@@ -1268,7 +1268,7 @@ $("#acessosBtn").onclick=abrirAcessos;
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
 const APP_VERSAO="2026.10.24";
 const VERSOES=[
-  {v:"2026.10.24", d:"24/10/2026", itens:["Fotos do checklist e da manutenção baixadas direto do Supabase (aparecem no app e no PDF mesmo se o bucket não estiver público)","Tocar na foto ou no vídeo 360° abre em tela cheia, na mesma tela (sem abrir aba nova); tocar fora ou no ✕ fecha"]},
+  {v:"2026.10.24", d:"24/10/2026", itens:["Checklist: deixa claro que quem entrega e quem recebe o turno é o supervisor (campo \"Supervisor que entrega\" com o supervisor da turma, \"Supervisor que recebe o turno\" com o nome de cada supervisor)","Fotos do checklist e da manutenção baixadas direto do Supabase (aparecem no app e no PDF mesmo se o bucket não estiver público)","Tocar na foto ou no vídeo 360° abre em tela cheia, na mesma tela (sem abrir aba nova); tocar fora ou no ✕ fecha"]},
   {v:"2026.10.23b", d:"23/10/2026", itens:["Checklist: baixar vários checklists ou várias comunicações de defeito num PDF só (um por página), por dia, semana, mês ou todos, para todas as turmas, PODA I, PODA II ou uma turma","Fotos e vídeo do checklist e da manutenção abrem direto do Supabase (não dependem mais do redirecionamento do netlify.toml) e saem no PDF","camada-gpe.js mudou: suba junto com o index.html","Troca de senha obrigatória no primeiro acesso e sempre que a gerência redefinir a senha: a pessoa cria uma senha só dela antes de entrar","Aba Atualizar (só gerente): links do app no Netlify e no Claude, do GitHub, do Netlify e do Supabase, com botão de copiar","Aba Atualizar: arquivos prontos para o GitHub (index.html, camada-gpe.js e netlify.toml já ligados ao Supabase); o .zip traz os arquivos soltos","Tela de entrada no Netlify mostra o motivo quando não conecta ao banco (camada-gpe.js ausente, chave recusada, banco vazio ou sem internet)","camada-gpe.js novo (Supabase): suba junto com o index.html"]},
   {v:"2026.10.23", d:"23/10/2026", itens:["Relatório: gráficos da evolução semanal, mensal e anual (poda em colunas 3D e extirpação em linha, e locais atendidos por tipo em linhas)","Relatório: tabelas de evolução semanal, mensal e anual no modelo da planilha (semana, período, poda total, extirpação total, processo/O.S, entre-pista, praça…), com o histórico da planilha até a 32ª semana","Baixar em PDF os gráficos da manutenção, com os filtros escolhidos e o logo da COMURG","Gráficos da manutenção: incidência de defeito por equipamento (quantas vezes estragou), tempo em manutenção (total, média e maior parada), disponibilidade no período, intervalo médio entre defeitos e defeito mais comum","Gráficos (aba dentro do Checklist) só da comunicação de defeito / manutenção, em 3D com linhas de grade: comunicações e retornos por dia com a linha de equipamentos em manutenção, tipo de defeito, urgência, parado × operante, por equipamento, por turma e dias fora de operação","Comunicação de defeito: parte 7 \"Retorno à atividade\" para preencher quando o equipamento voltar (data, horário, KM, oficina, serviço executado, liberado para operar, devolução do reserva e assinatura do supervisor); a comunicação em aberto mostra o botão para registrar o retorno","Fotos e vídeo só pela câmera, tirados na hora: o app recusa arquivo antigo da galeria","Comunicação de defeito: 6 fotos obrigatórias (2 do defeito em ângulos diferentes, parte de cima da carroceria, dentro do cesto e as duas laterais do equipamento inteiro); as fotos saem no PDF","Checklist: fotos obrigatórias da parte de cima da carroceria e de dentro do cesto (limpos) e das duas laterais do caminhão, e vídeo curto 360° do cesto; as fotos saem no PDF"]},
   {v:"2026.10.22", d:"22/10/2026", itens:["Serviço a executar também obrigatório em O.S e processo","Serviço \"Poda de rebaixamento de copa\" passou a se chamar \"Poda de redução de copa\"","Serviço \"Poda de levantamento de copa\" trocado por \"Poda de levantamento de saia\"","Serviços \"Árvore caída\" e \"Galho caído\" na lista de serviços a executar","Programar: em entre-pista, praça e área pública é obrigatório especificar o serviço (poda de manutenção, poda/extirpação, limpeza, levantamento de saia, adequação à rede, redução de copa, emergência, extirpação ou outro); aparece nas listas, no relatório e na planilha","Programar: O.S e processo não bloqueiam entre-pista, praça, área pública e calçada no mesmo endereço (e essas não bloqueiam O.S e processo); a duplicidade vale só entre O.S/processo ou entre os demais tipos","Checklist por equipamento: PODA I faz 2 por período e PODA II faz 4 (3 equipamentos + a van); a aba mostra quantos cada turma já fez no dia e o formulário sugere o equipamento que falta","Checklist e comunicação de defeito: assinatura sempre do supervisor da turma (entrega, recebimento, comunicação e retorno); gerência e coordenação podem preencher e o supervisor assina no aparelho com a matrícula e a senha de assinatura dele; diretoria só consulta","Baixar em PDF o checklist e a comunicação de defeito já preenchidos, no layout do formulário COMURG, com as assinaturas eletrônicas","Recebimento do turno: quem recebe vê o checklist na própria aba (aviso com número na aba Checklist), confere e assina dando ciência das condições do equipamento","Botão de olho em todos os campos de senha (entrar, acessos, assinatura) para ver o que está sendo digitado","Comunicação de defeito e recolhimento para manutenção do cesto aéreo (formulário COMURG completo), assinada pelo supervisor, com registro do retorno do equipamento e lista de manutenções em aberto; pode ser aberta direto do checklist com os dados já preenchidos","Checklist: assinatura eletrônica no modelo de documento assinado (selo, nome, cargo, data e hora e código verificador), com senha própria de assinatura, diferente da senha de entrar; o gerente pode apagar uma senha de assinatura esquecida","Checklist: item dos cones pergunta se o equipamento está com os cones oferecidos pela empresa MAAS","Aba Checklist: checklist diário de inspeção pós-operacional do cesto aéreo (formulário COMURG completo: situação do equipamento, conferência final, ocorrências e declaração), com aviso de equipamento não apto e das equipes que trabalharam no dia sem checklist","Checklist assinado pelo supervisor que entrega e pelo supervisor que recebe o turno (operador identificado por nome e matrícula); depois de recebido, o checklist fica fechado","Tipo de local Processo de volta (junto com O.S), com nº obrigatório; o endereço fica bloqueado até o processo ser concluído"]},
@@ -1893,10 +1893,11 @@ const ehSup=()=>sessao?.perfil==="supervisor";
 const souRecebedor=c=>!!sessao && sessao.perfil!=="diretoria" && !chkRecebido(c) && (!travado()||c?.recebe?.sup===sessao.sup||c?.supervisao===sessao.sup);
 // qualquer perfil (menos diretoria) pode preencher; a assinatura é sempre do supervisor da turma
 const podeEntregar=sup=>!!sessao && sessao.perfil!=="diretoria" && (!travado()||sup===sessao.sup);
+const nomeSupDe=sup=>{ if(!sup) return ""; const u=Object.values(acesso||{}).find(x=>x.perfil==="supervisor"&&x.ativo&&x.sup===sup); return u?.nome||supOf(sup)?.enc||""; };
 const supAssinaProprio=sup=>ehSup()&&sessao.sup===sup;
 const sigBlocoHtml=(px,sup)=>supAssinaProprio(sup)
-  ? `<p class="note" style="margin:6px 0 0"><b>Supervisor</b> · assina como <b>${esc(sessao.nome)}</b>, ${esc(cargoDe(acesso?.[sessao.id]||sessao))}</p>${sigFormHtml(px,sessao.id)}`
-  : `<p class="note" style="margin:6px 0 0"><b>Assinatura do supervisor da turma</b> · ele assina aqui com a matrícula e a senha de assinatura dele.</p><div class="row2"><label class="f">Matrícula do supervisor<input id="${px}Mat" autocomplete="off" placeholder="ex.: m859209"></label><label class="f">Senha de assinatura<input id="${px}Pin" type="password" autocomplete="off"></label></div>`;
+  ? `<p class="note" style="margin:6px 0 0"><b>Supervisor que entrega</b> · assina como <b>${esc(sessao.nome)}</b>, ${esc(cargoDe(acesso?.[sessao.id]||sessao))}</p>${sigFormHtml(px,sessao.id)}`
+  : `<p class="note" style="margin:6px 0 0"><b>Assinatura do supervisor da turma</b> (${esc(nomeSupDe(sup)||"supervisor")}) · ele assina aqui com a matrícula e a senha de assinatura dele.</p><div class="row2"><label class="f">Matrícula do supervisor<input id="${px}Mat" autocomplete="off" placeholder="ex.: m859209"></label><label class="f">Senha de assinatura<input id="${px}Pin" type="password" autocomplete="off"></label></div>`;
 async function assinante(px,sup){
   if(supAssinaProprio(sup)){ const r=await conferirAss(px,sessao.id); if(r) return {erro:r}; return {uid:sessao.id,nome:sessao.nome,sup:sessao.sup,cargo:cargoDe(acesso?.[sessao.id]||sessao),mat:matDe(acesso?.[sessao.id]||{}),como:"pelo próprio acesso"}; }
   const m=$("#"+px+"Mat")?.value, p=$("#"+px+"Pin")?.value;
@@ -2059,8 +2060,8 @@ function chkCard(c){
     ${al.length?`<div class="ckprob">${al.map(t=>`<div>• ${esc(t)}</div>`).join("")}</div>`:""}
     ${c.ocorr?`<div class="meta">Ocorrências: ${esc(c.ocorr)}</div>`:""}
     ${c.midia?`<div class="meta">📷 ${MID_SLOTS.filter(x=>x.tipo==="foto"&&c.midia[x.k]).length} de 4 fotos${c.midia.video360?" · 🎥 vídeo 360°":""}</div>`:""}
-    <div class="cksig"><span class="ok">✔ Assinado eletronicamente por <b>${esc(c.entrega?.nome||"—")}</b> (entrega)${c.entrega?.em?" · "+fmtHora(c.entrega.em):""} · operador ${esc(c.operador?.nome||"—")}</span>
-    ${chkRecebido(c)?`<span class="ok">✔ Assinado eletronicamente por <b>${esc(c.recebe.nome)}</b> (recebimento, ${esc(c.recebe.sup)}) · ${fmtHora(c.recebe.em)}</span>${c.recebe.obs?`<span class="dv">Ressalva no recebimento: ${esc(c.recebe.obs)}</span>`:""}`:`<span class="pe">Aguardando assinatura de recebimento${c.recebe?.sup?" · "+esc(c.recebe.sup)+" · "+esc(supOf(c.recebe.sup)?.enc||""):""}</span>`}</div>
+    <div class="cksig"><span class="ok">✔ Supervisor que entregou: <b>${esc(c.entrega?.nome||"—")}</b>${c.entrega?.em?" · "+fmtHora(c.entrega.em):""}</span>
+    ${chkRecebido(c)?`<span class="ok">✔ Supervisor que recebeu: <b>${esc(c.recebe.nome)}</b> (${esc(c.recebe.sup)}) · ${fmtHora(c.recebe.em)}</span>${c.recebe.obs?`<span class="dv">Ressalva no recebimento: ${esc(c.recebe.obs)}</span>`:""}`:`<span class="pe">Aguardando o supervisor que recebe${c.recebe?.sup?": "+esc(nomeSupDe(c.recebe.sup))+" ("+esc(c.recebe.sup)+")":""}</span>`}</div>
   </button>`;
 }
 $("#kList").onclick=e=>{const bm=e.target.closest("[data-man]"); if(bm){const m=mans.find(x=>x.id===bm.dataset.man); if(m) abrirMan(m); return;} const b=e.target.closest("[data-chk]"); if(!b) return; const c=chks.find(x=>x.id===b.dataset.chk); if(c) abrirChk(c);};
@@ -2078,7 +2079,7 @@ function abrirChk(c){
   const sit={...(c?.sit||{})}, itens={...(c?.itens||{})}, midia={...(c?.midia||{})};
   const dis=edit?"":"disabled";
   const vtOpts=[...$("#viatura").options].map(o=>`<option value="${esc(o.value)}"${o.value===vt0?" selected":""}>${esc(o.textContent)}</option>`).join("");
-  const supOpts=(sel,exc)=>`<option value="">Selecione…</option>`+SUPS.filter(s=>s.id!==exc).map(s=>`<option value="${esc(s.id)}"${s.id===sel?" selected":""}>${esc(s.id)} · ${esc(s.enc)}</option>`).join("");
+  const supOpts=(sel,exc)=>`<option value="">Selecione…</option>`+SUPS.filter(s=>s.id!==exc).map(s=>`<option value="${esc(s.id)}"${s.id===sel?" selected":""}>${esc(nomeSupDe(s.id)||s.enc)} · ${esc(s.id)}</option>`).join("");
   const host=$("#sheetHost");
   host.innerHTML=`<div class="sheet" id="sh"><div class="panel" role="dialog" aria-label="Checklist de inspeção pós-operacional">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div><b style="font-family:var(--display);font-size:21px;line-height:1.1;display:block">Checklist diário de inspeção pós-operacional</b><span class="note">Cesto aéreo · COMURG</span></div><button type="button" class="btn sec" id="kClose" style="min-height:40px;padding:0 14px">Fechar</button></div>
@@ -2091,7 +2092,7 @@ function abrirChk(c){
     </div>
     <div class="row2">
       <label class="f">Equipe<select id="kfEq" ${dis}>${["1ª EQUIPE","2ª EQUIPE","3ª EQUIPE"].map(x=>`<option${x===eq0?" selected":""}>${x}</option>`).join("")}</select></label>
-      <label class="f">Supervisor<input id="kfSupNome" value="${esc(c?.entrega?.nome||sessao?.nome||"")}" disabled></label>
+      <label class="f">Supervisor que entrega<input id="kfSupNome" value="${esc(c?.entrega?.nome||nomeSupDe(sup0))}" disabled></label>
     </div>
     <div class="row2">
       <label class="f">Equipamento<input id="kfEqp" value="${esc(c?.equipamento||"CESTO AÉREO")}" ${dis}></label>
@@ -2115,11 +2116,11 @@ function abrirChk(c){
     <div class="ckgrp">5. Declaração</div>
     <label class="ck"><input type="checkbox" id="kfDecl" ${c?.declaracao?"checked":""} ${dis}><span class="note" style="color:var(--ink)">${esc(CHK_DECL)}</span></label>
     <div class="ckbox">
-      <div class="ckgrp">Assinaturas – entrega do equipamento</div>
+      <div class="ckgrp">Entrega do turno – supervisor que entrega</div>
       ${edit?`<p class="note" style="margin:0"><b>Operador que está encerrando o turno</b></p>
         <div class="row2"><label class="f">Nome<input id="kfOpNome" value="${esc(c?.operador?.nome||"")}"></label><label class="f">Matrícula<input id="kfOpMat" value="${esc(c?.operador?.mat||"")}" autocomplete="off"></label></div>
         ${sigBlocoHtml("kE",sup0)}
-        <div class="row2"><label class="f">Horário de encerramento<input type="time" id="kfHora" value="${esc(c?.hora||horaAgora())}"></label><label class="f">Turma que vai receber<select id="kfRecSup">${supOpts(c?.recebe?.sup||"",sup0)}</select></label></div>`
+        <div class="row2"><label class="f">Horário de encerramento<input type="time" id="kfHora" value="${esc(c?.hora||horaAgora())}"></label><label class="f">Supervisor que recebe o turno<select id="kfRecSup">${supOpts(c?.recebe?.sup||"",sup0)}</select></label></div>`
        : opHtml(c?.operador)+assinHtml("Supervisor que entregou o turno",c?.entrega)+`<p class="note" style="margin:0">Horário de encerramento: <b>${esc(c?.hora||"—")}</b> · ${fmtD(c?.data)}</p>`}
     </div>
     ${c?`<div class="ckbox">
@@ -2189,7 +2190,8 @@ function abrirChk(c){
     if(trocar&&feitos.includes($("#kfVt").value)){ const livre=[...$("#kfVt").options].map(o=>o.value).find(v=>!feitos.includes(v)); if(livre){$("#kfVt").value=livre; eqpUI();} } };
   const eqpUI=()=>{ const e=$("#kfEqp"); if(e&&(e.value===""||e.value==="CESTO AÉREO"||e.value==="VAN")) e.value=/^VAN/.test($("#kfVt").value)?"VAN":"CESTO AÉREO"; };
   if(!c){ $("#kfVt").onchange=()=>{eqpUI();cotaUI(false)}; $("#kfData").onchange=()=>cotaUI(true); eqpUI(); cotaUI(true); }
-  $("#kfSup").onchange=()=>{const v=$("#kfSup").value, r=$("#kfRecSup").value; $("#kfRecSup").innerHTML=supOpts(r===v?"":r,v); $("#kfTurno").value=supOf(v)?.turno||""; cotaUI(true);};
+  $("#kfSup").onchange=()=>{ $("#kfSupNome").value=nomeSupDe($("#kfSup").value); }; const _kfSupOld=null;
+  $("#kfSup").addEventListener("change",()=>{const v=$("#kfSup").value, r=$("#kfRecSup").value; $("#kfRecSup").innerHTML=supOpts(r===v?"":r,v); $("#kfTurno").value=supOf(v)?.turno||""; cotaUI(true);});
   $("#kSalvar").onclick=async()=>{
     const sup=$("#kfSup").value, data=$("#kfData").value, vt=$("#kfVt").value, recSup=$("#kfRecSup").value, e=[];
     const kmI=$("#kfKmI").value.trim(), kmF=$("#kfKmF").value.trim(), opNome=$("#kfOpNome").value.trim(), opMat=$("#kfOpMat").value.trim();
@@ -2291,7 +2293,7 @@ function abrirMan(m,pre){
     ${m&&downloads?`<button type="button" class="btn pri" id="mPdf" style="min-height:44px;font-size:15px">Baixar PDF da comunicação</button>`:""}
     <label class="f">Turma / supervisão<select id="mfSup" ${travado()||!novo?"disabled":""}><option value="">Selecione…</option>${SUPS.map(s=>`<option value="${esc(s.id)}"${s.id===sup0?" selected":""}>${esc(s.id)} · ${esc(s.enc)}</option>`).join("")}</select></label>
     <div class="row2"><label class="f">Data<input type="date" id="mfData" value="${esc(m?.data||pre.data||hoje())}" ${dis}></label><label class="f">Turno<input id="mfTurno" value="${esc(supOf(sup0)?.turno||"")}" disabled></label></div>
-    <div class="row2"><label class="f">Equipe<select id="mfEq" ${dis}>${["1ª EQUIPE","2ª EQUIPE","3ª EQUIPE"].map(x=>`<option${x===(m?.equipe||pre.equipe||turma.equipe||"1ª EQUIPE")?" selected":""}>${x}</option>`).join("")}</select></label><label class="f">Supervisor<input value="${esc(m?.assin?.nome||sessao?.nome||"")}" disabled></label></div>
+    <div class="row2"><label class="f">Equipe<select id="mfEq" ${dis}>${["1ª EQUIPE","2ª EQUIPE","3ª EQUIPE"].map(x=>`<option${x===(m?.equipe||pre.equipe||turma.equipe||"1ª EQUIPE")?" selected":""}>${x}</option>`).join("")}</select></label><label class="f">Supervisor<input id="mfSupNome" value="${esc(m?.assin?.nome||nomeSupDe(sup0))}" disabled></label></div>
     <div class="row2"><label class="f">Operador<input id="mfOpNome" value="${esc(m?.operador?.nome||pre.opNome||"")}" ${dis}></label><label class="f">Matrícula do operador<input id="mfOpMat" value="${esc(m?.operador?.mat||pre.opMat||"")}" autocomplete="off" ${dis}></label></div>
     <div class="row2"><label class="f">Equipamento<input id="mfEqp" value="${esc(m?.equipamento||"CESTO AÉREO")}" ${dis}></label><label class="f">Prefixo / placa<select id="mfVt" ${dis}>${vtOpts}</select></label></div>
     <label class="f">KM atual<input id="mfKm" inputmode="numeric" value="${esc(m?.km||pre.km||"")}" ${dis}></label>
@@ -2338,7 +2340,7 @@ function abrirMan(m,pre){
     else { v.sit[n]=s; if(n==="recolhido") $("#mfRecBox").hidden=s!=="SIM"; }
     b.parentElement.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
   });
-  if(novo&&edit) $("#mfSup").onchange=()=>{$("#mfTurno").value=supOf($("#mfSup").value)?.turno||""};
+  if(novo&&edit) $("#mfSup").onchange=()=>{$("#mfTurno").value=supOf($("#mfSup").value)?.turno||""; $("#mfSupNome").value=nomeSupDe($("#mfSup").value);};
   if($("#mIrRet")) $("#mIrRet").onclick=()=>$("#mfRetSec").scrollIntoView({block:"start",behavior:"smooth"});
   if(retEdit&&$("#mRetOk")) $("#mRetOk").onclick=async()=>{
     const fr=[]; if(!$("#mfRetData").value) fr.push("data do retorno"); if($("#mfRetData").value>hoje()) fr.push("a data do retorno não pode ser no futuro");
