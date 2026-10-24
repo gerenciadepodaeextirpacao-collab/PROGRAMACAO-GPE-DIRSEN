@@ -1268,7 +1268,7 @@ $("#acessosBtn").onclick=abrirAcessos;
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
 const APP_VERSAO="2026.10.24";
 const VERSOES=[
-  {v:"2026.10.24", d:"24/10/2026", itens:["Checklist: deixa claro que quem entrega e quem recebe o turno é o supervisor (campo \"Supervisor que entrega\" com o supervisor da turma, \"Supervisor que recebe o turno\" com o nome de cada supervisor)","Fotos do checklist e da manutenção baixadas direto do Supabase (aparecem no app e no PDF mesmo se o bucket não estiver público)","Tocar na foto ou no vídeo 360° abre em tela cheia, na mesma tela (sem abrir aba nova); tocar fora ou no ✕ fecha"]},
+  {v:"2026.10.24", d:"24/10/2026", itens:["Checklist sem o operador: entrega e recebimento só pelos supervisores (tela, lista e PDF)","Checklist: deixa claro que quem entrega e quem recebe o turno é o supervisor (campo \"Supervisor que entrega\" com o supervisor da turma, \"Supervisor que recebe o turno\" com o nome de cada supervisor)","Fotos do checklist e da manutenção baixadas direto do Supabase (aparecem no app e no PDF mesmo se o bucket não estiver público)","Tocar na foto ou no vídeo 360° abre em tela cheia, na mesma tela (sem abrir aba nova); tocar fora ou no ✕ fecha"]},
   {v:"2026.10.23b", d:"23/10/2026", itens:["Checklist: baixar vários checklists ou várias comunicações de defeito num PDF só (um por página), por dia, semana, mês ou todos, para todas as turmas, PODA I, PODA II ou uma turma","Fotos e vídeo do checklist e da manutenção abrem direto do Supabase (não dependem mais do redirecionamento do netlify.toml) e saem no PDF","camada-gpe.js mudou: suba junto com o index.html","Troca de senha obrigatória no primeiro acesso e sempre que a gerência redefinir a senha: a pessoa cria uma senha só dela antes de entrar","Aba Atualizar (só gerente): links do app no Netlify e no Claude, do GitHub, do Netlify e do Supabase, com botão de copiar","Aba Atualizar: arquivos prontos para o GitHub (index.html, camada-gpe.js e netlify.toml já ligados ao Supabase); o .zip traz os arquivos soltos","Tela de entrada no Netlify mostra o motivo quando não conecta ao banco (camada-gpe.js ausente, chave recusada, banco vazio ou sem internet)","camada-gpe.js novo (Supabase): suba junto com o index.html"]},
   {v:"2026.10.23", d:"23/10/2026", itens:["Relatório: gráficos da evolução semanal, mensal e anual (poda em colunas 3D e extirpação em linha, e locais atendidos por tipo em linhas)","Relatório: tabelas de evolução semanal, mensal e anual no modelo da planilha (semana, período, poda total, extirpação total, processo/O.S, entre-pista, praça…), com o histórico da planilha até a 32ª semana","Baixar em PDF os gráficos da manutenção, com os filtros escolhidos e o logo da COMURG","Gráficos da manutenção: incidência de defeito por equipamento (quantas vezes estragou), tempo em manutenção (total, média e maior parada), disponibilidade no período, intervalo médio entre defeitos e defeito mais comum","Gráficos (aba dentro do Checklist) só da comunicação de defeito / manutenção, em 3D com linhas de grade: comunicações e retornos por dia com a linha de equipamentos em manutenção, tipo de defeito, urgência, parado × operante, por equipamento, por turma e dias fora de operação","Comunicação de defeito: parte 7 \"Retorno à atividade\" para preencher quando o equipamento voltar (data, horário, KM, oficina, serviço executado, liberado para operar, devolução do reserva e assinatura do supervisor); a comunicação em aberto mostra o botão para registrar o retorno","Fotos e vídeo só pela câmera, tirados na hora: o app recusa arquivo antigo da galeria","Comunicação de defeito: 6 fotos obrigatórias (2 do defeito em ângulos diferentes, parte de cima da carroceria, dentro do cesto e as duas laterais do equipamento inteiro); as fotos saem no PDF","Checklist: fotos obrigatórias da parte de cima da carroceria e de dentro do cesto (limpos) e das duas laterais do caminhão, e vídeo curto 360° do cesto; as fotos saem no PDF"]},
   {v:"2026.10.22", d:"22/10/2026", itens:["Serviço a executar também obrigatório em O.S e processo","Serviço \"Poda de rebaixamento de copa\" passou a se chamar \"Poda de redução de copa\"","Serviço \"Poda de levantamento de copa\" trocado por \"Poda de levantamento de saia\"","Serviços \"Árvore caída\" e \"Galho caído\" na lista de serviços a executar","Programar: em entre-pista, praça e área pública é obrigatório especificar o serviço (poda de manutenção, poda/extirpação, limpeza, levantamento de saia, adequação à rede, redução de copa, emergência, extirpação ou outro); aparece nas listas, no relatório e na planilha","Programar: O.S e processo não bloqueiam entre-pista, praça, área pública e calçada no mesmo endereço (e essas não bloqueiam O.S e processo); a duplicidade vale só entre O.S/processo ou entre os demais tipos","Checklist por equipamento: PODA I faz 2 por período e PODA II faz 4 (3 equipamentos + a van); a aba mostra quantos cada turma já fez no dia e o formulário sugere o equipamento que falta","Checklist e comunicação de defeito: assinatura sempre do supervisor da turma (entrega, recebimento, comunicação e retorno); gerência e coordenação podem preencher e o supervisor assina no aparelho com a matrícula e a senha de assinatura dele; diretoria só consulta","Baixar em PDF o checklist e a comunicação de defeito já preenchidos, no layout do formulário COMURG, com as assinaturas eletrônicas","Recebimento do turno: quem recebe vê o checklist na própria aba (aviso com número na aba Checklist), confere e assina dando ciência das condições do equipamento","Botão de olho em todos os campos de senha (entrar, acessos, assinatura) para ver o que está sendo digitado","Comunicação de defeito e recolhimento para manutenção do cesto aéreo (formulário COMURG completo), assinada pelo supervisor, com registro do retorno do equipamento e lista de manutenções em aberto; pode ser aberta direto do checklist com os dados já preenchidos","Checklist: assinatura eletrônica no modelo de documento assinado (selo, nome, cargo, data e hora e código verificador), com senha própria de assinatura, diferente da senha de entrar; o gerente pode apagar uma senha de assinatura esquecida","Checklist: item dos cones pergunta se o equipamento está com os cones oferecidos pela empresa MAAS","Aba Checklist: checklist diário de inspeção pós-operacional do cesto aéreo (formulário COMURG completo: situação do equipamento, conferência final, ocorrências e declaração), com aviso de equipamento não apto e das equipes que trabalharam no dia sem checklist","Checklist assinado pelo supervisor que entrega e pelo supervisor que recebe o turno (operador identificado por nome e matrícula); depois de recebido, o checklist fica fechado","Tipo de local Processo de volta (junto com O.S), com nº obrigatório; o endereço fica bloqueado até o processo ser concluído"]},
@@ -2056,7 +2056,7 @@ function chkCard(c){
   const al=chkAlertas(c), nv=chkNivel(c);
   return `<button type="button" class="rec" data-chk="${esc(c.id)}">
     <div class="l1"><span class="when">${esc(c.viatura||"")} · ${esc(c.supervisao)}</span><span class="pill ${nv}">${chkNivelTxt[nv]}</span></div>
-    <div class="meta">${esc(c.equipe||"")} · operador ${esc(c.operador?.nome||"—")}${c.kmIni||c.kmFim?` · km ${esc(c.kmIni||"?")} → ${esc(c.kmFim||"?")}`:""}${c.hora?" · encerrado às "+esc(c.hora):""}</div>
+    <div class="meta">${esc(c.equipe||"")}${c.kmIni||c.kmFim?` · km ${esc(c.kmIni||"?")} → ${esc(c.kmFim||"?")}`:""}${c.hora?" · encerrado às "+esc(c.hora):""}</div>
     ${al.length?`<div class="ckprob">${al.map(t=>`<div>• ${esc(t)}</div>`).join("")}</div>`:""}
     ${c.ocorr?`<div class="meta">Ocorrências: ${esc(c.ocorr)}</div>`:""}
     ${c.midia?`<div class="meta">📷 ${MID_SLOTS.filter(x=>x.tipo==="foto"&&c.midia[x.k]).length} de 4 fotos${c.midia.video360?" · 🎥 vídeo 360°":""}</div>`:""}
@@ -2117,11 +2117,9 @@ function abrirChk(c){
     <label class="ck"><input type="checkbox" id="kfDecl" ${c?.declaracao?"checked":""} ${dis}><span class="note" style="color:var(--ink)">${esc(CHK_DECL)}</span></label>
     <div class="ckbox">
       <div class="ckgrp">Entrega do turno – supervisor que entrega</div>
-      ${edit?`<p class="note" style="margin:0"><b>Operador que está encerrando o turno</b></p>
-        <div class="row2"><label class="f">Nome<input id="kfOpNome" value="${esc(c?.operador?.nome||"")}"></label><label class="f">Matrícula<input id="kfOpMat" value="${esc(c?.operador?.mat||"")}" autocomplete="off"></label></div>
-        ${sigBlocoHtml("kE",sup0)}
+      ${edit?`${sigBlocoHtml("kE",sup0)}
         <div class="row2"><label class="f">Horário de encerramento<input type="time" id="kfHora" value="${esc(c?.hora||horaAgora())}"></label><label class="f">Supervisor que recebe o turno<select id="kfRecSup">${supOpts(c?.recebe?.sup||"",sup0)}</select></label></div>`
-       : opHtml(c?.operador)+assinHtml("Supervisor que entregou o turno",c?.entrega)+`<p class="note" style="margin:0">Horário de encerramento: <b>${esc(c?.hora||"—")}</b> · ${fmtD(c?.data)}</p>`}
+       : assinHtml("Supervisor que entregou o turno",c?.entrega)+`<p class="note" style="margin:0">Horário de encerramento: <b>${esc(c?.hora||"—")}</b> · ${fmtD(c?.data)}</p>`}
     </div>
     ${c?`<div class="ckbox">
       <div class="ckgrp">Recebimento do turno (supervisor)</div>
@@ -2194,7 +2192,7 @@ function abrirChk(c){
   $("#kfSup").addEventListener("change",()=>{const v=$("#kfSup").value, r=$("#kfRecSup").value; $("#kfRecSup").innerHTML=supOpts(r===v?"":r,v); $("#kfTurno").value=supOf(v)?.turno||""; cotaUI(true);});
   $("#kSalvar").onclick=async()=>{
     const sup=$("#kfSup").value, data=$("#kfData").value, vt=$("#kfVt").value, recSup=$("#kfRecSup").value, e=[];
-    const kmI=$("#kfKmI").value.trim(), kmF=$("#kfKmF").value.trim(), opNome=$("#kfOpNome").value.trim(), opMat=$("#kfOpMat").value.trim();
+    const kmI=$("#kfKmI").value.trim(), kmF=$("#kfKmF").value.trim();
     if(!sup) e.push("escolha a turma"); if(!data) e.push("informe a data"); if(data>hoje()) e.push("a data não pode ser no futuro");
     const id=c?.id||chkId(data,sup,vt), ant=c||chks.find(x=>x.id===id);
     if(!c&&ant) e.push(`já existe checklist do ${vt} da ${sup} em ${fmtD(data)}; abra-o na lista para corrigir`);
@@ -2208,9 +2206,8 @@ function abrirChk(c){
     if(assets&&!midia.video360) e.push("anexe o vídeo 360° do cesto");
     if(document.querySelector("#kfMid .midst")?.textContent.includes("enviando")||[...document.querySelectorAll("#kfMid .midst")].some(x=>/enviando|reduzindo/.test(x.textContent))) e.push("espere terminar o envio das fotos / vídeo");
     if(!$("#kfDecl").checked) e.push("marque a declaração (seção 5)");
-    if(!opNome||!opMat) e.push("nome e matrícula do operador");
     if(!$("#kfHora").value) e.push("horário de encerramento");
-    if(!recSup) e.push("turma que vai receber");
+    if(!recSup) e.push("supervisor que recebe o turno");
     document.querySelectorAll("#kfSit .ckit, #kfItens .ckit").forEach(el=>{const b=el.querySelector(".cksn button");const n=b.dataset.n;const v=n.startsWith("s:")?sit[n.slice(2)]:itens[n.slice(2)];el.classList.toggle("err",!v);});
     if(e.length) return erro("Falta: "+e.join("; ")+".");
     err.hidden=true;
@@ -2219,7 +2216,6 @@ function abrirChk(c){
     const agora=new Date().toISOString();
     const body={data,semana:semanaDe(data),supervisao:sup,grupo:supOf(sup)?.grupo||"",turno:supOf(sup)?.turno||"",equipe:$("#kfEq").value,
       equipamento:$("#kfEqp").value.trim()||"CESTO AÉREO",viatura:vt,kmIni:kmI,kmFim:kmF,sit,itens,midia,ocorr:$("#kfOcorr").value.trim(),declaracao:true,hora:$("#kfHora").value,
-      operador:{nome:opNome.toUpperCase(),mat:opMat},
       entrega:{...q,sup:q.sup||sup,em:agora},
       recebe:{sup:recSup},
       ultimoUsuario:nomeAutor(),
@@ -2439,7 +2435,7 @@ const fsig=(t,a)=>a&&a.em?`<div><div class="sl">${esc(t)}</div><div class="sg"><
 const fhead=(t1,t2)=>`<div class="fh"><img src="${LOGO_FULL}" alt="COMURG"><div class="tt"><div class="org">Companhia de Urbanização de Goiânia – COMURG · Gerência de Poda e Extirpação – DIRSEN</div><h1>${t1}</h1><h2>${t2}</h2></div></div><div class="band"></div>`;
 function chkDocHtml(c){
   const kv=(a,b,c2,d)=>`<tr><td class="k">${a}</td><td>${b}</td><td class="k">${c2}</td><td>${d}</td></tr>`;
-  const cab=`<table>${kv("Data",fmtD(c.data),"Turno",esc(c.turno||supOf(c.supervisao)?.turno||""))}${kv("Equipe",esc(c.equipe||""),"Supervisor",esc(c.entrega?.nome||""))}${kv("Operador",esc(c.operador?.nome||"")+(c.operador?.mat?" · mat. "+esc(c.operador.mat):""),"Equipamento",esc(c.equipamento||"CESTO AÉREO"))}${kv("KM inicial",esc(c.kmIni||""),"Prefixo/placa",esc(c.viatura||""))}${kv("KM final",esc(c.kmFim||""),"Supervisão",esc(c.supervisao||""))}</table>`;
+  const cab=`<table>${kv("Data",fmtD(c.data),"Turno",esc(c.turno||supOf(c.supervisao)?.turno||""))}${kv("Equipe",esc(c.equipe||""),"Supervisor",esc(c.entrega?.nome||""))}${kv("Equipamento",esc(c.equipamento||"CESTO AÉREO"),"Prefixo/placa",esc(c.viatura||""))}${kv("KM inicial",esc(c.kmIni||""),"KM final",esc(c.kmFim||""))}${kv("Supervisão",esc(c.supervisao||""),"","")}</table>`;
   const s1=`<div><p class="sec">1. Situação do equipamento ao final do turno</p><table><tr><th>Item</th><th class="c">Sim</th><th class="c">Não</th></tr>${CHK_SIT.map(q=>{const v=c.sit?.[q.k];return `<tr${v&&v!==q.bom?' class="bad"':""}><td>${esc(q.t)}</td><td class="c">${fx(v,"SIM")}</td><td class="c">${fx(v,"NÃO")}</td></tr>`}).join("")}</table></div>`;
   const s2=`<div><p class="sec">2. Conferência final do equipamento</p><table><tr><th>Item</th><th class="c">Sim</th><th class="c">Não</th></tr>${CHK_ITENS.map((t,i)=>{const v=c.itens?.[i];return `<tr${v==="NÃO"?' class="bad"':""}><td>${esc(t)}</td><td class="c">${fx(v,"SIM")}</td><td class="c">${fx(v,"NÃO")}</td></tr>`}).join("")}</table></div>`;
   const s3=`<div><p class="sec">3. Observação sobre a inspeção</p><p class="leg">${esc(CHK_OBS_INSP)}</p></div>`;
@@ -2449,8 +2445,7 @@ function chkDocHtml(c){
   const sfot=`<div><p class="sec">Registro fotográfico</p><div class="fgrid">${fotos.map(x=>{const u=midUrl(c.midia?.[x.k]);return `<div class="fcel">${u?`<img src="${esc(u)}" alt="">`:`<div class="fsem">Sem foto</div>`}<span>${esc(x.t)}</span></div>`}).join("")}</div>
     <p class="leg" style="margin:6px 0 0">Vídeo 360° do cesto: ${c.midia?.video360?"anexado no sistema Programação GPE (assista pelo app, abrindo este checklist).":"não anexado."}</p></div>`;
   const ass=`<div><p class="sec">Assinaturas – entrega e recebimento do equipamento</p>
-    <div class="sl">Operador que está encerrando o turno</div><table>${kv("Nome",esc(c.operador?.nome||""),"Matrícula",esc(c.operador?.mat||""))}</table>
-    <p class="leg" style="margin:3px 0 0">Operador identificado pelo supervisor no ato da entrega.</p></div>
+    </div>
     ${fsig("Supervisor que entregou o turno",c.entrega)}
     <div><table>${kv("Horário de encerramento",esc(c.hora||""),"Data",fmtD(c.data))}</table></div>
     <div><div class="sl">Recebimento do turno (supervisor)</div>${chkRecebido(c)?(c.recebe.ciencia?`<p class="leg" style="margin:0 0 4px">( X ) Declaro que recebi o equipamento e tomei ciência das condições registradas neste checklist.</p>`:"")+fsig("",c.recebe).replace('<div class="sl"></div>','')+(c.recebe.obs?`<div class="box" style="margin-top:6px"><b>Ressalva no recebimento:</b> ${esc(c.recebe.obs)}</div>`:""):`<div class="pend">Aguardando assinatura de recebimento${c.recebe?.sup?" – "+esc(c.recebe.sup):""}.</div>`}</div>`;
