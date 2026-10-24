@@ -488,6 +488,12 @@ nav.tabs button[aria-current="page"]{background:linear-gradient(180deg,#ff8c42 0
 .lkrow b{display:block;font-size:14px}.lkrow small{display:block;font-size:12px;color:var(--muted)}.lkrow a{font-size:13px;color:var(--brand);overflow-wrap:anywhere}
 .lkrow .btn{min-height:40px;padding:0 14px;font-size:13px}
 .kbx{padding:12px 14px;display:block}.kbx summary{cursor:pointer;font:700 15px var(--display);letter-spacing:.04em;text-transform:uppercase;color:var(--brand)}
+.midver{all:unset;display:block;width:100%;height:100%;cursor:zoom-in}
+.midver img{width:100%;height:100%;object-fit:cover;display:block}
+.lbox{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.92);display:grid;grid-template-rows:auto 1fr;cursor:zoom-out}
+.lbox .lbt{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;color:#fff;font:600 14px var(--body)}
+.lbox .lbt button{background:rgba(255,255,255,.15);color:#fff;border:0;border-radius:99px;width:40px;height:40px;font-size:18px;cursor:pointer}
+.lbox img{max-width:100%;max-height:100%;width:auto;height:auto;margin:auto;object-fit:contain;align-self:center;justify-self:center;padding:0 8px 16px}
 .midbtns{display:flex;flex-wrap:wrap;gap:6px}
 .midbtn{min-height:40px!important;font-size:13px!important;display:inline-grid;place-items:center;padding:0 12px;justify-self:start;cursor:pointer}
 /* mostrar / ocultar senha */
@@ -1258,8 +1264,9 @@ function abrirAcessos(){
 }
 $("#acessosBtn").onclick=abrirAcessos;
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.23b";
+const APP_VERSAO="2026.10.24";
 const VERSOES=[
+  {v:"2026.10.24", d:"24/10/2026", itens:["Fotos do checklist e da manutenção baixadas direto do Supabase (aparecem no app e no PDF mesmo se o bucket não estiver público)","Tocar na foto abre em tela cheia; tocar de novo fecha"]},
   {v:"2026.10.23b", d:"23/10/2026", itens:["Checklist: baixar vários checklists ou várias comunicações de defeito num PDF só (um por página), por dia, semana, mês ou todos, para todas as turmas, PODA I, PODA II ou uma turma","Fotos e vídeo do checklist e da manutenção abrem direto do Supabase (não dependem mais do redirecionamento do netlify.toml) e saem no PDF","camada-gpe.js mudou: suba junto com o index.html","Troca de senha obrigatória no primeiro acesso e sempre que a gerência redefinir a senha: a pessoa cria uma senha só dela antes de entrar","Aba Atualizar (só gerente): links do app no Netlify e no Claude, do GitHub, do Netlify e do Supabase, com botão de copiar","Aba Atualizar: arquivos prontos para o GitHub (index.html, camada-gpe.js e netlify.toml já ligados ao Supabase); o .zip traz os arquivos soltos","Tela de entrada no Netlify mostra o motivo quando não conecta ao banco (camada-gpe.js ausente, chave recusada, banco vazio ou sem internet)","camada-gpe.js novo (Supabase): suba junto com o index.html"]},
   {v:"2026.10.23", d:"23/10/2026", itens:["Relatório: gráficos da evolução semanal, mensal e anual (poda em colunas 3D e extirpação em linha, e locais atendidos por tipo em linhas)","Relatório: tabelas de evolução semanal, mensal e anual no modelo da planilha (semana, período, poda total, extirpação total, processo/O.S, entre-pista, praça…), com o histórico da planilha até a 32ª semana","Baixar em PDF os gráficos da manutenção, com os filtros escolhidos e o logo da COMURG","Gráficos da manutenção: incidência de defeito por equipamento (quantas vezes estragou), tempo em manutenção (total, média e maior parada), disponibilidade no período, intervalo médio entre defeitos e defeito mais comum","Gráficos (aba dentro do Checklist) só da comunicação de defeito / manutenção, em 3D com linhas de grade: comunicações e retornos por dia com a linha de equipamentos em manutenção, tipo de defeito, urgência, parado × operante, por equipamento, por turma e dias fora de operação","Comunicação de defeito: parte 7 \"Retorno à atividade\" para preencher quando o equipamento voltar (data, horário, KM, oficina, serviço executado, liberado para operar, devolução do reserva e assinatura do supervisor); a comunicação em aberto mostra o botão para registrar o retorno","Fotos e vídeo só pela câmera, tirados na hora: o app recusa arquivo antigo da galeria","Comunicação de defeito: 6 fotos obrigatórias (2 do defeito em ângulos diferentes, parte de cima da carroceria, dentro do cesto e as duas laterais do equipamento inteiro); as fotos saem no PDF","Checklist: fotos obrigatórias da parte de cima da carroceria e de dentro do cesto (limpos) e das duas laterais do caminhão, e vídeo curto 360° do cesto; as fotos saem no PDF"]},
   {v:"2026.10.22", d:"22/10/2026", itens:["Serviço a executar também obrigatório em O.S e processo","Serviço \"Poda de rebaixamento de copa\" passou a se chamar \"Poda de redução de copa\"","Serviço \"Poda de levantamento de copa\" trocado por \"Poda de levantamento de saia\"","Serviços \"Árvore caída\" e \"Galho caído\" na lista de serviços a executar","Programar: em entre-pista, praça e área pública é obrigatório especificar o serviço (poda de manutenção, poda/extirpação, limpeza, levantamento de saia, adequação à rede, redução de copa, emergência, extirpação ou outro); aparece nas listas, no relatório e na planilha","Programar: O.S e processo não bloqueiam entre-pista, praça, área pública e calçada no mesmo endereço (e essas não bloqueiam O.S e processo); a duplicidade vale só entre O.S/processo ou entre os demais tipos","Checklist por equipamento: PODA I faz 2 por período e PODA II faz 4 (3 equipamentos + a van); a aba mostra quantos cada turma já fez no dia e o formulário sugere o equipamento que falta","Checklist e comunicação de defeito: assinatura sempre do supervisor da turma (entrega, recebimento, comunicação e retorno); gerência e coordenação podem preencher e o supervisor assina no aparelho com a matrícula e a senha de assinatura dele; diretoria só consulta","Baixar em PDF o checklist e a comunicação de defeito já preenchidos, no layout do formulário COMURG, com as assinaturas eletrônicas","Recebimento do turno: quem recebe vê o checklist na própria aba (aviso com número na aba Checklist), confere e assina dando ciência das condições do equipamento","Botão de olho em todos os campos de senha (entrar, acessos, assinatura) para ver o que está sendo digitado","Comunicação de defeito e recolhimento para manutenção do cesto aéreo (formulário COMURG completo), assinada pelo supervisor, com registro do retorno do equipamento e lista de manutenções em aberto; pode ser aberta direto do checklist com os dados já preenchidos","Checklist: assinatura eletrônica no modelo de documento assinado (selo, nome, cargo, data e hora e código verificador), com senha própria de assinatura, diferente da senha de entrar; o gerente pode apagar uma senha de assinatura esquecida","Checklist: item dos cones pergunta se o equipamento está com os cones oferecidos pela empresa MAAS","Aba Checklist: checklist diário de inspeção pós-operacional do cesto aéreo (formulário COMURG completo: situação do equipamento, conferência final, ocorrências e declaração), com aviso de equipamento não apto e das equipes que trabalharam no dia sem checklist","Checklist assinado pelo supervisor que entrega e pelo supervisor que recebe o turno (operador identificado por nome e matrícula); depois de recebido, o checklist fica fechado","Tipo de local Processo de volta (junto com O.S), com nº obrigatório; o endereço fica bloqueado até o processo ser concluído"]},
@@ -2490,13 +2497,24 @@ const MID_SLOTS=[
   {k:"video360",t:"Vídeo curto 360° do cesto (até uns 20 segundos)",tipo:"video"}];
 const MID_COL="chkmidia"; let assets=null; const midCache={};
 // fora do Claude as fotos ficam no Supabase (bucket "midia"); vale mesmo com um camada-gpe.js antigo
-const SUPA_MIDIA="https://eyqbihvatzcjismsszvs.supabase.co/storage/v1/object/public/midia/";
+const SUPA_URL="https://eyqbihvatzcjismsszvs.supabase.co", SUPA_KEY="sb_publishable_ekN-TZqBKMwRs6aGHPPejg_rLkBgjgv";
+const SUPA_MIDIA=SUPA_URL+"/storage/v1/object/public/midia/";
+// baixa a foto/vídeo pelo Supabase (funciona mesmo se o bucket não estiver público) e guarda um endereço local
+let _supaCli=null, midErroTxt={};
+async function supaFoto(id){
+  if(!window.supabase){ await new Promise((ok,f)=>{ const sc=document.createElement("script"); sc.src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"; sc.onload=ok; sc.onerror=f; document.head.appendChild(sc); }); }
+  _supaCli=_supaCli||window.supabase.createClient(SUPA_URL,SUPA_KEY,{auth:{persistSession:false}});
+  const r=await _supaCli.storage.from("midia").download(id);
+  if(r.error) throw r.error; return URL.createObjectURL(r.data);
+}
 // update (mescla) mesmo quando a camada do Netlify não tiver update()
 async function dbUpdate(ref,parte){ if(typeof ref.update==="function") return ref.update(parte);
   const atual=(await ref.get()).data()||{}; const mesclar=(a,b)=>{ const o={...a}; for(const [k,v] of Object.entries(b)) o[k]=(v&&typeof v==="object"&&!Array.isArray(v)&&a&&a[k]&&typeof a[k]==="object"&&!Array.isArray(a[k]))?mesclar(a[k],v):v; return o; };
   return ref.set(mesclar(atual,parte)); }
-const midUrl=m=>!m?"":m.id?(window.GPE_BLOB_URL?window.GPE_BLOB_URL(m.id):window.GPE_NETLIFY?SUPA_MIDIA+m.id:"/_blob/"+m.id):(midCache[m.db]||"");
-async function midCarregar(m){ if(!m?.db||midCache[m.db]||!db) return; try{ const s=await db.collection(MID_COL).doc(m.db).get(); if(s.exists) midCache[m.db]=s.data().img||""; }catch(e){} }
+const midUrl=m=>!m?"":m.id?(window.GPE_NETLIFY?(midCache["a:"+m.id]||SUPA_MIDIA+m.id):"/_blob/"+m.id):(midCache[m.db]||"");
+async function midCarregar(m){
+  if(m?.id&&window.GPE_NETLIFY){ if(midCache["a:"+m.id]) return; try{ midCache["a:"+m.id]=await supaFoto(m.id); delete midErroTxt[m.id]; }catch(e){ midErroTxt[m.id]=String(e?.message||e||"erro"); console.error("foto",m.id,e); } return; }
+  if(!m?.db||midCache[m.db]||!db) return; try{ const s=await db.collection(MID_COL).doc(m.db).get(); if(s.exists) midCache[m.db]=s.data().img||""; }catch(e){} }
 function imgReduzir(file,lado,q){ return new Promise((res,rej)=>{ const u=URL.createObjectURL(file), im=new Image();
   im.onload=()=>{ const k=Math.min(1,lado/Math.max(im.naturalWidth,im.naturalHeight)); const cv=document.createElement("canvas"); cv.width=Math.round(im.naturalWidth*k); cv.height=Math.round(im.naturalHeight*k);
     const x=cv.getContext("2d"); x.fillStyle="#fff"; x.fillRect(0,0,cv.width,cv.height); x.drawImage(im,0,0,cv.width,cv.height); URL.revokeObjectURL(u); cv.toBlob(b=>b?res(b):rej(new Error("img")),"image/jpeg",q); };
@@ -2536,7 +2554,7 @@ async function midEnviar(slot,file,onProg){
 const midErro=e=>e?.msg||({too_large:"Arquivo grande demais. Grave um vídeo mais curto.",unsupported_type:"Tipo de arquivo não aceito. Use foto JPG/PNG ou vídeo MP4.",quota_or_state:"O espaço de arquivos do app está cheio. Avise o gerente.",rate_limited:"Muitos envios seguidos. Espere um pouco e tente de novo."}[e?.code])||"Não foi possível enviar o arquivo. Tente de novo.";
 function midSlotHtml(s,m,edit){
   const url=midUrl(m), tem=!!m;
-  const prev=tem?(s.tipo==="video"?(m.id?`<video src="${esc(url)}" controls playsinline preload="metadata"></video>`:""):(url?`<a href="${esc(url)}" target="_blank" rel="noopener"><img src="${esc(url)}" alt="" onerror="this.closest('.midprev').innerHTML='<div class=&quot;midph&quot; style=&quot;font-size:11px;padding:4px;text-align:center&quot;>foto indisponível neste acesso</div>'"></a>`:`<div class="midph">carregando…</div>`)):`<div class="midph">${s.tipo==="video"?"🎥":"📷"}</div>`;
+  const prev=tem?(s.tipo==="video"?(m.id?`<video src="${esc(url)}" controls playsinline preload="metadata"></video>`:""):(url?`<button type="button" class="midver" data-ver="${esc(url)}" data-tit="${esc(s.t)}" aria-label="Ver foto grande"><img src="${esc(url)}" alt="" onerror="this.closest('.midprev').innerHTML='<div class=&quot;midph&quot; style=&quot;font-size:11px;padding:4px;text-align:center&quot;>${esc((m.id&&midErroTxt[m.id])?"foto não encontrada":"foto indisponível neste acesso")}</div>'"></button>`:`<div class="midph">carregando…</div>`)):`<div class="midph">${s.tipo==="video"?"🎥":"📷"}</div>`;
   return `<div class="midslot${tem?" ok":""}" data-k="${s.k}"><div class="midprev">${prev}</div><div class="midtx"><b>${esc(s.t)}</b><span class="midst">${tem?"✔ anexado":s.tipo==="video"&&!assets&&edit?"vídeo indisponível neste acesso":"falta anexar"}</span>
     ${edit?`<div class="midbtns"><label class="btn sec midbtn">${s.tipo==="video"?"🎥 Gravar":"📷 Câmera"}<input type="file" accept="${s.tipo==="video"?"video/*":"image/*"}" capture="environment" hidden></label></div>`:""}</div></div>`;
 }
@@ -2553,6 +2571,14 @@ function midSecHtml(midia,edit,slots=MID_SLOTS,titulo="Fotos e vídeo do equipam
     <p class="note" style="margin:0">${nota||(edit?"Fotos e vídeo só pela câmera, tirados na hora (não vale foto antiga da galeria). O vídeo é uma volta de 360° em torno do cesto.":"Registro fotográfico do fim do expediente.")}</p>
     <div class="midgrid" id="kfMid">${slots.map(s=>midSlotHtml(s,midia[s.k],edit)).join("")}</div>`;
 }
+// foto em tela cheia (toque para fechar)
+function verFoto(url,tit){
+  const v=document.createElement("div"); v.className="lbox"; v.setAttribute("role","dialog"); v.setAttribute("aria-label",tit||"Foto");
+  v.innerHTML=`<div class="lbt"><span>${esc(tit||"")}</span><button type="button" aria-label="Fechar">✕</button></div><img src="${esc(url)}" alt="${esc(tit||"")}">`;
+  const fechar=()=>{ v.remove(); removeEventListener("keydown",esc_); }; const esc_=e=>{ if(e.key==="Escape") fechar(); };
+  v.onclick=fechar; addEventListener("keydown",esc_); document.body.appendChild(v);
+}
+document.addEventListener("click",e=>{ const b=e.target.closest(".midver"); if(b){ e.preventDefault(); e.stopPropagation(); verFoto(b.dataset.ver,b.dataset.tit); } },true);
 function midLigar(host,midia,edit,slots=MID_SLOTS){
   const MID_SLOTS=slots;
   const redesenha=()=>{ host.querySelector("#kfMid").innerHTML=MID_SLOTS.map(s=>midSlotHtml(s,midia[s.k],edit)).join(""); };
