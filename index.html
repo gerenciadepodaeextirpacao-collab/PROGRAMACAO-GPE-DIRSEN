@@ -1300,8 +1300,9 @@ function abrirAcessos(){
 }
 $("#acessosBtn").onclick=abrirAcessos;
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.24j";
+const APP_VERSAO="2026.10.24k";
 const VERSOES=[
+  {v:"2026.10.24k", d:"24/10/2026", itens:["PDF da comunicação de defeito na ordem certa (1 a 7, assinatura antes do retorno, fotos no fim) e sem o espaço em branco entre as informações"]},
   {v:"2026.10.24j", d:"24/10/2026", itens:["Primeira assinatura: quem ainda não tem senha de assinatura cria na hora de assinar (também quando assina com a matrícula no aparelho de outra pessoa), confirmando a senha de entrar","Acessos: botão para o gerente resetar a senha de assinatura esquecida; a pessoa cria outra na próxima assinatura"]},
   {v:"2026.10.24i", d:"24/10/2026", itens:["Acessos: o gerente cadastra ou troca a senha de assinatura de cada pessoa e vê se ela já tem (e se foi cadastrada pela gerência ou pela própria pessoa)"]},
   {v:"2026.10.24h", d:"24/10/2026", itens:["Tocar em \"📷 Câmera\" ou \"🎥 Gravar\" abre a câmera do aparelho direto no app (botão de tirar foto, trocar câmera, gravar até 30 s, conferir e usar); se o aparelho não deixar, abre a câmera do celular"]},
@@ -2481,7 +2482,7 @@ const FDOC_CSS=`.fdoc{box-sizing:border-box;width:794px;background:#fff;color:#1
 .fdoc .fcel{border:1px solid #9a9a9a;padding:4px;display:grid;gap:3px}
 .fdoc .fcel img{width:100%;height:220px;object-fit:cover;display:block}
 .fdoc .fcel span{font-size:10px;color:#333}
-.fdoc .fgrid.m .fcel img,.fdoc .fgrid.m .fsem{height:150px}
+.fdoc .fgrid.m .fcel img,.fdoc .fgrid.m .fsem{height:210px}
 .fdoc .fsem{height:220px;display:grid;place-items:center;color:#999;font-size:11px;background:#f4f4f4}
 .fdoc .rod{font-size:9.5px;color:#666;text-align:center;margin-top:6px}`;
 const fx=(v,alvo)=>v===alvo?"( X )":"(&nbsp;&nbsp;&nbsp;&nbsp;)";
@@ -2526,13 +2527,10 @@ function manDocHtml(m){
       <tr><td class="k" style="width:30%">Retorno do equipamento</td><td>${fx(ret.volta,"SIM")} SIM &nbsp;&nbsp;${fx(ret.volta,"NÃO")} NÃO &nbsp;&nbsp; Data: ${ret.volta==="SIM"?fmtD(ret.data):"____/____/______"} &nbsp; Horário: ${ret.volta==="SIM"?esc(ret.hora||""):"____:____"}</td></tr>
       <tr><td class="k">Houve equipamento reserva</td><td>${fx(m.reserva,"SIM")} SIM &nbsp;&nbsp;${fx(m.reserva,"NÃO")} NÃO</td></tr>
       <tr><td class="k">Qual equipamento reserva</td><td>${esc(m.reservaQual||"—")}</td></tr></table></div>
-    <div><p class="sec">7. Retorno à atividade</p>${ret.volta==="SIM"?`<table>${kv("Data do retorno",fmtD(ret.data),"Horário",esc(ret.hora||"—"))}${kv("KM no retorno",esc(ret.km||"—"),"Oficina / responsável",esc(ret.oficina||"—"))}${kv("Liberado para operar",esc(ret.liberado||"SIM"),"Reserva devolvido",m.reserva==="SIM"?esc(ret.reservaDevolvida||"—"):"N/A")}</table><div class="box" style="margin-top:6px"><b>Serviço executado:</b> ${esc(ret.servico||ret.obs||"—")}${ret.obs&&ret.servico?`<br><b>Observação:</b> ${esc(ret.obs)}`:""}</div>`:`<div class="pend">Equipamento ainda em manutenção – retorno não registrado.</div>`}</div>
+    <div><p class="sec">6. Assinatura</p>${fsig("Supervisor",m.assin)}<table style="margin-top:4px">${kv("Data",fmtD(m.data),"Horário",esc(m.hora||""))}</table></div>
+    <div><p class="sec">7. Retorno à atividade</p>${ret.volta==="SIM"?`<table>${kv("Data do retorno",fmtD(ret.data),"Horário",esc(ret.hora||"—"))}${kv("KM no retorno",esc(ret.km||"—"),"Oficina / responsável",esc(ret.oficina||"—"))}${kv("Liberado para operar",esc(ret.liberado||"SIM"),"Reserva devolvido",m.reserva==="SIM"?esc(ret.reservaDevolvida||"—"):"N/A")}</table><div class="box" style="margin-top:6px"><b>Serviço executado:</b> ${esc(ret.servico||ret.obs||"—")}${ret.obs&&ret.servico?`<br><b>Observação:</b> ${esc(ret.obs)}`:""}</div>`:`<div class="pend">Equipamento ainda em manutenção – retorno não registrado.</div>`}${m.retAssin?fsig("Supervisor que registrou o retorno à atividade",m.retAssin):""}</div>
     <div><p class="sec">Registro fotográfico</p><div class="fgrid m">${manSlots(m.midia).filter(x=>x.tipo==="foto").map(x=>{const u=midUrl(m.midia?.[x.k]);return `<div class="fcel">${u?`<img src="${esc(u)}" alt="">`:`<div class="fsem">Sem foto</div>`}<span>${esc(x.t)}</span></div>`}).join("")}</div>
     <p class="leg" style="margin:6px 0 0">Vídeo do defeito: ${m.midia?.videoDef?"anexado no sistema Programação GPE (assista pelo app, abrindo esta comunicação).":"não anexado."}</p></div>
-    <div><p class="sec">6. Assinatura</p></div>
-    ${fsig("Supervisor",m.assin)}
-    <div><table>${kv("Data",fmtD(m.data),"Horário",esc(m.hora||""))}</table></div>
-    ${m.retAssin?fsig("Supervisor que registrou o retorno à atividade",m.retAssin):""}
     <p class="rod">Documento gerado pelo sistema Programação GPE em ${dataBR(new Date().toISOString())} às ${horaAgora()}.</p></div></div>`;
 }
 async function baixarFormPdf(btn,html,nome,label){
