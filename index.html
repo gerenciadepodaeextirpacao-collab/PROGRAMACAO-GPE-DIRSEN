@@ -37,6 +37,7 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{background:var(--bg)}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.4;padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--brand)}
 .wrap{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -884,18 +885,19 @@ nav.tabs button[aria-current="page"]{background:linear-gradient(180deg,#ff8c42 0
 </div>
 
 <div id="v-chk" hidden>
-  <h2>Checklist de equipamentos</h2>
-  <p class="lead">Inspeção pós-operacional do cesto aéreo no fim do expediente, com assinatura de quem entrega e de quem recebe o turno. Equipamento não apto ou com ressalva fica destacado para a gerência.</p>
-  <div class="evot ksub" role="tablist" aria-label="Checklist"><button type="button" role="tab" data-kt="lista" aria-pressed="true">📋 Checklists</button><button type="button" role="tab" data-kt="graf" aria-pressed="false">📊 Gráficos da manutenção</button></div>
+  <h2>Equipamentos</h2>
+  <p class="lead">Checklist de fim de expediente e comunicado de defeito do cesto aéreo, cada um na sua parte.</p>
+  <div class="evot ksub" role="tablist" aria-label="Checklist"><button type="button" role="tab" data-kt="lista" aria-pressed="true">📋 Checklist</button><button type="button" role="tab" data-kt="man" aria-pressed="false">🔧 Comunicado de defeito</button><button type="button" role="tab" data-kt="graf" aria-pressed="false">📊 Gráficos da manutenção</button></div>
+  <p class="note" id="kLead" style="margin:8px 0 0"></p>
   <div id="kTabLista">
   <div class="filters">
     <select id="kSup" aria-label="Turma"></select>
     <input type="date" id="kData" aria-label="Dia">
   </div>
   <div class="actions" style="grid-template-columns:1fr;margin:10px 0 0"><button type="button" class="btn pri" id="kNovo">Fazer checklist de fim de expediente</button><button type="button" class="btn ocbtn" id="kManut" style="min-height:48px;font-size:15px">Comunicar defeito / manutenção</button><p class="note" id="kSoSup" hidden style="margin:0">A assinatura do checklist e da comunicação de defeito é sempre do supervisor da turma: se você preencher, o supervisor assina no seu aparelho com a matrícula e a senha de assinatura dele.</p><button type="button" class="btn sec" id="kSenha" style="min-height:42px;font-size:14px">Minha senha de assinatura</button></div>
-  <details class="card kbx" style="margin-top:10px"><summary>⬇ Baixar checklists ou comunicações em PDF</summary>
+  <details class="card kbx" style="margin-top:10px"><summary id="kBxSum">⬇ Baixar checklists em PDF</summary>
     <p class="note" style="margin:6px 0 0">Junta vários documentos num PDF só, cada um começando numa página nova. Usa a turma escolhida acima: <b>todas</b>, <b>PODA I</b>, <b>PODA II</b> ou uma turma.</p>
-    <label class="f" style="margin-top:8px">O que baixar<select id="kBxTipo"><option value="chk">Checklists de fim de expediente</option><option value="man">Comunicações de defeito / manutenção</option></select></label>
+    <label class="f" style="margin-top:8px" hidden>O que baixar<select id="kBxTipo"><option value="chk">Checklists de fim de expediente</option><option value="man">Comunicações de defeito / manutenção</option></select></label>
     <label class="f" style="margin-top:8px">Período<select id="kBxPer"><option value="dia">Só o dia escolhido acima</option><option value="sem">A semana do dia escolhido</option><option value="mes">O mês do dia escolhido</option><option value="tudo">Todos (últimos 90 dias)</option></select></label>
     <p class="note" id="kBxInfo" style="margin:6px 0 0"></p>
     <button type="button" class="btn pri" id="kBxBtn" style="width:100%;margin-top:8px;min-height:46px;font-size:15px">Baixar PDF</button>
@@ -1300,8 +1302,10 @@ function abrirAcessos(){
 }
 $("#acessosBtn").onclick=abrirAcessos;
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.24k";
+const APP_VERSAO="2026.10.24m";
 const VERSOES=[
+  {v:"2026.10.24m", d:"24/10/2026", itens:["PDF gerado no celular sem página quase em branco no meio: o celular não aumenta mais a letra sozinho na hora de montar o PDF, então as quebras de página ficam no lugar certo (comunicado, checklist e relatório)"]},
+  {v:"2026.10.24l", d:"24/10/2026", itens:["Aba Checklist dividida em partes: 📋 Checklist, 🔧 Comunicado de defeito e 📊 Gráficos; cada parte com o seu botão, a sua lista e o seu download em PDF, sem misturar"]},
   {v:"2026.10.24k", d:"24/10/2026", itens:["PDF da comunicação de defeito na ordem certa (1 a 7, assinatura antes do retorno, fotos no fim) e sem o espaço em branco entre as informações"]},
   {v:"2026.10.24j", d:"24/10/2026", itens:["Primeira assinatura: quem ainda não tem senha de assinatura cria na hora de assinar (também quando assina com a matrícula no aparelho de outra pessoa), confirmando a senha de entrar","Acessos: botão para o gerente resetar a senha de assinatura esquecida; a pessoa cria outra na próxima assinatura"]},
   {v:"2026.10.24i", d:"24/10/2026", itens:["Acessos: o gerente cadastra ou troca a senha de assinatura de cada pessoa e vê se ela já tem (e se foi cadastrada pela gerência ou pela própria pessoa)"]},
@@ -2094,7 +2098,10 @@ function renderChk(){
   const host=$("#kList"); if(!host) return;
   const sup=$("#kSup").value, dia=$("#kData").value||hoje();
   try{chkLoteInfo()}catch(e){}
-  const podeLanc=!!sessao&&sessao.perfil!=="diretoria"; $("#kNovo").hidden=!podeLanc; $("#kSenha").hidden=!(ehSup()||isGerente()); $("#kManut").hidden=!podeLanc;
+  const man=kModo==="man";
+  const podeLanc=!!sessao&&sessao.perfil!=="diretoria"; $("#kNovo").hidden=!podeLanc||man; $("#kSenha").hidden=!(ehSup()||isGerente()); $("#kManut").hidden=!podeLanc||!man;
+  $("#kBxTipo").value=man?"man":"chk"; $("#kBxSum").textContent=man?"⬇ Baixar comunicados de defeito em PDF":"⬇ Baixar checklists em PDF";
+  $("#kLead").textContent=man?"Comunicação de defeito e recolhimento para manutenção: o que está em aberto aparece sempre; abaixo, as comunicações do dia escolhido.":"Checklist de fim de expediente do dia escolhido, com a entrega e o recebimento do turno pelos supervisores.";
   $("#kSoSup").hidden=ehSup()||!sessao;
   const vis=chkVis();
   const lst=vis.filter(c=>c.data===dia&&(casaTurma(sup,c)||(travado()&&c.recebe?.sup===sessao.sup))).sort((a,b)=>(a.supervisao||"").localeCompare(b.supervisao||"")||(a.equipe||"").localeCompare(b.equipe||""));
@@ -2109,12 +2116,25 @@ function renderChk(){
   let h="";
   const tb=document.querySelector('nav.tabs button[data-v="chk"]'); if(tb) tb.innerHTML="Checklist"+(meus.length?`<span class="tbadge" aria-label="${meus.length} turno(s) para receber">${meus.length}</span>`:"");
   if(meus.length) h+=`<div class="alert"><h3>Turno para você receber</h3><p class="note" style="margin:0">Abra, confira o checklist da turma que entregou e assine o recebimento dando ciência das condições do equipamento.</p>${meus.map(c=>`<button type="button" data-chk="${esc(c.id)}"><b>!</b><span>${esc(c.viatura||"")} · ${esc(c.supervisao)} · ${esc(c.equipe)}<small>Entregue por ${esc(c.entrega?.nome||"—")} em ${fmtD(c.data)}${c.hora?" às "+esc(c.hora):""}. Confira e assine o recebimento.</small></span></button>`).join("")}</div>`;
-  const mAb=(typeof manVis==="function"?manVis():[]).filter(m=>casaTurma(sup,m)&&(manAberta(m)||m.data===dia||m.retorno?.data===dia)).sort((a,b)=>(manAberta(b)-manAberta(a))||(b.data||"").localeCompare(a.data||""));
-  if(mAb.length) h+=`<div class="grp-h"><h3>Manutenção</h3><span>${mAb.filter(manAberta).length} em aberto</span></div><div class="list">${mAb.map(manCard).join("")}</div>`;
+  if(man){ host.innerHTML=manListaHtml(sup,dia); return; }
   h+=`<div class="grp-h"><h3>Checklists · ${fmtD(dia)} · ${diaDe(dia)}</h3><span>${lst.length} checklist${lst.length===1?"":"s"}${naoApto?` · <b style="color:var(--bad)">${naoApto} não apto</b>`:""}${ress?` · ${ress} com ressalva`:""} · ${semRec} sem recebimento</span></div>`;
   if(cota.length) h+=`<p class="note" style="margin:6px 0 0">Checklists por turma no dia (PODA I: 2 equipamentos · PODA II: 3 equipamentos + a van):</p><div class="ckpend">${cota.map(x=>`<span class="${x.feitos.length>=x.meta?"ok":""}" title="${esc(x.feitos.join(", "))}">${esc(x.t)} · <b>${x.feitos.length} de ${x.meta}</b>${x.feitos.length>=x.meta?" ✔":""}</span>`).join("")}</div>${pend.length?"":`<p class="note" style="margin:4px 0 0">Todas as turmas que trabalharam no dia completaram os checklists.</p>`}`;
   h+= lst.length ? `<div class="list">${lst.map(chkCard).join("")}</div>` : `<div class="empty" style="margin-top:8px">Nenhum checklist neste dia.</div>`;
   host.innerHTML=h;
+}
+// parte do comunicado de defeito (separada do checklist)
+let kModo="chk";
+function manListaHtml(sup,dia){
+  const vis=manVis().filter(m=>casaTurma(sup,m));
+  const ab=vis.filter(manAberta).sort((a,b)=>(a.data||"").localeCompare(b.data||""));
+  const doDia=vis.filter(m=>!manAberta(m)&&(m.data===dia||m.retorno?.data===dia)).sort((a,b)=>(a.supervisao||"").localeCompare(b.supervisao||""));
+  const ult=vis.filter(m=>!manAberta(m)&&m.data!==dia&&m.retorno?.data!==dia).sort((a,b)=>(b.retorno?.data||b.data||"").localeCompare(a.retorno?.data||a.data||"")).slice(0,5);
+  let h=`<div class="grp-h"><h3>Em manutenção (em aberto)</h3><span>${ab.length} equipamento${ab.length===1?"":"s"}</span></div>`;
+  h+= ab.length?`<div class="list">${ab.map(manCard).join("")}</div>`:`<div class="empty" style="margin-top:8px">Nenhum equipamento em manutenção.</div>`;
+  h+=`<div class="grp-h"><h3>Comunicações · ${fmtD(dia)} · ${diaDe(dia)}</h3><span>${doDia.length}</span></div>`;
+  h+= doDia.length?`<div class="list">${doDia.map(manCard).join("")}</div>`:`<div class="empty" style="margin-top:8px">Nenhuma comunicação encerrada neste dia.</div>`;
+  if(ult.length) h+=`<div class="grp-h"><h3>Últimas que voltaram à atividade</h3><span>${ult.length}</span></div><div class="list">${ult.map(manCard).join("")}</div>`;
+  return h;
 }
 function chkCard(c){
   const al=chkAlertas(c), nv=chkNivel(c);
@@ -2450,7 +2470,7 @@ function abrirMan(m,pre){
 $("#kManut").onclick=()=>abrirMan(null);
 
 /* ---------- PDF dos formulários (checklist e comunicação de defeito) no layout do formulário COMURG ---------- */
-const FDOC_CSS=`.fdoc{box-sizing:border-box;width:794px;background:#fff;color:#111;font:12px/1.4 Arial,Helvetica,sans-serif;padding:26px 40px 30px}
+const FDOC_CSS=`.fdoc{-webkit-text-size-adjust:100%;text-size-adjust:100%;box-sizing:border-box;width:794px;background:#fff;color:#111;font:12px/1.4 Arial,Helvetica,sans-serif;padding:26px 40px 30px}
 .fdoc *{box-sizing:border-box}
 .fdoc .r-body{display:grid;gap:10px}
 .fdoc .fh{display:flex;align-items:center;gap:16px;border-bottom:3px solid #005f27;padding-bottom:10px}
@@ -2809,7 +2829,8 @@ async function baixarGrafPdf(btn){
 
 $("#kgPdf").onclick=()=>{ if(!downloads){toast("Download não disponível aqui.");return;} baixarGrafPdf($("#kgPdf")); };
 document.querySelector(".ksub").onclick=e=>{ const b=e.target.closest("[data-kt]"); if(!b) return; const g=b.dataset.kt==="graf";
-  document.querySelectorAll(".ksub [data-kt]").forEach(x=>x.setAttribute("aria-pressed",String(x===b))); $("#kGraf").hidden=!g; $("#kTabLista").hidden=g; try{localStorage.setItem("gpe_ktab",b.dataset.kt)}catch(x){} if(g) renderChkGraf(); };
+  document.querySelectorAll(".ksub [data-kt]").forEach(x=>x.setAttribute("aria-pressed",String(x===b))); $("#kGraf").hidden=!g; $("#kTabLista").hidden=g; $("#kLead").hidden=g; try{localStorage.setItem("gpe_ktab",b.dataset.kt)}catch(x){}
+  if(g) renderChkGraf(); else { kModo=b.dataset.kt==="man"?"man":"chk"; renderChk(); } };
 $("#kgData").value=hoje(); $("#kgData").onchange=renderChkGraf;
 $("#kgSup").innerHTML=optTurmas(); $("#kgSup").value=meuSup()||"";
 $("#kgVt").innerHTML='<option value="">Todos os equipamentos</option>'+[...$("#viatura").options].map(o=>`<option value="${esc(o.value)}">${esc(o.textContent)}</option>`).join("");
@@ -3556,6 +3577,10 @@ function buildReport(){
 function rptNome(ext){const f=rptFiltro();return `relatorio-gpe${f.dia?"-dia-"+f.dia:f.sem?"-semana-"+f.sem:""}${f.sup?"-"+f.sup.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/-+$/,""):f.grp?"-"+f.grp.toLowerCase().replace(/\s+/g,"-"):""}.${ext}`}
 function loadH2P(){ if(window.html2pdf) return Promise.resolve(); return new Promise((res,rej)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";s.onload=res;s.onerror=()=>rej(new Error("load"));document.head.appendChild(s)}); }
 // paginação do PDF: tabelas longas viram partes com cabeçalho repetido e nenhum bloco é cortado entre páginas
+// o gerador de PDF desenha uma cópia da página num quadro do tamanho da tela: no celular o navegador aumentava a letra nessa cópia
+// e as quebras de página saíam fora do lugar (página quase em branco no meio). Quadro largo + sem ajuste automático de letra.
+function repaginarCopia(doc){ try{ const c=doc.querySelector(".html2pdf__container"); if(!c) return; c.style.margin="0"; c.style.right="auto"; c.style.left="0";
+  const el=c.firstElementChild; if(el){ el.style.webkitTextSizeAdjust="100%"; el.style.textSizeAdjust="100%"; } }catch(e){} }
 function paginarRpt(rpt){
   const PX=794/210, PAGE=277*PX; // área útil da folha A4 (margens 8 mm + 12 mm), em px na largura de 794
   const top0=()=>rpt.getBoundingClientRect().top;
@@ -3567,16 +3592,16 @@ function paginarRpt(rpt){
     const chunks=[]; let cur=[], h=h0;
     rows.forEach(r=>{ const rh=r.getBoundingClientRect().height; if(cur.length&&h+rh>lim){ chunks.push(cur); cur=[]; h=h0; } cur.push(r); h+=rh; });
     if(cur.length) chunks.push(cur); if(chunks.length<2) return;
-    const frag=document.createDocumentFragment();
-    chunks.forEach((c,i)=>{ const t=tb.cloneNode(false); if(head) t.appendChild(head.cloneNode(true)); const tbo=document.createElement("tbody"); c.forEach(r=>tbo.appendChild(r)); t.appendChild(tbo);
-      if(foot&&i===chunks.length-1) t.appendChild(foot.cloneNode(true)); const d=document.createElement("div"); d.className="tchunk"; if(i) d.style.marginTop="8px"; d.appendChild(t); frag.appendChild(d); });
+    const frag=rpt.ownerDocument.createDocumentFragment();
+    chunks.forEach((c,i)=>{ const t=tb.cloneNode(false); if(head) t.appendChild(head.cloneNode(true)); const tbo=rpt.ownerDocument.createElement("tbody"); c.forEach(r=>tbo.appendChild(r)); t.appendChild(tbo);
+      if(foot&&i===chunks.length-1) t.appendChild(foot.cloneNode(true)); const d=rpt.ownerDocument.createElement("div"); d.className="tchunk"; if(i) d.style.marginTop="8px"; d.appendChild(t); frag.appendChild(d); });
     tb.replaceWith(frag);
   });
   const units=[]; const add=el=>{ const cks=el.querySelectorAll(":scope .tchunk"); if(cks.length){ units.push({el, until:cks[0]}); [...cks].slice(1).forEach(k=>units.push({el:k})); } else units.push({el}); };
   rpt.querySelectorAll(":scope > .r-body > *").forEach(ch=>{ if(ch.classList.contains("two")&&ch.querySelector(".tchunk")) [...ch.children].forEach(add); else add(ch); });
   units.forEach(u=>{ const r=rel(u.el), b=u.until?rel(u.until).b:r.b; if(b-r.t>PAGE-6) return;
     const end=(Math.floor(r.t/PAGE)+1)*PAGE; if(b<=end-4) return;
-    const sp=document.createElement("div"); sp.className="pgsp"; sp.style.cssText="height:0;grid-column:1/-1"; u.el.parentNode.insertBefore(sp,u.el);
+    const sp=rpt.ownerDocument.createElement("div"); sp.className="pgsp"; sp.style.cssText="height:0;grid-column:1/-1"; u.el.parentNode.insertBefore(sp,u.el);
     const t2=rel(u.el).t; const need=(Math.floor((t2)/PAGE)+1)*PAGE+8-t2; sp.style.height=Math.max(0,need)+"px"; });
   return rpt.scrollHeight;
 }
@@ -3588,7 +3613,7 @@ async function rptPdf(html, label, op={}){
   const scs=[...document.querySelectorAll(".rscroll")].map(el=>[el,el.scrollTop]); scs.forEach(([el])=>el.scrollTop=0);
   try{
     const H=paginarRpt(host.firstElementChild), sc=Math.max(1,Math.min(op.escala||2,30000/Math.max(1,H))); // canvas muito alto falha: reduz a escala em relatórios longos
-    const w=html2pdf().set({margin:[8,0,12,0],image:{type:"jpeg",quality:op.qualidade||.95},html2canvas:{scale:sc,backgroundColor:op.fundo||"#fcfcfb",logging:false,scrollX:0,scrollY:0,useCORS:true},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css"]}}).from(host.firstElementChild).toPdf();
+    const w=html2pdf().set({margin:[8,0,12,0],image:{type:"jpeg",quality:op.qualidade||.95},html2canvas:{scale:sc,backgroundColor:op.fundo||"#fcfcfb",logging:false,scrollX:0,scrollY:0,useCORS:true,windowWidth:1280,onclone:repaginarCopia},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css"]}}).from(host.firstElementChild).toPdf();
     const pdf=await w.get("pdf"); const n=pdf.internal.getNumberOfPages();
     for(let i=1;i<=n;i++){pdf.setPage(i);pdf.setFontSize(8);pdf.setTextColor(110);pdf.text(`Programação GPE · ${label} · página ${i} de ${n}`,105,291,{align:"center"})}
     return pdf.output("blob");
@@ -3600,7 +3625,7 @@ async function rptPdfMulti(htmls, label, op={}){
   const sx=window.scrollX||0, sy=window.scrollY||0; window.scrollTo(0,0);
   const hosts=htmls.map(h=>{ const d=document.createElement("div"); d.style.cssText="position:absolute;left:-12000px;top:0;width:794px;background:"+(op.fundo||"#fff"); d.innerHTML=h; document.body.appendChild(d); return d; });
   try{
-    const opt=(H)=>({margin:[8,0,12,0],image:{type:"jpeg",quality:op.qualidade||.92},html2canvas:{scale:Math.max(1,Math.min(op.escala||2,30000/Math.max(1,H))),backgroundColor:op.fundo||"#fff",logging:false,scrollX:0,scrollY:0,useCORS:true},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css"]}});
+    const opt=(H)=>({margin:[8,0,12,0],image:{type:"jpeg",quality:op.qualidade||.92},html2canvas:{scale:Math.max(1,Math.min(op.escala||2,30000/Math.max(1,H))),backgroundColor:op.fundo||"#fff",logging:false,scrollX:0,scrollY:0,useCORS:true,windowWidth:1280,onclone:repaginarCopia},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css"]}});
     const Hs=hosts.map(h=>paginarRpt(h.firstElementChild));
     let w=html2pdf().set(opt(Math.max(...Hs))).from(hosts[0].firstElementChild).toPdf();
     for(let i=1;i<hosts.length;i++){ const el=hosts[i].firstElementChild; w=w.get("pdf").then(pdf=>{pdf.addPage();}).from(el).toContainer().toCanvas().toPdf(); if(op.prog) w=w.then(()=>op.prog(i+1,hosts.length)); }
@@ -3611,7 +3636,7 @@ async function rptPdfMulti(htmls, label, op={}){
 }
 function rptHtmlDoc(html){
   const css=[...document.querySelectorAll("style")].map(s=>s.textContent).join("\n").split("/* ---------- relatório")[1]||"";
-  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Relatório GPE</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap"><style>/* ---------- relatório${css}\nbody{margin:0;background:#e9ece7}.rpt{margin:20px auto;box-shadow:0 2px 14px rgba(0,0,0,.15)}@media print{body{background:#fff}.rpt{margin:0;box-shadow:none}.blk{break-inside:avoid}@page{size:A4;margin:8mm 0}}</style></head><body>${html}</body></html>`;
+  return `<!doctype html><html lang="pt-BR" style="-webkit-text-size-adjust:100%;text-size-adjust:100%"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Relatório GPE</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap"><style>/* ---------- relatório${css}\nbody{margin:0;background:#e9ece7}.rpt{margin:20px auto;box-shadow:0 2px 14px rgba(0,0,0,.15)}@media print{body{background:#fff}.rpt{margin:0;box-shadow:none}.blk{break-inside:avoid}@page{size:A4;margin:8mm 0}}</style></head><body>${html}</body></html>`;
 }
 function abrirRelatorio(){
   if(!loaded){toast("Aguarde os dados carregarem.");return}
