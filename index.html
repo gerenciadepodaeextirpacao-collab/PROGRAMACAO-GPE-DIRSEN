@@ -1302,8 +1302,9 @@ function abrirAcessos(){
 }
 $("#acessosBtn").onclick=abrirAcessos;
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.24m";
+const APP_VERSAO="2026.10.24n";
 const VERSOES=[
+  {v:"2026.10.24n", d:"24/10/2026", itens:["Comunicado de defeito: sem \"equipamento substituto\" e sem observações; equipamento OPERANTE ou NÃO OPERANTE (no lugar de parado); recolhido para manutenção: responsável é o motorista e o local é sempre a MAAS"]},
   {v:"2026.10.24m", d:"24/10/2026", itens:["PDF gerado no celular sem página quase em branco no meio: o celular não aumenta mais a letra sozinho na hora de montar o PDF, então as quebras de página ficam no lugar certo (comunicado, checklist e relatório)"]},
   {v:"2026.10.24l", d:"24/10/2026", itens:["Aba Checklist dividida em partes: 📋 Checklist, 🔧 Comunicado de defeito e 📊 Gráficos; cada parte com o seu botão, a sua lista e o seu download em PDF, sem misturar"]},
   {v:"2026.10.24k", d:"24/10/2026", itens:["PDF da comunicação de defeito na ordem certa (1 a 7, assinatura antes do retorno, fotos no fim) e sem o espaço em branco entre as informações"]},
@@ -2315,17 +2316,20 @@ const MAN_CORTE=(()=>{const d=new Date();d.setDate(d.getDate()-365);return d.get
 const MAN_TIPOS=["MECÂNICO","ELÉTRICO","HIDRÁULICO","ESTRUTURAL","OUTRO"];
 const MAN_SIT=[ // 3. situação e ação tomada
   {k:"urg",t:"Urgência",o:["URGENTE","MODERADA","BAIXA"]},
-  {k:"estado",t:"Equipamento",o:["OPERANTE","PARADO"]},
+  {k:"estado",t:"Equipamento",o:["OPERANTE","NÃO OPERANTE"]},
   {k:"isolado",t:"Isolado / sinalizado",o:["SIM","NÃO"]},
   {k:"recolhido",t:"Recolhido para manutenção",o:["SIM","NÃO"]},
-  {k:"substituto",t:"Equipamento substituto",o:["SIM","NÃO","N/A"]},
   {k:"comunicado",t:"Supervisor comunicado",o:["SIM","NÃO"]}];
 let mans=[];
+// comunicações antigas gravaram "PARADO": agora é "NÃO OPERANTE"
+const manVal=(m,k)=>k==="estado"&&m?.[k]==="PARADO"?"NÃO OPERANTE":(m?.[k]||"");
+const naoOper=m=>m.estado==="PARADO"||m.estado==="NÃO OPERANTE";
+const MAN_LOCAL="MAAS";
 const manVis=()=>mans.filter(m=>!travado()||m.supervisao===sessao?.sup);
 const manAberta=m=>m.retorno?.volta!=="SIM";
 const optHtml=(nome,ops,val,edit)=>`<div class="ckopt" role="group">${ops.map(v=>`<button type="button" data-n="${esc(nome)}" data-s="${esc(v)}" aria-pressed="${val===v}" ${edit?"":"disabled"}>${esc(v)}</button>`).join("")}</div>`;
-const manCor=m=>!manAberta(m)?"SIM":m.urg==="URGENTE"||m.estado==="PARADO"?"NÃO":"PARCIAL";
-const manTxt=m=>!manAberta(m)?"Retornou":m.estado==="PARADO"?"Parado":"Em aberto";
+const manCor=m=>!manAberta(m)?"SIM":m.urg==="URGENTE"||naoOper(m)?"NÃO":"PARCIAL";
+const manTxt=m=>!manAberta(m)?"Retornou":naoOper(m)?"Não operante":"Em aberto";
 function manCard(m){
   return `<button type="button" class="rec" data-man="${esc(m.id)}">
     <div class="l1"><span class="when">${esc(m.viatura||"")} · ${fmtD(m.data)}</span><span class="pill ${manCor(m)}">${manTxt(m)}</span></div>
@@ -2360,7 +2364,7 @@ function abrirMan(m,pre){
   const sup0=m?.supervisao||pre.supervisao||(travado()?sessao.sup:(kSup&&!kSup.startsWith("G:")?kSup:meuSup()))||"";
   const novo=!m, edit=novo&&podeEntregar(sup0), retEdit=!!m&&manAberta(m)&&podeEntregar(m.supervisao);
   const v={sit:{...(m||{})},tipos:[...(m?.tipos||[])],reserva:m?.reserva||"",retVolta:""}, midia={...(m?.midia||{})};
-  MAN_SIT.forEach(q=>v.sit[q.k]=m?.[q.k]||"");
+  MAN_SIT.forEach(q=>v.sit[q.k]=manVal(m,q.k));
   const vt0=m?.viatura||pre.viatura||turma.viatura||"SKY 5074.0";
   const vtOpts=[...$("#viatura").options].map(o=>`<option value="${esc(o.value)}"${o.value===vt0?" selected":""}>${esc(o.textContent)}</option>`).join("");
   const dis=edit?"":"disabled";
@@ -2382,11 +2386,11 @@ function abrirMan(m,pre){
     <input id="mfTipoOutro" placeholder="Qual outro tipo?" value="${esc(m?.tipoOutro||"")}" ${dis} ${v.tipos.includes("OUTRO")?"":"hidden"}>
     <div class="ckgrp">3. Situação e ação tomada</div>
     ${MAN_SIT.map(q=>`<div class="ckit"><div class="nm">${esc(q.t)}</div>${optHtml("m:"+q.k,q.o,v.sit[q.k],edit)}</div>`).join("")}
-    <label class="f">Observações<textarea id="mfObs" ${dis}>${esc(m?.obs||"")}</textarea></label>
     <div id="mfRecBox" ${v.sit.recolhido==="SIM"?"":"hidden"}>
       <div class="ckgrp">4. Dados do recolhimento</div>
       <div class="row2"><label class="f">Data do recolhimento<input type="date" id="mfRData" value="${esc(m?.recolh?.data||hoje())}" ${dis}></label><label class="f">Horário<input type="time" id="mfRHora" value="${esc(m?.recolh?.hora||horaAgora())}" ${dis}></label></div>
-      <div class="row2"><label class="f">Responsável<input id="mfRResp" value="${esc(m?.recolh?.resp||"")}" ${dis}></label><label class="f">Destino<input id="mfRDest" placeholder="ex.: oficina da locadora" value="${esc(m?.recolh?.destino||"")}" ${dis}></label></div>
+      <div class="row2"><label class="f">Responsável / motorista<input id="mfRResp" value="${esc(m?.recolh?.resp||"")}" placeholder="Motorista da ${MAN_LOCAL}" ${dis}></label><label class="f">Local<input id="mfRDest" value="${MAN_LOCAL}" disabled></label></div>
+      <p class="note" style="margin:0">O recolhimento é sempre feito pela ${MAN_LOCAL}: o responsável é o motorista da ${MAN_LOCAL}.</p>
     </div>
     <div class="ckgrp">5. Retorno do equipamento / equipamento reserva</div>
     <div class="ckit"><div class="nm">Houve equipamento reserva</div>${optHtml("m:reserva",["SIM","NÃO"],v.reserva,edit)}</div>
@@ -2443,7 +2447,7 @@ function abrirMan(m,pre){
     if(!$("#mfDesc").value.trim()) e.push("descrição do defeito (seção 1)");
     if(!v.tipos.length) e.push("tipo de defeito (seção 2)"); else if(v.tipos.includes("OUTRO")&&!$("#mfTipoOutro").value.trim()) e.push("qual o outro tipo de defeito");
     const semSit=MAN_SIT.filter(q=>!v.sit[q.k]).map(q=>q.t.toLowerCase()); if(semSit.length) e.push("seção 3: "+semSit.join(", "));
-    if(v.sit.recolhido==="SIM"&&(!$("#mfRData").value||!$("#mfRResp").value.trim()||!$("#mfRDest").value.trim())) e.push("dados do recolhimento: data, responsável e destino (seção 4)");
+    if(v.sit.recolhido==="SIM"&&(!$("#mfRData").value||!$("#mfRResp").value.trim())) e.push("dados do recolhimento: data e o motorista da "+MAN_LOCAL+" (seção 4)");
     const semF=MAN_SLOTS.filter(x=>x.tipo==="foto"&&!midia[x.k]).length; if(semF) e.push(`anexe ${semF===1?"a foto do defeito que falta":"as 2 fotos do defeito (ângulos diferentes)"}`);
     if(assets&&!midia.videoDef) e.push("grave o vídeo rápido do defeito");
     if([...document.querySelectorAll("#kfMid .midst")].some(x=>/enviando/.test(x.textContent))) e.push("espere terminar o envio das fotos");
@@ -2456,8 +2460,8 @@ function abrirMan(m,pre){
     const body={data,semana:semanaDe(data),supervisao:sup,grupo:supOf(sup)?.grupo||"",turno:supOf(sup)?.turno||"",equipe:$("#mfEq").value,
       equipamento:$("#mfEqp").value.trim()||"CESTO AÉREO",viatura:$("#mfVt").value,km:$("#mfKm").value.trim(),
       desc:$("#mfDesc").value.trim(),tipos:v.tipos,tipoOutro:v.tipos.includes("OUTRO")?$("#mfTipoOutro").value.trim():"",
-      ...Object.fromEntries(MAN_SIT.map(q=>[q.k,v.sit[q.k]])),obs:$("#mfObs").value.trim(),
-      recolh:v.sit.recolhido==="SIM"?{data:$("#mfRData").value,hora:$("#mfRHora").value,resp:$("#mfRResp").value.trim(),destino:$("#mfRDest").value.trim()}:null,
+      ...Object.fromEntries(MAN_SIT.map(q=>[q.k,v.sit[q.k]])),
+      recolh:v.sit.recolhido==="SIM"?{data:$("#mfRData").value,hora:$("#mfRHora").value,resp:$("#mfRResp").value.trim().toUpperCase(),destino:MAN_LOCAL}:null,
       reserva:v.reserva,reservaQual:v.reserva==="SIM"?$("#mfResQ").value:"",midia,retorno:{volta:"NÃO"},hora:$("#mfHora").value,checklist:pre.chkId||"",
       assin:{...q,sup:q.sup||sup,em:agora},
       ultimoUsuario:nomeAutor(),log:[{em:agora,por:nomeAutor()||"—",acao:"Comunicou defeito e assinou"}]};
@@ -2541,8 +2545,8 @@ function manDocHtml(m){
   return `<div class="fdoc"><style>${FDOC_CSS}</style><div class="r-body">${fhead("COMUNICAÇÃO DE DEFEITO E RECOLHIMENTO PARA MANUTENÇÃO","CESTO AÉREO")}<div>${cab}</div>
     <div><p class="sec">1. Descrição do defeito / anomalia</p><div class="box">${esc(m.desc||"")}</div></div>
     <div><p class="sec">2. Tipo de defeito</p><table><tr><td class="k">Tipo</td><td>${tiposTxt}</td></tr></table></div>
-    <div><p class="sec">3. Situação e ação tomada</p><table>${MAN_SIT.map(q=>`<tr><td class="k" style="width:30%">${esc(q.t)}</td><td>${ops(m[q.k],q.o)}</td></tr>`).join("")}</table><div class="box" style="margin-top:6px"><b>Observações:</b> ${esc(m.obs||"—")}</div></div>
-    <div><p class="sec">4. Dados do recolhimento</p><table>${kv("Data recolhimento",rc.data?fmtD(rc.data):"—","Horário",esc(rc.hora||"—"))}${kv("Responsável",esc(rc.resp||"—"),"Destino",esc(rc.destino||"—"))}</table></div>
+    <div><p class="sec">3. Situação e ação tomada</p><table>${MAN_SIT.map(q=>`<tr><td class="k" style="width:30%">${esc(q.t)}</td><td>${ops(manVal(m,q.k),q.o)}</td></tr>`).join("")}</table></div>
+    <div><p class="sec">4. Dados do recolhimento</p><table>${kv("Data recolhimento",rc.data?fmtD(rc.data):"—","Horário",esc(rc.hora||"—"))}${kv("Responsável / motorista",esc(rc.resp||"—"),"Local",esc(rc.destino||(m.recolhido==="SIM"?MAN_LOCAL:"—")))}</table></div>
     <div><p class="sec">5. Retorno do equipamento / equipamento reserva</p><table>
       <tr><td class="k" style="width:30%">Retorno do equipamento</td><td>${fx(ret.volta,"SIM")} SIM &nbsp;&nbsp;${fx(ret.volta,"NÃO")} NÃO &nbsp;&nbsp; Data: ${ret.volta==="SIM"?fmtD(ret.data):"____/____/______"} &nbsp; Horário: ${ret.volta==="SIM"?esc(ret.hora||""):"____:____"}</td></tr>
       <tr><td class="k">Houve equipamento reserva</td><td>${fx(m.reserva,"SIM")} SIM &nbsp;&nbsp;${fx(m.reserva,"NÃO")} NÃO</td></tr>
@@ -2775,7 +2779,7 @@ function renderChkGraf(){
   const diasFora=m=>Math.max(0,Math.round(((parseD(m.retorno?.volta==="SIM"?m.retorno.data:(fim<hoje()?fim:hoje()))||new Date())-(parseD(m.recolh?.data||m.data)||new Date()))/864e5));
   const vol=M.filter(m=>!manAberta(m)), medFora=vol.length?vol.reduce((a,m)=>a+diasFora(m),0)/vol.length:null;
   const urg=["URGENTE","MODERADA","BAIXA"].map(u=>({u,v:M.filter(m=>m.urg===u).length}));
-  let h=`<div class="dkpis">${dk("Comunicações",noPer.length,"no período")}${dk("Em aberto",mAb.length,`${mAb.filter(m=>m.estado==="PARADO").length} parado(s)`,mAb.length>0)}${dk("Retornaram à atividade",vol.length,medFora!=null?`em média ${medFora.toFixed(1).replace(".",",")} dia(s) fora`:"")}${dk("Urgentes",urg[0].v,`${urg[1].v} moderada · ${urg[2].v} baixa`,urg[0].v>0)}${dk("Recolhidos",M.filter(m=>m.recolhido==="SIM").length,`${M.filter(m=>m.reserva==="SIM").length} com equipamento reserva`)}${dk("Dias em manutenção",M.reduce((a,m)=>a+diasFora(m),0),`somando todos os equipamentos · maior parada ${Math.max(0,...M.map(diasFora))} dia(s)`)}</div>`;
+  let h=`<div class="dkpis">${dk("Comunicações",noPer.length,"no período")}${dk("Em aberto",mAb.length,`${mAb.filter(naoOper).length} não operante(s)`,mAb.length>0)}${dk("Retornaram à atividade",vol.length,medFora!=null?`em média ${medFora.toFixed(1).replace(".",",")} dia(s) fora`:"")}${dk("Urgentes",urg[0].v,`${urg[1].v} moderada · ${urg[2].v} baixa`,urg[0].v>0)}${dk("Recolhidos",M.filter(m=>m.recolhido==="SIM").length,`${M.filter(m=>m.reserva==="SIM").length} com equipamento reserva`)}${dk("Dias em manutenção",M.reduce((a,m)=>a+diasFora(m),0),`somando todos os equipamentos · maior parada ${Math.max(0,...M.map(diasFora))} dia(s)`)}</div>`;
   if(!M.length){ $("#kGrafBody").innerHTML=h+`<div class="dempty" style="margin-top:12px">Nenhuma comunicação de defeito no período e filtros escolhidos.</div>`; return; }
   // por dia: comunicações (colunas), retornos (colunas) e equipamentos em manutenção (linha)
   const com=dias.map(d=>todasM.filter(m=>m.data===d).length), ret=dias.map(d=>todasM.filter(m=>m.retorno?.volta==="SIM"&&m.retorno.data===d).length);
@@ -2784,8 +2788,8 @@ function renderChkGraf(){
   const tipos=MAN_TIPOS.map(t=>({t,v:M.filter(m=>(m.tipos||[]).includes(t)).length})).filter(x=>x.v).sort((a,b)=>b.v-a.v);
   h+=`<div class="dcard"><h3>Tipo de defeito</h3><div class="drows">${tipos.map(x=>kgBar(x.t.charAt(0)+x.t.slice(1).toLowerCase(),x.v,tipos[0].v,"var(--d-ext)")).join("")||`<div class="dempty">Sem dados.</div>`}</div></div>`;
   h+=`<div class="dcard"><h3>Urgência</h3><div class="drows">${kgStack("Comunicações por urgência",[{n:"urgente",v:urg[0].v,c:"var(--bad)"},{n:"moderada",v:urg[1].v,c:"var(--warn)"},{n:"baixa",v:urg[2].v,c:"var(--ok)"}],M.length)}</div><div class="dlg" style="margin-top:6px"><span><i style="background:var(--bad)"></i>urgente ${urg[0].v}</span><span><i style="background:var(--warn)"></i>moderada ${urg[1].v}</span><span><i style="background:var(--ok)"></i>baixa ${urg[2].v}</span></div></div>`;
-  const est=[{n:"parado",v:M.filter(m=>m.estado==="PARADO").length,c:"var(--bad)"},{n:"operante",v:M.filter(m=>m.estado==="OPERANTE").length,c:"var(--warn)"}];
-  h+=`<div class="dcard"><h3>Situação do equipamento ao comunicar</h3><div class="drows">${kgStack("Parado × operante",est,M.length)}</div><div class="dlg" style="margin-top:6px"><span><i style="background:var(--bad)"></i>parado ${est[0].v}</span><span><i style="background:var(--warn)"></i>operante ${est[1].v}</span></div></div>`;
+  const est=[{n:"não operante",v:M.filter(naoOper).length,c:"var(--bad)"},{n:"operante",v:M.filter(m=>m.estado==="OPERANTE").length,c:"var(--warn)"}];
+  h+=`<div class="dcard"><h3>Situação do equipamento ao comunicar</h3><div class="drows">${kgStack("Não operante × operante",est,M.length)}</div><div class="dlg" style="margin-top:6px"><span><i style="background:var(--bad)"></i>parado ${est[0].v}</span><span><i style="background:var(--warn)"></i>operante ${est[1].v}</span></div></div>`;
   const vtsM=[...new Set(M.map(m=>m.viatura))].filter(Boolean).map(v=>({v,n:M.filter(m=>m.viatura===v).length,ab:M.filter(m=>m.viatura===v&&manAberta(m)).length})).sort((a,b)=>b.n-a.n);
   // incidência por equipamento: quantas vezes estragou, tempo em manutenção, disponibilidade no período
   const nDias=dias.length, fimR=fim<hoje()?fim:hoje();
