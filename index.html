@@ -168,6 +168,9 @@ nav.tabs button{font-size:13px;letter-spacing:.02em}
 .alert button small{display:block;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
 .alert.ok{border-color:var(--ok)} .alert.ok h3{color:var(--ok)}
 .logl{font-size:12.5px;color:var(--muted);display:grid;gap:2px;max-height:160px;overflow:auto}
+.zapprev{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--sunk);max-height:52vh;overflow-y:auto}.zapprev img{width:100%;display:block;cursor:zoom-in}.zapprev .midph{padding:30px;text-align:center}
+.zapbtn{min-height:50px;font-size:16px;background:#1e7a3c!important;border-color:#1e7a3c!important}
+.zaptx summary{cursor:pointer;font-weight:600;padding:4px 0}
 .msgbox{width:100%;min-height:220px;font:14px/1.45 ui-monospace,Menlo,Consolas,monospace;background:var(--bg)}
 .pill.ATRASADO{background:var(--warn-bg);color:var(--warn)}
 .pill.REM{background:var(--sunk);color:var(--muted)}
@@ -491,12 +494,25 @@ nav.tabs button[aria-current="page"]{background:linear-gradient(180deg,#ff8c42 0
 .midver{all:unset;display:block;width:100%;height:100%;cursor:zoom-in}
 .midver img,.midver video{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
 .midver{position:relative}.midplay{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:26px;text-shadow:0 2px 6px rgba(0,0,0,.6);pointer-events:none}
-.lbox video{max-width:100%;max-height:100%;margin:auto;align-self:center;justify-self:center;padding:0 8px 16px;cursor:auto}
-.lbox{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.92);display:grid;grid-template-rows:auto 1fr;cursor:zoom-out}
+.lbox video{width:100%;max-width:100%;max-height:100%;margin:auto;align-self:center;justify-self:center;padding:0 8px 16px;cursor:auto}
+.lbox{position:fixed;inset:0;z-index:500;background:#000;display:grid;grid-template-rows:auto 1fr;cursor:zoom-out}
 .lbox .lbt{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;color:#fff;font:600 14px var(--body)}
 .lbox .lbt button{background:rgba(255,255,255,.15);color:#fff;border:0;border-radius:99px;width:40px;height:40px;font-size:18px;cursor:pointer}
 .lbox img{max-width:100%;max-height:100%;width:auto;height:auto;margin:auto;object-fit:contain;align-self:center;justify-self:center;padding:0 8px 16px}
 .midbtns{display:flex;flex-wrap:wrap;gap:6px}
+.cam{position:fixed;inset:0;z-index:600;background:#000;color:#fff;display:grid;grid-template-rows:auto 1fr auto}
+.cam .camtop{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;font:600 14px var(--body)}
+.cam .camx,.cam .camvira{background:rgba(255,255,255,.18);color:#fff;border:0;border-radius:99px;width:44px;height:44px;font-size:20px;cursor:pointer}
+.cam .camvw{position:relative;min-height:0;display:grid;place-items:center;overflow:hidden}
+.cam .camvw video,.cam .camvw img{width:100%;height:100%;object-fit:contain;display:block}
+.cam .cammsg{position:absolute;inset:0;display:grid;place-content:center;gap:14px;padding:24px;text-align:center;font:500 16px var(--body)}
+.cam .camrec{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:rgba(179,38,30,.9);border-radius:99px;padding:5px 14px;font:600 15px var(--body)}
+.cam .cambar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;justify-items:center;padding:16px 20px calc(18px + env(safe-area-inset-bottom,0px))}
+.cam .cambar.camok{grid-template-columns:1fr 1fr;gap:10px}
+.cam .camdisp{width:76px;height:76px;border-radius:50%;border:5px solid #fff;background:#fff;box-shadow:inset 0 0 0 4px #000;cursor:pointer}
+.cam .camdisp.vid{background:#d93025}
+.cam .camdisp.vid.on{border-radius:18px;background:#d93025;animation:campul 1s infinite}
+@keyframes campul{50%{opacity:.6}}
 .midbtn{min-height:40px!important;font-size:13px!important;display:inline-grid;place-items:center;padding:0 12px;justify-self:start;cursor:pointer}
 /* mostrar / ocultar senha */
 .pwwrap{position:relative;display:block}
@@ -762,7 +778,7 @@ nav.tabs button[aria-current="page"]{background:linear-gradient(180deg,#ff8c42 0
       <label class="f">Serviço a executar<select id="servico"><option value="">Selecione…</option></select></label>
       <input id="servOutro" placeholder="Qual serviço?" hidden>
     </div>
-    <label class="f" id="procWrap"><span id="procLbl">Nº do processo / ofício / O.S. (se houver)</span><input id="processo" placeholder="Ex.: 26.30.000010607-1"></label>
+    <label class="f" id="procWrap" hidden><span id="procLbl">Nº do processo</span><input id="processo" placeholder="Ex.: 26.30.000010607-1"></label>
   </section>
   <section class="card" id="secImp" hidden>
     <div class="step">Impacto na <b>programação do dia</b></div>
@@ -822,7 +838,7 @@ nav.tabs button[aria-current="page"]{background:linear-gradient(180deg,#ff8c42 0
       <p class="maphint es-prev" id="se_prev"></p>
       <input type="hidden" id="s_logradouro">
     </div>
-      <label class="f">Nº processo / ofício (se houver)<input id="s_processo"></label>
+      <label class="f" id="s_procWrap" hidden><span id="s_procLbl">Nº do processo</span><input id="s_processo"></label>
       <div id="qtdSub"></div>
       <div class="total"><span>Receita do serviço substituto</span><b id="totSub">R$ 0,00</b></div>
     </div>
@@ -1266,8 +1282,14 @@ function abrirAcessos(){
 }
 $("#acessosBtn").onclick=abrirAcessos;
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.24";
+const APP_VERSAO="2026.10.24h";
 const VERSOES=[
+  {v:"2026.10.24h", d:"24/10/2026", itens:["Tocar em \"📷 Câmera\" ou \"🎥 Gravar\" abre a câmera do aparelho direto no app (botão de tirar foto, trocar câmera, gravar até 30 s, conferir e usar); se o aparelho não deixar, abre a câmera do celular"]},
+  {v:"2026.10.24g", d:"24/10/2026", itens:["Comunicação de defeito sem operador e matrícula do operador (tela, lista e PDF): só a assinatura do supervisor"]},
+  {v:"2026.10.24f", d:"24/10/2026", itens:["Comunicação de defeito: só 2 fotos do defeito (ângulos diferentes) e um vídeo rápido do defeito; as comunicações antigas continuam mostrando as fotos que já tinham"]},
+  {v:"2026.10.24e", d:"24/10/2026", itens:["Programar: o campo do nº do processo / O.S só aparece quando o tipo de local é PROCESSO ou O.S (também no serviço feito no lugar)"]},
+  {v:"2026.10.24d", d:"24/10/2026", itens:["Mensagem do WhatsApp agora é uma imagem no padrão do app (logo, faixa colorida com a situação, local, equipe, quantidades em blocos), com botão para enviar direto no WhatsApp, baixar a imagem ou enviar só o texto"]},
+  {v:"2026.10.24c", d:"24/10/2026", itens:["Foto e vídeo 360° abrem em tela cheia com fundo preto, por cima de tudo, na mesma tela (sem abrir aba nova)"]},
   {v:"2026.10.24", d:"24/10/2026", itens:["Checklist sem o operador: entrega e recebimento só pelos supervisores (tela, lista e PDF)","Checklist: deixa claro que quem entrega e quem recebe o turno é o supervisor (campo \"Supervisor que entrega\" com o supervisor da turma, \"Supervisor que recebe o turno\" com o nome de cada supervisor)","Fotos do checklist e da manutenção baixadas direto do Supabase (aparecem no app e no PDF mesmo se o bucket não estiver público)","Tocar na foto ou no vídeo 360° abre em tela cheia, na mesma tela (sem abrir aba nova); tocar fora ou no ✕ fecha"]},
   {v:"2026.10.23b", d:"23/10/2026", itens:["Checklist: baixar vários checklists ou várias comunicações de defeito num PDF só (um por página), por dia, semana, mês ou todos, para todas as turmas, PODA I, PODA II ou uma turma","Fotos e vídeo do checklist e da manutenção abrem direto do Supabase (não dependem mais do redirecionamento do netlify.toml) e saem no PDF","camada-gpe.js mudou: suba junto com o index.html","Troca de senha obrigatória no primeiro acesso e sempre que a gerência redefinir a senha: a pessoa cria uma senha só dela antes de entrar","Aba Atualizar (só gerente): links do app no Netlify e no Claude, do GitHub, do Netlify e do Supabase, com botão de copiar","Aba Atualizar: arquivos prontos para o GitHub (index.html, camada-gpe.js e netlify.toml já ligados ao Supabase); o .zip traz os arquivos soltos","Tela de entrada no Netlify mostra o motivo quando não conecta ao banco (camada-gpe.js ausente, chave recusada, banco vazio ou sem internet)","camada-gpe.js novo (Supabase): suba junto com o index.html"]},
   {v:"2026.10.23", d:"23/10/2026", itens:["Relatório: gráficos da evolução semanal, mensal e anual (poda em colunas 3D e extirpação em linha, e locais atendidos por tipo em linhas)","Relatório: tabelas de evolução semanal, mensal e anual no modelo da planilha (semana, período, poda total, extirpação total, processo/O.S, entre-pista, praça…), com o histórico da planilha até a 32ª semana","Baixar em PDF os gráficos da manutenção, com os filtros escolhidos e o logo da COMURG","Gráficos da manutenção: incidência de defeito por equipamento (quantas vezes estragou), tempo em manutenção (total, média e maior parada), disponibilidade no período, intervalo médio entre defeitos e defeito mais comum","Gráficos (aba dentro do Checklist) só da comunicação de defeito / manutenção, em 3D com linhas de grade: comunicações e retornos por dia com a linha de equipamentos em manutenção, tipo de defeito, urgência, parado × operante, por equipamento, por turma e dias fora de operação","Comunicação de defeito: parte 7 \"Retorno à atividade\" para preencher quando o equipamento voltar (data, horário, KM, oficina, serviço executado, liberado para operar, devolução do reserva e assinatura do supervisor); a comunicação em aberto mostra o botão para registrar o retorno","Fotos e vídeo só pela câmera, tirados na hora: o app recusa arquivo antigo da galeria","Comunicação de defeito: 6 fotos obrigatórias (2 do defeito em ângulos diferentes, parte de cima da carroceria, dentro do cesto e as duas laterais do equipamento inteiro); as fotos saem no PDF","Checklist: fotos obrigatórias da parte de cima da carroceria e de dentro do cesto (limpos) e das duas laterais do caminhão, e vídeo curto 360° do cesto; as fotos saem no PDF"]},
@@ -1362,7 +1384,8 @@ $("#supTroca").onclick=()=>{ ls.set("gpe_sup",""); limpar("prog"); scrollTo(0,0)
 function meuSup(){ return travado() ? sessao.sup : (ls.get("gpe_sup","") || ""); }
 function equipeOpts(){ const s=supOf(form.sup); const o3=$("#equipe").querySelector('option[value="3ª EQUIPE"],option:nth-child(3)');
   if(o3){ o3.hidden=o3.disabled=!!(s&&s.grupo==="PODA I"); if(o3.disabled&&$("#equipe").value==="3ª EQUIPE") $("#equipe").value="1ª EQUIPE"; } }
-chipRow($("#tipoChips"), TIPOS.map(t=>({v:t,h:esc(t)})), v=>{form.tipo=v;setPressed($("#tipoChips"),v);procUI();servUI();checaDup()});
+$("#s_tipo").addEventListener("change",sProcUI);
+chipRow($("#tipoChips"), TIPOS.map(t=>({v:t,h:esc(t)})), v=>{form.tipo=v;setPressed($("#tipoChips"),v);if(!temProc(v))$("#processo").value="";procUI();servUI();checaDup()});
 $("#servico").innerHTML='<option value="">Selecione…</option>'+SERVICOS.map(x=>`<option value="${esc(x)}">${x==="OUTRO"?"Outro (especificar)":esc(x.charAt(0)+x.slice(1).toLowerCase())}</option>`).join("");
 $("#servico").onchange=servUI;
 chipRow($("#stChips"), [{v:"SIM",h:"Executado"},{v:"PARCIAL",h:"Parcial"},{v:"NÃO",h:"Não executado"},{v:"PROGRAMADO",h:"Aguardando atendimento"}], v=>{form.st=v;setPressed($("#stChips"),v);modeUI()});
@@ -1373,7 +1396,12 @@ const tagOc=r=>r.ocorrencia?`<span class="tagoc">${OC[r.ocorrencia.tipo]||"Ocorr
 function servUI(){ const on=TIPOS_SERV.has(form.tipo); $("#servWrap").hidden=!on; $("#servOutro").hidden=!on||$("#servico").value!=="OUTRO"; }
 function servLer(){ if(!TIPOS_SERV.has(form.tipo)) return ""; const v=$("#servico").value; return v==="OUTRO"?($("#servOutro").value.trim().toUpperCase()||""):v; }
 function servCarregar(v){ v=v||""; if(!v){$("#servico").value="";$("#servOutro").value="";} else if(SERVICOS.includes(v)){$("#servico").value=v;$("#servOutro").value="";} else {$("#servico").value="OUTRO";$("#servOutro").value=v;} servUI(); }
-function procUI(){ $("#procLbl").textContent = form.tipo==="O.S" ? "Nº da O.S (obrigatório)" : form.tipo==="PROCESSO" ? "Nº do processo (obrigatório)" : "Nº do processo / ofício / O.S (se houver)"; }
+// nº do processo / O.S: o campo só aparece quando o tipo de local é PROCESSO ou O.S
+const temProc=t=>t==="O.S"||t==="PROCESSO";
+function procUI(){ const tem=temProc(form.tipo); $("#procWrap").hidden=!(tem||$("#processo").value.trim());
+  $("#procLbl").textContent = form.tipo==="O.S" ? "Nº da O.S (obrigatório)" : form.tipo==="PROCESSO" ? "Nº do processo (obrigatório)" : "Nº do processo / O.S (registrado antes)"; }
+function sProcUI(){ const w=$("#s_procWrap"); if(!w) return; const t=$("#s_tipo").value; if(!temProc(t)&&document.activeElement===$("#s_tipo")) $("#s_processo").value="";
+  w.hidden=!(temProc(t)||$("#s_processo").value.trim()); $("#s_procLbl").textContent=t==="O.S"?"Nº da O.S":"Nº do processo"; }
 
 function qtyBlock(host, prefix, totEl){
   const grp=(g,t)=>`<div class="qgroup"><h4>${t}</h4>`+ITENS.filter(i=>i.g===g).map(i=>`
@@ -1492,7 +1520,7 @@ function limpar(mode="prog", keep={}){
   $("#fiscal").value = fNome; $("#fiscalN").value = fNome;
   $("#data").value = keep.data || (mode==="prog" ? ls.get("gpe_progdata","") || hoje() : hoje()); dataUI();
   setPressed($("#supChips"),form.sup); setPressed($("#tipoChips"),""); setPressed($("#stChips"),"");
-  $("#err").hidden=true; $("#dupMsg").hidden=true; motivoUI(); procUI(); modeUI(); if(typeof renderSemProg==="function") renderSemProg();
+  $("#err").hidden=true; $("#dupMsg").hidden=true; motivoUI(); procUI(); sProcUI(); modeUI(); if(typeof renderSemProg==="function") renderSemProg();
 }
 $("#clearBtn").onclick=()=>limpar(form.mode==="baixa"?"prog":form.mode);
 $("#cancelEdit").onclick=()=>{ const back=form.mode!=="prog", oc=form.mode==="ocorr"; limpar("prog"); if(back) show(oc?"oc":"campo"); };
@@ -1595,7 +1623,7 @@ function abrirBaixa(r, pre){
     writeQ("q_",r.qtd||{},$("#qtdMain")); $("#dataExec").value=r.dataExec||r.data;
     $("#proxData").value=r.proxData||""; setMotivo(r.motivo||"");
     const s=r.substituto; $("#semSub").checked=!!r.semSubstituto;
-    if(s){$("#s_data").value=s.data||r.data;$("#s_bairro").value=s.bairro||"";endCarregar("se_", s.logradouro||"");$("#s_tipo").value=s.tipo||"";$("#s_processo").value=s.processo||"";writeQ("s_",s.qtd||{},$("#qtdSub"))}
+    if(s){$("#s_data").value=s.data||r.data;$("#s_bairro").value=s.bairro||"";endCarregar("se_", s.logradouro||"");$("#s_tipo").value=s.tipo||"";$("#s_processo").value=s.processo||"";sProcUI();writeQ("s_",s.qtd||{},$("#qtdSub"))}
     if(r.fiscal){$("#fiscal").value=r.fiscal;$("#fiscalN").value=r.fiscal}
   }
   modeUI(); show("form",true,"campo"); scrollTo(0,0);
@@ -2015,7 +2043,7 @@ $("#kBxBtn").onclick=async()=>{
   const btn=$("#kBxBtn"), t=btn.textContent; btn.disabled=true; btn.textContent="Preparando…";
   try{
     try{ await seloPng(); }catch(x){}
-    await Promise.all(lst.flatMap(c=>(man?MAN_SLOTS:MID_SLOTS).map(s=>midCarregar(c.midia?.[s.k]))));
+    await Promise.all(lst.flatMap(c=>(man?manSlots(c.midia):MID_SLOTS).map(s=>midCarregar(c.midia?.[s.k]))));
     const htmls=lst.map(c=>(man?manDocHtml(c):chkDocHtml(c)).replace(/<div class="i"><svg[\s\S]*?<\/svg><\/div>/g,SELO_PNG?`<div class="i"><img src="${SELO_PNG}" alt=""></div>`:"$&"));
     btn.textContent="Gerando PDF (1 de "+lst.length+")…";
     const blob=await rptPdfMulti(htmls,rot+" · "+quem+" · "+nome,{escala:2,qualidade:.92,prog:(i,n)=>{btn.textContent="Gerando PDF ("+i+" de "+n+")…";}});
@@ -2141,7 +2169,7 @@ function abrirChk(c){
   midLigar(host,midia,edit);
   if($("#kPdf")) $("#kPdf").onclick=async()=>{ await Promise.all(MID_SLOTS.map(s=>midCarregar(c.midia?.[s.k]))); baixarFormPdf($("#kPdf"),chkDocHtml(c),arqNome("checklist",c.data,c.viatura),"Checklist "+(c.viatura||"")+" · "+fmtD(c.data)); };
   const err=$("#kfErr"), erro=t=>{err.textContent=t; err.hidden=false; err.scrollIntoView({block:"nearest"});};
-  if($("#kComDef")) $("#kComDef").onclick=()=>abrirMan(null,{supervisao:c.supervisao,data:c.data,equipe:c.equipe,viatura:c.viatura,km:c.kmFim,opNome:c.operador?.nome,opMat:c.operador?.mat,desc:[c.ocorr,...chkAlertas(c)].filter(Boolean).join("\n"),chkId:c.id});
+  if($("#kComDef")) $("#kComDef").onclick=()=>abrirMan(null,{supervisao:c.supervisao,data:c.data,equipe:c.equipe,viatura:c.viatura,km:c.kmFim,desc:[c.ocorr,...chkAlertas(c)].filter(Boolean).join("\n"),chkId:c.id});
 
   if(receber){
     $("#kReceber").onclick=async()=>{
@@ -2249,7 +2277,7 @@ function manCard(m){
     <div class="l1"><span class="when">${esc(m.viatura||"")} · ${fmtD(m.data)}</span><span class="pill ${manCor(m)}">${manTxt(m)}</span></div>
     <div class="where" style="white-space:pre-line">${(m.tipos||[]).map(t=>`<span class="tagimp">${esc(t==="OUTRO"&&m.tipoOutro?m.tipoOutro:t)}</span>`).join("")}${esc(m.desc||"")}</div>
     <div class="meta">${esc(m.supervisao)} · ${esc(m.equipe||"")} · urgência ${esc((m.urg||"—").toLowerCase())}${m.recolhido==="SIM"?` · recolhido ${m.recolh?.data?fmtDs(m.recolh.data):""}${m.recolh?.destino?" → "+esc(m.recolh.destino):""}`:""}${m.reserva==="SIM"?` · reserva ${esc(m.reservaQual||"")}`:""}</div>
-    ${m.midia?`<div class="meta">📷 ${MAN_SLOTS.filter(x=>m.midia[x.k]).length} de 6 fotos</div>`:""}
+    ${m.midia?`<div class="meta">📷 ${MAN_SLOTS.filter(x=>x.tipo==="foto"&&m.midia[x.k]).length} de 2 fotos do defeito${m.midia.videoDef?" · 🎥 vídeo":""}</div>`:""}
     ${manAberta(m)?`<div class="meta" style="color:var(--accent);font-weight:600">🔧 Em manutenção · toque para registrar o retorno à atividade</div>`:""}
     <div class="cksig"><span class="ok">✔ Assinado eletronicamente por <b>${esc(m.assin?.nome||"—")}</b>${m.assin?.em?" · "+fmtHora(m.assin.em):""}</span>${!manAberta(m)?`<span class="ok">✔ Retorno em ${fmtD(m.retorno.data)}${m.retorno.hora?" às "+esc(m.retorno.hora):""} · ${esc(m.retAssin?.nome||"")}</span>`:""}</div>
   </button>`;
@@ -2290,12 +2318,11 @@ function abrirMan(m,pre){
     <label class="f">Turma / supervisão<select id="mfSup" ${travado()||!novo?"disabled":""}><option value="">Selecione…</option>${SUPS.map(s=>`<option value="${esc(s.id)}"${s.id===sup0?" selected":""}>${esc(s.id)} · ${esc(s.enc)}</option>`).join("")}</select></label>
     <div class="row2"><label class="f">Data<input type="date" id="mfData" value="${esc(m?.data||pre.data||hoje())}" ${dis}></label><label class="f">Turno<input id="mfTurno" value="${esc(supOf(sup0)?.turno||"")}" disabled></label></div>
     <div class="row2"><label class="f">Equipe<select id="mfEq" ${dis}>${["1ª EQUIPE","2ª EQUIPE","3ª EQUIPE"].map(x=>`<option${x===(m?.equipe||pre.equipe||turma.equipe||"1ª EQUIPE")?" selected":""}>${x}</option>`).join("")}</select></label><label class="f">Supervisor<input id="mfSupNome" value="${esc(m?.assin?.nome||nomeSupDe(sup0))}" disabled></label></div>
-    <div class="row2"><label class="f">Operador<input id="mfOpNome" value="${esc(m?.operador?.nome||pre.opNome||"")}" ${dis}></label><label class="f">Matrícula do operador<input id="mfOpMat" value="${esc(m?.operador?.mat||pre.opMat||"")}" autocomplete="off" ${dis}></label></div>
     <div class="row2"><label class="f">Equipamento<input id="mfEqp" value="${esc(m?.equipamento||"CESTO AÉREO")}" ${dis}></label><label class="f">Prefixo / placa<select id="mfVt" ${dis}>${vtOpts}</select></label></div>
     <label class="f">KM atual<input id="mfKm" inputmode="numeric" value="${esc(m?.km||pre.km||"")}" ${dis}></label>
     <div class="ckgrp">1. Descrição do defeito / anomalia</div>
     <textarea id="mfDesc" aria-label="Descrição do defeito" placeholder="O que aconteceu, onde, quando apareceu" ${dis}>${esc(m?.desc||pre.desc||"")}</textarea>
-    ${midSecHtml(midia,edit,MAN_SLOTS,"Fotos do defeito e do equipamento",edit?"Fotos só pela câmera, tiradas na hora: duas do defeito de ângulos diferentes, mostrando claramente a avaria, e quatro do equipamento.":"Registro fotográfico da comunicação.")}
+    ${midSecHtml(midia,edit,edit?MAN_SLOTS:manSlots(midia),"Fotos e vídeo do defeito",edit?"Só pela câmera, na hora: duas fotos do defeito de ângulos diferentes, mostrando claramente a avaria, e um vídeo rápido do defeito.":"Registro fotográfico da comunicação.")}
     <div class="ckgrp">2. Tipo de defeito <span class="note" style="text-transform:none;letter-spacing:0">(pode marcar mais de um)</span></div>
     <div class="ckopt" id="mfTipos">${MAN_TIPOS.map(t=>`<button type="button" data-t="${t}" aria-pressed="${v.tipos.includes(t)}" ${dis}>${t}</button>`).join("")}</div>
     <input id="mfTipoOutro" placeholder="Qual outro tipo?" value="${esc(m?.tipoOutro||"")}" ${dis} ${v.tipos.includes("OUTRO")?"":"hidden"}>
@@ -2315,7 +2342,7 @@ function abrirMan(m,pre){
     <div class="ckbox">
       <div class="ckgrp">6. Assinaturas</div>
       ${novo?`${edit?`<p class="note" style="margin:0"><b>Operador:</b> identificado acima por nome e matrícula.</p>${sigBlocoHtml("mE",sup0)}<label class="f">Horário<input type="time" id="mfHora" value="${horaAgora()}"></label>`:`<p class="note">Somente consulta.</p>`}`
-        : opHtml(m.operador).replace("Operador que encerrou o turno","Operador")+assinHtml("Supervisor",m.assin)+`<p class="note" style="margin:0">Data: <b>${fmtD(m.data)}</b> · Horário: <b>${esc(m.hora||"—")}</b></p>`}
+        : assinHtml("Supervisor",m.assin)+`<p class="note" style="margin:0">Data: <b>${fmtD(m.data)}</b> · Horário: <b>${esc(m.hora||"—")}</b></p>`}
     </div>
     ${m?retSecHtml(m,retEdit):""}
     <div class="err" id="mfErr" hidden></div>
@@ -2323,8 +2350,8 @@ function abrirMan(m,pre){
   </div></div>`;
   const close=()=>host.innerHTML="";
   $("#sh").onclick=e=>{if(e.target.id==="sh")close()}; $("#mClose").onclick=close;
-  midLigar(host,midia,edit,MAN_SLOTS);
-  if($("#mPdf")) $("#mPdf").onclick=async()=>{ await Promise.all(MAN_SLOTS.map(s=>midCarregar(m.midia?.[s.k]))); baixarFormPdf($("#mPdf"),manDocHtml(m),arqNome("comunicacao-defeito",m.data,m.viatura),"Comunicação de defeito "+(m.viatura||"")+" · "+fmtD(m.data)); };
+  midLigar(host,midia,edit,edit?MAN_SLOTS:manSlots(midia));
+  if($("#mPdf")) $("#mPdf").onclick=async()=>{ await Promise.all(manSlots(m.midia).map(s=>midCarregar(m.midia?.[s.k]))); baixarFormPdf($("#mPdf"),manDocHtml(m),arqNome("comunicacao-defeito",m.data,m.viatura),"Comunicação de defeito "+(m.viatura||"")+" · "+fmtD(m.data)); };
   const err=$("#mfErr"), erro=t=>{err.textContent=t; err.hidden=false; err.scrollIntoView({block:"nearest"});};
   host.querySelector(".panel").addEventListener("click",e=>{
     const b=e.target.closest(".ckopt button"); if(!b||b.disabled) return;
@@ -2358,14 +2385,13 @@ function abrirMan(m,pre){
   $("#mSalvar").onclick=async()=>{
     const sup=$("#mfSup").value, data=$("#mfData").value, e=[];
     if(!sup) e.push("turma"); if(!data) e.push("data"); if(data>hoje()) e.push("a data não pode ser no futuro");
-    const opNome=$("#mfOpNome").value.trim(), opMat=$("#mfOpMat").value.trim();
-    if(!opNome||!opMat) e.push("nome e matrícula do operador");
     if(!$("#mfKm").value.trim()) e.push("KM atual");
     if(!$("#mfDesc").value.trim()) e.push("descrição do defeito (seção 1)");
     if(!v.tipos.length) e.push("tipo de defeito (seção 2)"); else if(v.tipos.includes("OUTRO")&&!$("#mfTipoOutro").value.trim()) e.push("qual o outro tipo de defeito");
     const semSit=MAN_SIT.filter(q=>!v.sit[q.k]).map(q=>q.t.toLowerCase()); if(semSit.length) e.push("seção 3: "+semSit.join(", "));
     if(v.sit.recolhido==="SIM"&&(!$("#mfRData").value||!$("#mfRResp").value.trim()||!$("#mfRDest").value.trim())) e.push("dados do recolhimento: data, responsável e destino (seção 4)");
-    const semF=MAN_SLOTS.filter(x=>!midia[x.k]).length; if(semF) e.push(`anexe ${semF===1?"a foto que falta":"as "+semF+" fotos que faltam"} (2 do defeito, carroceria, cesto e as duas laterais)`);
+    const semF=MAN_SLOTS.filter(x=>x.tipo==="foto"&&!midia[x.k]).length; if(semF) e.push(`anexe ${semF===1?"a foto do defeito que falta":"as 2 fotos do defeito (ângulos diferentes)"}`);
+    if(assets&&!midia.videoDef) e.push("grave o vídeo rápido do defeito");
     if([...document.querySelectorAll("#kfMid .midst")].some(x=>/enviando/.test(x.textContent))) e.push("espere terminar o envio das fotos");
     if(!v.reserva) e.push("se houve equipamento reserva (seção 5)"); else if(v.reserva==="SIM"&&!$("#mfResQ").value) e.push("qual equipamento reserva");
     if(e.length) return erro("Falta: "+e.join("; ")+".");
@@ -2374,7 +2400,7 @@ function abrirMan(m,pre){
     const q=await assinante("mE",sup); if(q.erro) return erro("Assinatura: "+q.erro+".");
     const agora=new Date().toISOString(), id=db.collection(MAN_COL).doc().id;
     const body={data,semana:semanaDe(data),supervisao:sup,grupo:supOf(sup)?.grupo||"",turno:supOf(sup)?.turno||"",equipe:$("#mfEq").value,
-      operador:{nome:opNome.toUpperCase(),mat:opMat},equipamento:$("#mfEqp").value.trim()||"CESTO AÉREO",viatura:$("#mfVt").value,km:$("#mfKm").value.trim(),
+      equipamento:$("#mfEqp").value.trim()||"CESTO AÉREO",viatura:$("#mfVt").value,km:$("#mfKm").value.trim(),
       desc:$("#mfDesc").value.trim(),tipos:v.tipos,tipoOutro:v.tipos.includes("OUTRO")?$("#mfTipoOutro").value.trim():"",
       ...Object.fromEntries(MAN_SIT.map(q=>[q.k,v.sit[q.k]])),obs:$("#mfObs").value.trim(),
       recolh:v.sit.recolhido==="SIM"?{data:$("#mfRData").value,hora:$("#mfRHora").value,resp:$("#mfRResp").value.trim(),destino:$("#mfRDest").value.trim()}:null,
@@ -2455,7 +2481,7 @@ function manDocHtml(m){
   const kv=(a,b,c2,d)=>`<tr><td class="k">${a}</td><td>${b}</td><td class="k">${c2}</td><td>${d}</td></tr>`;
   const ops=(val,list)=>list.map(o=>`${fx(val,o)} ${esc(o)}`).join("&nbsp;&nbsp; ");
   const tiposTxt=MAN_TIPOS.map(t=>`${(m.tipos||[]).includes(t)?"( X )":"(&nbsp;&nbsp;&nbsp;&nbsp;)"} ${t}${t==="OUTRO"&&m.tipoOutro?": "+esc(m.tipoOutro):""}`).join("&nbsp;&nbsp; ");
-  const cab=`<table>${kv("Data",fmtD(m.data),"Turno",esc(m.turno||""))}${kv("Equipe",esc(m.equipe||""),"Supervisor",esc(m.assin?.nome||""))}${kv("Operador",esc(m.operador?.nome||"")+(m.operador?.mat?" · mat. "+esc(m.operador.mat):""),"Equipamento",esc(m.equipamento||"CESTO AÉREO"))}${kv("Prefixo/placa",esc(m.viatura||""),"KM atual",esc(m.km||""))}</table>`;
+  const cab=`<table>${kv("Data",fmtD(m.data),"Turno",esc(m.turno||""))}${kv("Equipe",esc(m.equipe||""),"Supervisor",esc(m.assin?.nome||""))}${kv("Equipamento",esc(m.equipamento||"CESTO AÉREO"),"Prefixo/placa",esc(m.viatura||""))}${kv("KM atual",esc(m.km||""),"","")}</table>`;
   const rc=m.recolh||{};
   const ret=m.retorno||{};
   return `<div class="fdoc"><style>${FDOC_CSS}</style><div class="r-body">${fhead("COMUNICAÇÃO DE DEFEITO E RECOLHIMENTO PARA MANUTENÇÃO","CESTO AÉREO")}<div>${cab}</div>
@@ -2468,8 +2494,9 @@ function manDocHtml(m){
       <tr><td class="k">Houve equipamento reserva</td><td>${fx(m.reserva,"SIM")} SIM &nbsp;&nbsp;${fx(m.reserva,"NÃO")} NÃO</td></tr>
       <tr><td class="k">Qual equipamento reserva</td><td>${esc(m.reservaQual||"—")}</td></tr></table></div>
     <div><p class="sec">7. Retorno à atividade</p>${ret.volta==="SIM"?`<table>${kv("Data do retorno",fmtD(ret.data),"Horário",esc(ret.hora||"—"))}${kv("KM no retorno",esc(ret.km||"—"),"Oficina / responsável",esc(ret.oficina||"—"))}${kv("Liberado para operar",esc(ret.liberado||"SIM"),"Reserva devolvido",m.reserva==="SIM"?esc(ret.reservaDevolvida||"—"):"N/A")}</table><div class="box" style="margin-top:6px"><b>Serviço executado:</b> ${esc(ret.servico||ret.obs||"—")}${ret.obs&&ret.servico?`<br><b>Observação:</b> ${esc(ret.obs)}`:""}</div>`:`<div class="pend">Equipamento ainda em manutenção – retorno não registrado.</div>`}</div>
-    <div><p class="sec">Registro fotográfico</p><div class="fgrid m">${MAN_SLOTS.map(x=>{const u=midUrl(m.midia?.[x.k]);return `<div class="fcel">${u?`<img src="${esc(u)}" alt="">`:`<div class="fsem">Sem foto</div>`}<span>${esc(x.t)}</span></div>`}).join("")}</div></div>
-    <div><p class="sec">6. Assinaturas</p><div class="sl">Operador</div><table>${kv("Nome",esc(m.operador?.nome||""),"Matrícula",esc(m.operador?.mat||""))}</table><p class="leg" style="margin:3px 0 0">Operador identificado pelo supervisor na comunicação.</p></div>
+    <div><p class="sec">Registro fotográfico</p><div class="fgrid m">${manSlots(m.midia).filter(x=>x.tipo==="foto").map(x=>{const u=midUrl(m.midia?.[x.k]);return `<div class="fcel">${u?`<img src="${esc(u)}" alt="">`:`<div class="fsem">Sem foto</div>`}<span>${esc(x.t)}</span></div>`}).join("")}</div>
+    <p class="leg" style="margin:6px 0 0">Vídeo do defeito: ${m.midia?.videoDef?"anexado no sistema Programação GPE (assista pelo app, abrindo esta comunicação).":"não anexado."}</p></div>
+    <div><p class="sec">6. Assinatura</p></div>
     ${fsig("Supervisor",m.assin)}
     <div><table>${kv("Data",fmtD(m.data),"Horário",esc(m.hora||""))}</table></div>
     ${m.retAssin?fsig("Supervisor que registrou o retorno à atividade",m.retAssin):""}
@@ -2561,10 +2588,14 @@ function midSlotHtml(s,m,edit){
 const MAN_SLOTS=[
   {k:"defeito1",t:"Defeito / avaria – ângulo 1 (mostrando claramente o problema)",tipo:"foto"},
   {k:"defeito2",t:"Defeito / avaria – ângulo 2 (outro ângulo)",tipo:"foto"},
+  {k:"videoDef",t:"Vídeo rápido do defeito (uns 10 a 20 segundos)",tipo:"video"}];
+// fotos que as comunicações antigas tinham: continuam aparecendo nelas
+const MAN_ANT=[
   {k:"carroceria",t:"Parte de cima da carroceria (mostrando que está limpa)",tipo:"foto"},
   {k:"cesto",t:"Dentro do cesto (mostrando que está limpo)",tipo:"foto"},
   {k:"ladoDir",t:"Lateral direita – equipamento inteiro",tipo:"foto"},
   {k:"ladoEsq",t:"Lateral esquerda – equipamento inteiro",tipo:"foto"}];
+const manSlots=midia=>MAN_SLOTS.concat(MAN_ANT.filter(s=>midia?.[s.k]));
 function midSecHtml(midia,edit,slots=MID_SLOTS,titulo="Fotos e vídeo do equipamento",nota){
   return `<div class="ckgrp">${titulo}</div>
     <p class="note" style="margin:0">${nota||(edit?"Fotos e vídeo só pela câmera, tirados na hora (não vale foto antiga da galeria). O vídeo é uma volta de 360° em torno do cesto.":"Registro fotográfico do fim do expediente.")}</p>
@@ -2578,18 +2609,68 @@ function verFoto(url,tit,tipo){
   v.onclick=e=>{ if(e.target.closest("video")) return; fechar(); }; addEventListener("keydown",esc_); document.body.appendChild(v);
 }
 document.addEventListener("click",e=>{ const b=e.target.closest(".midver"); if(b){ e.preventDefault(); e.stopPropagation(); verFoto(b.dataset.ver,b.dataset.tit,b.dataset.tipo); } },true);
+/* ---------- câmera do aparelho dentro do app (abre direto a câmera; sem galeria) ---------- */
+// devolve um File tirado agora, null se cancelou, ou "nativo" para usar a câmera do sistema (input capture)
+function camAbrir(s){
+  return new Promise(resolve=>{
+    if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder&&s.tipo==="video"){ resolve("nativo"); return; }
+    const video=s.tipo==="video"; let stream=null, frente=false, rec=null, partes=[], timer=null, t0=0, saiu=false;
+    const v=document.createElement("div"); v.className="cam"; v.setAttribute("role","dialog"); v.setAttribute("aria-label",video?"Gravar vídeo":"Tirar foto");
+    v.innerHTML=`<div class="camtop"><span>${esc(s.t)}</span><button type="button" class="camx" aria-label="Fechar">✕</button></div>
+      <div class="camvw"><video class="camv" autoplay playsinline muted></video><img class="camprev" alt="" hidden><video class="camvprev" controls playsinline hidden></video><div class="cammsg" hidden></div><div class="camrec" hidden>● <b>0:00</b></div></div>
+      <div class="cambar"><button type="button" class="camvira" aria-label="Trocar câmera">⟲</button><button type="button" class="camdisp${video?" vid":""}" aria-label="${video?"Gravar":"Tirar foto"}"></button><span class="camesp"></span></div>
+      <div class="cambar camok" hidden><button type="button" class="btn sec camde">${video?"Gravar de novo":"Tirar outra"}</button><button type="button" class="btn pri camusar">${video?"Usar vídeo":"Usar foto"}</button></div>`;
+    document.body.appendChild(v);
+    const q=sel=>v.querySelector(sel), cv=q(".camv");
+    const parar=()=>{ if(stream) stream.getTracks().forEach(t=>t.stop()); stream=null; };
+    const fim=r=>{ if(saiu) return; saiu=true; clearInterval(timer); try{ if(rec&&rec.state!=="inactive") rec.stop(); }catch(e){} parar(); v.remove(); resolve(r); };
+    const msg=(t,nativo)=>{ const m=q(".cammsg"); m.hidden=false; m.innerHTML=`<p>${t}</p>${nativo?`<button type="button" class="btn pri camnat">Abrir a câmera do celular</button>`:""}`; q(".cambar").hidden=true; if(nativo) q(".camnat").onclick=()=>fim("nativo"); };
+    const ligar=async()=>{ parar(); try{
+        stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:frente?"user":{ideal:"environment"},width:{ideal:video?1280:1920},height:{ideal:video?720:1080}}});
+        cv.srcObject=stream; await cv.play().catch(()=>{}); }
+      catch(e){ msg(e?.name==="NotAllowedError"?"A câmera não foi liberada. Libere a câmera para este app nas permissões do navegador, ou use a câmera do celular.":"Não foi possível abrir a câmera aqui.",true); } };
+    let arq=null, url="";
+    const revisar=(file)=>{ arq=file; if(url) URL.revokeObjectURL(url); url=URL.createObjectURL(file); cv.hidden=true; parar();
+      if(video){ const p=q(".camvprev"); p.src=url; p.hidden=false; } else { const p=q(".camprev"); p.src=url; p.hidden=false; }
+      q(".cambar").hidden=true; q(".cammsg").hidden=true; q(".cambar.camok").hidden=false; };
+    const denovo=async()=>{ arq=null; q(".camprev").hidden=true; const p=q(".camvprev"); p.pause(); p.hidden=true; p.removeAttribute("src"); cv.hidden=false; q(".cambar.camok").hidden=true; q(".cambar").hidden=false; await ligar(); };
+    q(".camx").onclick=()=>fim(null);
+    q(".camvira").onclick=()=>{ frente=!frente; ligar(); };
+    q(".camde").onclick=denovo;
+    q(".camusar").onclick=()=>fim(arq);
+    q(".camdisp").onclick=()=>{
+      if(!stream) return;
+      if(!video){ const w=cv.videoWidth,h=cv.videoHeight; if(!w) return; const c=document.createElement("canvas"); c.width=w; c.height=h; c.getContext("2d").drawImage(cv,0,0,w,h);
+        c.toBlob(b=>{ if(b) revisar(new File([b],"foto-"+Date.now()+".jpg",{type:"image/jpeg",lastModified:Date.now()})); },"image/jpeg",.92); return; }
+      const bt=q(".camdisp");
+      if(rec&&rec.state==="recording"){ rec.stop(); return; }
+      const tipos=["video/mp4;codecs=avc1","video/mp4","video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm"]; const mt=tipos.find(t=>MediaRecorder.isTypeSupported?.(t))||"";
+      try{ rec=new MediaRecorder(stream,{...(mt?{mimeType:mt}:{}),videoBitsPerSecond:2500000}); }catch(e){ msg("Este aparelho não grava vídeo dentro do app.",true); return; }
+      partes=[]; rec.ondataavailable=e=>{ if(e.data&&e.data.size) partes.push(e.data); };
+      rec.onstop=()=>{ clearInterval(timer); bt.classList.remove("on"); q(".camrec").hidden=true; if(saiu) return; const ty=(rec.mimeType||mt||"video/webm").split(";")[0];
+        const b=new Blob(partes,{type:ty}); revisar(new File([b],"video-"+Date.now()+(ty.includes("mp4")?".mp4":".webm"),{type:ty,lastModified:Date.now()})); };
+      rec.start(500); t0=Date.now(); bt.classList.add("on"); const r=q(".camrec"); r.hidden=false;
+      timer=setInterval(()=>{ const s2=Math.floor((Date.now()-t0)/1000); r.querySelector("b").textContent=Math.floor(s2/60)+":"+String(s2%60).padStart(2,"0"); if(s2>=30&&rec.state==="recording") rec.stop(); },250);
+    };
+    ligar();
+  });
+}
 function midLigar(host,midia,edit,slots=MID_SLOTS){
   const MID_SLOTS=slots;
   const redesenha=()=>{ host.querySelector("#kfMid").innerHTML=MID_SLOTS.map(s=>midSlotHtml(s,midia[s.k],edit)).join(""); };
   Promise.all(MID_SLOTS.map(s=>midCarregar(midia[s.k]))).then(redesenha);
   if(!edit) return;
-  host.querySelector("#kfMid").addEventListener("change",async e=>{
-    const inp=e.target.closest('input[type="file"]'); if(!inp||!inp.files[0]) return;
-    const el=inp.closest(".midslot"), s=MID_SLOTS.find(x=>x.k===el.dataset.k), st=el.querySelector(".midst");
-    st.textContent=s.tipo==="video"?"enviando vídeo…":"enviando foto…";
-    try{ midia[s.k]=await midEnviar(s,inp.files[0],p=>{st.textContent=`reduzindo o vídeo… ${Math.round(p*100)}%`}); redesenha(); }
-    catch(x){ st.textContent=midErro(x); st.classList.add("bad"); }
-  });
+  const enviar=async(el,file)=>{ const s=MID_SLOTS.find(x=>x.k===el.dataset.k), st=el.querySelector(".midst");
+    st.classList.remove("bad"); st.textContent=s.tipo==="video"?"enviando vídeo…":"enviando foto…";
+    try{ midia[s.k]=await midEnviar(s,file,p=>{st.textContent=`reduzindo o vídeo… ${Math.round(p*100)}%`}); redesenha(); }
+    catch(x){ st.textContent=midErro(x); st.classList.add("bad"); } };
+  host.querySelector("#kfMid").addEventListener("change",e=>{
+    const inp=e.target.closest('input[type="file"]'); if(!inp||!inp.files[0]) return; enviar(inp.closest(".midslot"),inp.files[0]); });
+  // tocar no botão abre a câmera do aparelho direto no app; se não der, usa a câmera do sistema
+  host.querySelector("#kfMid").addEventListener("click",async e=>{
+    const lb=e.target.closest(".midbtn"); if(!lb||window.GPE_CAMERA_NATIVA) return; const inp=lb.querySelector('input[type="file"]'); if(e.target===inp) return;
+    e.preventDefault(); const el=lb.closest(".midslot"), s=MID_SLOTS.find(x=>x.k===el.dataset.k);
+    const r=await camAbrir(s); if(r==="nativo"){ inp.click(); return; } if(r) enviar(el,r); });
 }
 
 /* ---------- gráficos do checklist e da manutenção ---------- */
@@ -3847,19 +3928,111 @@ function msgGrupo(r){
   L.push(`Fiscal: ${r.fiscal||"—"}${r.ultimoUsuario?" · lançado por "+r.ultimoUsuario:""}`);
   return L.join("\n");
 }
+/* ---------- imagem do serviço para o WhatsApp (mesmo padrão visual do app) ---------- */
+function msgSituacao(r){
+  if(r.ocorrencia) return isProg(r)?{t:"OCORRÊNCIA REGISTRADA",c:"#f37020"}:{t:"OCORRÊNCIA ATENDIDA",c:"#1e7a3c"};
+  if(r.avulso) return {t:"SERVIÇO SEM PROGRAMAÇÃO",c:"#3e4095"};
+  return r.status==="SIM"?{t:"EXECUTADO",c:"#1e7a3c"}:r.status==="PARCIAL"?{t:"EXECUTADO PARCIAL",c:"#9a5b00"}:r.status==="NÃO"?{t:"NÃO EXECUTADO · REMARCADO",c:"#b3261e"}:{t:"PROGRAMADO",c:"#5b6670"};
+}
+let _logoImg=null;
+function logoImg(){ if(_logoImg) return _logoImg; _logoImg=new Promise(ok=>{const i=new Image(); i.onload=()=>ok(i); i.onerror=()=>ok(null); i.src=LOGO_FULL;}); return _logoImg; }
+async function msgImagem(r){
+  try{ await Promise.all(['700 40px "Barlow Condensed"','600 30px "Barlow Condensed"','400 30px Barlow','600 30px Barlow'].map(f=>document.fonts.load(f))); }catch(e){}
+  const W=1080, P=48, cv=document.createElement("canvas"); cv.width=W; cv.height=5200; const x=cv.getContext("2d");
+  const DISP='"Barlow Condensed","Arial Narrow",Arial,sans-serif', BODY='Barlow,Arial,sans-serif';
+  const C={bg:"#eef1ec",card:"#ffffff",line:"#c9d1c4",ink:"#16231a",mut:"#56655a",brand:"#005f27",pod:"#2a78d6",ext:"#eb6834"};
+  const rr=(X,Y,w,h,rad,fill,stroke)=>{x.beginPath();x.roundRect(X,Y,w,h,rad);if(fill){x.fillStyle=fill;x.fill()}if(stroke){x.strokeStyle=stroke;x.lineWidth=2;x.stroke()}};
+  const wrap=(txt,maxW)=>{ const out=[]; String(txt||"").split("\n").forEach(par=>{ let ln=""; par.split(/\s+/).forEach(w=>{ const t=ln?ln+" "+w:w; if(x.measureText(t).width>maxW&&ln){out.push(ln);ln=w}else ln=t; }); out.push(ln); }); return out; };
+  x.fillStyle=C.bg; x.fillRect(0,0,W,cv.height);
+  // cabeçalho
+  x.fillStyle="#fff"; x.fillRect(0,0,W,170);
+  const lg=await logoImg(); if(lg){ const h=120,w=lg.width*h/lg.height; x.drawImage(lg,P,25,w,h); }
+  x.textAlign="right"; x.fillStyle=C.brand; x.font=`700 54px ${DISP}`; x.fillText("PROGRAMAÇÃO GPE",W-P,84);
+  x.fillStyle=C.mut; x.font=`500 25px ${BODY}`; x.fillText("Gerência de Poda e Extirpação – DIRSEN",W-P,122); x.fillText("COMURG · Goiânia",W-P,153);
+  [["#f37020",0,.27],["#0d880b",.27,.72],["#005f27",.72,.89],["#3e4095",.89,1]].forEach(([c,a,b])=>{x.fillStyle=c;x.fillRect(W*a,170,W*(b-a)+1,10)});
+  // faixa de situação
+  const st=msgSituacao(r), dt=r.dataExec||r.data; let y=180;
+  x.fillStyle=st.c; x.fillRect(0,y,W,128); x.textAlign="left"; x.fillStyle="#fff";
+  let fs=60; x.font=`700 ${fs}px ${DISP}`; while(x.measureText(st.t).width>W-2*P&&fs>34){ fs-=2; x.font=`700 ${fs}px ${DISP}`; } x.fillText(st.t,P,y+72);
+  x.font=`500 28px ${BODY}`; x.fillText(`${fmtD(dt)} · ${diaDe(dt)} · ${semanaDe(dt)}ª semana`,P,y+112);
+  y+=128+30;
+  // cartão com os dados
+  const top=y, CW=W-2*P, IN=P+34, VW=CW-68; y+=34;
+  const ops=[]; const D=(fn)=>ops.push(fn);
+  const campo=(rot,val,op={})=>{ if(!val&&val!==0) return; D(()=>{ x.textAlign="left"; x.fillStyle=C.mut; x.font=`600 22px ${BODY}`; x.fillText(rot.toUpperCase(),IN,y+22); y+=34;
+    x.fillStyle=op.cor||C.ink; x.font=`${op.peso||500} ${op.tam||32}px ${op.disp?DISP:BODY}`; wrap(val,VW).forEach(l=>{x.fillText(l,IN,y+(op.tam||32)); y+=(op.tam||32)*1.28;}); y+=16; }); };
+  const sep=()=>D(()=>{ x.fillStyle=C.line; x.fillRect(IN,y,VW,2); y+=24; });
+  const sup=supOf(r.supervisao);
+  campo("Equipe executora",`${r.supervisao||""}${r.equipe?" · "+r.equipe:""}${r.viatura?" · "+r.viatura:""}`,{peso:700,tam:40,disp:true,cor:C.brand});
+  campo("Supervisor",sup?.enc||r.encarregado||"");
+  sep();
+  campo("Local",`${r.bairro||""} — ${r.logradouro||""}`,{peso:700,tam:38,disp:true});
+  if(r.tipo) campo("Tipo de local / serviço",tipoTxt(r));
+  campo("Atende processo",r.processo?`SIM · nº ${r.processo}`:"NÃO",{peso:600,cor:r.processo?C.brand:C.ink});
+  if(r.geo) campo("GPS",`${r.geo.lat.toFixed(6)}, ${r.geo.lng.toFixed(6)}`);
+  if(r.ocorrencia){ const o=r.ocorrencia; sep(); campo("Ocorrência",`${OC[o.tipo]||""} · ${o.qtd||1} un.${o.hora?" · chamado "+o.hora:""}${o.origem?" · "+o.origem:""}${o.protocolo?" · prot. "+o.protocolo:""}${o.rede?" · rede elétrica":""}${o.via?" · via bloqueada":""}`,{peso:600,cor:"#b3261e"});
+    const im=o.impacto; if(im) campo("Impacto na programação",im.houve?im.servicos.map(s=>s.local+" ("+EFEITO_C[s.efeito]+")").join("; "):"nenhum"); }
+  // quantidades em blocos
+  const blocos=(rot,q,cor)=>{ const its=ITENS.filter(i=>+q?.[i.c]); if(!its.length) return; D(()=>{
+    x.textAlign="left"; x.fillStyle=C.mut; x.font=`600 22px ${BODY}`; x.fillText(rot.toUpperCase(),IN,y+22); y+=38;
+    const cols=2, gap=16, bw=(VW-gap)/cols, bh=118;
+    its.forEach((it,k)=>{ const cx=IN+(k%cols)*(bw+gap), cy=y+Math.floor(k/cols)*(bh+gap), cc=cor||(it.g==="P"?C.pod:C.ext);
+      rr(cx,cy,bw,bh,16,"#fff",C.line); x.fillStyle=cc; x.beginPath(); x.roundRect(cx,cy,12,bh,[16,0,0,16]); x.fill();
+      x.fillStyle=cc; x.font=`700 54px ${DISP}`; x.textAlign="left"; x.fillText(String(q[it.c]),cx+30,cy+64);
+      const nw=x.measureText(String(q[it.c])).width; x.fillStyle=C.ink; x.font=`700 30px ${DISP}`; x.fillText(it.c,cx+30+nw+16,cy+60);
+      x.fillStyle=C.mut; x.font=`500 21px ${BODY}`; x.fillText(it.d.length>40?it.d.slice(0,39)+"…":it.d,cx+30,cy+96); });
+    y+=Math.ceil(its.length/cols)*(bh+gap)+12; }); };
+  const ex=execQ(r);
+  if(Object.keys(ex).length){ sep(); blocos("Executado",ex); }
+  if(r.status==="PARCIAL"){ const pv=prevQ(r),f={}; ITENS.forEach(i=>{const d=(+pv[i.c]||0)-(+r.qtd?.[i.c]||0); if(d>0) f[i.c]=d}); const fq=r.qtdRemarcada||f; if(Object.keys(fq).length){ blocos("Faltou",fq,"#9a5b00"); if(r.proxData) campo("Remarcado para",fmtD(r.proxData),{peso:700,cor:"#9a5b00"}); } }
+  if(isProg(r)&&!r.ocorrencia){ sep(); blocos("Programado",prevQ(r)); }
+  if(r.status==="NÃO"){ sep(); blocos("Programado",prevQ(r),"#5b6670"); campo("Remarcado para",fmtD(r.proxData),{peso:700,cor:"#b3261e"});
+    campo("Feito no lugar",r.substituto?`${r.substituto.bairro} — ${r.substituto.logradouro}${r.substituto.tipo?" ("+r.substituto.tipo+")":""}`:"nenhum serviço");
+    if(r.substituto) blocos("Executado no lugar",r.substituto.qtd); }
+  if(r.motivo||r.obs) sep();
+  if(r.motivo) campo("Motivo",r.motivo,{peso:600});
+  if(r.obs) campo("Observação",r.obs);
+  sep(); campo("Fiscal",`${r.fiscal||"—"}${r.ultimoUsuario?" · lançado por "+r.ultimoUsuario:""}`,{tam:28});
+  // desenha o cartão: primeiro mede, depois pinta
+  const y0=y; ops.forEach(f=>f()); const fim=y; const h=fim-top+10;
+  x.fillStyle=C.bg; x.fillRect(0,top,W,h+40); rr(P,top,CW,h,24,C.card,C.line); y=y0; ops.forEach(f=>f());
+  y=top+h+30;
+  x.textAlign="center"; x.fillStyle=C.mut; x.font=`500 22px ${BODY}`; x.fillText(`Gerado pelo app Programação GPE em ${dataBR(new Date().toISOString())} às ${horaAgora()}`,W/2,y+10); y+=40;
+  const out=document.createElement("canvas"); out.width=W; out.height=y; out.getContext("2d").drawImage(cv,0,0); return out;
+}
+const cvBlob=cv=>new Promise(ok=>cv.toBlob(ok,"image/png"));
+function zapArq(r){ return ("gpe-"+(r.dataExec||r.data||"")+"-"+(r.bairro||"")+"-"+(r.logradouro||"")).normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9]+/g,"-").replace(/-+$/,"").toLowerCase().slice(0,80)+".png"; }
 function abrirMsg(r){
   const txt=msgGrupo(r);
   $("#sheetHost").innerHTML=`<div class="sheet" id="sh"><div class="panel" role="dialog" aria-label="Mensagem para o grupo">
-    <b style="font-family:var(--display);font-size:22px">Mensagem para o grupo</b>
-    <p class="note" style="margin:0">Padrão do grupo de WhatsApp da Gerência: equipe executora, se atende processo, local e o que foi feito. Copie e cole no grupo.</p>
-    <textarea class="msgbox" id="msgTxt" readonly>${esc(txt)}</textarea>
-    <div class="actions" style="grid-template-columns:1fr 1fr;margin:0"><button type="button" class="btn sec" id="msgClose">Fechar</button><button type="button" class="btn pri" id="msgCopy">Copiar</button></div>
+    <b style="font-family:var(--display);font-size:22px">Enviar no WhatsApp</b>
+    <p class="note" style="margin:0">Imagem no padrão do app para o grupo da Gerência, com a mensagem em texto junto.</p>
+    <div class="zapprev" id="zapPrev"><div class="midph">Montando a imagem…</div></div>
+    <button type="button" class="btn pri zapbtn" id="zapEnviar" disabled>📤 Enviar imagem no WhatsApp</button>
+    <div class="actions" style="grid-template-columns:1fr 1fr;margin:0">
+      <button type="button" class="btn sec" id="zapBaixar" disabled>⬇ Baixar imagem</button>
+      <a class="btn sec" id="zapTexto" href="https://api.whatsapp.com/send?text=${encodeURIComponent(txt)}" target="_blank" rel="noopener" style="text-align:center;text-decoration:none;display:grid;place-items:center">💬 Enviar só o texto</a>
+    </div>
+    <details class="zaptx"><summary>Ver / copiar o texto</summary><textarea class="msgbox" id="msgTxt" readonly>${esc(txt)}</textarea></details>
+    <div class="actions" style="grid-template-columns:1fr 1fr;margin:0"><button type="button" class="btn sec" id="msgClose">Fechar</button><button type="button" class="btn sec" id="msgCopy">Copiar texto</button></div>
   </div></div>`;
   const close=()=>$("#sheetHost").innerHTML="";
   $("#sh").onclick=e=>{if(e.target.id==="sh")close()}; $("#msgClose").onclick=close;
-  $("#msgCopy").onclick=()=>{ const ta=$("#msgTxt");
-    const fallback=()=>{ta.focus();ta.select();try{document.execCommand("copy");toast("Mensagem copiada. Cole no grupo.")}catch(e){toast("Selecionei o texto: use Copiar do celular.")}};
-    try{ navigator.clipboard.writeText(txt).then(()=>toast("Mensagem copiada. Cole no grupo."),fallback); }catch(e){ fallback(); } };
+  const copiar=(ok="Mensagem copiada. Cole no grupo.")=>new Promise(res=>{ const ta=$("#msgTxt");
+    const fallback=()=>{ try{ ta.closest("details").open=true; ta.focus(); ta.select(); document.execCommand("copy"); toast(ok); }catch(e){ toast("Selecionei o texto: use Copiar do celular."); } res(); };
+    try{ navigator.clipboard.writeText(txt).then(()=>{toast(ok);res()},fallback); }catch(e){ fallback(); } });
+  $("#msgCopy").onclick=()=>copiar();
+  let blob=null; const nome=zapArq(r);
+  msgImagem(r).then(async cv=>{ blob=await cvBlob(cv); const pv=$("#zapPrev"); if(!pv) return;
+    pv.innerHTML=`<img src="${cv.toDataURL("image/png")}" alt="Imagem do serviço para o WhatsApp">`; pv.querySelector("img").onclick=e=>verFoto(e.target.src,"Imagem para o WhatsApp");
+    $("#zapEnviar").disabled=false; $("#zapBaixar").disabled=!downloads; }).catch(e=>{ console.error(e); const pv=$("#zapPrev"); if(pv) pv.innerHTML=`<div class="midph">Não foi possível montar a imagem. Use "Enviar só o texto".</div>`; });
+  const baixar=async()=>{ if(!blob||!downloads) return false; try{ await downloads.save({filename:nome,data:blob}); return true; }catch(e){ return false; } };
+  $("#zapBaixar").onclick=async()=>{ if(await baixar()) toast("Imagem baixada. No WhatsApp, anexe a imagem da galeria."); };
+  $("#zapEnviar").onclick=async()=>{ if(!blob) return; const f=new File([blob],nome,{type:"image/png"});
+    try{ if(navigator.canShare&&navigator.canShare({files:[f]})){ await navigator.share({files:[f],text:txt}); return; } }catch(e){ if(e?.name==="AbortError") return; }
+    await copiar("Texto copiado.");
+    if(await baixar()) toast("Imagem baixada e texto copiado. No WhatsApp, anexe a imagem e cole o texto.",6000);
+    else toast("Este aparelho não envia a imagem direto. Use \"Enviar só o texto\".",6000); };
 }
 
 /* ---------- alertas de pendência ---------- */
