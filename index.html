@@ -1302,8 +1302,9 @@ function abrirAcessos(){
 }
 $("#acessosBtn").onclick=abrirAcessos;
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.24n";
+const APP_VERSAO="2026.10.24o";
 const VERSOES=[
+  {v:"2026.10.24o", d:"24/10/2026", itens:["Comunicado de defeito: vídeo mostrando o defeito obrigatório, com opção de gravar mais vídeos (até 5); fotos do defeito passam a ser opcionais"]},
   {v:"2026.10.24n", d:"24/10/2026", itens:["Comunicado de defeito: sem \"equipamento substituto\" e sem observações; equipamento OPERANTE ou NÃO OPERANTE (no lugar de parado); recolhido para manutenção: responsável é o motorista e o local é sempre a MAAS"]},
   {v:"2026.10.24m", d:"24/10/2026", itens:["PDF gerado no celular sem página quase em branco no meio: o celular não aumenta mais a letra sozinho na hora de montar o PDF, então as quebras de página ficam no lugar certo (comunicado, checklist e relatório)"]},
   {v:"2026.10.24l", d:"24/10/2026", itens:["Aba Checklist dividida em partes: 📋 Checklist, 🔧 Comunicado de defeito e 📊 Gráficos; cada parte com o seu botão, a sua lista e o seu download em PDF, sem misturar"]},
@@ -2335,7 +2336,7 @@ function manCard(m){
     <div class="l1"><span class="when">${esc(m.viatura||"")} · ${fmtD(m.data)}</span><span class="pill ${manCor(m)}">${manTxt(m)}</span></div>
     <div class="where" style="white-space:pre-line">${(m.tipos||[]).map(t=>`<span class="tagimp">${esc(t==="OUTRO"&&m.tipoOutro?m.tipoOutro:t)}</span>`).join("")}${esc(m.desc||"")}</div>
     <div class="meta">${esc(m.supervisao)} · ${esc(m.equipe||"")} · urgência ${esc((m.urg||"—").toLowerCase())}${m.recolhido==="SIM"?` · recolhido ${m.recolh?.data?fmtDs(m.recolh.data):""}${m.recolh?.destino?" → "+esc(m.recolh.destino):""}`:""}${m.reserva==="SIM"?` · reserva ${esc(m.reservaQual||"")}`:""}</div>
-    ${m.midia?`<div class="meta">📷 ${MAN_SLOTS.filter(x=>x.tipo==="foto"&&m.midia[x.k]).length} de 2 fotos do defeito${m.midia.videoDef?" · 🎥 vídeo":""}</div>`:""}
+    ${m.midia?`<div class="meta">🎥 ${manVids(m.midia)} vídeo${manVids(m.midia)===1?"":"s"} · 📷 ${manSlots(m.midia).filter(x=>x.tipo==="foto"&&m.midia[x.k]).length} foto(s)</div>`:""}
     ${manAberta(m)?`<div class="meta" style="color:var(--accent);font-weight:600">🔧 Em manutenção · toque para registrar o retorno à atividade</div>`:""}
     <div class="cksig"><span class="ok">✔ Assinado eletronicamente por <b>${esc(m.assin?.nome||"—")}</b>${m.assin?.em?" · "+fmtHora(m.assin.em):""}</span>${!manAberta(m)?`<span class="ok">✔ Retorno em ${fmtD(m.retorno.data)}${m.retorno.hora?" às "+esc(m.retorno.hora):""} · ${esc(m.retAssin?.nome||"")}</span>`:""}</div>
   </button>`;
@@ -2364,6 +2365,7 @@ function abrirMan(m,pre){
   const sup0=m?.supervisao||pre.supervisao||(travado()?sessao.sup:(kSup&&!kSup.startsWith("G:")?kSup:meuSup()))||"";
   const novo=!m, edit=novo&&podeEntregar(sup0), retEdit=!!m&&manAberta(m)&&podeEntregar(m.supervisao);
   const v={sit:{...(m||{})},tipos:[...(m?.tipos||[])],reserva:m?.reserva||"",retVolta:""}, midia={...(m?.midia||{})};
+  const manSlotsEd=manSlots(midia); // lista viva: "Gravar mais um vídeo" acrescenta aqui
   MAN_SIT.forEach(q=>v.sit[q.k]=manVal(m,q.k));
   const vt0=m?.viatura||pre.viatura||turma.viatura||"SKY 5074.0";
   const vtOpts=[...$("#viatura").options].map(o=>`<option value="${esc(o.value)}"${o.value===vt0?" selected":""}>${esc(o.textContent)}</option>`).join("");
@@ -2380,7 +2382,8 @@ function abrirMan(m,pre){
     <label class="f">KM atual<input id="mfKm" inputmode="numeric" value="${esc(m?.km||pre.km||"")}" ${dis}></label>
     <div class="ckgrp">1. Descrição do defeito / anomalia</div>
     <textarea id="mfDesc" aria-label="Descrição do defeito" placeholder="O que aconteceu, onde, quando apareceu" ${dis}>${esc(m?.desc||pre.desc||"")}</textarea>
-    ${midSecHtml(midia,edit,edit?MAN_SLOTS:manSlots(midia),"Fotos e vídeo do defeito",edit?"Só pela câmera, na hora: duas fotos do defeito de ângulos diferentes, mostrando claramente a avaria, e um vídeo rápido do defeito.":"Registro fotográfico da comunicação.")}
+    ${midSecHtml(midia,edit,manSlotsEd,"Vídeo e fotos do defeito",edit?"Só pela câmera, na hora. O vídeo mostrando o defeito é obrigatório; se precisar, grave mais vídeos (até 5). As fotos são opcionais.":"Registro do defeito.")}
+    ${edit?`<button type="button" class="btn sec" id="mfMaisVid" style="min-height:44px;font-size:14px" ${manSlotsEd.filter(x=>x.tipo==="video").length>=MAN_VID_MAX?"hidden":""}>🎥 Gravar mais um vídeo</button>`:""}
     <div class="ckgrp">2. Tipo de defeito <span class="note" style="text-transform:none;letter-spacing:0">(pode marcar mais de um)</span></div>
     <div class="ckopt" id="mfTipos">${MAN_TIPOS.map(t=>`<button type="button" data-t="${t}" aria-pressed="${v.tipos.includes(t)}" ${dis}>${t}</button>`).join("")}</div>
     <input id="mfTipoOutro" placeholder="Qual outro tipo?" value="${esc(m?.tipoOutro||"")}" ${dis} ${v.tipos.includes("OUTRO")?"":"hidden"}>
@@ -2408,7 +2411,10 @@ function abrirMan(m,pre){
   </div></div>`;
   const close=()=>host.innerHTML="";
   $("#sh").onclick=e=>{if(e.target.id==="sh")close()}; $("#mClose").onclick=close;
-  midLigar(host,midia,edit,edit?MAN_SLOTS:manSlots(midia));
+  const midCtl=midLigar(host,midia,edit,manSlotsEd);
+  if($("#mfMaisVid")) $("#mfMaisVid").onclick=()=>{ const n=manSlotsEd.filter(x=>x.tipo==="video").length+1; if(n>MAN_VID_MAX) return;
+    manSlotsEd.splice(n-1,0,manVidSlot(n)); midCtl?.redesenha(); if(n>=MAN_VID_MAX) $("#mfMaisVid").hidden=true;
+    setTimeout(()=>document.querySelector(`.midslot[data-k="videoDef${n}"]`)?.scrollIntoView({block:"center",behavior:"smooth"}),50); };
   if($("#mPdf")) $("#mPdf").onclick=async()=>{ await Promise.all(manSlots(m.midia).map(s=>midCarregar(m.midia?.[s.k]))); baixarFormPdf($("#mPdf"),manDocHtml(m),arqNome("comunicacao-defeito",m.data,m.viatura),"Comunicação de defeito "+(m.viatura||"")+" · "+fmtD(m.data)); };
   const err=$("#mfErr"), erro=t=>{err.textContent=t; err.hidden=false; err.scrollIntoView({block:"nearest"});};
   host.querySelector(".panel").addEventListener("click",e=>{
@@ -2448,8 +2454,7 @@ function abrirMan(m,pre){
     if(!v.tipos.length) e.push("tipo de defeito (seção 2)"); else if(v.tipos.includes("OUTRO")&&!$("#mfTipoOutro").value.trim()) e.push("qual o outro tipo de defeito");
     const semSit=MAN_SIT.filter(q=>!v.sit[q.k]).map(q=>q.t.toLowerCase()); if(semSit.length) e.push("seção 3: "+semSit.join(", "));
     if(v.sit.recolhido==="SIM"&&(!$("#mfRData").value||!$("#mfRResp").value.trim())) e.push("dados do recolhimento: data e o motorista da "+MAN_LOCAL+" (seção 4)");
-    const semF=MAN_SLOTS.filter(x=>x.tipo==="foto"&&!midia[x.k]).length; if(semF) e.push(`anexe ${semF===1?"a foto do defeito que falta":"as 2 fotos do defeito (ângulos diferentes)"}`);
-    if(assets&&!midia.videoDef) e.push("grave o vídeo rápido do defeito");
+    if(assets&&!manVids(midia)) e.push("grave o vídeo mostrando o defeito (obrigatório)");
     if([...document.querySelectorAll("#kfMid .midst")].some(x=>/enviando/.test(x.textContent))) e.push("espere terminar o envio das fotos");
     if(!v.reserva) e.push("se houve equipamento reserva (seção 5)"); else if(v.reserva==="SIM"&&!$("#mfResQ").value) e.push("qual equipamento reserva");
     if(e.length) return erro("Falta: "+e.join("; ")+".");
@@ -2553,8 +2558,8 @@ function manDocHtml(m){
       <tr><td class="k">Qual equipamento reserva</td><td>${esc(m.reservaQual||"—")}</td></tr></table></div>
     <div><p class="sec">6. Assinatura</p>${fsig("Supervisor",m.assin)}<table style="margin-top:4px">${kv("Data",fmtD(m.data),"Horário",esc(m.hora||""))}</table></div>
     <div><p class="sec">7. Retorno à atividade</p>${ret.volta==="SIM"?`<table>${kv("Data do retorno",fmtD(ret.data),"Horário",esc(ret.hora||"—"))}${kv("KM no retorno",esc(ret.km||"—"),"Oficina / responsável",esc(ret.oficina||"—"))}${kv("Liberado para operar",esc(ret.liberado||"SIM"),"Reserva devolvido",m.reserva==="SIM"?esc(ret.reservaDevolvida||"—"):"N/A")}</table><div class="box" style="margin-top:6px"><b>Serviço executado:</b> ${esc(ret.servico||ret.obs||"—")}${ret.obs&&ret.servico?`<br><b>Observação:</b> ${esc(ret.obs)}`:""}</div>`:`<div class="pend">Equipamento ainda em manutenção – retorno não registrado.</div>`}${m.retAssin?fsig("Supervisor que registrou o retorno à atividade",m.retAssin):""}</div>
-    <div><p class="sec">Registro fotográfico</p><div class="fgrid m">${manSlots(m.midia).filter(x=>x.tipo==="foto").map(x=>{const u=midUrl(m.midia?.[x.k]);return `<div class="fcel">${u?`<img src="${esc(u)}" alt="">`:`<div class="fsem">Sem foto</div>`}<span>${esc(x.t)}</span></div>`}).join("")}</div>
-    <p class="leg" style="margin:6px 0 0">Vídeo do defeito: ${m.midia?.videoDef?"anexado no sistema Programação GPE (assista pelo app, abrindo esta comunicação).":"não anexado."}</p></div>
+    <div><p class="sec">Registro do defeito</p>${(()=>{ const fs=manSlots(m.midia).filter(x=>x.tipo==="foto"&&m.midia?.[x.k]); return fs.length?`<div class="fgrid m">${fs.map(x=>{const u=midUrl(m.midia?.[x.k]);return `<div class="fcel">${u?`<img src="${esc(u)}" alt="">`:`<div class="fsem">Foto indisponível</div>`}<span>${esc(x.t.replace(" (opcional)",""))}</span></div>`}).join("")}</div>`:`<p class="leg" style="margin:4px 0 0">Sem fotos (opcionais).</p>`; })()}
+    <p class="leg" style="margin:6px 0 0">Vídeos do defeito: ${manVids(m.midia)?manVids(m.midia)+" anexado"+(manVids(m.midia)>1?"s":"")+" no sistema Programação GPE (assista pelo app, abrindo esta comunicação).":"não anexado."}</p></div>
     <p class="rod">Documento gerado pelo sistema Programação GPE em ${dataBR(new Date().toISOString())} às ${horaAgora()}.</p></div></div>`;
 }
 async function baixarFormPdf(btn,html,nome,label){
@@ -2636,21 +2641,26 @@ const midErro=e=>e?.msg||({too_large:"Arquivo grande demais. Grave um vídeo mai
 function midSlotHtml(s,m,edit){
   const url=midUrl(m), tem=!!m;
   const prev=tem?(s.tipo==="video"?(m.id?`<button type="button" class="midver" data-ver="${esc(url)}" data-tit="${esc(s.t)}" data-tipo="video" aria-label="Ver vídeo grande"><video src="${esc(url)}#t=0.5" muted playsinline preload="metadata"></video><span class="midplay">▶</span></button>`:""):(url?`<button type="button" class="midver" data-ver="${esc(url)}" data-tit="${esc(s.t)}" aria-label="Ver foto grande"><img src="${esc(url)}" alt="" onerror="this.closest('.midprev').innerHTML='<div class=&quot;midph&quot; style=&quot;font-size:11px;padding:4px;text-align:center&quot;>${esc((m.id&&midErroTxt[m.id])?"foto não encontrada":"foto indisponível neste acesso")}</div>'"></button>`:`<div class="midph">carregando…</div>`)):`<div class="midph">${s.tipo==="video"?"🎥":"📷"}</div>`;
-  return `<div class="midslot${tem?" ok":""}" data-k="${s.k}"><div class="midprev">${prev}</div><div class="midtx"><b>${esc(s.t)}</b><span class="midst">${tem?"✔ anexado":s.tipo==="video"&&!assets&&edit?"vídeo indisponível neste acesso":"falta anexar"}</span>
+  return `<div class="midslot${tem?" ok":""}" data-k="${s.k}"><div class="midprev">${prev}</div><div class="midtx"><b>${esc(s.t)}</b><span class="midst">${tem?"✔ anexado":s.tipo==="video"&&!assets&&edit?"vídeo indisponível neste acesso":/\(opcional\)/.test(s.t)?"opcional":"falta anexar"}</span>
     ${edit?`<div class="midbtns"><label class="btn sec midbtn">${s.tipo==="video"?"🎥 Gravar":"📷 Câmera"}<input type="file" accept="${s.tipo==="video"?"video/*":"image/*"}" capture="environment" hidden></label></div>`:""}</div></div>`;
 }
 // fotos da comunicação de defeito
 const MAN_SLOTS=[
-  {k:"defeito1",t:"Defeito / avaria – ângulo 1 (mostrando claramente o problema)",tipo:"foto"},
-  {k:"defeito2",t:"Defeito / avaria – ângulo 2 (outro ângulo)",tipo:"foto"},
-  {k:"videoDef",t:"Vídeo rápido do defeito (uns 10 a 20 segundos)",tipo:"video"}];
+  {k:"videoDef",t:"Vídeo do defeito (obrigatório · uns 10 a 20 segundos, mostrando o defeito)",tipo:"video"},
+  {k:"defeito1",t:"Foto do defeito – ângulo 1 (opcional)",tipo:"foto"},
+  {k:"defeito2",t:"Foto do defeito – ângulo 2 (opcional)",tipo:"foto"}];
+// vídeos a mais do defeito (opcionais): videoDef2 … videoDef5
+const MAN_VID_MAX=5;
+const manVidSlot=n=>({k:"videoDef"+n,t:"Vídeo "+n+" do defeito (opcional)",tipo:"video"});
+const manVids=midia=>Object.keys(midia||{}).filter(k=>/^videoDef\d*$/.test(k)&&midia[k]).length;
 // fotos que as comunicações antigas tinham: continuam aparecendo nelas
 const MAN_ANT=[
   {k:"carroceria",t:"Parte de cima da carroceria (mostrando que está limpa)",tipo:"foto"},
   {k:"cesto",t:"Dentro do cesto (mostrando que está limpo)",tipo:"foto"},
   {k:"ladoDir",t:"Lateral direita – equipamento inteiro",tipo:"foto"},
   {k:"ladoEsq",t:"Lateral esquerda – equipamento inteiro",tipo:"foto"}];
-const manSlots=midia=>MAN_SLOTS.concat(MAN_ANT.filter(s=>midia?.[s.k]));
+const manSlots=midia=>{ const ex=[]; for(let n=2;n<=MAN_VID_MAX;n++) if(midia?.["videoDef"+n]) ex.push(manVidSlot(n));
+  return [MAN_SLOTS[0],...ex,...MAN_SLOTS.slice(1)].concat(MAN_ANT.filter(s=>midia?.[s.k])); };
 function midSecHtml(midia,edit,slots=MID_SLOTS,titulo="Fotos e vídeo do equipamento",nota){
   return `<div class="ckgrp">${titulo}</div>
     <p class="note" style="margin:0">${nota||(edit?"Fotos e vídeo só pela câmera, tirados na hora (não vale foto antiga da galeria). O vídeo é uma volta de 360° em torno do cesto.":"Registro fotográfico do fim do expediente.")}</p>
@@ -2714,7 +2724,7 @@ function midLigar(host,midia,edit,slots=MID_SLOTS){
   const MID_SLOTS=slots;
   const redesenha=()=>{ host.querySelector("#kfMid").innerHTML=MID_SLOTS.map(s=>midSlotHtml(s,midia[s.k],edit)).join(""); };
   Promise.all(MID_SLOTS.map(s=>midCarregar(midia[s.k]))).then(redesenha);
-  if(!edit) return;
+  if(!edit) return {redesenha};
   const enviar=async(el,file)=>{ const s=MID_SLOTS.find(x=>x.k===el.dataset.k), st=el.querySelector(".midst");
     st.classList.remove("bad"); st.textContent=s.tipo==="video"?"enviando vídeo…":"enviando foto…";
     try{ midia[s.k]=await midEnviar(s,file,p=>{st.textContent=`reduzindo o vídeo… ${Math.round(p*100)}%`}); redesenha(); }
@@ -2726,6 +2736,7 @@ function midLigar(host,midia,edit,slots=MID_SLOTS){
     const lb=e.target.closest(".midbtn"); if(!lb||window.GPE_CAMERA_NATIVA) return; const inp=lb.querySelector('input[type="file"]'); if(e.target===inp) return;
     e.preventDefault(); const el=lb.closest(".midslot"), s=MID_SLOTS.find(x=>x.k===el.dataset.k);
     const r=await camAbrir(s); if(r==="nativo"){ inp.click(); return; } if(r) enviar(el,r); });
+  return {redesenha};
 }
 
 /* ---------- gráficos do checklist e da manutenção ---------- */
