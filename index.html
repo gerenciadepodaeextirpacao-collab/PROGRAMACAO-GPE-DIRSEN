@@ -500,6 +500,8 @@ nav.tabs button[aria-current="page"]{background:linear-gradient(180deg,#ff8c42 0
 .lbox .lbt button{background:rgba(255,255,255,.15);color:#fff;border:0;border-radius:99px;width:40px;height:40px;font-size:18px;cursor:pointer}
 .lbox img{max-width:100%;max-height:100%;width:auto;height:auto;margin:auto;object-fit:contain;align-self:center;justify-self:center;padding:0 8px 16px}
 .midbtns{display:flex;flex-wrap:wrap;gap:6px}
+.signovo{display:grid;gap:8px;border:1px dashed var(--accent);border-radius:10px;padding:8px 10px}
+.assbox{display:grid;gap:6px;border:1px dashed var(--line);border-radius:10px;padding:8px 10px;background:var(--sunk)}
 .cam{position:fixed;inset:0;z-index:600;background:#000;color:#fff;display:grid;grid-template-rows:auto 1fr auto}
 .cam .camtop{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;font:600 14px var(--body)}
 .cam .camx,.cam .camvira{background:rgba(255,255,255,.18);color:#fff;border:0;border-radius:99px;width:44px;height:44px;font-size:20px;cursor:pointer}
@@ -1223,6 +1225,10 @@ function abrirAcessos(){
       ${canAdmin?`<div class="row2"><input type="password" placeholder="${u.hash?"Nova senha":"Definir senha"}" data-pin="${esc(id)}" aria-label="Senha de ${esc(u.nome)}">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><button type="button" class="btn pri" style="min-height:48px;font-size:14px" data-savepin="${esc(id)}">Salvar senha</button>
         ${id===sessao?.id?"":`<button type="button" class="btn ${u.ativo?"danger":"sec"}" style="min-height:48px;font-size:14px" data-toggle="${esc(id)}">${u.ativo?"Desativar":"Reativar"}</button>`}</div></div>
+      <div class="assbox"><div class="note" style="margin:0">✍ Senha de assinatura: ${assins[id]?.hash?`<b style="color:var(--ok)">cadastrada</b>${assins[id].em?" em "+fmtHora(assins[id].em):""}${assins[id].porGerente?" (pela gerência)":" (pela própria pessoa)"}`:`<b style="color:var(--bad)">não cadastrada</b>`}</div>
+        <div class="row2"><input type="password" autocomplete="new-password" placeholder="${assins[id]?.hash?"Nova senha de assinatura":"Cadastrar senha de assinatura"}" data-assp="${esc(id)}" aria-label="Senha de assinatura de ${esc(u.nome)}">
+        <button type="button" class="btn sec" style="min-height:48px;font-size:14px" data-asssave="${esc(id)}">${assins[id]?.hash?"Trocar senha de assinatura":"Salvar senha de assinatura"}</button></div>
+        ${assins[id]?.hash?`<button type="button" class="btn danger" style="min-height:44px;font-size:14px" data-assreset="${esc(id)}">Resetar senha de assinatura (esqueceu)</button>`:""}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><button type="button" class="btn sec" style="min-height:44px;font-size:14px" data-edit="${esc(id)}">Editar</button>
         ${id===sessao?.id?"":`<button type="button" class="btn danger" style="min-height:44px;font-size:14px" data-del="${esc(id)}">Excluir</button>`}</div>
       <div class="inline" data-editbox="${esc(id)}" hidden>
@@ -1251,6 +1257,18 @@ function abrirAcessos(){
     const sp=e.target.closest("[data-savepin]"); if(sp){const id=sp.dataset.savepin, pin=host.querySelector(`[data-pin="${id}"]`).value;
       if(!pinOk(pin)){toast(MSG_SENHA);return}
       const salt=novoSal(); await salvar(id,{salt,hash:await hashPin(salt,pin),ativo:true,senhaEm:new Date().toISOString()},"Senha de "+acesso[id].nome+" salva. No próximo acesso a pessoa cria uma senha própria."); return;}
+    const as=e.target.closest("[data-asssave]"); if(as){ const id=as.dataset.asssave, u=acesso[id], n=host.querySelector(`[data-assp="${id}"]`).value;
+      if(!n||n.length<6){toast("A senha de assinatura precisa ter pelo menos 6 caracteres.");return}
+      if(await senhaConfere(id,n)){toast("A senha de assinatura tem que ser diferente da senha de entrar no app.");return}
+      const salt=novoSal(), doc={salt,hash:await hashPin(salt,n),nome:u.nome,em:new Date().toISOString(),porGerente:true};
+      try{ await db.collection(ASS_COL).doc(id).set(doc); assins[id]=doc; toast("Senha de assinatura de "+u.nome+" salva. Passe para a pessoa; ela pode trocar em \"Minha senha de assinatura\"."); abrirAcessos(); }
+      catch(x){ toast("Não foi possível salvar a senha de assinatura agora."); }
+      return;}
+    const ar=e.target.closest("[data-assreset]"); if(ar){ const id=ar.dataset.assreset, u=acesso[id];
+      if(ar.dataset.armed!=="1"){ ar.dataset.armed="1"; ar.textContent="Toque de novo para resetar"; return; }
+      try{ await db.collection(ASS_COL).doc(id).delete(); delete assins[id]; toast("Senha de assinatura de "+u.nome+" resetada. Na próxima assinatura ele cria uma nova (confirmando a senha de entrar)."); abrirAcessos(); }
+      catch(x){ toast("Não foi possível resetar agora."); }
+      return;}
     const tg=e.target.closest("[data-toggle]"); if(tg){const id=tg.dataset.toggle, u=acesso[id];
       if(u.ativo&&tg.dataset.armed!=="1"){tg.dataset.armed="1";tg.textContent="Confirmar";return}
       await salvar(id,{ativo:!u.ativo},u.ativo?u.nome+" desativado.":u.nome+" reativado."); return;}
@@ -1282,8 +1300,10 @@ function abrirAcessos(){
 }
 $("#acessosBtn").onclick=abrirAcessos;
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.24h";
+const APP_VERSAO="2026.10.24j";
 const VERSOES=[
+  {v:"2026.10.24j", d:"24/10/2026", itens:["Primeira assinatura: quem ainda não tem senha de assinatura cria na hora de assinar (também quando assina com a matrícula no aparelho de outra pessoa), confirmando a senha de entrar","Acessos: botão para o gerente resetar a senha de assinatura esquecida; a pessoa cria outra na próxima assinatura"]},
+  {v:"2026.10.24i", d:"24/10/2026", itens:["Acessos: o gerente cadastra ou troca a senha de assinatura de cada pessoa e vê se ela já tem (e se foi cadastrada pela gerência ou pela própria pessoa)"]},
   {v:"2026.10.24h", d:"24/10/2026", itens:["Tocar em \"📷 Câmera\" ou \"🎥 Gravar\" abre a câmera do aparelho direto no app (botão de tirar foto, trocar câmera, gravar até 30 s, conferir e usar); se o aparelho não deixar, abre a câmera do celular"]},
   {v:"2026.10.24g", d:"24/10/2026", itens:["Comunicação de defeito sem operador e matrícula do operador (tela, lista e PDF): só a assinatura do supervisor"]},
   {v:"2026.10.24f", d:"24/10/2026", itens:["Comunicação de defeito: só 2 fotos do defeito (ângulos diferentes) e um vídeo rápido do defeito; as comunicações antigas continuam mostrando as fotos que já tinham"]},
@@ -1923,19 +1943,34 @@ const souRecebedor=c=>!!sessao && sessao.perfil!=="diretoria" && !chkRecebido(c)
 const podeEntregar=sup=>!!sessao && sessao.perfil!=="diretoria" && (!travado()||sup===sessao.sup);
 const nomeSupDe=sup=>{ if(!sup) return ""; const u=Object.values(acesso||{}).find(x=>x.perfil==="supervisor"&&x.ativo&&x.sup===sup); return u?.nome||supOf(sup)?.enc||""; };
 const supAssinaProprio=sup=>ehSup()&&sessao.sup===sup;
+// matrícula + senha de assinatura; se a pessoa ainda não tem senha de assinatura, cria ali mesmo (confirmando a senha de entrar dela)
+const sigMatHtml=(idMat,idPin,rot)=>`<div class="row2"><label class="f">${rot}<input id="${idMat}" class="sigmat" data-pin="${idPin}" autocomplete="off" placeholder="ex.: m859209"></label><label class="f" id="${idPin}W">Senha de assinatura<input id="${idPin}" type="password" autocomplete="off"></label></div>
+  <div class="signovo" id="${idPin}Novo" hidden><p class="note" style="margin:0"><b>Primeira assinatura de <span data-nome></span>.</b> Crie agora a senha de assinatura (pelo menos 6 caracteres, diferente da senha de entrar no app). Ela vale como a assinatura dele: não passe para ninguém.</p>
+    <div class="row2"><label class="f">Nova senha de assinatura<input id="${idPin}N" type="password" autocomplete="new-password"></label><label class="f">Repita a senha<input id="${idPin}C" type="password" autocomplete="new-password"></label></div>
+    <label class="f">Senha de entrar no app de <span data-nome></span> (para confirmar que é ele)<input id="${idPin}L" type="password" autocomplete="off"></label></div>`;
+function sigMatUI(inp){ const id=inp.dataset.pin, a=acharMat(inp.value), novo=!!(a&&a[1].ativo&&a[1].perfil==="supervisor"&&!assins[a[0]]?.hash);
+  const w=document.getElementById(id+"W"), bx=document.getElementById(id+"Novo"); if(!w||!bx) return;
+  w.hidden=novo; bx.hidden=!novo; if(novo) bx.querySelectorAll("[data-nome]").forEach(x=>x.textContent=a[1].nome); }
+document.addEventListener("input",e=>{ const m=e.target.closest?.(".sigmat"); if(m) sigMatUI(m); });
+// confere a senha de assinatura de a=[uid,u] (ou cria a primeira); "" = ok
+async function senhaPorMat(idPin,a){
+  if(assins[a[0]]?.hash){ const p=$("#"+idPin)?.value||""; if(!p) return "senha de assinatura"; return await hashPin(assins[a[0]].salt,p)===assins[a[0]].hash?"":"senha de assinatura não confere"; }
+  const r=await criarSenhaAss(a[0],$("#"+idPin+"N")?.value,$("#"+idPin+"C")?.value,$("#"+idPin+"L")?.value);
+  if(!r){ const inp=document.querySelector(`.sigmat[data-pin="${idPin}"]`); if(inp) sigMatUI(inp); }
+  return r?(r==="a senha de entrar no app não confere"?"a senha de entrar no app de "+a[1].nome+" não confere":"primeira senha de assinatura: "+r):"";
+}
 const sigBlocoHtml=(px,sup)=>supAssinaProprio(sup)
   ? `<p class="note" style="margin:6px 0 0"><b>Supervisor que entrega</b> · assina como <b>${esc(sessao.nome)}</b>, ${esc(cargoDe(acesso?.[sessao.id]||sessao))}</p>${sigFormHtml(px,sessao.id)}`
-  : `<p class="note" style="margin:6px 0 0"><b>Assinatura do supervisor da turma</b> (${esc(nomeSupDe(sup)||"supervisor")}) · ele assina aqui com a matrícula e a senha de assinatura dele.</p><div class="row2"><label class="f">Matrícula do supervisor<input id="${px}Mat" autocomplete="off" placeholder="ex.: m859209"></label><label class="f">Senha de assinatura<input id="${px}Pin" type="password" autocomplete="off"></label></div>`;
+  : `<p class="note" style="margin:6px 0 0"><b>Assinatura do supervisor da turma</b> (${esc(nomeSupDe(sup)||"supervisor")}) · ele assina aqui com a matrícula e a senha de assinatura dele. Se for a primeira assinatura, ele cria a senha aqui mesmo.</p>${sigMatHtml(px+"Mat",px+"Pin","Matrícula do supervisor")}`;
 async function assinante(px,sup){
   if(supAssinaProprio(sup)){ const r=await conferirAss(px,sessao.id); if(r) return {erro:r}; return {uid:sessao.id,nome:sessao.nome,sup:sessao.sup,cargo:cargoDe(acesso?.[sessao.id]||sessao),mat:matDe(acesso?.[sessao.id]||{}),como:"pelo próprio acesso"}; }
-  const m=$("#"+px+"Mat")?.value, p=$("#"+px+"Pin")?.value;
-  if(!matKey(m)||!p) return {erro:"matrícula e senha de assinatura do supervisor"};
+  const m=$("#"+px+"Mat")?.value;
+  if(!matKey(m)) return {erro:"matrícula e senha de assinatura do supervisor"};
   const a=acharMat(m), u=a?.[1];
   if(!u||!u.ativo) return {erro:"matrícula do supervisor não encontrada ou desativada"};
   if(u.perfil!=="supervisor") return {erro:"essa matrícula não é de supervisor; só o supervisor assina"};
   if(sup&&u.sup!==sup) return {erro:`essa matrícula é da ${u.sup||"outra turma"}; quem assina é o supervisor da ${sup}`};
-  const sa=assins[a[0]]; if(!sa?.hash) return {erro:`${u.nome} ainda não criou a senha de assinatura (ele cria no próprio acesso, aba Checklist, em "Minha senha de assinatura")`};
-  if(await hashPin(sa.salt,p)!==sa.hash) return {erro:"senha de assinatura do supervisor não confere"};
+  const rs=await senhaPorMat(px+"Pin",a); if(rs) return {erro:rs==="senha de assinatura"?"senha de assinatura do supervisor":rs==="senha de assinatura não confere"?"senha de assinatura do supervisor não confere":rs};
   return {uid:a[0],nome:u.nome,sup:u.sup,cargo:cargoDe(u),mat:matDe(u),como:"assinado no aparelho de "+(sessao?.nome||"outro usuário")};
 }
 // o que fugiu do esperado: situação (seção 1) e itens com NÃO (seção 2)
@@ -2156,7 +2191,7 @@ function abrirChk(c){
         <label class="f">Ressalva no recebimento (se houver)<textarea id="kfRecObs" placeholder="Ex.: vazamento na mangueira não informado na entrega"></textarea></label>
         <label class="ck"><input type="checkbox" id="kfCiencia"><span class="note" style="color:var(--ink)"><b>Ciência:</b> declaro que recebi o equipamento e tomei ciência das condições registradas neste checklist${chkAlertas(c).length?" (inclusive das anomalias apontadas)":""}${c.ocorr?" e das ocorrências / observações":""}.</span></label>
         ${travado()&&sessao.sup===c.recebe?.sup?`<p class="note" style="margin:0">Assina como <b>${esc(sessao.nome)}</b>, ${esc(cargoDe(acesso?.[sessao.id]||sessao))}.</p>${sigFormHtml("kR",sessao.id)}`
-          :`<p class="note" style="margin:0">O supervisor que recebe assina aqui com a matrícula e a <b>senha de assinatura</b> dele.</p><div class="row2"><label class="f">Matrícula de quem recebe<input id="kfRecMat" autocomplete="off" placeholder="ex.: m859209"></label><label class="f">Senha de assinatura<input id="kfRecPin" type="password" autocomplete="off"></label></div>`}
+          :`<p class="note" style="margin:0">O supervisor que recebe assina aqui com a matrícula e a <b>senha de assinatura</b> dele.</p>${sigMatHtml("kfRecMat","kfRecPin","Matrícula de quem recebe")}`}
         <div class="actions" style="grid-template-columns:1fr;margin:4px 0 0"><button type="button" class="btn pri" id="kReceber">Assinar recebimento</button></div>`
        : `<p class="note" style="margin:0">Aguardando a assinatura de quem recebe${c.recebe?.sup?" (<b>"+esc(c.recebe.sup)+" · "+esc(supOf(c.recebe.sup)?.enc||"")+"</b>)":""}. O supervisor que recebe assina pelo próprio acesso, na aba Checklist.</p>`}
     </div>`:""}
@@ -2179,15 +2214,13 @@ function abrirChk(c){
         const r=await conferirAss("kR",sessao.id); if(r) return erro("Falta / erro: "+r+".");
         quem={uid:sessao.id,nome:sessao.nome,sup:sessao.sup,cargo:cargoDe(acesso?.[sessao.id]||sessao),mat:matDe(acesso?.[sessao.id]||{}),como:"pelo próprio acesso"};
       } else{
-        const m=$("#kfRecMat").value, p=$("#kfRecPin").value;
-        if(!matKey(m)||!p) return erro("Falta: matrícula e senha de assinatura de quem recebe.");
+        const m=$("#kfRecMat").value;
+        if(!matKey(m)) return erro("Falta: matrícula e senha de assinatura de quem recebe.");
         const a=acharMat(m), u=a?.[1];
         if(!u||!u.ativo) return erro("Matrícula de quem recebe não encontrada ou desativada.");
         if(u.perfil!=="supervisor") return erro("Só o supervisor da turma que recebe pode assinar o recebimento.");
-        const sa=assins[a[0]];
-        if(!sa?.hash) return erro(`${u.nome} ainda não criou a senha de assinatura. Ele cria no próprio acesso, na aba Checklist, em "Minha senha de assinatura".`);
-        if(await hashPin(sa.salt,p)!==sa.hash) return erro("Senha de assinatura de quem recebe não confere.");
         if(u.sup&&c.recebe?.sup&&u.sup!==c.recebe.sup) return erro(`Esta matrícula é da ${u.sup}. O turno foi entregue para a ${c.recebe.sup}.`);
+        const rs=await senhaPorMat("kfRecPin",a); if(rs) return erro(rs==="senha de assinatura"?"Falta: senha de assinatura de quem recebe.":rs==="senha de assinatura não confere"?"Senha de assinatura de quem recebe não confere.":"Não foi possível: "+rs+".");
         quem={uid:a[0],nome:u.nome,sup:u.sup||c.recebe?.sup||"",cargo:cargoDe(u),mat:matDe(u),como:"assinado no aparelho de "+(sessao?.nome||"outro usuário")};
       }
       if(quem.uid===c.entrega?.uid) return erro("Quem recebe não pode ser o mesmo supervisor que entregou.");
@@ -2341,7 +2374,7 @@ function abrirMan(m,pre){
       : `<p class="note" style="margin:0">Retorno do equipamento: <b>${manAberta(m)?"ainda não":"SIM · "+fmtD(m.retorno.data)+" às "+esc(m.retorno.hora||"—")}</b></p>`}
     <div class="ckbox">
       <div class="ckgrp">6. Assinaturas</div>
-      ${novo?`${edit?`<p class="note" style="margin:0"><b>Operador:</b> identificado acima por nome e matrícula.</p>${sigBlocoHtml("mE",sup0)}<label class="f">Horário<input type="time" id="mfHora" value="${horaAgora()}"></label>`:`<p class="note">Somente consulta.</p>`}`
+      ${novo?`${edit?`${sigBlocoHtml("mE",sup0)}<label class="f">Horário<input type="time" id="mfHora" value="${horaAgora()}"></label>`:`<p class="note">Somente consulta.</p>`}`
         : assinHtml("Supervisor",m.assin)+`<p class="note" style="margin:0">Data: <b>${fmtD(m.data)}</b> · Horário: <b>${esc(m.hora||"—")}</b></p>`}
     </div>
     ${m?retSecHtml(m,retEdit):""}
