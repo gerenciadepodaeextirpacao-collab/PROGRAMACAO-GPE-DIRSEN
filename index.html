@@ -1097,9 +1097,11 @@ const byId = id => todos().find(r=>r.id===id);
 
 /* ---------- acesso: usuário + PIN ---------- */
 // Lista de pessoas fica no documento cfg/acesso (só quem edita o app pode alterar). O PIN é guardado com hash SHA-256 + sal.
-const PERF={diretoria:"Diretoria",gerencia:"Gerente",ger_equipe:"Gerência",coordenador:"Coordenador",supervisor:"Supervisor",fiscal:"Fiscal de turma"};
-const ORD={diretoria:0,gerencia:1,ger_equipe:2,coordenador:3,supervisor:4,fiscal:5};
-const PERF_DESC={diretoria:"Diretoria (consulta geral)",gerencia:"Gerente (visão geral + acessos)",ger_equipe:"Gerência (visão geral)",coordenador:"Coordenador (visão geral)",supervisor:"Supervisor",fiscal:"Fiscal de turma"};
+const PERF={diretoria:"Diretoria",gerencia:"Gerente",ger_equipe:"Gerência",coordenador:"Coordenador",supervisor:"Supervisor",supervisor1:"Supervisor 1",fiscal:"Fiscal de turma"};
+const ORD={diretoria:0,gerencia:1,ger_equipe:2,coordenador:3,supervisor:4,supervisor1:5,fiscal:6};
+const PERF_DESC={diretoria:"Diretoria (consulta geral)",gerencia:"Gerente (visão geral + acessos)",ger_equipe:"Gerência (visão geral)",coordenador:"Coordenador (visão geral)",supervisor:"Supervisor",supervisor1:"Supervisor 1 (baixas, quedas, lista e painel da turma)",fiscal:"Fiscal de turma"};
+// Supervisor 1: só Baixas, Quedas, Lista e Painel (da própria turma); não programa nem faz checklist
+const SUP1_ABAS=new Set(["campo","oc","lista","resumo"]);
 // perfis sem turma: enxergam todas as supervisões
 const GERAL=new Set(["diretoria","gerencia","ger_equipe","coordenador"]);
 let acesso=null, acessoLoaded=false, canAdmin=false, sessao=ls.get("gpe_sessao",null);
@@ -1163,7 +1165,7 @@ function concluirEntrada(id,u,mat){
   sessao={id,nome:u.nome,perfil:u.perfil,sup:u.sup||""}; ls.set("gpe_sessao",sessao); if(window.GPE_NETLIFY) canAdmin=u.perfil==="gerencia"; ls.set("gpe_ultimo",id); ls.set("gpe_ultmat",matKey(mat));
   if(travado()){ ls.set("gpe_sup",sessao.sup); const t=ls.get("gpe_turma",{}); ls.set("gpe_turma",{...t,sup:sessao.sup,fiscal:sessao.perfil==="fiscal"?sessao.nome:t.fiscal}); }
   $("#lgPin").value="";
-  renderLogin(); limpar("prog"); show(sessao.perfil==="fiscal"?"campo":soLeitura()?"resumo":ls.get("gpe_tab","campo")); renderAll(); scrollTo(0,0);
+  renderLogin(); limpar("prog"); show(sessao.perfil==="fiscal"||sessao.perfil==="supervisor1"?"campo":soLeitura()?"resumo":ls.get("gpe_tab","campo")); renderAll(); scrollTo(0,0);
   toast("Bem-vindo, "+sessao.nome+".");
 }
 $("#lgForm").addEventListener("submit",entrar);
@@ -1201,7 +1203,7 @@ function applyPerms(){
   $("#whoNome").textContent=s.nome; $("#whoPerfil").textContent=PERF[per]+(s.sup?" · "+s.sup:"");
   $("#acessosBtn").hidden=!isGerente();
   const tabs=[...document.querySelectorAll("nav.tabs button")];
-  tabs.forEach(b=>b.hidden = (b.dataset.v==="upd" && per!=="gerencia") || (per==="fiscal" && (b.dataset.v==="form"||b.dataset.v==="resumo")) || (per==="diretoria" && (b.dataset.v==="form"||b.dataset.v==="campo"||b.dataset.v==="oc")) || (per==="supervisor" && (b.dataset.v==="lista"||b.dataset.v==="resumo")));
+  tabs.forEach(b=>b.hidden = (b.dataset.v==="upd" && per!=="gerencia") || (per==="fiscal" && (b.dataset.v==="form"||b.dataset.v==="resumo")) || (per==="diretoria" && (b.dataset.v==="form"||b.dataset.v==="campo"||b.dataset.v==="oc")) || (per==="supervisor" && (b.dataset.v==="lista"||b.dataset.v==="resumo")) || (per==="supervisor1" && !SUP1_ABAS.has(b.dataset.v)));
   const nvis=tabs.filter(b=>!b.hidden).length, nw=document.querySelector("nav.tabs .wrap"); nw.style.gridTemplateColumns=`repeat(${nvis},1fr)`; nw.classList.toggle("t6",nvis>=6);
   const lock=travado(), g=supOf(s.sup)?.grupo||"";
   [["#cSup",s.sup],["#oSup",s.sup],["#kSup",s.sup],["#kgSup",s.sup],["#fSup",s.sup],["#rSup",s.sup]].forEach(([sel,v])=>{const el=$(sel); if(lock){el.value=v; el.disabled=true;} else el.disabled=false;});
@@ -1209,6 +1211,7 @@ function applyPerms(){
   if(per==="fiscal" && (curView==="form"||curView==="resumo")) show("campo");
   if(per==="diretoria" && (curView==="form"||curView==="campo"||curView==="oc")) show("resumo");
   if(per==="supervisor" && (curView==="lista"||curView==="resumo")) show("form");
+  if(per==="supervisor1" && !SUP1_ABAS.has(curView)) show("campo");
   if(curView==="upd" && per!=="gerencia") show(per==="diretoria"?"resumo":per==="fiscal"?"campo":"form");
 }
 function nomeAutor(){ return sessao?.nome||""; }
@@ -1244,7 +1247,7 @@ function abrirAcessos(){
     ${canAdmin?`<section class="card" style="margin:0"><div class="step">Adicionar pessoa</div>
       <div class="row2"><label class="f">Matrícula<input id="nuMat" autocapitalize="none" placeholder="Ex.: m859209"></label>
       <label class="f">Nome<input id="nuNome" placeholder="Ex.: JOÃO DA SILVA"></label></div>
-      <div class="row2"><label class="f">Perfil<select id="nuPerf">${["supervisor","fiscal","coordenador","ger_equipe","gerencia","diretoria"].map(k=>`<option value="${k}">${PERF_DESC[k]}</option>`).join("")}</select></label>
+      <div class="row2"><label class="f">Perfil<select id="nuPerf">${["supervisor","supervisor1","fiscal","coordenador","ger_equipe","gerencia","diretoria"].map(k=>`<option value="${k}">${PERF_DESC[k]}</option>`).join("")}</select></label>
       <label class="f">Senha<input id="nuPin" type="password" placeholder="Mínimo 6 caracteres"></label></div>
       <label class="f" id="nuSupW">Turma<select id="nuSup">${SUPS.map(s=>`<option value="${esc(s.id)}">${esc(s.id)}</option>`).join("")}</select></label>
       <button type="button" class="btn pri" id="nuAdd">Adicionar</button></section>`:""}
@@ -1302,8 +1305,9 @@ function abrirAcessos(){
 }
 $("#acessosBtn").onclick=abrirAcessos;
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.24o";
+const APP_VERSAO="2026.10.26";
 const VERSOES=[
+  {v:"2026.10.26", d:"26/10/2026", itens:["Novo perfil de acesso \"Supervisor 1\": vê só Baixas, Quedas, Lista e Painel da própria turma (não programa, não faz checklist nem assina)"]},
   {v:"2026.10.24o", d:"24/10/2026", itens:["Comunicado de defeito: vídeo mostrando o defeito obrigatório, com opção de gravar mais vídeos (até 5); fotos do defeito passam a ser opcionais"]},
   {v:"2026.10.24n", d:"24/10/2026", itens:["Comunicado de defeito: sem \"equipamento substituto\" e sem observações; equipamento OPERANTE ou NÃO OPERANTE (no lugar de parado); recolhido para manutenção: responsável é o motorista e o local é sempre a MAAS"]},
   {v:"2026.10.24m", d:"24/10/2026", itens:["PDF gerado no celular sem página quase em branco no meio: o celular não aumenta mais a letra sozinho na hora de montar o PDF, então as quebras de página ficam no lugar certo (comunicado, checklist e relatório)"]},
