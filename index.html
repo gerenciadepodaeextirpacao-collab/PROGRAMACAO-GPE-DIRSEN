@@ -167,6 +167,11 @@ nav.tabs button{font-size:13px;letter-spacing:.02em}
 .alert button b{font:700 22px var(--display);min-width:32px;color:var(--warn)}
 .alert button span{font-size:14px}
 .alert button small{display:block;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
+/* avisos urgentes (programação da semana seguinte incompleta e programado sem baixa): vermelho e piscando */
+.alert button.urg{background:linear-gradient(180deg,#e53935,#b3261e)!important;border:1px solid #7f1410!important;border-bottom:3px solid #5c0d0a!important;color:#fff!important;animation:urgPisca 1.1s ease-in-out infinite;box-shadow:0 0 0 0 rgba(229,57,53,.7)}
+.alert button.urg b{white-space:nowrap}.alert button.urg b,.alert button.urg span{color:#fff!important}.alert button.urg small{color:#ffe3e0!important;font-weight:600}
+@keyframes urgPisca{0%,100%{filter:none;box-shadow:0 0 0 0 rgba(229,57,53,.75)}50%{filter:brightness(1.35) saturate(1.2);box-shadow:0 0 0 7px rgba(229,57,53,0)}}
+.alert:has(button.urg){border-color:#d32f2f;border-width:2px}.alert:has(button.urg) h3{color:#d32f2f}
 .alert.ok{border-color:var(--ok)} .alert.ok h3{color:var(--ok)}
 .logl{font-size:12.5px;color:var(--muted);display:grid;gap:2px;max-height:160px;overflow:auto}
 .zapprev{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--sunk);max-height:52vh;overflow-y:auto}.zapprev img{width:100%;display:block;cursor:zoom-in}.zapprev .midph{padding:30px;text-align:center}
@@ -502,6 +507,10 @@ nav.tabs button[aria-current="page"]{background:linear-gradient(180deg,#ff8c42 0
 .lbox img{max-width:100%;max-height:100%;width:auto;height:auto;margin:auto;object-fit:contain;align-self:center;justify-self:center;padding:0 8px 16px}
 .midbtns{display:flex;flex-wrap:wrap;gap:6px}
 .signovo{display:grid;gap:8px;border:1px dashed var(--accent);border-radius:10px;padding:8px 10px}
+.pxs{border:1px solid var(--line);border-left:6px solid var(--warn);border-radius:12px;background:var(--surface);padding:10px 12px;display:grid;gap:6px;margin:0 0 10px}
+.pxs.ok{border-left-color:var(--ok)}.pxs.bad{border-left-color:var(--bad);background:var(--bad-bg)}
+.pxs .pxh{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline}.pxs .pxh b{font-family:var(--display);font-size:18px;text-transform:uppercase;letter-spacing:.03em}.pxs .pxh span{font-size:13px;color:var(--muted)}
+.pxs .pxl{display:flex;flex-wrap:wrap;gap:6px}.pxs .pxl span{font-size:12.5px;border-radius:99px;padding:4px 10px;background:var(--warn-bg);color:var(--warn)}.pxs .pxl span.ok{background:var(--ok-bg);color:var(--ok)}.pxs .pxl span.bad{background:var(--bad-bg);color:var(--bad);border:1px solid var(--bad)}
 .assbox{display:grid;gap:6px;border:1px dashed var(--line);border-radius:10px;padding:8px 10px;background:var(--sunk)}
 .cam{position:fixed;inset:0;z-index:600;background:#000;color:#fff;display:grid;grid-template-rows:auto 1fr auto}
 .cam .camtop{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;font:600 14px var(--body)}
@@ -763,6 +772,7 @@ nav.tabs button[aria-current="page"]{background:linear-gradient(180deg,#ff8c42 0
       <label class="f">Dia<input id="dia" readonly tabindex="-1"></label>
       <label class="f">Semana<input id="semana" inputmode="numeric"></label>
     </div>
+    <p class="err" id="dataAviso" hidden style="margin:0"></p>
     <label class="f">Setor / bairro<input id="bairro" list="bairros" autocomplete="off" placeholder="Comece a digitar e escolha da lista"></label>
     <div class="endsep" data-end="e_">
       <div class="es-row1"><label class="f">Tipo de via<select id="e_via"><option value="">Selecione…</option><option value="R.">R. (rua)</option><option value="AV.">AV. (avenida)</option><option value="AL.">AL. (alameda)</option><option value="PÇ.">PÇ. (praça)</option><option value="ROD.">ROD. (rodovia)</option><option value="TV.">TV. (travessa)</option><option value="ESTR.">ESTR. (estrada)</option></select></label>
@@ -938,6 +948,7 @@ nav.tabs button[aria-current="page"]{background:linear-gradient(180deg,#ff8c42 0
 <div id="v-resumo" hidden>
   <h2>Painel</h2>
   <p class="lead">Programado × executado em tempo real, direto dos lançamentos. Use os filtros para ver uma semana, um grupo ou uma turma.</p>
+  <div id="proxSem"></div>
   <div class="filters"><select id="rSem" aria-label="Semana"></select><select id="rGrp" aria-label="Grupo"><option value="">PODA I + PODA II</option><option>PODA I</option><option>PODA II</option></select><select id="rSup" aria-label="Turma" style="grid-column:1/-1"></select>
     <div class="diaf" style="grid-column:1/-1"><label for="rDia">Dia específico</label><input type="date" id="rDia" aria-label="Dia específico"><button type="button" class="btn sec" id="rDiaX" hidden>Limpar dia</button></div></div>
   <p class="note" id="rDiaNote" hidden style="margin:6px 0 0"></p>
@@ -1022,7 +1033,8 @@ function fmtD(s){const d=parseD(s);return d?String(d.getDate()).padStart(2,"0")+
 function fmtDs(s){const d=parseD(s);return d?String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0"):"—"}
 function diaDe(s){const d=parseD(s);return d?DIAS[d.getDay()]:""}
 // Semana GPE: 27ª começa em 07/09/2026 (segunda), mesma numeração dos painéis da planilha.
-function semanaDe(s){const d=parseD(s);if(!d)return null;const base=new Date(2026,8,7);const seg=new Date(d);seg.setDate(d.getDate()-((d.getDay()+6)%7));return 27+Math.round((seg-base)/(7*864e5))}
+// semana de DOMINGO a SÁBADO (27ª semana = 06/09/2026 a 12/09/2026)
+function semanaDe(s){const d=parseD(s);if(!d)return null;const base=new Date(2026,8,6);const dom=new Date(d);dom.setDate(d.getDate()-d.getDay());return 27+Math.round((dom-base)/(7*864e5))}
 function receitaDe(q){return Math.round(ITENS.reduce((a,i)=>a+(+q?.[i.c]||0)*i.p,0)*100)/100}
 function somaG(q,g){return ITENS.filter(i=>i.g===g).reduce((a,i)=>a+(+q?.[i.c]||0),0)}
 function supOf(id){return SUPS.find(s=>s.id===id)}
@@ -1074,7 +1086,7 @@ addEventListener("offline",syncUI);
 const JANELA_DIAS=200; // cobre a regra de 180 dias das áreas públicas
 const CORTE=(()=>{const d=new Date();d.setDate(d.getDate()-JANELA_DIAS);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")})();
 let recentes=[], pendentes=[], antigos=[], histCarregado=false;
-function mergeRegs(){ const m=new Map(); [...antigos,...recentes,...pendentes].forEach(r=>{ m.set(r.id,r); }); registros=[...m.values()]; }
+function mergeRegs(){ const m=new Map(); [...antigos,...recentes,...pendentes].forEach(r=>{ if(r&&r.data){ const w=semanaDe(r.data); if(w) r.semana=w; } m.set(r.id,r); }); registros=[...m.values()]; }
 async function carregarHistorico(){
   if(!db||histCarregado) return;
   const btn=$("#histBtn"); btn.disabled=true; btn.textContent="Carregando histórico…";
@@ -1311,8 +1323,12 @@ function abrirAcessos(){
 }
 $("#acessosBtn").onclick=abrirAcessos;
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.26b";
+const APP_VERSAO="2026.10.26f";
 const VERSOES=[
+  {v:"2026.10.26f", d:"26/10/2026", itens:["Quadro da programação da próxima semana por turma passou para o Painel (saiu da aba Programar)"]},
+  {v:"2026.10.26e", d:"26/10/2026", itens:["Avisos de programação da semana seguinte incompleta e de programado sem baixa em vermelho e piscando; tocar no aviso da programação abre a aba Programar"]},
+  {v:"2026.10.26d", d:"26/10/2026", itens:["Semana contada de DOMINGO a SÁBADO em todo o app (programação, lista, painel, relatório, gráficos e PDFs)"]},
+  {v:"2026.10.26c", d:"26/10/2026", itens:["Programar: a programação é sempre para a semana seguinte — a data já abre na segunda da próxima semana e avisa se escolher uma data antes dela","Quadro da programação da próxima semana por turma (dias programados de cada turma), com prazo até quinta da semana anterior: pronta, faltando ou ATRASADA","Alerta do Painel passa a mostrar as turmas com a programação da próxima semana incompleta (no lugar de \"sem programação para amanhã\")"]},
   {v:"2026.10.26b", d:"26/10/2026", itens:["Supervisor 1: além de uma turma, pode ser lotado na GERÊNCIA DE PODA E EXTIRPAÇÃO ou na DIRETORIA (aí vê todas as turmas, só em Baixas, Quedas, Lista e Painel)"]},
   {v:"2026.10.26", d:"26/10/2026", itens:["Novo perfil de acesso \"Supervisor 1\": vê só Baixas, Quedas, Lista e Painel da própria turma (não programa, não faz checklist nem assina)"]},
   {v:"2026.10.24o", d:"24/10/2026", itens:["Comunicado de defeito: vídeo mostrando o defeito obrigatório, com opção de gravar mais vídeos (até 5); fotos do defeito passam a ser opcionais"]},
@@ -1497,7 +1513,29 @@ function showPrev(q){ document.querySelectorAll("#qtdMain [data-prev]").forEach(
 qtyBlock($("#qtdMain"),"q_",$("#totMain"));
 qtyBlock($("#qtdSub"),"s_",$("#totSub"));
 
-function dataUI(){const v=$("#data").value;$("#dia").value=diaDe(v);$("#semana").value=v?semanaDe(v)+"ª":""}
+function dataUI(){const v=$("#data").value;$("#dia").value=diaDe(v);$("#semana").value=v?semanaDe(v)+"ª":""; avisoDataUI();}
+/* ---------- regra: a programação é feita numa semana para execução na semana seguinte; pronta até quinta da semana anterior ---------- */
+function domDe(d){ const x=new Date(d); x.setHours(12,0,0,0); x.setDate(x.getDate()-x.getDay()); return x; }
+// próxima semana = domingo a sábado seguinte; dias de trabalho contados de segunda a sábado; prazo = quinta da semana atual
+function proxSemInfo(){ const domAtual=domDe(new Date()), dom=new Date(domAtual); dom.setDate(dom.getDate()+7);
+  const qui=new Date(domAtual); qui.setDate(qui.getDate()+4); const dias=[...Array(6)].map((_,i)=>{const x=new Date(dom);x.setDate(dom.getDate()+1+i);return iso(x)});
+  return {ini:iso(dom), seg:dias[0], sem:semanaDe(iso(dom)), qui:iso(qui), dias, atrasado:hoje()>iso(qui)}; }
+function proxSemTurma(sup,P){ const dias=P.dias.filter(x=>trabalha(sup,x)); const L=todosGlobal?todosGlobal():todos();
+  const feitos=dias.filter(x=>L.some(r=>r.supervisao===sup&&r.data===x&&!r.avulso&&!r.arquivado&&!r.ocorrencia));
+  return {dias,feitos,falta:dias.filter(x=>!feitos.includes(x)),ok:dias.length>0&&feitos.length>=dias.length}; }
+function avisoDataUI(){ const el=$("#dataAviso"); if(!el) return; const v=$("#data").value, P=proxSemInfo();
+  const mostra=form.mode==="prog"&&!form.base&&v&&v<P.ini; el.hidden=!mostra;
+  if(mostra) el.textContent=`Atenção: a programação é para a semana seguinte (${P.sem}ª semana, de ${periodoSem(P.sem)}). Confira se a data está certa.`; }
+function renderProxSem(){
+  const host=$("#proxSem"); if(!host) return; if(!sessao){ host.innerHTML=""; return; }
+  const P=proxSemInfo(), sups=travado()?SUPS.filter(x=>x.id===sessao.sup):SUPS; if(!sups.length){ host.innerHTML=""; return; }
+  const R=sups.map(x=>({sup:x.id,...proxSemTurma(x.id,P)})), prontas=R.filter(r=>r.ok).length, todas=prontas===R.length;
+  const cls=todas?"ok":P.atrasado?"bad":"warn";
+  const quiTxt=`quinta-feira, ${fmtD(P.qui)}`;
+  host.innerHTML=`<section class="pxs ${cls}" style="margin-top:12px"><div class="pxh"><b>Programação da ${P.sem}ª semana</b><span>${periodoSem(P.sem)}</span></div>
+    <p class="note" style="margin:0">A programação é feita nesta semana para execução na semana seguinte e tem que estar <b>pronta até ${quiTxt}</b>.${todas?" ✔ Tudo pronto.":P.atrasado?" <b>Prazo vencido.</b>":""}</p>
+    <div class="pxl">${R.map(r=>`<span class="${r.ok?"ok":P.atrasado?"bad":"warn"}" title="${r.falta.length?"Falta: "+r.falta.map(x=>diaDe(x)+" "+fmtDs(x)).join(", "):"Todos os dias programados"}">${esc(r.sup)} · <b>${r.feitos.length} de ${r.dias.length} dias</b>${r.ok?" ✔":P.atrasado?" · ATRASADA":""}</span>`).join("")}</div></section>`;
+}
 $("#data").onchange=dataUI;
 function lerMotivo(){ const v=$("#motivo").value; return v==="Outro" ? $("#motivoTxt").value.trim() : v; }
 function setMotivo(m){ const opts=[...$("#motivo").options].map(o=>o.value); if(!m){$("#motivo").value="";$("#motivoTxt").value=""} else if(opts.includes(m)&&m!=="Outro"){$("#motivo").value=m;$("#motivoTxt").value=""} else {$("#motivo").value="Outro";$("#motivoTxt").value=m==="Outro"?"":m} motivoUI(); }
@@ -1556,7 +1594,7 @@ function limpar(mode="prog", keep={}){
   form.sup = mode==="prog" ? (keep.sup ?? meuSup()) : (keep.sup ?? t.sup ?? ""); $("#equipe").value = keep.equipe || t.equipe || "1ª EQUIPE"; $("#viatura").value = ((v=>v==="SKAY"||v==="SKY"?"SKY 5074.0":v)(keep.viatura || t.viatura)) || "SPLINTER 5063.6";
   const fNome = sessao?.perfil==="fiscal" ? sessao.nome : (t.fiscal||"");
   $("#fiscal").value = fNome; $("#fiscalN").value = fNome;
-  $("#data").value = keep.data || (mode==="prog" ? ls.get("gpe_progdata","") || hoje() : hoje()); dataUI();
+  $("#data").value = keep.data || (mode==="prog" ? (()=>{ const sv=ls.get("gpe_progdata",""), P=proxSemInfo(); return sv&&sv>=P.ini?sv:P.seg; })() : hoje()); dataUI();
   setPressed($("#supChips"),form.sup); setPressed($("#tipoChips"),""); setPressed($("#stChips"),"");
   $("#err").hidden=true; $("#dupMsg").hidden=true; motivoUI(); procUI(); sProcUI(); modeUI(); if(typeof renderSemProg==="function") renderSemProg();
 }
@@ -2078,7 +2116,7 @@ $("#kNovo").onclick=()=>abrirChk(null);
 function chkLote(){
   const sup=$("#kSup").value, dia=$("#kData").value||hoje(), per=$("#kBxPer").value, d=parseD(dia);
   let ini=dia, fim=dia, nome="dia "+fmtD(dia);
-  if(per==="sem"){ const seg=new Date(d); seg.setDate(d.getDate()-((d.getDay()+6)%7)); const dom=new Date(seg); dom.setDate(seg.getDate()+6); ini=iso(seg); fim=iso(dom); nome="semana "+(semanaDe(dia)||"")+"ª ("+fmtDs(ini)+" a "+fmtDs(fim)+")"; }
+  if(per==="sem"){ const seg=new Date(d); seg.setDate(d.getDate()-d.getDay()); const dom=new Date(seg); dom.setDate(seg.getDate()+6); ini=iso(seg); fim=iso(dom); nome="semana "+(semanaDe(dia)||"")+"ª ("+fmtDs(ini)+" a "+fmtDs(fim)+")"; }
   if(per==="mes"){ ini=dia.slice(0,8)+"01"; const u=new Date(d.getFullYear(),d.getMonth()+1,0); fim=iso(u); nome=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"][d.getMonth()]+"/"+d.getFullYear(); }
   if(per==="tudo"){ ini="0000"; fim="9999"; nome="todos"; }
   const man=$("#kBxTipo").value==="man";
@@ -3264,13 +3302,13 @@ function chL(cats, series, fmt, W=714, H=200){
 
 // "Semana 33ª · de 19/10 a 25/10/2026"
 function semTxt(s){ if(!s) return ""; const [a,b]=periodoSem(+s).split(" a "); return `Semana ${s}ª · de ${a} a ${b}`; }
-function periodoSem(s){const b=new Date(2026,8,7);b.setDate(b.getDate()+(s-27)*7);const e=new Date(b);e.setDate(b.getDate()+6);const f=d=>String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0");return f(b)+" a "+f(e)+"/"+e.getFullYear()}
+function periodoSem(s){const b=new Date(2026,8,6);b.setDate(b.getDate()+(s-27)*7);const e=new Date(b);e.setDate(b.getDate()+6);const f=d=>String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0");return f(b)+" a "+f(e)+"/"+e.getFullYear()}
 function rptFiltro(){const dia=$("#rDia").value; return {dia, sem:dia?String(semanaDe(dia)||""):$("#rSem").value, grp:$("#rGrp").value, sup:$("#rSup").value}}
 // um lançamento entra no dia se foi programado, executado ou teve serviço feito no lugar naquela data
 const noDia=(r,d)=>r.data===d||r.dataExec===d||r.substituto?.data===d;
 // período do filtro como intervalo de datas (dia específico ou semana de segunda a domingo)
 const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
-function faixa(f){ if(f.dia) return [f.dia,f.dia]; if(f.sem){ const b=new Date(2026,8,7); b.setDate(b.getDate()+(+f.sem-27)*7); const e=new Date(b); e.setDate(b.getDate()+6); return [iso(b),iso(e)]; } return null; }
+function faixa(f){ if(f.dia) return [f.dia,f.dia]; if(f.sem){ const b=new Date(2026,8,6); b.setDate(b.getDate()+(+f.sem-27)*7); const e=new Date(b); e.setDate(b.getDate()+6); return [iso(b),iso(e)]; } return null; }
 const naFaixa=(d,fx)=>!fx||(!!d&&d>=fx[0]&&d<=fx[1]);
 // um lançamento entra no período se foi programado, executado ou teve serviço feito no lugar dentro dele
 const filtroR=f=>{ const fx=faixa(f); return r=>(!fx||naFaixa(r.data,fx)||naFaixa(r.dataExec,fx)||naFaixa(r.substituto?.data,fx))&&(!f.grp||r.grupo===f.grp)&&(!f.sup||r.supervisao===f.sup); };
@@ -3308,7 +3346,7 @@ function evoLinhas(f){
   const ex=evoExec(f), sems={}, recorte=!!(f.grp||f.sup);
   ex.forEach(x=>{ const s=semanaDe(x.d); if(!s||(!recorte&&s<=HIST_ATE)) return; const o=sems[s]=sems[s]||{sem:s,pod:0,ext:0,t:{}};
     o.pod+=somaG(x.q,"P"); o.ext+=somaG(x.q,"E"); const tp=(x.tipo==="O.S"?"PROCESSO":x.tipo)||"—"; o.t[tp]=(o.t[tp]||0)+1; });
-  const app=Object.values(sems).map(o=>{ const b=new Date(2026,8,7); b.setDate(b.getDate()+(o.sem-27)*7); const e=new Date(b); e.setDate(b.getDate()+6); return {...o,ini:iso(b),fim:iso(e)}; });
+  const app=Object.values(sems).map(o=>{ const b=new Date(2026,8,6); b.setDate(b.getDate()+(o.sem-27)*7); const e=new Date(b); e.setDate(b.getDate()+6); return {...o,ini:iso(b),fim:iso(e)}; });
   return [...(recorte?[]:HIST_EVO),...app].sort((a,b)=>a.ini.localeCompare(b.ini));
 }
 // gráficos da evolução (relatório): colunas 3D para poda + linha de extirpação (eixo à direita); linhas por tipo de local
@@ -3376,7 +3414,7 @@ function buildReport(){
   const sups=SUPS.filter(s=>(!f.grp||s.grupo===f.grp)&&(!f.sup||s.id===f.sup));
   const S={}; sups.forEach(s=>S[s.id]={prog:0,SIM:0,PARCIAL:0,NAO:0,late:0,fut:0,av:0,rp:0,re:0,ep:0,ee:0});
   const it={}; ITENS.forEach(i=>it[i.c]={p:0,e:0}); const mot={}; let Rp=0,Re=0,Pp=0,Pe=0,Ep=0,Ee=0;
-  const isWeek=!!f.sem; const dCats=isWeek?["SEG","TER","QUA","QUI","SEX","SAB","DOM"]:[...new Set(rows.map(r=>r.semana).filter(Boolean))].sort((a,b)=>a-b).map(s=>s+"ª");
+  const isWeek=!!f.sem; const dCats=isWeek?["DOM","SEG","TER","QUA","QUI","SEX","SAB"]:[...new Set(rows.map(r=>r.semana).filter(Boolean))].sort((a,b)=>a-b).map(s=>s+"ª");
   const dP=dCats.map(()=>0), dE=dCats.map(()=>0);
   const addDay=(date,sem,q)=>{const k=isWeek?diaDe(date):(sem?sem+"ª":"");const i=dCats.indexOf(k);if(i<0)return;dP[i]+=somaG(q,"P");dE[i]+=somaG(q,"E")};
   rows.forEach(r=>{const b=S[r.supervisao];if(!b)return;
@@ -3431,7 +3469,7 @@ function buildReport(){
           <div class="k"><span>Programado (previsto)</span><b>${brlS(Rp)}</b><i>${esc(periodo)}</i></div>
           <div class="k"><span>Executado</span><b>${brlS(Re)}</b><i>${pct(Re,Rp)} do programado</i></div>`;
         if(!travado()){
-          let mes=mesDe(hoje()); if(f.dia) mes=mesDe(f.dia); else if(f.sem){const b=new Date(2026,8,7);b.setDate(b.getDate()+(+f.sem-27)*7);mes=b.getFullYear()+"-"+String(b.getMonth()+1).padStart(2,"0");}
+          let mes=mesDe(hoje()); if(f.dia) mes=mesDe(f.dia); else if(f.sem){const b=new Date(2026,8,6);b.setDate(b.getDate()+(+f.sem-27)*7);mes=b.getFullYear()+"-"+String(b.getMonth()+1).padStart(2,"0");}
           const its=contratoMes(mes,todosGlobal()), pr=c=>ITENS.find(i=>i.c===c).p;
           const vc=its.reduce((a,x)=>a+x.cq*pr(x.c),0), ve=its.reduce((a,x)=>a+x.e*pr(x.c),0), vt=its.reduce((a,x)=>a+x.t*pr(x.c),0);
           // barra de referência: 100% = valor do contrato no mês
@@ -3471,7 +3509,7 @@ function buildReport(){
       </tbody><tfoot><tr><td>Total em valor</td><td style="white-space:nowrap">${brl(vc)}</td><td style="white-space:nowrap">${brl(vp)}</td><td>${pc(vp,vc)}</td><td style="white-space:nowrap">${brl(ve)}</td><td>${pc(ve,vc)}</td><td></td></tr></tfoot></table>
       <p class="note" style="margin:4px 0 0">Situação compara o <b>programado</b> com a cota: Atingiu = 100% ou mais · Perto = 70% a 99% · Abaixo = menos de 70%.</p></div>`; })():""}
 
-    ${(!travado())?(()=>{ let mes=mesDe(hoje()); if(f.dia) mes=mesDe(f.dia); else if(f.sem){const b=new Date(2026,8,7);b.setDate(b.getDate()+(+f.sem-27)*7);mes=b.getFullYear()+"-"+String(b.getMonth()+1).padStart(2,"0");}
+    ${(!travado())?(()=>{ let mes=mesDe(hoje()); if(f.dia) mes=mesDe(f.dia); else if(f.sem){const b=new Date(2026,8,6);b.setDate(b.getDate()+(+f.sem-27)*7);mes=b.getFullYear()+"-"+String(b.getMonth()+1).padStart(2,"0");}
       const its=contratoMes(mes,todosGlobal()); const pr=c=>ITENS.find(i=>i.c===c).p; const vc=its.reduce((a,x)=>a+x.cq*pr(x.c),0), ve=its.reduce((a,x)=>a+x.e*pr(x.c),0), vt=its.reduce((a,x)=>a+x.t*pr(x.c),0);
       return `<div class="blk"><h3>Contrato mensal · ${mesLbl(mes)}</h3><p class="cap">${(f.sup||f.grp)?"Valores de todas as turmas (o contrato é único). ":""}Contrato ${brl(vc)} · executado ${brl(ve)} (${vc?Math.round(ve/vc*100):0}%) · executado + a executar ${brl(vt)} (${vc?Math.round(vt/vc*100):0}%). Barra escura = executado; clara = programação em aberto; traço = limite do contrato.</p>
       <table><thead><tr><th>Item</th><th>Contrato</th><th>Executado</th><th>A executar</th><th style="width:150px">Uso do contrato</th><th>Saldo</th><th>Situação</th></tr></thead><tbody>
@@ -3848,7 +3886,7 @@ function planilhaGPE(){
 
   // contrato mensal
   if(!travado()){
-    let mes=mesDe(hoje());if(f.dia) mes=mesDe(f.dia); else if(f.sem){const b=new Date(2026,8,7);b.setDate(b.getDate()+(+f.sem-27)*7);mes=b.getFullYear()+"-"+String(b.getMonth()+1).padStart(2,"0")}
+    let mes=mesDe(hoje());if(f.dia) mes=mesDe(f.dia); else if(f.sem){const b=new Date(2026,8,6);b.setDate(b.getDate()+(+f.sem-27)*7);mes=b.getFullYear()+"-"+String(b.getMonth()+1).padStart(2,"0")}
     const its=contratoMes(mes,todosGlobal());
     section(ws,r,NC,`CONTRATO MENSAL · ${mesLbl(mes).toUpperCase()} (todas as turmas)`);r++;
     ["Item","Descrição","Contrato (qtd)","Preço unit.","Executado","A executar","Total","Uso do contrato","Saldo (qtd)","Situação","Valor do contrato","Valor executado"].forEach((t,c)=>ws.set(r,c,t,S.th));ws.h(r,28);r++;
@@ -4129,18 +4167,19 @@ function renderAlertas(){
   const remarc=all.filter(r=>isProg(r)&&(r.historico||[]).length>=2);
   const ocAg=all.filter(r=>r.ocorrencia&&isProg(r));
   const parc=all.filter(r=>r.status==="PARCIAL"&&!r.proxData&&!r.remarcadaPara&&falta(r));
-  const semAm=travado()?[]:SUPS.filter(s=>!all.some(r=>r.supervisao===s.id&&r.data===am&&isProg(r)));
+  const PX=proxSemInfo(), semAm=(travado()?SUPS.filter(x=>x.id===sessao.sup):SUPS).filter(s=>!proxSemTurma(s.id,PX).ok);
   const ex=(arr,f)=>arr.slice(0,3).map(f).join(" · ")+(arr.length>3?` · +${arr.length-3}`:"");
   const itens=[
-    [semBaixa.length,"serviços sem baixa há 2 dias ou mais",ex(semBaixa,r=>`${fmtDs(r.data)} ${r.supervisao} — ${r.bairro}`),"ATRASADO",""],
+    [semBaixa.length,"serviços programados sem baixa há 2 dias ou mais",ex(semBaixa,r=>`${fmtDs(r.data)} ${r.supervisao} — ${r.bairro}`),"ATRASADO","",1],
     [ocAg.length,"galho/árvore caída aguardando atendimento",ex(ocAg,r=>`${fmtDs(r.data)} ${r.bairro}`),"","oc"],
     [remarc.length,"serviços remarcados 2 vezes ou mais",ex(remarc,r=>`${r.bairro} (${(r.historico||[]).length}x)`),"","rem"],
     [parc.length,"parciais sem remarcação do que faltou",ex(parc,r=>`${fmtDs(r.data)} ${r.bairro}`),"PARCIAL",""],
-    [semAm.length,`turmas sem programação para amanhã (${fmtDs(am)})`,semAm.map(s=>s.id).join(" · "),"",""]
+    [semAm.length,`turmas com a programação da ${PX.sem}ª semana incompleta ${PX.atrasado?"· PRAZO VENCIDO (quinta "+fmtDs(PX.qui)+")":"· prazo: quinta "+fmtDs(PX.qui)}`,semAm.map(s=>{const t=proxSemTurma(s.id,PX);return s.id+" ("+t.feitos.length+"/"+t.dias.length+" dias)"}).join(" · "),"","progsem",1]
   ].filter(x=>x[0]);
-  host.innerHTML = itens.length ? `<section class="alert"><h3>Atenção</h3>${itens.map(([n,t,d,st,pd])=>`<button type="button" data-st="${st}" data-pd="${pd}"><b>${n}</b><span>${t}<small>${esc(d)}</small></span></button>`).join("")}</section>`
+  host.innerHTML = itens.length ? `<section class="alert"><h3>Atenção</h3>${itens.map(([n,t,d,st,pd,urg])=>`<button type="button" class="${urg?"urg":""}" data-st="${st}" data-pd="${pd}"><b>${urg?"⚠ ":""}${n}</b><span>${t}<small>${esc(d)}</small></span></button>`).join("")}</section>`
     : `<section class="alert ok"><h3>Tudo em dia</h3><p class="note" style="margin:0">Nenhuma pendência de baixa, ocorrência ou remarcação.</p></section>`;
-  host.querySelectorAll("button[data-st]").forEach(b=>b.onclick=()=>{ if(b.dataset.pd==="oc"&&!soLeitura()){ show("oc"); scrollTo(0,0); return; } $("#fSem").value=""; $("#fSt").value=b.dataset.st; $("#fPend").value=b.dataset.pd; renderLista(); show("lista"); scrollTo(0,0); });
+  host.querySelectorAll("button[data-st]").forEach(b=>b.onclick=()=>{ if(b.dataset.pd==="oc"&&!soLeitura()){ show("oc"); scrollTo(0,0); return; }
+    if(b.dataset.pd==="progsem"){ if(!soLeitura()&&!(sessao?.perfil==="fiscal"||sessao?.perfil==="supervisor1")){ show("form"); scrollTo(0,0); } return; } $("#fSem").value=""; $("#fSt").value=b.dataset.st; $("#fPend").value=b.dataset.pd; renderLista(); show("lista"); scrollTo(0,0); });
 }
 $("#histBtn").onclick=carregarHistorico;
 
@@ -4150,10 +4189,10 @@ function renderSemProg(){
   const rows=todos().filter(r=>r.supervisao===form.sup && r.semana===sem && !r.avulso).sort((a,b)=>(a.data||"").localeCompare(b.data||"")||(a.equipe||"").localeCompare(b.equipe||""));
   const prev=rows.reduce((a,r)=>a+receitaDe(prevQ(r)),0);
   const dias=[...new Set(rows.map(r=>r.data))];
-  const b0=new Date(2026,8,7); b0.setDate(b0.getDate()+(sem-27)*7);
-  const semDias=[...Array(7)].map((_,i)=>{const x=new Date(b0);x.setDate(b0.getDate()+i);return iso(x)}).filter((x,i)=>i<6||rows.some(r=>r.data===x));
+  const b0=new Date(2026,8,6); b0.setDate(b0.getDate()+(sem-27)*7);
+  const semDias=[...Array(7)].map((_,i)=>{const x=new Date(b0);x.setDate(b0.getDate()+i);return iso(x)}).filter((x,i)=>i>0||rows.some(r=>r.data===x));
   const semDias7=[...Array(7)].map((_,i)=>{const x=new Date(b0);x.setDate(b0.getDate()+i);return iso(x)}), diasTrab=semDias7.filter(x=>trabalha(form.sup,x));
-  const diasVer=semDias7.filter((x,i)=>i<6||podasProgDia(form.sup,x)>0);
+  const diasVer=semDias7.filter((x,i)=>i>0||podasProgDia(form.sup,x)>0);
   const metaHtml=`<p class="maphint" style="margin-top:6px">Meta: <b>${brl(META_PODA_DIA)} programados por dia</b> nesta supervisão.</p><div class="metadias">${diasVer.map(x=>{const v=podasProgDia(form.sup,x), t=trabalha(form.sup,x);return t?`<span class="${metaCls(v)}${x===d?" hj":""}" title="${fmtD(x)}: ${brl(v)} de ${brl(META_PODA_DIA)}">${diaDe(x)} ${fmtDs(x)} · ${kR(v)} / 50 mil</span>`:`<span class="${x===d?"hj":""}" style="opacity:.6" title="${fmtD(x)}: folga na escala 12x36">${diaDe(x)} ${fmtDs(x)} · folga${v?" · "+kR(v):""}</span>`}).join("")}</div>`;
   host.innerHTML=`<div class="grp-h"><h3>Programação da ${sem}ª semana <small style="font:500 13px var(--body);letter-spacing:0;text-transform:none;color:var(--muted)">de ${periodoSem(sem).replace(" a "," a ")}</small></h3><span>${rows.length} serviço${rows.length!==1?"s":""} · ${brl(prev)}</span></div>`+
     metaHtml+(rows.length?`<p class="maphint" style="margin-top:6px">Ver as marcações de cada dia no mapa:</p><div class="maprow">${dias.map(d=>{const rs=rows.filter(r=>r.data===d);return rotaLink(rs,diaDe(d)+" "+fmtDs(d)+" ("+rs.length+")")}).join("")}</div>`:"")+
@@ -4162,6 +4201,7 @@ function renderSemProg(){
 }
 // na aba Programar a lista da semana é só de consulta: baixa, remarcação e correções ficam no Campo e na Lista
 $("#data").addEventListener("change",()=>{ renderSemProg(); metaUI(); });
+{ const _m=modeUI; modeUI=function(...a){ const v=_m.apply(this,a); try{ renderProxSem(); avisoDataUI(); }catch(e){} return v; }; }
 function fMapUI(){ const b=$("#bairro").value.trim(), l=$("#logradouro").value.trim(), w=$("#fMapW"); if(!w) return;
   w.hidden=!(b||l); if(!w.hidden){ const a=$("#fMap"); a.href=gmUrl(b,l); a.innerHTML=PIN+"Conferir endereço no mapa"; } }
 ["#bairro","#logradouro"].forEach(s=>{ $(s).addEventListener("input",fMapUI); $(s).addEventListener("change",fMapUI); });
@@ -4194,7 +4234,7 @@ function renderPainel(){
   h+=acompHtml(F);
   // contrato do mês
   if(!travado()){
-    let mes=mesDe(hoje()); if(F.dia) mes=mesDe(F.dia); else if(sem){const b=new Date(2026,8,7);b.setDate(b.getDate()+(+sem-27)*7);mes=b.getFullYear()+"-"+String(b.getMonth()+1).padStart(2,"0");}
+    let mes=mesDe(hoje()); if(F.dia) mes=mesDe(F.dia); else if(sem){const b=new Date(2026,8,6);b.setDate(b.getDate()+(+sem-27)*7);mes=b.getFullYear()+"-"+String(b.getMonth()+1).padStart(2,"0");}
     const its=contratoMes(mes,todosGlobal());
     const pr=cd=>ITENS.find(i=>i.c===cd).p; const VC=its.reduce((a,x)=>a+x.cq*pr(x.c),0), VE=its.reduce((a,x)=>a+x.e*pr(x.c),0), VT=its.reduce((a,x)=>a+x.t*pr(x.c),0);
     const y=+mes.slice(0,4), mo=+mes.slice(5,7), dim=new Date(y,mo,0).getDate(), hj=hoje(), dia=mesDe(hj)===mes?+hj.slice(8,10):(hj>mes?dim:0), ritmo=dia/dim;
@@ -4225,7 +4265,7 @@ function renderPainel(){
   h+=evolucaoHtml(F,W-30)+resumoMesHtml(F);
   // execução por dia/semana — colunas lado a lado + total
   const isWeek=!!sem; let cats,keys;
-  if(isWeek){ const b=new Date(2026,8,7);b.setDate(b.getDate()+(+sem-27)*7); keys=[...Array(7)].map((_,i)=>{const d=new Date(b);d.setDate(b.getDate()+i);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}); cats=keys.map(k=>diaDe(k)); }
+  if(isWeek){ const b=new Date(2026,8,6);b.setDate(b.getDate()+(+sem-27)*7); keys=[...Array(7)].map((_,i)=>{const d=new Date(b);d.setDate(b.getDate()+i);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}); cats=keys.map(k=>diaDe(k)); }
   else { keys=[...new Set(rows.map(r=>r.semana).filter(Boolean))].sort((a,b)=>a-b).slice(-8); cats=keys.map(k=>k+"ª"); }
   const P=keys.map(()=>0), E=keys.map(()=>0);
   const add=(d,q)=>{const k=isWeek?d:semanaDe(d); const i=keys.indexOf(k); if(i<0)return; P[i]+=somaG(q,"P"); E[i]+=somaG(q,"E");};
@@ -4349,7 +4389,7 @@ const ST_NOME={SIM:"Executado",PARCIAL:"Parcial","NÃO":"Não executado",ATRASAD
 let acSel=null;
 function acompHtml(F){
   const sw=+(F.sem||semanaDe(F.dia||hoje())||0); if(!sw) return "";
-  const b0=new Date(2026,8,7); b0.setDate(b0.getDate()+(sw-27)*7);
+  const b0=new Date(2026,8,6); b0.setDate(b0.getDate()+(sw-27)*7);
   const dias=[...Array(7)].map((_,i)=>{const d=new Date(b0);d.setDate(b0.getDate()+i);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")});
   const sups=SUPS.filter(s=>(!F.grp||s.grupo===F.grp)&&(!F.sup||s.id===F.sup));
   const base=todos().filter(r=>!r.ocorrencia&&!r.avulso&&!r.arquivado&&dias.includes(r.data)&&sups.some(s=>s.id===r.supervisao));
@@ -4407,7 +4447,7 @@ function dCols(cats,P,E,W){
   return `<svg class="dv" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Árvores executadas: ${cats.map((c,i)=>c+" "+P[i]+" podas e "+E[i]+" extirpações").join("; ")}">${g}</svg>`;
 }
 let _pnT; addEventListener("resize",()=>{clearTimeout(_pnT);_pnT=setTimeout(()=>{if(curView==="resumo")renderPainel()},200)});
-function renderAll(){ try{renderEscala()}catch(e){} syncUI(); renderCampo(); renderOc(); try{renderChk();renderChkGraf()}catch(e){console.error(e)} renderLista(); renderResumo(); renderSemProg(); renderContrato(); renderAlertas(); }
+function renderAll(){ try{renderEscala()}catch(e){} syncUI(); try{renderProxSem()}catch(e){console.error(e)} renderCampo(); renderOc(); try{renderChk();renderChkGraf()}catch(e){console.error(e)} renderLista(); renderResumo(); renderSemProg(); renderContrato(); renderAlertas(); }
 
 /* ---------- botão de olho em todo campo de senha (mostrar o que está sendo digitado) ---------- */
 const OLHO_ABERTO='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
