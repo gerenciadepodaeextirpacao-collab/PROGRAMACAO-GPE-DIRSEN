@@ -1102,6 +1102,12 @@ const ORD={diretoria:0,gerencia:1,ger_equipe:2,coordenador:3,supervisor:4,superv
 const PERF_DESC={diretoria:"Diretoria (consulta geral)",gerencia:"Gerente (visão geral + acessos)",ger_equipe:"Gerência (visão geral)",coordenador:"Coordenador (visão geral)",supervisor:"Supervisor",supervisor1:"Supervisor 1 (baixas, quedas, lista e painel da turma)",fiscal:"Fiscal de turma"};
 // Supervisor 1: só Baixas, Quedas, Lista e Painel (da própria turma); não programa nem faz checklist
 const SUP1_ABAS=new Set(["campo","oc","lista","resumo"]);
+// lotação do Supervisor 1: uma turma, ou a Gerência / Diretoria (aí ele vê todas as turmas, só nessas abas)
+const LOT_GERAL=["GERÊNCIA DE PODA E EXTIRPAÇÃO","DIRETORIA"];
+const lotGeral=u=>u?.perfil==="supervisor1"&&LOT_GERAL.includes(u?.sup);
+const lotOpts=(perfil,sel)=>SUPS.map(s=>`<option value="${esc(s.id)}" ${s.id===sel?"selected":""}>${esc(s.id)}</option>`).join("")+`<optgroup label="Supervisor 1 – lotação geral" data-lotg ${perfil==="supervisor1"?"":"hidden disabled"}>${LOT_GERAL.map(x=>`<option value="${esc(x)}" ${x===sel?"selected":""}>${esc(x)}</option>`).join("")}</optgroup>`;
+function lotSync(perfSel,supSel,wrap){ const sup1=perfSel.value==="supervisor1", og=supSel.querySelector("[data-lotg]"); if(og){ og.hidden=!sup1; og.disabled=!sup1; }
+  if(!sup1&&LOT_GERAL.includes(supSel.value)) supSel.selectedIndex=0; if(wrap) wrap.firstChild.textContent=sup1?"Turma / lotação":"Turma"; }
 // perfis sem turma: enxergam todas as supervisões
 const GERAL=new Set(["diretoria","gerencia","ger_equipe","coordenador"]);
 let acesso=null, acessoLoaded=false, canAdmin=false, sessao=ls.get("gpe_sessao",null);
@@ -1109,7 +1115,7 @@ let acesso=null, acessoLoaded=false, canAdmin=false, sessao=ls.get("gpe_sessao",
 const isGer=()=>GERAL.has(sessao?.perfil) && sessao?.perfil!=="diretoria";
 const soLeitura=()=>sessao?.perfil==="diretoria";
 const isGerente=()=>sessao?.perfil==="gerencia";
-const travado=()=>!!sessao && !GERAL.has(sessao.perfil);
+const travado=()=>!!sessao && !GERAL.has(sessao.perfil) && !lotGeral(sessao);
 async function hashPin(salt,pin){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(salt+":"+pin));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
 function novoSal(){return [...crypto.getRandomValues(new Uint8Array(8))].map(x=>x.toString(16).padStart(2,"0")).join("")}
 function uidNovo(){return "u"+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
@@ -1240,7 +1246,7 @@ function abrirAcessos(){
         <div class="row2"><label class="f">Matrícula<input data-edmat autocapitalize="none" value="${esc(matDe(u))}" placeholder="Ex.: m859209"></label>
         <label class="f">Nome<input data-ednome value="${esc(u.nome)}"></label></div>
         <div class="row2"><label class="f">Perfil<select data-edperf>${Object.entries(PERF).map(([k,t])=>`<option value="${k}" ${k===u.perfil?"selected":""}>${PERF_DESC[k]}</option>`).join("")}</select></label>
-        <label class="f" data-edsupw ${GERAL.has(u.perfil)?"hidden":""}>Turma<select data-edsup>${SUPS.map(s=>`<option value="${esc(s.id)}" ${s.id===u.sup?"selected":""}>${esc(s.id)}</option>`).join("")}</select></label></div>
+        <label class="f" data-edsupw ${GERAL.has(u.perfil)?"hidden":""}>${u.perfil==="supervisor1"?"Turma / lotação":"Turma"}<select data-edsup>${lotOpts(u.perfil,u.sup)}</select></label></div>
         <button type="button" class="btn pri" data-saveedit="${esc(id)}">Salvar alterações</button>
       </div>`:""}
     </div>`).join("")}</div>
@@ -1249,14 +1255,14 @@ function abrirAcessos(){
       <label class="f">Nome<input id="nuNome" placeholder="Ex.: JOÃO DA SILVA"></label></div>
       <div class="row2"><label class="f">Perfil<select id="nuPerf">${["supervisor","supervisor1","fiscal","coordenador","ger_equipe","gerencia","diretoria"].map(k=>`<option value="${k}">${PERF_DESC[k]}</option>`).join("")}</select></label>
       <label class="f">Senha<input id="nuPin" type="password" placeholder="Mínimo 6 caracteres"></label></div>
-      <label class="f" id="nuSupW">Turma<select id="nuSup">${SUPS.map(s=>`<option value="${esc(s.id)}">${esc(s.id)}</option>`).join("")}</select></label>
+      <label class="f" id="nuSupW">Turma<select id="nuSup">${lotOpts("supervisor","")}</select></label>
       <button type="button" class="btn pri" id="nuAdd">Adicionar</button></section>`:""}
   </div></div>`;
   const close=()=>host.innerHTML="";
   $("#sh").onclick=e=>{if(e.target.id==="sh")close()};
   $("#acClose").onclick=close;
-  host.querySelectorAll("[data-edperf]").forEach(s=>s.onchange=()=>{const w=s.closest(".inline").querySelector("[data-edsupw]");w.hidden=GERAL.has(s.value)});
-  const perf=$("#nuPerf"); if(perf) perf.onchange=()=>{$("#nuSupW").hidden=GERAL.has(perf.value)};
+  host.querySelectorAll("[data-edperf]").forEach(s=>s.onchange=()=>{const w=s.closest(".inline").querySelector("[data-edsupw]");w.hidden=GERAL.has(s.value); lotSync(s,w.querySelector("[data-edsup]"),w)});
+  const perf=$("#nuPerf"); if(perf) perf.onchange=()=>{$("#nuSupW").hidden=GERAL.has(perf.value); lotSync(perf,$("#nuSup"),$("#nuSupW"))};
   const salvar=async(id,dados,msg)=>{ try{ await dbUpdate(db.doc("cfg/acesso"),{usuarios:{[id]:dados}}); toast(msg); abrirAcessos(); }catch(e){ toast("Não foi possível salvar. Só dono ou editor do app altera acessos."); } };
   host.querySelector(".panel").addEventListener("click",async e=>{
     const sp=e.target.closest("[data-savepin]"); if(sp){const id=sp.dataset.savepin, pin=host.querySelector(`[data-pin="${id}"]`).value;
@@ -1305,8 +1311,9 @@ function abrirAcessos(){
 }
 $("#acessosBtn").onclick=abrirAcessos;
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.26";
+const APP_VERSAO="2026.10.26b";
 const VERSOES=[
+  {v:"2026.10.26b", d:"26/10/2026", itens:["Supervisor 1: além de uma turma, pode ser lotado na GERÊNCIA DE PODA E EXTIRPAÇÃO ou na DIRETORIA (aí vê todas as turmas, só em Baixas, Quedas, Lista e Painel)"]},
   {v:"2026.10.26", d:"26/10/2026", itens:["Novo perfil de acesso \"Supervisor 1\": vê só Baixas, Quedas, Lista e Painel da própria turma (não programa, não faz checklist nem assina)"]},
   {v:"2026.10.24o", d:"24/10/2026", itens:["Comunicado de defeito: vídeo mostrando o defeito obrigatório, com opção de gravar mais vídeos (até 5); fotos do defeito passam a ser opcionais"]},
   {v:"2026.10.24n", d:"24/10/2026", itens:["Comunicado de defeito: sem \"equipamento substituto\" e sem observações; equipamento OPERANTE ou NÃO OPERANTE (no lugar de parado); recolhido para manutenção: responsável é o motorista e o local é sempre a MAAS"]},
