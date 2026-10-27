@@ -1221,14 +1221,14 @@ function applyPerms(){
   $("#whoNome").textContent=s.nome; $("#whoPerfil").textContent=PERF[per]+(s.sup?" · "+s.sup:"");
   $("#acessosBtn").hidden=!isGerente();
   const tabs=[...document.querySelectorAll("nav.tabs button")];
-  tabs.forEach(b=>b.hidden = (b.dataset.v==="upd" && per!=="gerencia") || (per==="fiscal" && (b.dataset.v==="form"||b.dataset.v==="resumo")) || (per==="diretoria" && (b.dataset.v==="form"||b.dataset.v==="campo"||b.dataset.v==="oc")) || (per==="supervisor" && (b.dataset.v==="lista"||b.dataset.v==="resumo")) || (per==="supervisor1" && !SUP1_ABAS.has(b.dataset.v)));
+  tabs.forEach(b=>b.hidden = (b.dataset.v==="upd" && per!=="gerencia") || (per==="fiscal" && (b.dataset.v==="form"||b.dataset.v==="resumo")) || (per==="diretoria" && (b.dataset.v==="form"||b.dataset.v==="campo"||b.dataset.v==="oc")) || (per==="supervisor" && b.dataset.v==="resumo") || (per==="supervisor1" && !SUP1_ABAS.has(b.dataset.v)));
   const nvis=tabs.filter(b=>!b.hidden).length, nw=document.querySelector("nav.tabs .wrap"); nw.style.gridTemplateColumns=`repeat(${nvis},1fr)`; nw.classList.toggle("t6",nvis>=6);
   const lock=travado(), g=supOf(s.sup)?.grupo||"";
   [["#cSup",s.sup],["#oSup",s.sup],["#kSup",s.sup],["#kgSup",s.sup],["#fSup",s.sup],["#rSup",s.sup]].forEach(([sel,v])=>{const el=$(sel); if(lock){el.value=v; el.disabled=true;} else el.disabled=false;});
   if(lock){ $("#rGrp").value=g; $("#rGrp").disabled=true; ls.set("gpe_sup",s.sup); } else $("#rGrp").disabled=false;
   if(per==="fiscal" && (curView==="form"||curView==="resumo")) show("campo");
   if(per==="diretoria" && (curView==="form"||curView==="campo"||curView==="oc")) show("resumo");
-  if(per==="supervisor" && (curView==="lista"||curView==="resumo")) show("form");
+  if(per==="supervisor" && curView==="resumo") show("form");
   if(per==="supervisor1" && !SUP1_ABAS.has(curView)) show("campo");
   if(curView==="upd" && per!=="gerencia") show(per==="diretoria"?"resumo":per==="fiscal"?"campo":"form");
 }
@@ -1323,8 +1323,11 @@ function abrirAcessos(){
 }
 $("#acessosBtn").onclick=abrirAcessos;
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.26f";
+const APP_VERSAO="2026.10.27";
 const VERSOES=[
+  {v:"2026.10.27", d:"27/10/2026", itens:["Aba Lista liberada para os supervisores (só com os lançamentos da própria turma)"]},
+  {v:"2026.10.26g", d:"26/10/2026", itens:["\"Ver no mapa\": busca a rua/avenida inteira no formato do Google Maps (sem quadra, lote, número e complemento), para abrir com a via destacada; vale também para o mapa de um endereço só"]},
+  {v:"2026.10.26g", d:"26/10/2026", itens:["\"Ver no mapa\" abre o Google Maps buscando a rua/avenida pelo nome por extenso (sem quadra e lote), para a via aparecer destacada no mapa"]},
   {v:"2026.10.26f", d:"26/10/2026", itens:["Quadro da programação da próxima semana por turma passou para o Painel (saiu da aba Programar)"]},
   {v:"2026.10.26e", d:"26/10/2026", itens:["Avisos de programação da semana seguinte incompleta e de programado sem baixa em vermelho e piscando; tocar no aviso da programação abre a aba Programar"]},
   {v:"2026.10.26d", d:"26/10/2026", itens:["Semana contada de DOMINGO a SÁBADO em todo o app (programação, lista, painel, relatório, gráficos e PDFs)"]},
@@ -2932,13 +2935,18 @@ $("#ocList").onclick=e=>{const g=id=>todosGlobal().find(r=>r.id===id);
 
 const PIN=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>`;
 const gmEnd=(b,l)=>[l,b,"Goiânia - GO"].filter(Boolean).join(", ");
-const gmUrl=(b,l)=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(gmEnd(b,l));
+// "Ver no mapa": busca só a rua/avenida (sem QD., LT. e complemento) com o nome por extenso — o Google Maps abre com a via destacada
+const VIA_EXT={"R.":"Rua","AV.":"Avenida","AL.":"Alameda","PÇ.":"Praça","PC.":"Praça","ROD.":"Rodovia","TV.":"Travessa","ESTR.":"Estrada","BC.":"Beco"};
+function gmVia(l){ let t=String(l||"").split(",")[0].replace(/\b(QD|LT|QUADRA|LOTE|N[º°O]?)\.?\s*\d+\S*/g,"").replace(/\b(ESQ|C\/|EM FRENTE|PROX|PRÓX)\b.*$/,"").replace(/\s+/g," ").trim(); const m=t.match(/^(R\.|AV\.|AL\.|PÇ\.|PC\.|ROD\.|TV\.|ESTR\.|BC\.)\s*(.*)$/);
+  return m?VIA_EXT[m[1]]+" "+m[2]:t; }
+// formato que o Google Maps usa para ruas ("Rua X - Bairro, Goiânia - GO"): assim ele acha a via inteira e mostra destacada
+const gmUrl=(b,l)=>{ const v=gmVia(l); return "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent((v?v+(b?" - "+b:""):b||"")+", Goiânia - GO"); };
 const mapLink=(r,txt="Ver no mapa")=>(r&&(r.logradouro||r.bairro))?`<a class="maplink" href="${gmUrl(r.bairro,r.logradouro)}" target="_blank" rel="noopener">${PIN}${txt}</a>`:"";
 // rota com vários endereços no Google Maps (até 11 paradas: origem + 9 intermediárias + destino)
 function rotaUrl(rows){
   const ends=[...new Set(rows.filter(r=>r.logradouro||r.bairro).map(r=>gmEnd(r.bairro,r.logradouro)))].slice(0,11);
   if(!ends.length) return "";
-  if(ends.length===1) return "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(ends[0]);
+  if(ends.length===1){ const r=rows.find(x=>x.logradouro||x.bairro); return gmUrl(r.bairro,r.logradouro); }
   const e=encodeURIComponent; let u="https://www.google.com/maps/dir/?api=1&travelmode=driving&origin="+e(ends[0])+"&destination="+e(ends[ends.length-1]);
   if(ends.length>2) u+="&waypoints="+ends.slice(1,-1).map(e).join("%7C");
   return u;
