@@ -1327,8 +1327,11 @@ function abrirAcessos(){
 }
 $("#acessosBtn").onclick=abrirAcessos;
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.27c";
+const APP_VERSAO="2026.10.27f";
 const VERSOES=[
+  {v:"2026.10.27f", d:"27/10/2026", itens:["Recolhimento para manutenção: o responsável é sempre o MOTORISTA (não precisa digitar nome)"]},
+  {v:"2026.10.27e", d:"27/10/2026", itens:["Retorno à atividade do comunicado sem o campo \"Oficina / responsável\" (tela e PDF)"]},
+  {v:"2026.10.27d", d:"27/10/2026", itens:["Comunicado de defeito: a informação de equipamento reserva (SIM / NÃO e qual) pode ser registrada ou corrigida depois que o comunicado já foi salvo"]},
   {v:"2026.10.27c", d:"27/10/2026", itens:["Recebimento do checklist: qualquer supervisor que estiver recebendo o equipamento pode assinar com a matrícula dele, mesmo que a entrega tenha indicado outra turma (fica registrada a turma de quem assinou e a indicada na entrega)","Link do app no Netlify corrigido para gpe-dirsen.netlify.app"]},
   {v:"2026.10.27b", d:"27/10/2026", itens:["Checklist: o supervisor que recebe pode recusar o recebimento (não concordou ou encontrou avaria), relatando o motivo e assinando","Recusa vai para o coordenador validar a situação correta (procede / não procede, com a situação verificada e assinatura); aviso em vermelho para o coordenador e no Painel","O supervisor que fez o checklist recebe o aviso de que foi contestado, com o motivo e depois a decisão do coordenador","Recusa e validação aparecem na lista, no checklist aberto e no PDF"]},
   {v:"2026.10.27", d:"27/10/2026", itens:["Aba Lista liberada para os supervisores (só com os lançamentos da própria turma)"]},
@@ -2473,13 +2476,13 @@ function manCard(m){
 function retSecHtml(m,retEdit){
   const r=m.retorno||{};
   if(!manAberta(m)) return `<div class="ckbox" id="mfRetSec"><div class="ckgrp">7. Retorno à atividade</div>
-    <dl class="kv"><dt>Data / hora</dt><dd>${fmtD(r.data)}${r.hora?" às "+esc(r.hora):""}</dd>${r.km?`<dt>KM no retorno</dt><dd>${esc(r.km)}</dd>`:""}${r.oficina?`<dt>Oficina / responsável</dt><dd>${esc(r.oficina)}</dd>`:""}<dt>Serviço executado</dt><dd>${esc(r.servico||r.obs||"—")}</dd><dt>Liberado para operar</dt><dd>${esc(r.liberado||"SIM")}</dd>${m.reserva==="SIM"?`<dt>Reserva devolvido</dt><dd>${esc(r.reservaDevolvida||"—")}${m.reservaQual?" ("+esc(m.reservaQual)+")":""}</dd>`:""}${r.obs&&r.servico?`<dt>Observação</dt><dd>${esc(r.obs)}</dd>`:""}</dl>
+    <dl class="kv"><dt>Data / hora</dt><dd>${fmtD(r.data)}${r.hora?" às "+esc(r.hora):""}</dd>${r.km?`<dt>KM no retorno</dt><dd>${esc(r.km)}</dd>`:""}<dt>Serviço executado</dt><dd>${esc(r.servico||r.obs||"—")}</dd><dt>Liberado para operar</dt><dd>${esc(r.liberado||"SIM")}</dd>${m.reserva==="SIM"?`<dt>Reserva devolvido</dt><dd>${esc(r.reservaDevolvida||"—")}${m.reservaQual?" ("+esc(m.reservaQual)+")":""}</dd>`:""}${r.obs&&r.servico?`<dt>Observação</dt><dd>${esc(r.obs)}</dd>`:""}</dl>
     ${assinHtml("Supervisor que registrou o retorno",m.retAssin)}</div>`;
   if(!retEdit) return `<div class="ckbox" id="mfRetSec"><div class="ckgrp">7. Retorno à atividade</div><p class="note" style="margin:0">Equipamento ainda em manutenção. O supervisor da turma registra aqui quando ele voltar.</p></div>`;
   return `<div class="ckbox" id="mfRetSec"><div class="ckgrp">7. Retorno à atividade</div>
     <p class="note" style="margin:0">Preencha quando o equipamento voltar da manutenção e estiver liberado para trabalhar.</p>
     <div class="row2"><label class="f">Data do retorno<input type="date" id="mfRetData" value="${hoje()}"></label><label class="f">Horário<input type="time" id="mfRetHora" value="${horaAgora()}"></label></div>
-    <div class="row2"><label class="f">KM no retorno<input id="mfRetKm" inputmode="numeric" placeholder="ex.: 84600"></label><label class="f">Oficina / responsável<input id="mfRetOf" placeholder="ex.: oficina da locadora"></label></div>
+    <label class="f">KM no retorno<input id="mfRetKm" inputmode="numeric" placeholder="ex.: 84600"></label>
     <label class="f">Serviço executado na manutenção<textarea id="mfRetServ" placeholder="ex.: troca da mangueira do braço e teste do hidráulico"></textarea></label>
     <div class="ckit"><div class="nm">Equipamento testado e liberado para operar</div>${optHtml("m:retLib",["SIM","NÃO"],"",true)}</div>
     ${m.reserva==="SIM"?`<div class="ckit"><div class="nm">Equipamento reserva devolvido${m.reservaQual?" ("+esc(m.reservaQual)+")":""}</div>${optHtml("m:retRes",["SIM","NÃO"],"",true)}</div>`:""}
@@ -2492,6 +2495,7 @@ function abrirMan(m,pre){
   const turma=ls.get("gpe_turma",{}), kSup=$("#kSup").value;
   const sup0=m?.supervisao||pre.supervisao||(travado()?sessao.sup:(kSup&&!kSup.startsWith("G:")?kSup:meuSup()))||"";
   const novo=!m, edit=novo&&podeEntregar(sup0), retEdit=!!m&&manAberta(m)&&podeEntregar(m.supervisao);
+  const resEdit=!!m&&podeEntregar(m.supervisao); // equipamento reserva: pode ser registrado / corrigido depois de salvo
   const v={sit:{...(m||{})},tipos:[...(m?.tipos||[])],reserva:m?.reserva||"",retVolta:""}, midia={...(m?.midia||{})};
   const manSlotsEd=manSlots(midia); // lista viva: "Gravar mais um vídeo" acrescenta aqui
   MAN_SIT.forEach(q=>v.sit[q.k]=manVal(m,q.k));
@@ -2520,12 +2524,13 @@ function abrirMan(m,pre){
     <div id="mfRecBox" ${v.sit.recolhido==="SIM"?"":"hidden"}>
       <div class="ckgrp">4. Dados do recolhimento</div>
       <div class="row2"><label class="f">Data do recolhimento<input type="date" id="mfRData" value="${esc(m?.recolh?.data||hoje())}" ${dis}></label><label class="f">Horário<input type="time" id="mfRHora" value="${esc(m?.recolh?.hora||horaAgora())}" ${dis}></label></div>
-      <div class="row2"><label class="f">Responsável / motorista<input id="mfRResp" value="${esc(m?.recolh?.resp||"")}" placeholder="Motorista da ${MAN_LOCAL}" ${dis}></label><label class="f">Local<input id="mfRDest" value="${MAN_LOCAL}" disabled></label></div>
-      <p class="note" style="margin:0">O recolhimento é sempre feito pela ${MAN_LOCAL}: o responsável é o motorista da ${MAN_LOCAL}.</p>
+      <div class="row2"><label class="f">Responsável<input id="mfRResp" value="MOTORISTA" disabled></label><label class="f">Local<input id="mfRDest" value="${MAN_LOCAL}" disabled></label></div>
+      <p class="note" style="margin:0">O responsável pelo recolhimento é sempre o motorista.</p>
     </div>
     <div class="ckgrp">5. Retorno do equipamento / equipamento reserva</div>
-    <div class="ckit"><div class="nm">Houve equipamento reserva</div>${optHtml("m:reserva",["SIM","NÃO"],v.reserva,edit)}</div>
-    <label class="f" id="mfResQBox" ${v.reserva==="SIM"?"":"hidden"}>Qual equipamento reserva<select id="mfResQ" ${dis}><option value="">Selecione…</option>${[...$("#viatura").options].map(o=>`<option value="${esc(o.value)}"${o.value===m?.reservaQual?" selected":""}>${esc(o.textContent)}</option>`).join("")}</select></label>
+    <div class="ckit"><div class="nm">Houve equipamento reserva</div>${optHtml("m:reserva",["SIM","NÃO"],v.reserva,edit||resEdit)}</div>
+    <label class="f" id="mfResQBox" ${v.reserva==="SIM"?"":"hidden"}>Qual equipamento reserva<select id="mfResQ" ${edit||resEdit?"":"disabled"}><option value="">Selecione…</option>${[...$("#viatura").options].map(o=>`<option value="${esc(o.value)}"${o.value===m?.reservaQual?" selected":""}>${esc(o.textContent)}</option>`).join("")}</select></label>
+    ${resEdit?`<div class="actions" style="grid-template-columns:1fr;margin:0"><button type="button" class="btn sec" id="mResSalvar" style="min-height:44px;font-size:14px">Salvar equipamento reserva</button></div>`:""}
     ${novo?`<p class="note" style="margin:0">O retorno do equipamento é registrado depois, quando ele voltar da manutenção, na parte <b>Retorno à atividade</b> desta comunicação.</p>`
       : `<p class="note" style="margin:0">Retorno do equipamento: <b>${manAberta(m)?"ainda não":"SIM · "+fmtD(m.retorno.data)+" às "+esc(m.retorno.hora||"—")}</b></p>`}
     <div class="ckbox">
@@ -2556,6 +2561,17 @@ function abrirMan(m,pre){
     b.parentElement.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
   });
   if(novo&&edit) $("#mfSup").onchange=()=>{$("#mfTurno").value=supOf($("#mfSup").value)?.turno||""; $("#mfSupNome").value=nomeSupDe($("#mfSup").value);};
+  if(resEdit&&$("#mResSalvar")) $("#mResSalvar").onclick=async()=>{
+    err.hidden=true;
+    if(!v.reserva) return erro("Marque se houve equipamento reserva (SIM ou NÃO).");
+    if(v.reserva==="SIM"&&!$("#mfResQ").value) return erro("Escolha qual equipamento reserva.");
+    if(!db) return erro("Sem conexão com o banco.");
+    const agora=new Date().toISOString(), qual=v.reserva==="SIM"?$("#mfResQ").value:"";
+    const parte={reserva:v.reserva,reservaQual:qual,log:[...(m.log||[]),{em:agora,por:nomeAutor()||"—",acao:"Equipamento reserva: "+v.reserva+(qual?" ("+qual+")":"")}].slice(-20),ultimoUsuario:nomeAutor()};
+    const b=$("#mResSalvar"); b.disabled=true; b.textContent="Salvando…";
+    try{ await dbUpdate(db.collection(MAN_COL).doc(m.id),parte); Object.assign(m,parte); b.disabled=false; b.textContent="Salvar equipamento reserva"; toast("Equipamento reserva registrado."); }
+    catch(x){ b.disabled=false; b.textContent="Salvar equipamento reserva"; erro("Não foi possível salvar agora. Tente de novo."); }
+  };
   if($("#mIrRet")) $("#mIrRet").onclick=()=>$("#mfRetSec").scrollIntoView({block:"start",behavior:"smooth"});
   if(retEdit&&$("#mRetOk")) $("#mRetOk").onclick=async()=>{
     const fr=[]; if(!$("#mfRetData").value) fr.push("data do retorno"); if($("#mfRetData").value>hoje()) fr.push("a data do retorno não pode ser no futuro");
@@ -2567,7 +2583,7 @@ function abrirMan(m,pre){
     if(!db) return erro("Sem conexão com o banco.");
     const q=await assinante("mR",m.supervisao); if(q.erro) return erro("Assinatura: "+q.erro+".");
     const agora=new Date().toISOString(), body={...m}; delete body.id;
-    body.retorno={volta:"SIM",data:$("#mfRetData").value,hora:$("#mfRetHora").value,km:$("#mfRetKm").value.trim(),oficina:$("#mfRetOf").value.trim(),servico:$("#mfRetServ").value.trim(),liberado:"SIM",reservaDevolvida:m.reserva==="SIM"?v.retRes:"",obs:$("#mfRetObs").value.trim()};
+    body.retorno={volta:"SIM",data:$("#mfRetData").value,hora:$("#mfRetHora").value,km:$("#mfRetKm").value.trim(),servico:$("#mfRetServ").value.trim(),liberado:"SIM",reservaDevolvida:m.reserva==="SIM"?v.retRes:"",obs:$("#mfRetObs").value.trim()};
     body.retAssin={...q,em:agora};
     body.retAssin.cod=await codVerif({id:m.id,retorno:body.retorno,uid:q.uid,em:agora});
     body.log=[...(m.log||[]),{em:agora,por:nomeAutor(),acao:"Registrou o retorno do equipamento"}].slice(-20);
@@ -2581,7 +2597,7 @@ function abrirMan(m,pre){
     if(!$("#mfDesc").value.trim()) e.push("descrição do defeito (seção 1)");
     if(!v.tipos.length) e.push("tipo de defeito (seção 2)"); else if(v.tipos.includes("OUTRO")&&!$("#mfTipoOutro").value.trim()) e.push("qual o outro tipo de defeito");
     const semSit=MAN_SIT.filter(q=>!v.sit[q.k]).map(q=>q.t.toLowerCase()); if(semSit.length) e.push("seção 3: "+semSit.join(", "));
-    if(v.sit.recolhido==="SIM"&&(!$("#mfRData").value||!$("#mfRResp").value.trim())) e.push("dados do recolhimento: data e o motorista da "+MAN_LOCAL+" (seção 4)");
+    if(v.sit.recolhido==="SIM"&&!$("#mfRData").value) e.push("data do recolhimento (seção 4)");
     if(assets&&!manVids(midia)) e.push("grave o vídeo mostrando o defeito (obrigatório)");
     if([...document.querySelectorAll("#kfMid .midst")].some(x=>/enviando/.test(x.textContent))) e.push("espere terminar o envio das fotos");
     if(!v.reserva) e.push("se houve equipamento reserva (seção 5)"); else if(v.reserva==="SIM"&&!$("#mfResQ").value) e.push("qual equipamento reserva");
@@ -2594,7 +2610,7 @@ function abrirMan(m,pre){
       equipamento:$("#mfEqp").value.trim()||"CESTO AÉREO",viatura:$("#mfVt").value,km:$("#mfKm").value.trim(),
       desc:$("#mfDesc").value.trim(),tipos:v.tipos,tipoOutro:v.tipos.includes("OUTRO")?$("#mfTipoOutro").value.trim():"",
       ...Object.fromEntries(MAN_SIT.map(q=>[q.k,v.sit[q.k]])),
-      recolh:v.sit.recolhido==="SIM"?{data:$("#mfRData").value,hora:$("#mfRHora").value,resp:$("#mfRResp").value.trim().toUpperCase(),destino:MAN_LOCAL}:null,
+      recolh:v.sit.recolhido==="SIM"?{data:$("#mfRData").value,hora:$("#mfRHora").value,resp:"MOTORISTA",destino:MAN_LOCAL}:null,
       reserva:v.reserva,reservaQual:v.reserva==="SIM"?$("#mfResQ").value:"",midia,retorno:{volta:"NÃO"},hora:$("#mfHora").value,checklist:pre.chkId||"",
       assin:{...q,sup:q.sup||sup,em:agora},
       ultimoUsuario:nomeAutor(),log:[{em:agora,por:nomeAutor()||"—",acao:"Comunicou defeito e assinou"}]};
@@ -2679,13 +2695,13 @@ function manDocHtml(m){
     <div><p class="sec">1. Descrição do defeito / anomalia</p><div class="box">${esc(m.desc||"")}</div></div>
     <div><p class="sec">2. Tipo de defeito</p><table><tr><td class="k">Tipo</td><td>${tiposTxt}</td></tr></table></div>
     <div><p class="sec">3. Situação e ação tomada</p><table>${MAN_SIT.map(q=>`<tr><td class="k" style="width:30%">${esc(q.t)}</td><td>${ops(manVal(m,q.k),q.o)}</td></tr>`).join("")}</table></div>
-    <div><p class="sec">4. Dados do recolhimento</p><table>${kv("Data recolhimento",rc.data?fmtD(rc.data):"—","Horário",esc(rc.hora||"—"))}${kv("Responsável / motorista",esc(rc.resp||"—"),"Local",esc(rc.destino||(m.recolhido==="SIM"?MAN_LOCAL:"—")))}</table></div>
+    <div><p class="sec">4. Dados do recolhimento</p><table>${kv("Data recolhimento",rc.data?fmtD(rc.data):"—","Horário",esc(rc.hora||"—"))}${kv("Responsável",m.recolhido==="SIM"?"MOTORISTA":"—","Local",esc(rc.destino||(m.recolhido==="SIM"?MAN_LOCAL:"—")))}</table></div>
     <div><p class="sec">5. Retorno do equipamento / equipamento reserva</p><table>
       <tr><td class="k" style="width:30%">Retorno do equipamento</td><td>${fx(ret.volta,"SIM")} SIM &nbsp;&nbsp;${fx(ret.volta,"NÃO")} NÃO &nbsp;&nbsp; Data: ${ret.volta==="SIM"?fmtD(ret.data):"____/____/______"} &nbsp; Horário: ${ret.volta==="SIM"?esc(ret.hora||""):"____:____"}</td></tr>
       <tr><td class="k">Houve equipamento reserva</td><td>${fx(m.reserva,"SIM")} SIM &nbsp;&nbsp;${fx(m.reserva,"NÃO")} NÃO</td></tr>
       <tr><td class="k">Qual equipamento reserva</td><td>${esc(m.reservaQual||"—")}</td></tr></table></div>
     <div><p class="sec">6. Assinatura</p>${fsig("Supervisor",m.assin)}<table style="margin-top:4px">${kv("Data",fmtD(m.data),"Horário",esc(m.hora||""))}</table></div>
-    <div><p class="sec">7. Retorno à atividade</p>${ret.volta==="SIM"?`<table>${kv("Data do retorno",fmtD(ret.data),"Horário",esc(ret.hora||"—"))}${kv("KM no retorno",esc(ret.km||"—"),"Oficina / responsável",esc(ret.oficina||"—"))}${kv("Liberado para operar",esc(ret.liberado||"SIM"),"Reserva devolvido",m.reserva==="SIM"?esc(ret.reservaDevolvida||"—"):"N/A")}</table><div class="box" style="margin-top:6px"><b>Serviço executado:</b> ${esc(ret.servico||ret.obs||"—")}${ret.obs&&ret.servico?`<br><b>Observação:</b> ${esc(ret.obs)}`:""}</div>`:`<div class="pend">Equipamento ainda em manutenção – retorno não registrado.</div>`}${m.retAssin?fsig("Supervisor que registrou o retorno à atividade",m.retAssin):""}</div>
+    <div><p class="sec">7. Retorno à atividade</p>${ret.volta==="SIM"?`<table>${kv("Data do retorno",fmtD(ret.data),"Horário",esc(ret.hora||"—"))}${kv("KM no retorno",esc(ret.km||"—"),"Liberado para operar",esc(ret.liberado||"SIM"))}${kv("Reserva devolvido",m.reserva==="SIM"?esc(ret.reservaDevolvida||"—"):"N/A","","")}</table><div class="box" style="margin-top:6px"><b>Serviço executado:</b> ${esc(ret.servico||ret.obs||"—")}${ret.obs&&ret.servico?`<br><b>Observação:</b> ${esc(ret.obs)}`:""}</div>`:`<div class="pend">Equipamento ainda em manutenção – retorno não registrado.</div>`}${m.retAssin?fsig("Supervisor que registrou o retorno à atividade",m.retAssin):""}</div>
     <div><p class="sec">Registro do defeito</p>${(()=>{ const fs=manSlots(m.midia).filter(x=>x.tipo==="foto"&&m.midia?.[x.k]); return fs.length?`<div class="fgrid m">${fs.map(x=>{const u=midUrl(m.midia?.[x.k]);return `<div class="fcel">${u?`<img src="${esc(u)}" alt="">`:`<div class="fsem">Foto indisponível</div>`}<span>${esc(x.t.replace(" (opcional)",""))}</span></div>`}).join("")}</div>`:`<p class="leg" style="margin:4px 0 0">Sem fotos (opcionais).</p>`; })()}
     <p class="leg" style="margin:6px 0 0">Vídeos do defeito: ${manVids(m.midia)?manVids(m.midia)+" anexado"+(manVids(m.midia)>1?"s":"")+" no sistema Programação GPE (assista pelo app, abrindo esta comunicação).":"não anexado."}</p></div>
     <p class="rod">Documento gerado pelo sistema Programação GPE em ${dataBR(new Date().toISOString())} às ${horaAgora()}.</p></div></div>`;
