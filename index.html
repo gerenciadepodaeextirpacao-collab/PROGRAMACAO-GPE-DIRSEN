@@ -511,6 +511,10 @@ nav.tabs button[aria-current="page"]{background:linear-gradient(180deg,#ff8c42 0
 .pxs.ok{border-left-color:var(--ok)}.pxs.bad{border-left-color:var(--bad);background:var(--bad-bg)}
 .pxs .pxh{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline}.pxs .pxh b{font-family:var(--display);font-size:18px;text-transform:uppercase;letter-spacing:.03em}.pxs .pxh span{font-size:13px;color:var(--muted)}
 .pxs .pxl{display:flex;flex-wrap:wrap;gap:6px}.pxs .pxl span{font-size:12.5px;border-radius:99px;padding:4px 10px;background:var(--warn-bg);color:var(--warn)}.pxs .pxl span.ok{background:var(--ok-bg);color:var(--ok)}.pxs .pxl span.bad{background:var(--bad-bg);color:var(--bad);border:1px solid var(--bad)}
+.recusabox{display:grid;gap:8px;border:1.5px solid var(--bad);border-radius:10px;padding:10px;background:var(--bad-bg)}
+.valbox{border-color:var(--accent)!important}.pend-coord{margin:0;font-weight:700;color:var(--bad)}
+.cksig .bad{color:var(--bad);font-weight:600}.cksig .urgtxt{color:var(--bad);font-weight:700}
+#kValDec{display:grid;gap:6px}#kValDec button{text-align:left;white-space:normal}
 .assbox{display:grid;gap:6px;border:1px dashed var(--line);border-radius:10px;padding:8px 10px;background:var(--sunk)}
 .cam{position:fixed;inset:0;z-index:600;background:#000;color:#fff;display:grid;grid-template-rows:auto 1fr auto}
 .cam .camtop{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;font:600 14px var(--body)}
@@ -1323,8 +1327,9 @@ function abrirAcessos(){
 }
 $("#acessosBtn").onclick=abrirAcessos;
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.27";
+const APP_VERSAO="2026.10.27b";
 const VERSOES=[
+  {v:"2026.10.27b", d:"27/10/2026", itens:["Checklist: o supervisor que recebe pode recusar o recebimento (não concordou ou encontrou avaria), relatando o motivo e assinando","Recusa vai para o coordenador validar a situação correta (procede / não procede, com a situação verificada e assinatura); aviso em vermelho para o coordenador e no Painel","O supervisor que fez o checklist recebe o aviso de que foi contestado, com o motivo e depois a decisão do coordenador","Recusa e validação aparecem na lista, no checklist aberto e no PDF"]},
   {v:"2026.10.27", d:"27/10/2026", itens:["Aba Lista liberada para os supervisores (só com os lançamentos da própria turma)"]},
   {v:"2026.10.26g", d:"26/10/2026", itens:["\"Ver no mapa\": busca a rua/avenida inteira no formato do Google Maps (sem quadra, lote, número e complemento), para abrir com a via destacada; vale também para o mapa de um endereço só"]},
   {v:"2026.10.26g", d:"26/10/2026", itens:["\"Ver no mapa\" abre o Google Maps buscando a rua/avenida pelo nome por extenso (sem quadra e lote), para a via aparecer destacada no mapa"]},
@@ -1992,12 +1997,17 @@ let chks=[];
 const chkId=(data,sup,vt)=>"chk_"+(data+"_"+sup+"_"+vt).normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9]+/g,"-");
 const chkVis=()=>chks.filter(c=>!travado()||c.supervisao===sessao?.sup||c.recebe?.sup===sessao?.sup);
 const chkRecebido=c=>!!c?.recebe?.em;
+// recusa do recebimento: o supervisor que recebe nega e relata o motivo; o coordenador valida a situação
+const chkRecusado=c=>!!c?.recusa?.em;
+const chkAguardaCoord=c=>chkRecusado(c)&&!c?.validacao?.em;
+const podeValidar=()=>!!sessao&&(sessao.perfil==="coordenador"||sessao.perfil==="gerencia");
+const VAL_TXT={PROCEDE:"Procede – a avaria / divergência apontada pelo supervisor que recebe é real",NAO_PROCEDE:"Não procede – o equipamento estava como registrado na entrega"};
 const CHK_META={"PODA I":2,"PODA II":4}; // equipamentos por turma em cada período (PODA II: 3 + van)
 const chkMeta=sup=>CHK_META[supOf(sup)?.grupo]||2;
 // recebe pelo próprio acesso, ou no aparelho de quem entregou (confirmando matrícula e senha de quem recebe)
 // só supervisor assina (entrega, recebimento, comunicação de defeito e retorno)
 const ehSup=()=>sessao?.perfil==="supervisor";
-const souRecebedor=c=>!!sessao && sessao.perfil!=="diretoria" && !chkRecebido(c) && (!travado()||c?.recebe?.sup===sessao.sup||c?.supervisao===sessao.sup);
+const souRecebedor=c=>!!sessao && sessao.perfil!=="diretoria" && !chkRecebido(c) && !chkRecusado(c) && (!travado()||c?.recebe?.sup===sessao.sup||c?.supervisao===sessao.sup);
 // qualquer perfil (menos diretoria) pode preencher; a assinatura é sempre do supervisor da turma
 const podeEntregar=sup=>!!sessao && sessao.perfil!=="diretoria" && (!travado()||sup===sessao.sup);
 const nomeSupDe=sup=>{ if(!sup) return ""; const u=Object.values(acesso||{}).find(x=>x.perfil==="supervisor"&&x.ativo&&x.sup===sup); return u?.nome||supOf(sup)?.enc||""; };
@@ -2159,16 +2169,24 @@ function renderChk(){
   $("#kSoSup").hidden=ehSup()||!sessao;
   const vis=chkVis();
   const lst=vis.filter(c=>c.data===dia&&(casaTurma(sup,c)||(travado()&&c.recebe?.sup===sessao.sup))).sort((a,b)=>(a.supervisao||"").localeCompare(b.supervisao||"")||(a.equipe||"").localeCompare(b.equipe||""));
-  const meus=travado()?vis.filter(c=>!chkRecebido(c)&&c.recebe?.sup===sessao.sup).sort((a,b)=>(b.data||"").localeCompare(a.data||"")):[];
+  const meus=travado()?vis.filter(c=>!chkRecebido(c)&&!chkRecusado(c)&&c.recebe?.sup===sessao.sup).sort((a,b)=>(b.data||"").localeCompare(a.data||"")):[];
   // checklists esperados por turma no dia: PODA I = 2 equipamentos; PODA II = 3 + a van = 4
   const trab=new Set();
   todos().filter(r=>casaTurma(sup,r)&&r.supervisao&&(r.dataExec===dia||(r.data===dia&&r.status!=="NÃO"))).forEach(r=>trab.add(r.supervisao));
   lst.filter(c=>casaTurma(sup,c)).forEach(c=>trab.add(c.supervisao));
   const cota=[...trab].sort().map(t=>{const feitos=[...new Set(lst.filter(c=>c.supervisao===t).map(c=>c.viatura))];return {t,feitos,meta:chkMeta(t)}});
   const pend=cota.filter(x=>x.feitos.length<x.meta);
-  const naoApto=lst.filter(c=>chkNivel(c)==="NÃO").length, ress=lst.filter(c=>chkNivel(c)==="PARCIAL").length, semRec=lst.filter(c=>!chkRecebido(c)).length;
+  const naoApto=lst.filter(c=>chkNivel(c)==="NÃO").length, ress=lst.filter(c=>chkNivel(c)==="PARCIAL").length, semRec=lst.filter(c=>!chkRecebido(c)&&!chkRecusado(c)).length;
+  const aguarda=chks.filter(chkAguardaCoord).filter(c=>!travado()||c.supervisao===sessao.sup||c.recebe?.sup===sessao.sup).sort((a,b)=>(a.data||"").localeCompare(b.data||""));
   let h="";
-  const tb=document.querySelector('nav.tabs button[data-v="chk"]'); if(tb) tb.innerHTML="Checklist"+(meus.length?`<span class="tbadge" aria-label="${meus.length} turno(s) para receber">${meus.length}</span>`:"");
+  // recusas: o coordenador valida; o supervisor que entregou é avisado (pendentes e as validadas nos últimos 7 dias)
+  const val=podeValidar()?aguarda:[];
+  const d7=(()=>{const d=new Date();d.setDate(d.getDate()-7);return d.toISOString()})();
+  const minhasRec=travado()?chks.filter(c=>chkRecusado(c)&&c.supervisao===sessao.sup&&(!c.validacao?.em||c.validacao.em>=d7)).sort((a,b)=>(b.recusa.em||"").localeCompare(a.recusa.em||"")):[];
+  const nb=meus.length+val.length+minhasRec.filter(chkAguardaCoord).length;
+  const tb=document.querySelector('nav.tabs button[data-v="chk"]'); if(tb) tb.innerHTML="Checklist"+(nb?`<span class="tbadge" aria-label="${nb} pendência(s) no checklist">${nb}</span>`:"");
+  if(val.length) h+=`<div class="alert"><h3>Recebimento recusado – validar</h3><p class="note" style="margin:0">O supervisor que recebe recusou o recebimento. Abra, confira a situação e registre a validação.</p>${val.map(c=>`<button type="button" class="urg" data-chk="${esc(c.id)}"><b>⚠</b><span>${esc(c.viatura||"")} · ${esc(c.supervisao)} → ${esc(c.recusa.sup||"")}<small>${fmtD(c.data)} · recusado por ${esc(c.recusa.nome)}: ${esc(c.recusa.motivo||"")}</small></span></button>`).join("")}</div>`;
+  if(minhasRec.length) h+=`<div class="alert"><h3>Seu checklist foi contestado</h3><p class="note" style="margin:0">O supervisor que recebe não concordou com o checklist entregue pela sua turma. O coordenador valida a situação correta.</p>${minhasRec.map(c=>`<button type="button" class="${chkAguardaCoord(c)?"urg":""}" data-chk="${esc(c.id)}"><b>${chkAguardaCoord(c)?"⚠":"✔"}</b><span>${esc(c.viatura||"")} · ${fmtD(c.data)} · recusado por ${esc(c.recusa.nome)} (${esc(c.recusa.sup||"")})<small>Motivo: ${esc(c.recusa.motivo||"")} · ${c.validacao?.em?"Coordenador "+esc(c.validacao.nome)+": "+(c.validacao.decisao==="PROCEDE"?"procede":"não procede")+" – "+esc(c.validacao.obs||""):"aguardando o coordenador"}</small></span></button>`).join("")}</div>`;
   if(meus.length) h+=`<div class="alert"><h3>Turno para você receber</h3><p class="note" style="margin:0">Abra, confira o checklist da turma que entregou e assine o recebimento dando ciência das condições do equipamento.</p>${meus.map(c=>`<button type="button" data-chk="${esc(c.id)}"><b>!</b><span>${esc(c.viatura||"")} · ${esc(c.supervisao)} · ${esc(c.equipe)}<small>Entregue por ${esc(c.entrega?.nome||"—")} em ${fmtD(c.data)}${c.hora?" às "+esc(c.hora):""}. Confira e assine o recebimento.</small></span></button>`).join("")}</div>`;
   if(man){ host.innerHTML=manListaHtml(sup,dia); return; }
   h+=`<div class="grp-h"><h3>Checklists · ${fmtD(dia)} · ${diaDe(dia)}</h3><span>${lst.length} checklist${lst.length===1?"":"s"}${naoApto?` · <b style="color:var(--bad)">${naoApto} não apto</b>`:""}${ress?` · ${ress} com ressalva`:""} · ${semRec} sem recebimento</span></div>`;
@@ -2190,16 +2208,24 @@ function manListaHtml(sup,dia){
   if(ult.length) h+=`<div class="grp-h"><h3>Últimas que voltaram à atividade</h3><span>${ult.length}</span></div><div class="list">${ult.map(manCard).join("")}</div>`;
   return h;
 }
+function recusaHtml(c){
+  const r=c.recusa, v=c.validacao;
+  return `<div class="recusabox"><p class="note" style="margin:0;color:var(--bad)"><b>✖ Recebimento recusado</b> pela ${esc(r.sup||"turma que recebe")}.</p>
+    <p class="note" style="margin:0"><b>Motivo:</b> ${esc(r.motivo||"")}</p>${assinHtml("Supervisor que recusou o recebimento",r)}</div>
+    ${v?.em?`<div class="ckbox valbox"><div class="ckgrp">Validação do coordenador</div><p class="note" style="margin:0"><b>${esc(VAL_TXT[v.decisao]||v.decisao)}</b></p><p class="note" style="margin:0"><b>Situação verificada / providência:</b> ${esc(v.obs||"")}</p>${assinHtml("Coordenador que validou",v)}</div>`
+      :`<p class="pend-coord">⏳ Aguardando a validação do coordenador.</p>`}`;
+}
 function chkCard(c){
   const al=chkAlertas(c), nv=chkNivel(c);
   return `<button type="button" class="rec" data-chk="${esc(c.id)}">
-    <div class="l1"><span class="when">${esc(c.viatura||"")} · ${esc(c.supervisao)}</span><span class="pill ${nv}">${chkNivelTxt[nv]}</span></div>
+    <div class="l1"><span class="when">${esc(c.viatura||"")} · ${esc(c.supervisao)}</span>${chkAguardaCoord(c)?`<span class="pill NÃO">Recusado</span>`:""}<span class="pill ${nv}">${chkNivelTxt[nv]}</span></div>
     <div class="meta">${esc(c.equipe||"")}${c.kmIni||c.kmFim?` · km ${esc(c.kmIni||"?")} → ${esc(c.kmFim||"?")}`:""}${c.hora?" · encerrado às "+esc(c.hora):""}</div>
     ${al.length?`<div class="ckprob">${al.map(t=>`<div>• ${esc(t)}</div>`).join("")}</div>`:""}
     ${c.ocorr?`<div class="meta">Ocorrências: ${esc(c.ocorr)}</div>`:""}
     ${c.midia?`<div class="meta">📷 ${MID_SLOTS.filter(x=>x.tipo==="foto"&&c.midia[x.k]).length} de 4 fotos${c.midia.video360?" · 🎥 vídeo 360°":""}</div>`:""}
     <div class="cksig"><span class="ok">✔ Supervisor que entregou: <b>${esc(c.entrega?.nome||"—")}</b>${c.entrega?.em?" · "+fmtHora(c.entrega.em):""}</span>
-    ${chkRecebido(c)?`<span class="ok">✔ Supervisor que recebeu: <b>${esc(c.recebe.nome)}</b> (${esc(c.recebe.sup)}) · ${fmtHora(c.recebe.em)}</span>${c.recebe.obs?`<span class="dv">Ressalva no recebimento: ${esc(c.recebe.obs)}</span>`:""}`:`<span class="pe">Aguardando o supervisor que recebe${c.recebe?.sup?": "+esc(nomeSupDe(c.recebe.sup))+" ("+esc(c.recebe.sup)+")":""}</span>`}</div>
+    ${chkRecusado(c)?`<span class="bad">✖ Recebimento recusado por <b>${esc(c.recusa.nome)}</b> (${esc(c.recusa.sup||"")}) · ${fmtHora(c.recusa.em)}</span><span class="dv">Motivo: ${esc(c.recusa.motivo||"")}</span>${c.validacao?.em?`<span class="ok">✔ Validado por <b>${esc(c.validacao.nome)}</b>: ${c.validacao.decisao==="PROCEDE"?"procede":"não procede"} · ${fmtHora(c.validacao.em)}</span>`:`<span class="pe urgtxt">⏳ Aguardando validação do coordenador</span>`}`
+    :chkRecebido(c)?`<span class="ok">✔ Supervisor que recebeu: <b>${esc(c.recebe.nome)}</b> (${esc(c.recebe.sup)}) · ${fmtHora(c.recebe.em)}</span>${c.recebe.obs?`<span class="dv">Ressalva no recebimento: ${esc(c.recebe.obs)}</span>`:""}`:`<span class="pe">Aguardando o supervisor que recebe${c.recebe?.sup?": "+esc(nomeSupDe(c.recebe.sup))+" ("+esc(c.recebe.sup)+")":""}</span>`}</div>
   </button>`;
 }
 $("#kList").onclick=e=>{const bm=e.target.closest("[data-man]"); if(bm){const m=mans.find(x=>x.id===bm.dataset.man); if(m) abrirMan(m); return;} const b=e.target.closest("[data-chk]"); if(!b) return; const c=chks.find(x=>x.id===b.dataset.chk); if(c) abrirChk(c);};
@@ -2212,8 +2238,9 @@ function abrirChk(c){
   const eq0=c?.equipe||turma.equipe||$("#equipe").value||"1ª EQUIPE";
   const vt0=c?.viatura||turma.viatura||"SKY 5074.0";
   const rec=chkRecebido(c);
-  const edit=!rec && podeEntregar(sup0);
+  const edit=!rec && !chkRecusado(c) && podeEntregar(sup0);
   const receber=!!c && souRecebedor(c);
+  const validar=!!c && chkAguardaCoord(c) && podeValidar();
   const sit={...(c?.sit||{})}, itens={...(c?.itens||{})}, midia={...(c?.midia||{})};
   const dis=edit?"":"disabled";
   const vtOpts=[...$("#viatura").options].map(o=>`<option value="${esc(o.value)}"${o.value===vt0?" selected":""}>${esc(o.textContent)}</option>`).join("");
@@ -2262,15 +2289,28 @@ function abrirChk(c){
     ${c?`<div class="ckbox">
       <div class="ckgrp">Recebimento do turno (supervisor)</div>
       ${rec?(c.recebe.ciencia?`<p class="note" style="margin:0">✔ Ciente das condições registradas neste checklist.</p>`:"")+assinHtml("Supervisor que recebeu o turno",c.recebe)+(c.recebe.obs?`<p class="note" style="margin:0">Ressalva: ${esc(c.recebe.obs)}</p>`:"")
+       : chkRecusado(c)?recusaHtml(c)
        : receber?`<p class="note" style="margin:0">Turma que recebe: <b>${esc(c.recebe?.sup||"—")}</b>. Confira o equipamento antes de assinar. Se algo estiver diferente do que foi entregue, anote na ressalva.</p>
         <label class="f">Ressalva no recebimento (se houver)<textarea id="kfRecObs" placeholder="Ex.: vazamento na mangueira não informado na entrega"></textarea></label>
         <label class="ck"><input type="checkbox" id="kfCiencia"><span class="note" style="color:var(--ink)"><b>Ciência:</b> declaro que recebi o equipamento e tomei ciência das condições registradas neste checklist${chkAlertas(c).length?" (inclusive das anomalias apontadas)":""}${c.ocorr?" e das ocorrências / observações":""}.</span></label>
         ${travado()&&sessao.sup===c.recebe?.sup?`<p class="note" style="margin:0">Assina como <b>${esc(sessao.nome)}</b>, ${esc(cargoDe(acesso?.[sessao.id]||sessao))}.</p>${sigFormHtml("kR",sessao.id)}`
           :`<p class="note" style="margin:0">O supervisor que recebe assina aqui com a matrícula e a <b>senha de assinatura</b> dele.</p>${sigMatHtml("kfRecMat","kfRecPin","Matrícula de quem recebe")}`}
-        <div class="actions" style="grid-template-columns:1fr;margin:4px 0 0"><button type="button" class="btn pri" id="kReceber">Assinar recebimento</button></div>`
+        <div class="actions" style="grid-template-columns:1fr;margin:4px 0 0"><button type="button" class="btn pri" id="kReceber">Assinar recebimento</button>
+          <button type="button" class="btn danger" id="kRecusarAbre" style="min-height:44px;font-size:14px">Não concordo / encontrei avaria – recusar recebimento</button></div>
+        <div class="recusabox" id="kRecusaBox" hidden>
+          <p class="note" style="margin:0"><b>Recusar o recebimento:</b> relate o motivo (o que está diferente do que foi entregue ou a avaria encontrada). O checklist vai para o <b>coordenador</b>, que vai validar a situação correta. A recusa também é assinada com a senha de assinatura.</p>
+          <label class="f">Motivo da recusa (obrigatório)<textarea id="kfRecusaMot" placeholder="Ex.: mangueira do braço vazando, não informado na entrega; cesto sujo"></textarea></label>
+          <button type="button" class="btn danger" id="kRecusar">Assinar recusa e enviar ao coordenador</button>
+        </div>`
        : `<p class="note" style="margin:0">Aguardando a assinatura de quem recebe${c.recebe?.sup?" (<b>"+esc(c.recebe.sup)+" · "+esc(supOf(c.recebe.sup)?.enc||"")+"</b>)":""}. O supervisor que recebe assina pelo próprio acesso, na aba Checklist.</p>`}
     </div>`:""}
-    ${c&&chkAlertas(c).length&&podeEntregar(c.supervisao)?`<button type="button" class="btn sec" id="kComDef" style="min-height:44px;font-size:14px">Comunicar defeito / recolher para manutenção</button>`:""}
+    ${validar?`<div class="ckbox valbox"><div class="ckgrp">Validação do coordenador</div>
+      <p class="note" style="margin:0">O supervisor que recebe recusou o recebimento. Confira a situação (com a turma, no local ou pelas fotos e vídeo) e registre qual é a situação correta.</p>
+      <div class="ckopt" id="kValDec">${Object.entries(VAL_TXT).map(([k,t])=>`<button type="button" data-dec="${k}" aria-pressed="false">${esc(t)}</button>`).join("")}</div>
+      <label class="f">Situação verificada / providência (obrigatório)<textarea id="kfValObs" placeholder="Ex.: confirmado vazamento; equipamento recolhido para manutenção"></textarea></label>
+      <p class="note" style="margin:0">Valida como <b>${esc(sessao.nome)}</b>, ${esc(cargoDe(acesso?.[sessao.id]||sessao))}.</p>${sigFormHtml("kV",sessao.id)}
+      <button type="button" class="btn pri" id="kValidar">Assinar validação</button></div>`:""}
+    ${c&&(chkAlertas(c).length||c.validacao?.decisao==="PROCEDE")&&podeEntregar(c.supervisao)?`<button type="button" class="btn sec" id="kComDef" style="min-height:44px;font-size:14px">Comunicar defeito / recolher para manutenção</button>`:""}
     <div class="err" id="kfErr" hidden></div>
     ${edit?`<div class="actions" style="grid-template-columns:1fr;margin:4px 0 0"><button type="button" class="btn pri" id="kSalvar">${c?"Salvar correção e assinar entrega":"Salvar e assinar entrega"}</button></div>`:""}
   </div></div>`;
@@ -2281,23 +2321,59 @@ function abrirChk(c){
   const err=$("#kfErr"), erro=t=>{err.textContent=t; err.hidden=false; err.scrollIntoView({block:"nearest"});};
   if($("#kComDef")) $("#kComDef").onclick=()=>abrirMan(null,{supervisao:c.supervisao,data:c.data,equipe:c.equipe,viatura:c.viatura,km:c.kmFim,desc:[c.ocorr,...chkAlertas(c)].filter(Boolean).join("\n"),chkId:c.id});
 
+  // quem assina o recebimento (ou a recusa): o próprio supervisor que recebe, ou com a matrícula dele neste aparelho
+  const quemRecebe=async()=>{
+    if(travado()&&sessao.sup===c.recebe?.sup){
+      const r=await conferirAss("kR",sessao.id); if(r) return {erro:"Falta / erro: "+r+"."};
+      return {uid:sessao.id,nome:sessao.nome,sup:sessao.sup,cargo:cargoDe(acesso?.[sessao.id]||sessao),mat:matDe(acesso?.[sessao.id]||{}),como:"pelo próprio acesso"};
+    }
+    const m=$("#kfRecMat").value;
+    if(!matKey(m)) return {erro:"Falta: matrícula e senha de assinatura de quem recebe."};
+    const a=acharMat(m), u=a?.[1];
+    if(!u||!u.ativo) return {erro:"Matrícula de quem recebe não encontrada ou desativada."};
+    if(u.perfil!=="supervisor") return {erro:"Só o supervisor da turma que recebe pode assinar o recebimento."};
+    if(u.sup&&c.recebe?.sup&&u.sup!==c.recebe.sup) return {erro:`Esta matrícula é da ${u.sup}. O turno foi entregue para a ${c.recebe.sup}.`};
+    const rs=await senhaPorMat("kfRecPin",a); if(rs) return {erro:rs==="senha de assinatura"?"Falta: senha de assinatura de quem recebe.":rs==="senha de assinatura não confere"?"Senha de assinatura de quem recebe não confere.":"Não foi possível: "+rs+"."};
+    return {uid:a[0],nome:u.nome,sup:u.sup||c.recebe?.sup||"",cargo:cargoDe(u),mat:matDe(u),como:"assinado no aparelho de "+(sessao?.nome||"outro usuário")};
+  };
+  if(receber){
+    $("#kRecusarAbre").onclick=()=>{ const bx=$("#kRecusaBox"); bx.hidden=!bx.hidden; if(!bx.hidden){ bx.scrollIntoView({block:"center",behavior:"smooth"}); $("#kfRecusaMot").focus(); } };
+    $("#kRecusar").onclick=async()=>{
+      err.hidden=true; const mot=($("#kfRecusaMot").value||"").trim();
+      if(mot.length<5) return erro("Falta: relatar o motivo da recusa.");
+      const quem=await quemRecebe(); if(quem.erro) return erro(quem.erro);
+      if(quem.uid===c.entrega?.uid) return erro("Quem recebe não pode ser o mesmo supervisor que entregou.");
+      if(!db) return erro("Sem conexão com o banco. Tente de novo quando a internet voltar.");
+      const agora=new Date().toISOString(), body={...c}; delete body.id;
+      body.recusa={...quem,sup:c.recebe?.sup||quem.sup,em:agora,motivo:mot};
+      body.recusa.cod=await codVerif({id:c.id,entrega:c.entrega?.cod,recusa:{uid:quem.uid,em:agora,motivo:mot}});
+      body.log=[...(c.log||[]),{em:agora,por:quem.nome,acao:"Recusou o recebimento: "+mot}].slice(-20);
+      const b=$("#kRecusar"); b.disabled=true; b.textContent="Salvando…";
+      try{ await db.collection(CHK_COL).doc(c.id).set(body); close(); toast("Recusa registrada. O coordenador vai validar a situação."); }
+      catch(x){ b.disabled=false; b.textContent="Assinar recusa e enviar ao coordenador"; erro("Não foi possível salvar agora. Tente de novo."); }
+    };
+  }
+  if(validar){
+    let dec=""; $("#kValDec").onclick=e=>{ const b=e.target.closest("[data-dec]"); if(!b) return; dec=b.dataset.dec; $("#kValDec").querySelectorAll("[data-dec]").forEach(x=>x.setAttribute("aria-pressed",String(x===b))); };
+    $("#kValidar").onclick=async()=>{
+      err.hidden=true; const obs=($("#kfValObs").value||"").trim();
+      if(!dec) return erro("Falta: escolher se a recusa procede ou não procede.");
+      if(obs.length<5) return erro("Falta: descrever a situação verificada / providência.");
+      const r=await conferirAss("kV",sessao.id); if(r) return erro("Assinatura: "+r+".");
+      if(!db) return erro("Sem conexão com o banco. Tente de novo quando a internet voltar.");
+      const agora=new Date().toISOString(), body={...c}; delete body.id;
+      body.validacao={decisao:dec,obs,uid:sessao.id,nome:sessao.nome,sup:"",cargo:cargoDe(acesso?.[sessao.id]||sessao),mat:matDe(acesso?.[sessao.id]||{}),como:"pelo próprio acesso",em:agora};
+      body.validacao.cod=await codVerif({id:c.id,recusa:c.recusa?.cod,validacao:{uid:sessao.id,em:agora,dec,obs}});
+      body.log=[...(c.log||[]),{em:agora,por:sessao.nome,acao:"Validou a recusa: "+(dec==="PROCEDE"?"procede":"não procede")}].slice(-20);
+      const b=$("#kValidar"); b.disabled=true; b.textContent="Salvando…";
+      try{ await db.collection(CHK_COL).doc(c.id).set(body); close(); toast(dec==="PROCEDE"?"Validação salva: a recusa procede. Se for o caso, faça o comunicado de defeito.":"Validação salva: a recusa não procede."); }
+      catch(x){ b.disabled=false; b.textContent="Assinar validação"; erro("Não foi possível salvar agora. Tente de novo."); }
+    };
+  }
   if(receber){
     $("#kReceber").onclick=async()=>{
       err.hidden=true;
-      let quem=null;
-      if(travado()&&sessao.sup===c.recebe?.sup){
-        const r=await conferirAss("kR",sessao.id); if(r) return erro("Falta / erro: "+r+".");
-        quem={uid:sessao.id,nome:sessao.nome,sup:sessao.sup,cargo:cargoDe(acesso?.[sessao.id]||sessao),mat:matDe(acesso?.[sessao.id]||{}),como:"pelo próprio acesso"};
-      } else{
-        const m=$("#kfRecMat").value;
-        if(!matKey(m)) return erro("Falta: matrícula e senha de assinatura de quem recebe.");
-        const a=acharMat(m), u=a?.[1];
-        if(!u||!u.ativo) return erro("Matrícula de quem recebe não encontrada ou desativada.");
-        if(u.perfil!=="supervisor") return erro("Só o supervisor da turma que recebe pode assinar o recebimento.");
-        if(u.sup&&c.recebe?.sup&&u.sup!==c.recebe.sup) return erro(`Esta matrícula é da ${u.sup}. O turno foi entregue para a ${c.recebe.sup}.`);
-        const rs=await senhaPorMat("kfRecPin",a); if(rs) return erro(rs==="senha de assinatura"?"Falta: senha de assinatura de quem recebe.":rs==="senha de assinatura não confere"?"Senha de assinatura de quem recebe não confere.":"Não foi possível: "+rs+".");
-        quem={uid:a[0],nome:u.nome,sup:u.sup||c.recebe?.sup||"",cargo:cargoDe(u),mat:matDe(u),como:"assinado no aparelho de "+(sessao?.nome||"outro usuário")};
-      }
+      const quem=await quemRecebe(); if(quem.erro) return erro(quem.erro);
       if(quem.uid===c.entrega?.uid) return erro("Quem recebe não pode ser o mesmo supervisor que entregou.");
       if(!$("#kfCiencia").checked) return erro("Falta: marcar a ciência das condições do equipamento.");
       if(!db) return erro("Sem conexão com o banco. Tente de novo quando a internet voltar.");
@@ -2589,7 +2665,7 @@ function chkDocHtml(c){
     </div>
     ${fsig("Supervisor que entregou o turno",c.entrega)}
     <div><table>${kv("Horário de encerramento",esc(c.hora||""),"Data",fmtD(c.data))}</table></div>
-    <div><div class="sl">Recebimento do turno (supervisor)</div>${chkRecebido(c)?(c.recebe.ciencia?`<p class="leg" style="margin:0 0 4px">( X ) Declaro que recebi o equipamento e tomei ciência das condições registradas neste checklist.</p>`:"")+fsig("",c.recebe).replace('<div class="sl"></div>','')+(c.recebe.obs?`<div class="box" style="margin-top:6px"><b>Ressalva no recebimento:</b> ${esc(c.recebe.obs)}</div>`:""):`<div class="pend">Aguardando assinatura de recebimento${c.recebe?.sup?" – "+esc(c.recebe.sup):""}.</div>`}</div>`;
+    <div><div class="sl">Recebimento do turno (supervisor)</div>${chkRecebido(c)?(c.recebe.ciencia?`<p class="leg" style="margin:0 0 4px">( X ) Declaro que recebi o equipamento e tomei ciência das condições registradas neste checklist.</p>`:"")+fsig("",c.recebe).replace('<div class="sl"></div>','')+(c.recebe.obs?`<div class="box" style="margin-top:6px"><b>Ressalva no recebimento:</b> ${esc(c.recebe.obs)}</div>`:""):chkRecusado(c)?`<div class="pend"><b>RECEBIMENTO RECUSADO.</b> Motivo: ${esc(c.recusa.motivo||"")}</div>`+fsig("Supervisor que recusou o recebimento",c.recusa)+(c.validacao?.em?`<div class="sl" style="margin-top:6px">Validação do coordenador</div><table><tr><td class="k" style="width:30%">Decisão</td><td>${esc(VAL_TXT[c.validacao.decisao]||c.validacao.decisao)}</td></tr><tr><td class="k">Situação verificada / providência</td><td>${esc(c.validacao.obs||"")}</td></tr></table>`+fsig("Coordenador que validou",c.validacao):`<div class="pend">Aguardando a validação do coordenador.</div>`):`<div class="pend">Aguardando assinatura de recebimento${c.recebe?.sup?" – "+esc(c.recebe.sup):""}.</div>`}</div>`;
   return `<div class="fdoc"><style>${FDOC_CSS}</style><div class="r-body">${fhead("CHECKLIST DIÁRIO DE INSPEÇÃO PÓS-OPERACIONAL","CESTO AÉREO")}<div>${cab}</div>${s1}${s2}${s3}${s4}${sfot}${s5}${ass}<p class="rod">Documento gerado pelo sistema Programação GPE em ${dataBR(new Date().toISOString())} às ${horaAgora()}.</p></div></div>`;
 }
 function manDocHtml(m){
@@ -4178,6 +4254,7 @@ function renderAlertas(){
   const PX=proxSemInfo(), semAm=(travado()?SUPS.filter(x=>x.id===sessao.sup):SUPS).filter(s=>!proxSemTurma(s.id,PX).ok);
   const ex=(arr,f)=>arr.slice(0,3).map(f).join(" · ")+(arr.length>3?` · +${arr.length-3}`:"");
   const itens=[
+    [podeValidar()?chks.filter(chkAguardaCoord).length:0,"checklists com recebimento recusado aguardando validação do coordenador",ex(chks.filter(chkAguardaCoord),c=>`${fmtDs(c.data)} ${c.viatura} — ${c.supervisao}`),"","chkrec",1],
     [semBaixa.length,"serviços programados sem baixa há 2 dias ou mais",ex(semBaixa,r=>`${fmtDs(r.data)} ${r.supervisao} — ${r.bairro}`),"ATRASADO","",1],
     [ocAg.length,"galho/árvore caída aguardando atendimento",ex(ocAg,r=>`${fmtDs(r.data)} ${r.bairro}`),"","oc"],
     [remarc.length,"serviços remarcados 2 vezes ou mais",ex(remarc,r=>`${r.bairro} (${(r.historico||[]).length}x)`),"","rem"],
@@ -4187,6 +4264,7 @@ function renderAlertas(){
   host.innerHTML = itens.length ? `<section class="alert"><h3>Atenção</h3>${itens.map(([n,t,d,st,pd,urg])=>`<button type="button" class="${urg?"urg":""}" data-st="${st}" data-pd="${pd}"><b>${urg?"⚠ ":""}${n}</b><span>${t}<small>${esc(d)}</small></span></button>`).join("")}</section>`
     : `<section class="alert ok"><h3>Tudo em dia</h3><p class="note" style="margin:0">Nenhuma pendência de baixa, ocorrência ou remarcação.</p></section>`;
   host.querySelectorAll("button[data-st]").forEach(b=>b.onclick=()=>{ if(b.dataset.pd==="oc"&&!soLeitura()){ show("oc"); scrollTo(0,0); return; }
+    if(b.dataset.pd==="chkrec"){ show("chk"); scrollTo(0,0); return; }
     if(b.dataset.pd==="progsem"){ if(!soLeitura()&&!(sessao?.perfil==="fiscal"||sessao?.perfil==="supervisor1")){ show("form"); scrollTo(0,0); } return; } $("#fSem").value=""; $("#fSt").value=b.dataset.st; $("#fPend").value=b.dataset.pd; renderLista(); show("lista"); scrollTo(0,0); });
 }
 $("#histBtn").onclick=carregarHistorico;
