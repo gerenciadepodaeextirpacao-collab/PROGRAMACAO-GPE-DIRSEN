@@ -1327,8 +1327,9 @@ function abrirAcessos(){
 }
 $("#acessosBtn").onclick=abrirAcessos;
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.27b";
+const APP_VERSAO="2026.10.27c";
 const VERSOES=[
+  {v:"2026.10.27c", d:"27/10/2026", itens:["Recebimento do checklist: qualquer supervisor que estiver recebendo o equipamento pode assinar com a matrícula dele, mesmo que a entrega tenha indicado outra turma (fica registrada a turma de quem assinou e a indicada na entrega)","Link do app no Netlify corrigido para gpe-dirsen.netlify.app"]},
   {v:"2026.10.27b", d:"27/10/2026", itens:["Checklist: o supervisor que recebe pode recusar o recebimento (não concordou ou encontrou avaria), relatando o motivo e assinando","Recusa vai para o coordenador validar a situação correta (procede / não procede, com a situação verificada e assinatura); aviso em vermelho para o coordenador e no Painel","O supervisor que fez o checklist recebe o aviso de que foi contestado, com o motivo e depois a decisão do coordenador","Recusa e validação aparecem na lista, no checklist aberto e no PDF"]},
   {v:"2026.10.27", d:"27/10/2026", itens:["Aba Lista liberada para os supervisores (só com os lançamentos da própria turma)"]},
   {v:"2026.10.26g", d:"26/10/2026", itens:["\"Ver no mapa\": busca a rua/avenida inteira no formato do Google Maps (sem quadra, lote, número e complemento), para abrir com a via destacada; vale também para o mapa de um endereço só"]},
@@ -1362,7 +1363,7 @@ const VERSOES=[
 ];
 // links úteis (aba Atualizar, só o gerente)
 const LINKS_APP=[
-  {t:"App no Netlify (para as equipes)", s:"Endereço público do app, com o banco no Supabase.", u:"https://programacao-gpe.netlify.app"},
+  {t:"App no Netlify (para as equipes)", s:"Endereço público do app, com o banco no Supabase.", u:"https://gpe-dirsen.netlify.app"},
   {t:"App no Claude", s:"Versão dentro do Claude (banco do Claude).", u:"https://claude.ai/artifact/GmyiVqG1JySNfn77yrriiN"},
   {t:"GitHub – repositório do app", s:"Onde se sobe o index.html a cada atualização.", u:"https://github.com/gerenciadepodaeextirpacao-collab/PROGRAMACAO-GPE"},
   {t:"Netlify – painel", s:"Publicações (Deploys) e configurações do site.", u:"https://app.netlify.com"},
@@ -2294,7 +2295,7 @@ function abrirChk(c){
         <label class="f">Ressalva no recebimento (se houver)<textarea id="kfRecObs" placeholder="Ex.: vazamento na mangueira não informado na entrega"></textarea></label>
         <label class="ck"><input type="checkbox" id="kfCiencia"><span class="note" style="color:var(--ink)"><b>Ciência:</b> declaro que recebi o equipamento e tomei ciência das condições registradas neste checklist${chkAlertas(c).length?" (inclusive das anomalias apontadas)":""}${c.ocorr?" e das ocorrências / observações":""}.</span></label>
         ${travado()&&sessao.sup===c.recebe?.sup?`<p class="note" style="margin:0">Assina como <b>${esc(sessao.nome)}</b>, ${esc(cargoDe(acesso?.[sessao.id]||sessao))}.</p>${sigFormHtml("kR",sessao.id)}`
-          :`<p class="note" style="margin:0">O supervisor que recebe assina aqui com a matrícula e a <b>senha de assinatura</b> dele.</p>${sigMatHtml("kfRecMat","kfRecPin","Matrícula de quem recebe")}`}
+          :`<p class="note" style="margin:0">O supervisor que está recebendo o equipamento assina aqui com a matrícula e a <b>senha de assinatura</b> dele${c.recebe?.sup?` (indicado na entrega: ${esc(c.recebe.sup)}; se outro supervisor receber, vale a matrícula de quem assinar)`:""}.</p>${sigMatHtml("kfRecMat","kfRecPin","Matrícula de quem recebe")}`}
         <div class="actions" style="grid-template-columns:1fr;margin:4px 0 0"><button type="button" class="btn pri" id="kReceber">Assinar recebimento</button>
           <button type="button" class="btn danger" id="kRecusarAbre" style="min-height:44px;font-size:14px">Não concordo / encontrei avaria – recusar recebimento</button></div>
         <div class="recusabox" id="kRecusaBox" hidden>
@@ -2332,7 +2333,6 @@ function abrirChk(c){
     const a=acharMat(m), u=a?.[1];
     if(!u||!u.ativo) return {erro:"Matrícula de quem recebe não encontrada ou desativada."};
     if(u.perfil!=="supervisor") return {erro:"Só o supervisor da turma que recebe pode assinar o recebimento."};
-    if(u.sup&&c.recebe?.sup&&u.sup!==c.recebe.sup) return {erro:`Esta matrícula é da ${u.sup}. O turno foi entregue para a ${c.recebe.sup}.`};
     const rs=await senhaPorMat("kfRecPin",a); if(rs) return {erro:rs==="senha de assinatura"?"Falta: senha de assinatura de quem recebe.":rs==="senha de assinatura não confere"?"Senha de assinatura de quem recebe não confere.":"Não foi possível: "+rs+"."};
     return {uid:a[0],nome:u.nome,sup:u.sup||c.recebe?.sup||"",cargo:cargoDe(u),mat:matDe(u),como:"assinado no aparelho de "+(sessao?.nome||"outro usuário")};
   };
@@ -2345,7 +2345,7 @@ function abrirChk(c){
       if(quem.uid===c.entrega?.uid) return erro("Quem recebe não pode ser o mesmo supervisor que entregou.");
       if(!db) return erro("Sem conexão com o banco. Tente de novo quando a internet voltar.");
       const agora=new Date().toISOString(), body={...c}; delete body.id;
-      body.recusa={...quem,sup:c.recebe?.sup||quem.sup,em:agora,motivo:mot};
+      body.recusa={...quem,sup:quem.sup||c.recebe?.sup,designado:c.recebe?.sup&&quem.sup&&quem.sup!==c.recebe.sup?c.recebe.sup:"",em:agora,motivo:mot};
       body.recusa.cod=await codVerif({id:c.id,entrega:c.entrega?.cod,recusa:{uid:quem.uid,em:agora,motivo:mot}});
       body.log=[...(c.log||[]),{em:agora,por:quem.nome,acao:"Recusou o recebimento: "+mot}].slice(-20);
       const b=$("#kRecusar"); b.disabled=true; b.textContent="Salvando…";
@@ -2379,7 +2379,7 @@ function abrirChk(c){
       if(!db) return erro("Sem conexão com o banco. Tente de novo quando a internet voltar.");
       const agora=new Date().toISOString();
       const body={...c}; delete body.id;
-      body.recebe={...(c.recebe||{}),...quem,sup:c.recebe?.sup||quem.sup,em:agora,ciencia:true,obs:($("#kfRecObs").value||"").trim()};
+      body.recebe={...(c.recebe||{}),...quem,sup:quem.sup||c.recebe?.sup,designado:c.recebe?.sup&&quem.sup&&quem.sup!==c.recebe.sup?c.recebe.sup:"",em:agora,ciencia:true,obs:($("#kfRecObs").value||"").trim()};
       body.recebe.cod=await codVerif({id:c.id,entrega:c.entrega?.cod,recebe:{uid:quem.uid,em:agora,obs:body.recebe.obs}});
       body.log=[...(c.log||[]),{em:agora,por:quem.nome,acao:"Recebeu o turno e assinou"}].slice(-20);
       const b=$("#kReceber"); b.disabled=true; b.textContent="Salvando…";
