@@ -832,6 +832,28 @@ nav.tabs .tbadge{background:#f37020!important;color:#fff!important}
 .oxrow{display:grid;grid-template-columns:96px 1fr;gap:8px}.oxrow>label:last-child{grid-column:1/-1}.oxq{width:100%}.oxq input{flex:1 1 0;width:0!important;min-width:0}.oxq button{flex:none}.oxsub{text-align:right;font-size:14px;color:var(--muted)}.oxsub b{color:var(--ink)}
 .oxeq{display:grid;grid-template-columns:1fr;gap:6px;border:1px solid var(--line);border-top:4px solid #005f27;border-radius:12px;padding:10px 12px}.oxeq .oxdel{justify-self:end}
 .oxtot{display:flex;justify-content:space-between;align-items:center;background:#005f27;color:#fff;border-radius:12px;padding:12px 14px}.oxtot span{font-weight:700;letter-spacing:.05em;text-transform:uppercase;font-size:13px}.oxtot b{font-family:var(--display);font-size:26px}
+
+/* visual institucional sempre claro: celular em modo escuro não escurece o app (cores da COMURG nítidas) */
+@media (prefers-color-scheme:dark){:root:not([data-theme="x"]){
+  --c-exec:#184f95; --c-prev:#86b6ef; --d-pod:#2a78d6; --d-ext:#eb6834; --d-track:#e4e9e1; --d-title:#005f27;
+  --bg:#f6f7f5; --surface:#ffffff; --sunk:#e3e8e0; --line:#d5ddd2;
+  --ink:#16231a; --muted:#56655a; --brand:#005f27; --brand-ink:#ffffff;
+  --accent:#f37020; --accent-ink:#ffffff;
+  --ok:#1e7a3c; --ok-bg:#dcefe1; --warn:#9a5b00; --warn-bg:#fbebcf; --bad:#b3261e; --bad-bg:#f8dcd9; --idle:#5b6670; --idle-bg:#e4e8ec;
+  --sh-1:none;--sh-2:none;--sh-in:none;--hl:transparent;--edge:#d5ddd2;--bg-grad:none;--card-grad:none;
+  color-scheme:light}
+  :root:not([data-theme="x"]) .step{color:#005f27}}
+:root{color-scheme:light}
+:root[data-theme="dark"]:not([data-x]){
+  --c-exec:#184f95; --c-prev:#86b6ef; --d-pod:#2a78d6; --d-ext:#eb6834; --d-track:#e4e9e1; --d-title:#005f27;
+  --bg:#f6f7f5; --surface:#ffffff; --sunk:#e3e8e0; --line:#d5ddd2;
+  --ink:#16231a; --muted:#56655a; --brand:#005f27; --brand-ink:#ffffff;
+  --accent:#f37020; --accent-ink:#ffffff;
+  --ok:#1e7a3c; --ok-bg:#dcefe1; --warn:#9a5b00; --warn-bg:#fbebcf; --bad:#b3261e; --bad-bg:#f8dcd9; --idle:#5b6670; --idle-bg:#e4e8ec;
+  --sh-1:none;--sh-2:none;--sh-in:none;--hl:transparent;--edge:#d5ddd2;--bg-grad:none;--card-grad:none;
+  color-scheme:light}
+
+:root[data-theme="dark"] .step{color:#005f27}
 </style>
 
 <div id="login" class="login" hidden>
@@ -1565,8 +1587,9 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.28o";
+const APP_VERSAO="2026.10.28p";
 const VERSOES=[
+  {v:"2026.10.28p", d:"28/10/2026", itens:["Celular com modo escuro ligado: o app agora fica sempre no visual claro da COMURG (antes as cores ficavam escuras e apagadas)"]},
   {v:"2026.10.28o", d:"28/10/2026", itens:["Orçamento: equipamento separado em CESTO AÉREO SKY e CESTO AÉREO SPLINTER"]},
   {v:"2026.10.28n", d:"28/10/2026", itens:["Orçamento: planejamento da execução – equipamentos necessários e quantidade de cada um (lista ou digitado), quantidade de servidores e dias para executar; aparece também no PDF"]},
   {v:"2026.10.28m", d:"28/10/2026", itens:["Orçamento: \"Responsável técnico\" passou a ser \"Responsável pela vistoria\", só com nome, cargo e matrícula (sem registro do CREA), no formulário e no PDF"]},
