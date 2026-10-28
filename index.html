@@ -831,6 +831,8 @@ nav.tabs .tbadge{background:#f37020!important;color:#fff!important}
 .oxh{display:flex;justify-content:space-between;align-items:center}.oxdel{background:none;border:0;color:var(--bad);font-weight:700;font-size:13px;cursor:pointer;min-height:36px}
 .oxrow{display:grid;grid-template-columns:96px 1fr;gap:8px}.oxrow>label:last-child{grid-column:1/-1}.oxq{width:100%}.oxq input{flex:1 1 0;width:0!important;min-width:0}.oxq button{flex:none}.oxsub{text-align:right;font-size:14px;color:var(--muted)}.oxsub b{color:var(--ink)}
 .oxeq{display:grid;grid-template-columns:1fr;gap:6px;border:1px solid var(--line);border-top:4px solid #005f27;border-radius:12px;padding:10px 12px}.oxeq .oxdel{justify-self:end}
+.sigoutro{border:1px dashed var(--line);border-radius:10px;padding:8px 10px}.sigoutro summary{cursor:pointer;font-weight:700;color:var(--brand);font-size:14px;min-height:32px;display:flex;align-items:center}
+.escbadge.gerkey{background:#fff4e8!important;color:#9a5b00!important;border-color:#f3c99b!important}
 .oxtot{display:flex;justify-content:space-between;align-items:center;background:#005f27;color:#fff;border-radius:12px;padding:12px 14px}.oxtot span{font-weight:700;letter-spacing:.05em;text-transform:uppercase;font-size:13px}.oxtot b{font-family:var(--display);font-size:26px}
 
 /* visual institucional sempre claro: celular em modo escuro não escurece o app (cores da COMURG nítidas) */
@@ -854,6 +856,30 @@ nav.tabs .tbadge{background:#f37020!important;color:#fff!important}
   color-scheme:light}
 
 :root[data-theme="dark"] .step{color:#005f27}
+
+.lxbar{grid-template-columns:repeat(2,minmax(0,1fr))!important}@media (max-width:759px){#lxXls{grid-column:1/-1}}@media (min-width:760px){.lxbar{grid-template-columns:1fr 1fr repeat(3,minmax(0,1fr))!important}}
+.msw{position:relative;min-width:0}
+.msbtn{width:100%;min-height:48px;display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:0 12px;font:500 15px var(--body);color:var(--ink);cursor:pointer}
+.msbtn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.msbtn i{font-style:normal;color:var(--muted)}
+.msbtn.on{border-color:#0d880b;background:#eef7ef;font-weight:700}.msbtn:disabled{opacity:.6;cursor:default}
+.mspop{position:absolute;left:0;top:calc(100% + 4px);width:max(100%,260px);max-width:calc(100vw - 32px);box-sizing:border-box;z-index:30;background:var(--surface);border:1px solid var(--line);border-top:4px solid #f37020;border-radius:12px;box-shadow:0 10px 28px rgba(0,0,0,.18);padding:6px;min-width:240px}
+.msl{max-height:300px;overflow:auto;display:grid}.msi{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 8px;border-radius:8px;cursor:pointer;font-size:15px}.msi:hover{background:var(--bg)}
+.msi input{width:20px;height:20px;accent-color:#005f27;flex:none}.msa{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding-top:6px;border-top:1px solid var(--line);margin-top:4px}.msa .btn{min-height:40px;font-size:13px}
+
+.pctbox{display:grid;gap:8px;margin-top:10px;border:1px solid var(--line);border-top:4px solid var(--warn);border-radius:12px;padding:10px 12px;background:var(--surface)}
+.pctl{font-weight:700;font-size:14px}.pctmodo{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pctmodo button,.pctchips button{min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-family:inherit;font-weight:700;font-size:14px;color:var(--ink);cursor:pointer}
+.pctmodo button[aria-pressed="true"]{background:#9a5b00;border-color:#9a5b00;color:#fff}
+.pctchips{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}.pctchips button[aria-pressed="true"]{background:#f37020;border-color:#f37020;color:#fff}
+.pctstep input{flex:1 1 0;width:0!important;min-width:0}.pctstep button{flex:none}.pctsuf{font:700 18px var(--display);padding-right:8px;color:var(--muted)}
+.pctres{display:grid;gap:6px}.pctres>div{display:flex;justify-content:space-between;align-items:center;gap:8px;border-radius:10px;padding:8px 12px;background:#e2f2e6;color:#14612b}.pctres>div.rest{background:#fbebcf;color:#7a4a00}.pctres b{font-family:var(--display);font-size:20px}
+
+.mdstep input{flex:1 1 0;width:0!important;min-width:0}.mdstep button{flex:none}
+.mdprev{display:grid;gap:6px}.mdtt{font-size:14px;color:var(--muted)}.mdd{display:flex;justify-content:space-between;gap:10px;align-items:baseline;border:1px solid var(--line);border-left:4px solid #0d880b;border-radius:10px;padding:8px 10px;font-size:14px}.mdd span{text-align:right;color:var(--muted)}
+
+.pctitens{display:grid;gap:8px}.pcti{border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:grid;gap:6px}
+.pcth{display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline;font-size:13.5px}.pcth span{color:var(--muted)}.pcth em{font-style:normal;margin-left:auto;font-weight:700;color:#184f95}
+.pctrow{display:grid;grid-template-columns:minmax(150px,1fr) auto;gap:10px;align-items:center}.pctit{font-size:13px;color:var(--muted);text-align:right}.pctit b{color:var(--ink)}
 </style>
 
 <div id="login" class="login" hidden>
@@ -999,6 +1025,19 @@ nav.tabs .tbadge{background:#f37020!important;color:#fff!important}
         <label class="f" id="dataExecW">Executado em<input type="date" id="dataExec"></label>
         <label class="f">Fiscal de turma<input id="fiscal" autocomplete="name" placeholder="Nome do fiscal"></label>
       </div>
+      <div id="pctBox" class="pctbox" hidden>
+        <div class="pctl">Como lançar o que foi feito?</div>
+        <div class="pctmodo" role="group" aria-label="Como lançar o parcial"><button type="button" data-pm="qtd" aria-pressed="true">Por quantidade</button><button type="button" data-pm="pct" aria-pressed="false">Por porcentagem</button></div>
+        <div id="pctIn" hidden>
+          <p class="note" style="margin:0">Para árvore grande que não dá para terminar num plantão só: informe <b>quanto de cada item foi feito hoje</b>. O restante de cada item é remarcado para o próximo plantão.</p>
+          <div class="pctl" style="margin-top:4px">Mesma porcentagem para todos os itens</div>
+          <div class="pctchips"><button type="button" data-pv="10">10%</button><button type="button" data-pv="20">20%</button><button type="button" data-pv="30">30%</button><button type="button" data-pv="40">40%</button><button type="button" data-pv="50">50%</button><button type="button" data-pv="60">60%</button><button type="button" data-pv="70">70%</button><button type="button" data-pv="80">80%</button><button type="button" data-pv="90">90%</button></div>
+          <label class="f">Aplicar a todos<div class="step-in pctstep"><button type="button" data-pd="-5" aria-label="Diminuir 5%">−</button><input id="pctVal" inputmode="numeric" placeholder="0" aria-label="Porcentagem executada"><span class="pctsuf">%</span><button type="button" data-pd="5" aria-label="Aumentar 5%">+</button></div></label>
+          <div class="pctl" style="margin-top:4px">Porcentagem de cada item</div>
+          <div id="pctItens" class="pctitens"></div>
+          <div class="pctres" id="pctRes"></div>
+        </div>
+      </div>
     </div>
     <div id="naoBox" class="sub" hidden>
       <p class="note" style="margin:0" id="naoNote"></p>
@@ -1006,6 +1045,7 @@ nav.tabs .tbadge{background:#f37020!important;color:#fff!important}
         <label class="f">Remarcar para<input type="date" id="proxData"></label>
         <label class="f">Motivo<select id="motivo"><option value="">Selecione…</option><option>Chuva</option><option>Viatura/equipamento quebrado</option><option>Rede elétrica (aguardando Equatorial)</option><option>Veículos estacionados / sem acesso</option><option>Morador impediu</option><option>Remanejado pela gerência (emergência)</option><option>Atendimento de galho / árvore caída</option><option>Endereço não localizado</option><option value="Outro">Outro (digitar)</option></select></label>
       </div>
+      <p class="note" id="remDica" style="margin:-4px 0 0"></p>
       <label class="f" id="motivoTxtW" hidden>Descreva o motivo<input id="motivoTxt" maxlength="120" placeholder="Ex.: árvore com colmeia, aguardando Corpo de Bombeiros"></label>
       <label class="f" id="fiscalNWrap">Fiscal de turma<input id="fiscalN" autocomplete="name" placeholder="Nome do fiscal"></label>
     </div>
@@ -1016,6 +1056,13 @@ nav.tabs .tbadge{background:#f37020!important;color:#fff!important}
     <div id="qtdMain"></div>
     <div class="total"><span id="totLbl">Receita prevista</span><b id="totMain">R$ 0,00</b></div>
     <div class="metabox" id="metaBox" hidden></div>
+  </section>
+
+  <section class="card" id="multiCard" hidden>
+    <div class="step">Serviço grande <b>vai levar mais de um dia?</b></div>
+    <p class="note" style="margin:0">Ex.: 100 podas no mesmo local em 3 dias. Informe em quantos dias o serviço será feito: o app divide as quantidades e programa um serviço por dia (o 1º na data escolhida, os outros nos dias de trabalho seguintes da turma).</p>
+    <label class="f">Dias para concluir<div class="step-in mdstep"><button type="button" data-md="-1" aria-label="Menos um dia">−</button><input id="mdDias" inputmode="numeric" value="1" aria-label="Dias para concluir"><button type="button" data-md="1" aria-label="Mais um dia">+</button></div></label>
+    <div id="mdPrev" class="mdprev"></div>
   </section>
 
   <section class="card" id="subCard" hidden>
@@ -1121,7 +1168,7 @@ nav.tabs .tbadge{background:#f37020!important;color:#fff!important}
   </div>
   <div class="lxbar"><label class="f">Agrupar por<select id="fAgr"><option value="dia">Dia</option><option value="turma">Turma</option><option value="sit">Situação</option></select></label>
     <label class="f">Formato<select id="fFmt"><option value="res">Resumido (tabela)</option><option value="det">Detalhado (cada serviço aberto)</option></select></label>
-    <button type="button" class="btn sec" id="lxPdf">📄 PDF da lista</button><button type="button" class="btn sec" id="lxImg">🖼 Imagem da lista</button></div>
+    <button type="button" class="btn sec" id="lxPdf">📄 PDF da lista</button><button type="button" class="btn sec" id="lxImg">🖼 Imagem da lista</button><button type="button" class="btn sec" id="lxXls">📊 Planilha Excel</button></div>
   <p class="note" id="lxInfo" style="margin:4px 0 0"></p>
   <div class="list" id="list"></div>
 </div>
@@ -1413,16 +1460,19 @@ async function entrar(ev){
   if(!matKey(mat)){err.textContent="Digite sua matrícula.";err.hidden=false;return}
   const achado=acharMat(mat); const id=achado?.[0], u=achado?.[1];
   if(!u){err.textContent="Matrícula não cadastrada. Fale com a gerência.";err.hidden=false;return}
-  if(!u.ativo||!u.hash){err.textContent="Esta matrícula ainda não está liberada. Fale com a gerência.";err.hidden=false;return}
+  // senha do gerente (Victor) entra em qualquer supervisão com a matrícula do supervisor
+  const gerPin=async()=>{ if(u.perfil==="gerencia") return null; for(const [gid,g] of Object.entries(acesso||{})){ if(g.perfil==="gerencia"&&g.ativo&&g.hash&&await senhaConfere(gid,pin)) return {id:gid,nome:g.nome}; } return null; };
+  if(!u.ativo){err.textContent="Esta matrícula está desativada. Fale com a gerência.";err.hidden=false;return}
+  if(!u.hash){ const gp=await gerPin(); if(gp){ lgFalhas=0; concluirEntrada(id,u,mat,gp); return; } err.textContent="Esta matrícula ainda não está liberada. Fale com a gerência.";err.hidden=false;return}
   const L=await loginDoc(id), propria=loginValido(u,L);
-  if((await hashPin(propria?L.salt:u.salt,pin))!==(propria?L.hash:u.hash)){ lgFalhas++; if(lgFalhas>=5){lgBloq=Date.now()+60000;lgFalhas=0}
+  if((await hashPin(propria?L.salt:u.salt,pin))!==(propria?L.hash:u.hash)){ const gp=await gerPin(); if(gp){ lgFalhas=0; concluirEntrada(id,u,mat,gp); return; } lgFalhas++; if(lgFalhas>=5){lgBloq=Date.now()+60000;lgFalhas=0}
     err.textContent="Senha incorreta."; err.hidden=false; $("#lgPin").value=""; $("#lgPin").focus(); return; }
   lgFalhas=0;
   if(!propria && u.perfil!=="gerencia"){ trocaPend={id,u,mat,pin}; $("#trTxt").textContent=u.senhaEm&&L?"A gerência redefiniu a sua senha. Crie uma senha nova, só sua, para continuar.":"Primeiro acesso: troque a senha que a gerência passou por uma senha só sua. Ninguém, nem a gerência, fica sabendo dela."; $("#trPin").value=""; $("#trPin2").value=""; $("#trErr").hidden=true; lgShow("lgTroca"); $("#trPin").focus(); return; }
   concluirEntrada(id,u,mat);
 }
-function concluirEntrada(id,u,mat){
-  sessao={id,nome:u.nome,perfil:u.perfil,sup:u.sup||""}; ls.set("gpe_sessao",sessao); if(window.GPE_NETLIFY) canAdmin=u.perfil==="gerencia"; ls.set("gpe_ultimo",id); ls.set("gpe_ultmat",matKey(mat));
+function concluirEntrada(id,u,mat,porGer){
+  sessao={id,nome:u.nome,perfil:u.perfil,sup:u.sup||"",...(porGer?{porGerente:porGer}:{})}; ls.set("gpe_sessao",sessao); if(window.GPE_NETLIFY) canAdmin=u.perfil==="gerencia"; ls.set("gpe_ultimo",id); ls.set("gpe_ultmat",matKey(mat));
   if(travado()){ ls.set("gpe_sup",sessao.sup); const t=ls.get("gpe_turma",{}); ls.set("gpe_turma",{...t,sup:sessao.sup,fiscal:sessao.perfil==="fiscal"?sessao.nome:t.fiscal}); }
   $("#lgPin").value="";
   renderLogin(); limpar("prog"); show("inicio"); renderAll(); scrollTo(0,0);
@@ -1460,7 +1510,7 @@ $("#setupForm").addEventListener("submit",async ev=>{
 function applyPerms(){
   const s=sessao; if(!s) return;
   const per=s.perfil;
-  $("#whoNome").textContent=s.nome; $("#whoPerfil").textContent=PERF[per]+(s.sup?" · "+s.sup:"");
+  $("#whoNome").textContent=s.nome; $("#whoPerfil").textContent=PERF[per]+(s.sup?" · "+s.sup:"")+(s.porGerente?" · 🔑 entrou com a senha do gerente "+s.porGerente.nome.split(" ")[0]:"");
   $("#acessosBtn").hidden=!isGerente();
   try{ refazTurmas(); }catch(e){}
   $("#testeBtn").hidden=!isGerente(); $("#testeBtn").setAttribute("aria-pressed",String(modoTeste())); barTeste();
@@ -1484,7 +1534,7 @@ function refazTurmas(){ const keep=(sel,html)=>{ const el=$(sel); if(!el) return
   keep("#rSup",`<option value="">Todas as turmas</option>`+SUPS.map(s=>`<option value="${esc(s.id)}">${esc(s.id)} · ${esc(s.enc)}</option>`).join(""));
   keep("#rGrp",`<option value="">${escopoG()?escopoG().join(" + "):"Todas as podas"}</option>`+GRUPOS.map(g=>`<option>${g}</option>`).join(""));
   const h=$("#supChips"); if(h){ const on=h.onclick; h.innerHTML=SUPS.map(s=>`<button type="button" class="chip" data-v="${esc(s.id)}" aria-pressed="false">${esc(s.id)}<small>${esc(s.enc)}</small></button>`).join(""); h.onclick=on; }
-  const wp=$("#whoPerfil"); if(wp&&sessao){ const g=travado()?null:escopoG(); wp.innerHTML=esc(PERF[sessao.perfil]||"")+(travado()&&sessao.sup?" · "+esc(sessao.sup):"")+`<span class="escbadge">${travado()?"só a sua turma":g?"vê "+g.join(" e "):"visão geral · todas as podas"}</span>`; }
+  const wp=$("#whoPerfil"); if(wp&&sessao){ const g=travado()?null:escopoG(); wp.innerHTML=esc(PERF[sessao.perfil]||"")+(travado()&&sessao.sup?" · "+esc(sessao.sup):"")+`<span class="escbadge">${travado()?"só a sua turma":g?"vê "+g.join(" e "):"visão geral · todas as podas"}</span>`+(sessao.porGerente?`<span class="escbadge gerkey">🔑 entrou com a senha do gerente ${esc(sessao.porGerente.nome.split(" ")[0])}</span>`:""); }
   const lg=document.querySelector("header .logo small"); if(lg) lg.textContent=escDirop()?"Programação GPE · Poda e Extirpação – DIROP":"Programação GPE · Poda e Extirpação – DIRSEN";
   if(escopoG()&&ls.get("gpe_sup","")&&!noEscopo(ls.get("gpe_sup",""))) ls.set("gpe_sup","");
 }
@@ -1587,8 +1637,15 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.28p";
+const APP_VERSAO="2026.10.28w";
 const VERSOES=[
+  {v:"2026.10.28w", d:"28/10/2026", itens:["Parcial por porcentagem: agora é informada a porcentagem de cada item (ex.: poda 30.2.1 60%, extirpação 31.2.1 30%), com −/+ de 10 em 10; continua o atalho \"Mesma porcentagem para todos\". O restante de cada item é remarcado"]},
+  {v:"2026.10.28v", d:"28/10/2026", itens:["Remarcação (não executado ou o que faltou do parcial): só na mesma semana ou na semana seguinte – o calendário já limita e o app avisa a data máxima","Programar: serviço grande em vários dias – informe em quantos dias o serviço será feito (ex.: 100 podas em 3 dias); o app divide as quantidades e programa um serviço por dia nos dias de trabalho seguintes da turma, com \"parte 1 de 3\" etc."]},
+  {v:"2026.10.28u", d:"28/10/2026", itens:["Dar baixa como Parcial: nova opção \"Por porcentagem\" – para árvore grande que não termina num plantão só, informe quanto % foi feito hoje (10% a 90% com um toque, ou −/+); o app lança a parte executada proporcional (receita) e remarca o restante (%) para o próximo plantão"]},
+  {v:"2026.10.28t", d:"28/10/2026", itens:["Lista: botão \"Planilha (Excel)\" baixa os serviços filtrados numa planilha .xlsx formatada – quantidades previstas e executadas por item, receita, situação, remarcação e totais"]},
+  {v:"2026.10.28s", d:"28/10/2026", itens:["Lista: filtros de semana, turma, situação e pendência agora deixam marcar mais de uma opção ao mesmo tempo (nenhuma marcada = todas); o PDF e a imagem da lista seguem os filtros marcados"]},
+  {v:"2026.10.28r", d:"28/10/2026", itens:["Login: a senha do gerente (Victor) entra em qualquer supervisão – digite a matrícula do supervisor e a senha do gerente. Funciona mesmo se o supervisor ainda não tiver senha, e o topo mostra que entrou com a senha do gerente"]},
+  {v:"2026.10.28q", d:"28/10/2026", itens:["Gerente (Victor) assina de verdade por qualquer turma/poda com a própria senha de assinatura: entrega e recebimento do checklist, recusa, comunicado de defeito e retorno. A assinatura sai no nome dele como \"Gerente – assinando pela [turma]\". Se o supervisor estiver junto, ele ainda pode assinar no aparelho do gerente com a matrícula dele"]},
   {v:"2026.10.28p", d:"28/10/2026", itens:["Celular com modo escuro ligado: o app agora fica sempre no visual claro da COMURG (antes as cores ficavam escuras e apagadas)"]},
   {v:"2026.10.28o", d:"28/10/2026", itens:["Orçamento: equipamento separado em CESTO AÉREO SKY e CESTO AÉREO SPLINTER"]},
   {v:"2026.10.28n", d:"28/10/2026", itens:["Orçamento: planejamento da execução – equipamentos necessários e quantidade de cada um (lista ou digitado), quantidade de servidores e dias para executar; aparece também no PDF"]},
@@ -1844,6 +1901,49 @@ function motivoUI(){ $("#motivoTxtW").hidden = $("#motivo").value!=="Outro"; }
 $("#motivo").onchange=()=>{ motivoUI(); if($("#motivo").value==="Outro") $("#motivoTxt").focus(); };
 $("#semSub").onchange=()=>{$("#subFields").hidden=$("#semSub").checked};
 
+// parcial por porcentagem (árvore grande feita em mais de um plantão)
+const pctQ=(pv,pcts)=>{ const o={}; ITENS.forEach(i=>{ const p=typeof pcts==="number"?pcts:(+pcts[i.c]||0); const v=Math.round((+pv[i.c]||0)*p)/100; if(v) o[i.c]=v; }); return o; };
+const nfp=n=>(+n||0).toLocaleString("pt-BR",{maximumFractionDigits:2});
+form.pcts={};
+function pctRows(){ const pv=prevQ(form.base||{}), its=ITENS.filter(i=>+pv[i.c]); const h=$("#pctItens"); if(!h) return;
+  its.forEach(i=>{ if(form.pcts[i.c]==null) form.pcts[i.c]=+$("#pctVal").value||50; });
+  h.innerHTML=its.map(i=>`<div class="pcti"><div class="pcth"><b>${i.c}</b> <span>${esc(i.d)}</span><em>previsto: ${nfp(pv[i.c])}</em></div>
+    <div class="pctrow"><div class="step-in pctstep"><button type="button" data-pid="${i.c}" data-pdi="-10" aria-label="Menos 10% no item ${i.c}">−</button><input data-pit="${i.c}" inputmode="numeric" value="${form.pcts[i.c]}" aria-label="Porcentagem do item ${i.c}"><span class="pctsuf">%</span><button type="button" data-pid="${i.c}" data-pdi="10" aria-label="Mais 10% no item ${i.c}">+</button></div>
+    <div class="pctit" data-pres="${i.c}"></div></div></div>`).join("")||`<p class="note" style="margin:0">Este serviço não tem quantidade prevista.</p>`; }
+function pctUI(){ const on=form.pctModo==="pct"; $("#pctBox").querySelectorAll("[data-pm]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.pm===form.pctModo)));
+  $("#pctIn").hidden=!on; const pv=prevQ(form.base||{}), g=+$("#pctVal").value||0;
+  $("#pctBox").querySelectorAll("[data-pv]").forEach(b=>b.setAttribute("aria-pressed",String(+b.dataset.pv===g)));
+  if(on){ if(!$("#pctItens").children.length) pctRows();
+    ITENS.filter(i=>+pv[i.c]).forEach(i=>{ const p=+form.pcts[i.c]||0, el=$("#pctItens").querySelector(`[data-pit="${i.c}"]`); if(el&&document.activeElement!==el) el.value=p;
+      const r=$("#pctItens").querySelector(`[data-pres="${i.c}"]`); if(r) r.innerHTML=`feito <b>${nfp(pv[i.c]*p/100)}</b> · fica <b>${nfp(pv[i.c]*(100-p)/100)}</b>`; });
+    const ex=pctQ(pv,form.pcts), rp=receitaDe(pv), re=receitaDe(ex);
+    $("#pctRes").innerHTML=`<div><span>Feito hoje</span><b>${brl(re)}</b></div><div class="rest"><span>Fica para o próximo plantão</span><b>${brl(rp-re)}</b></div>`; }
+  if(form.mode==="baixa"&&form.st==="PARCIAL") $("#qtdCard").hidden=on; }
+const pctTodos=v=>{ const pv=prevQ(form.base||{}); ITENS.filter(i=>+pv[i.c]).forEach(i=>form.pcts[i.c]=v); };
+$("#pctBox").addEventListener("click",e=>{ const m=e.target.closest("[data-pm]"); if(m){ form.pctModo=m.dataset.pm; if(form.pctModo==="pct"&&!$("#pctVal").value){ $("#pctVal").value=50; pctTodos(50); } $("#pctItens").innerHTML=""; pctUI(); return; }
+  const v=e.target.closest("[data-pv]"); if(v){ $("#pctVal").value=v.dataset.pv; pctTodos(+v.dataset.pv); pctUI(); return; }
+  const d=e.target.closest("[data-pd]"); if(d){ e.preventDefault(); const nv=Math.min(100,Math.max(0,(+$("#pctVal").value||0)+ +d.dataset.pd)); $("#pctVal").value=nv; pctTodos(nv); pctUI(); return; }
+  const di=e.target.closest("[data-pdi]"); if(di){ e.preventDefault(); const c=di.dataset.pid; form.pcts[c]=Math.min(100,Math.max(0,(+form.pcts[c]||0)+ +di.dataset.pdi)); pctUI(); } });
+$("#pctVal").addEventListener("input",()=>{ let v=parseInt($("#pctVal").value); if(v>100){ v=100; $("#pctVal").value=100; } if(v>=0){ pctTodos(v); pctUI(); } });
+$("#pctBox").addEventListener("input",e=>{ const c=e.target.dataset?.pit; if(!c) return; let v=parseInt(e.target.value); if(v>100){ v=100; e.target.value=100; } form.pcts[c]=v>=0?v:0; pctUI(); });
+// serviço grande em vários dias: divide as quantidades previstas pelos dias de trabalho seguintes
+function mdDatas(sup,ini,n){ const out=[]; let d=parseD(ini); if(!d) return out; let guard=0;
+  while(out.length<n&&guard<60){ const x=iso(d); if(d.getDay()!==0&&(out.length===0||trabalha(sup,x))) out.push(x); d.setDate(d.getDate()+1); guard++; } return out; }
+function mdPartes(q,n){ const ps=[...Array(n)].map(()=>({})); ITENS.forEach(i=>{ const Q=+q[i.c]||0; if(!Q) return; const b=Math.floor(Q/n), r=Q%n; ps.forEach((p,k)=>{ const v=b+(k<r?1:0); if(v) p[i.c]=v; }); }); return ps; }
+const mdTxt=q=>ITENS.filter(i=>+q[i.c]).map(i=>`<b>${q[i.c]}</b> ${i.g==="P"?"poda":"extirp."} ${i.c}`).join(" · ");
+function mdUI(){ const on=form.mode==="prog"&&!form.base; $("#multiCard").hidden=!on; if(!on) return;
+  const n=Math.max(1,Math.min(15,parseInt($("#mdDias").value)||1)); const h=$("#mdPrev");
+  if(n<2){ h.innerHTML=""; return; }
+  const q=readQ("q_"), ds=mdDatas(form.sup,$("#data").value,n), ps=mdPartes(q,n);
+  if(!Object.keys(q).length||!$("#data").value){ h.innerHTML=`<p class="note" style="margin:0">Lance a data e as quantidades totais para ver a divisão.</p>`; return; }
+  h.innerHTML=`<div class="mdtt">Total: ${mdTxt(q)} · ${brl(receitaDe(q))} em <b>${n} dias</b></div>`+ds.map((d,k)=>`<div class="mdd"><b>Dia ${k+1} · ${diaDe(d)} ${fmtDs(d)}</b><span>${Object.keys(ps[k]).length?mdTxt(ps[k])+" · "+brl(receitaDe(ps[k])):"—"}</span></div>`).join(""); }
+$("#multiCard").addEventListener("click",e=>{ const b=e.target.closest("[data-md]"); if(!b) return; e.preventDefault(); $("#mdDias").value=Math.max(1,Math.min(15,(parseInt($("#mdDias").value)||1)+ +b.dataset.md)); mdUI(); });
+$("#mdDias").addEventListener("input",mdUI); $("#dataExec").addEventListener("change",()=>{ if(form.mode==="baixa") remUI(); }); $("#data").addEventListener("change",mdUI); $("#qtdMain").addEventListener("input",()=>{ if(form.mode==="prog") mdUI(); }); $("#qtdMain").addEventListener("click",()=>{ if(form.mode==="prog") setTimeout(mdUI,0); });
+// remarcação: na mesma semana ou na semana seguinte (até o sábado da próxima semana)
+function remLimite(ref){ const base=(ref&&ref>hoje())?ref:hoje(); const d=domDe(parseD(base)||new Date()); d.setDate(d.getDate()+13); return iso(d); }
+function remUI(){ const el=$("#proxData"); if(!el) return; const ref=form.st==="PARCIAL"?($("#dataExec").value||form.base?.data):form.base?.data; const lim=remLimite(ref);
+  el.max=lim; const mn=new Date(); mn.setDate(mn.getDate()+(ref&&ref>=hoje()?0:0)); el.min=(ref&&ref>=hoje())?iso(new Date(parseD(ref).getTime()+864e5)):hoje();
+  const h=$("#remDica"); if(h) h.innerHTML=`Pode ser na <b>mesma semana</b> ou na <b>semana seguinte</b> (até ${diaDe(lim)} ${fmtD(lim)}).`; }
 function modeUI(){
   const m=form.mode, nao=form.st==="NÃO";
   const ex = m==="avulso" || (m==="baixa" && !nao);
@@ -1873,6 +1973,8 @@ function modeUI(){
   equipeOpts();
   $("#baseCard").hidden = m!=="baixa";
   $("#subFields").hidden = $("#semSub").checked;
+  $("#pctBox").hidden = !parc; if(parc) pctUI();
+  mdUI(); if(m==="baixa") remUI();
   const T={prog:[form.base?"Corrigir programação":"Programar serviço", form.base?"Altere o que for preciso e salve.":"Lance aqui cada serviço da programação da turma. Depois de salvar, a turma e a data continuam preenchidas para você lançar o próximo.", form.base?"Salvar alterações":"Salvar programação"],
     baixa:[form.base&&!isProg(form.base)?"Corrigir baixa":"Dar baixa","Informe o que aconteceu com este serviço programado.","Salvar baixa"],
     avulso:[form.base?"Corrigir serviço sem programação":"Serviço sem programação","Para emergências e pedidos feitos na hora.","Salvar serviço"],
@@ -1886,7 +1988,7 @@ function modeUI(){
 
 function lembrar(){ const t=ls.get("gpe_turma",{}); ls.set("gpe_turma",{...t,sup:form.sup||t.sup,equipe:$("#equipe").value,viatura:$("#viatura").value,fiscal:($("#fiscal").value||$("#fiscalN").value||t.fiscal||"")}) }
 function limpar(mode="prog", keep={}){
-  form.mode=mode; form.tipo=""; servCarregar(""); form.st=""; form.base=null; form.geo=null; form.geoAuto=false; if($("#geoTxt")) $("#geoTxt").value="";
+  form.mode=mode; form.tipo=""; servCarregar(""); form.st=""; form.pctModo="qtd"; form.pcts={}; if($("#pctItens")) $("#pctItens").innerHTML=""; if($("#mdDias")) $("#mdDias").value=1; if($("#pctVal")) $("#pctVal").value=""; form.base=null; form.geo=null; form.geoAuto=false; if($("#geoTxt")) $("#geoTxt").value="";
   ["bairro","logradouro","processo","proxData","motivo","motivoTxt","obs","s_bairro","s_logradouro","s_processo","s_tipo","s_data","dataExec"].forEach(id=>$("#"+id).value="");
   $("#semSub").checked=false;
   form.okSemItens=false; form.oc=""; ["ocHora","ocOrigem","ocProt","ocQtd"].forEach(id=>$("#"+id).value=""); ["ocVia","ocRede","ocDano"].forEach(id=>$("#"+id).checked=false); setPressed($("#ocChips"),""); $("#ocQLbl").textContent="Quantidade";
@@ -1998,6 +2100,7 @@ function abrirBaixa(r, pre){
   else { // corrigindo uma baixa existente
     form.st=r.status; setPressed($("#stChips"),form.st);
     writeQ("q_",r.qtd||{},$("#qtdMain")); $("#dataExec").value=r.dataExec||r.data;
+    if(r.pctItens||r.pctExec){ form.pctModo="pct"; form.pcts={...(r.pctItens||{})}; if(!r.pctItens){ const pv=prevQ(r); ITENS.filter(i=>+pv[i.c]).forEach(i=>form.pcts[i.c]=r.pctExec); } $("#pctVal").value=typeof r.pctExec==="number"?r.pctExec:""; }
     $("#proxData").value=r.proxData||""; setMotivo(r.motivo||"");
     const s=r.substituto; $("#semSub").checked=!!r.semSubstituto;
     if(s){$("#s_data").value=s.data||r.data;$("#s_bairro").value=s.bairro||"";endCarregar("se_", s.logradouro||"");$("#s_tipo").value=s.tipo||"";$("#s_processo").value=s.processo||"";sProcUI();writeQ("s_",s.qtd||{},$("#qtdSub"))}
@@ -2124,7 +2227,7 @@ $("#form").addEventListener("submit", async ev=>{
     if(TIPOS_SERV.has(common.tipo)&&!common.servico) e.push($("#servico").value==="OUTRO"?"escreva qual é o serviço":"escolha o serviço a executar (ex.: poda de manutenção)");
   }
   const obs=$("#obs").value.trim();
-  let body, extra=null;
+  let body, extra=null, extraMulti=null;
 
   if(m==="prog"){
     const q=readQ("q_"); if(!Object.keys(q).length) e.push("lance ao menos uma quantidade prevista");
@@ -2134,10 +2237,22 @@ $("#form").addEventListener("submit", async ev=>{
       origem:base?.origem||"app", historico:base?.historico||[], remarcadaDe:base?.remarcadaDe||null,
       autor:base?.autor||myId||null, criadoEm:base?.criadoEm||now, atualizadoEm:now, atualizadoPor:myId||null};
     delete body.id; delete body._fila;
+    const nd=!base?Math.max(1,Math.min(15,parseInt($("#mdDias").value)||1)):1;
+    if(nd>1&&Object.keys(q).length){ const ds=mdDatas(common.supervisao||form.sup,common.data,nd), ps=mdPartes(q,nd), gid="md"+Date.now().toString(36), tot=qtdTxtPlano(q);
+      const partes=ds.map((d,k)=>({d,q:ps[k]})).filter(x=>Object.keys(x.q).length);
+      if(partes.length<2) e.push("as quantidades são pequenas demais para dividir em "+nd+" dias – diminua os dias ou use a baixa parcial por porcentagem");
+      else { const mk=(x,k)=>({...body, data:x.d, dia:diaDe(x.d), semana:semanaDe(x.d), qtdPrevista:x.q, receitaPrevista:receitaDe(x.q),
+          multiDia:{grupo:gid,n:k+1,de:partes.length,total:q}, obs:[`Parte ${k+1} de ${partes.length} do serviço (total: ${tot})`,obs].filter(Boolean).join(" · ")});
+        body=mk(partes[0],0); extraMulti=partes.slice(1).map((x,k)=>({id:newId(), body:mk(x,k+1)})); } }
   } else {
     if(!form.st) e.push("marque a situação");
     const execOk = form.st==="SIM"||form.st==="PARCIAL";
-    const q = execOk ? readQ("q_") : {};
+    const usaPct = m==="baixa" && form.st==="PARCIAL" && form.pctModo==="pct";
+    const pcts={}; if(usaPct){ const pv0=prevQ(base); ITENS.filter(i=>+pv0[i.c]).forEach(i=>pcts[i.c]=Math.min(100,Math.max(0,+form.pcts[i.c]||0))); }
+    const pvals=Object.values(pcts), pct=pvals.length&&pvals.every(v=>v===pvals[0])?pvals[0]:null;
+    if(usaPct && !pvals.some(v=>v>0)) e.push("informe a porcentagem feita de pelo menos um item");
+    else if(usaPct && pvals.every(v=>v>=100)) e.push("todos os itens estão em 100%: marque Executado em vez de Parcial");
+    const q = usaPct ? pctQ(prevQ(base),pcts) : execOk ? readQ("q_") : {};
     if(execOk && m!=="ocorr" && !Object.keys(q).length) e.push("lance as quantidades executadas");
     if(m==="ocorr" && !form.oc) e.push("marque se é galho caído ou árvore caída");
     if(m==="ocorr" && form.sup && impCands().length){ if(form.impHouve===undefined) e.push("informe se a emergência afetou a programação do dia");
@@ -2151,6 +2266,7 @@ $("#form").addEventListener("submit", async ev=>{
       obs,
       baixaEm:base?.baixaEm||now, baixaPor:base?.baixaPor||myId||null, atualizadoEm:now, atualizadoPor:myId||null};
     delete body.id; delete body._fila;
+    body.pctExec = usaPct ? pct : null; body.pctItens = usaPct ? pcts : null;
     if(m==="baixa"){ body.qtdPrevista = prevQ(base); body.receitaPrevista = receitaDe(body.qtdPrevista); }
     if(m==="ocorr"){ body.avulso=true; body.origem=base?.origem||"app"; body.autor=base?.autor||myId||null; body.criadoEm=base?.criadoEm||now; body.qtdPrevista={};
       body.dataExec=common.data; body.status="SIM";
@@ -2161,7 +2277,7 @@ $("#form").addEventListener("submit", async ev=>{
     // o que ficou por fazer: tudo (não executado) ou a diferença previsto − executado (parcial)
     let remQ=null;
     if(m==="baixa" && form.st==="NÃO") remQ=prevQ(base);
-    if(m==="baixa" && form.st==="PARCIAL"){ const pv=prevQ(base); remQ={}; ITENS.forEach(i=>{const d=(+pv[i.c]||0)-(+q[i.c]||0); if(d>0) remQ[i.c]=d}); if(!Object.keys(remQ).length) remQ=null; }
+    if(m==="baixa" && form.st==="PARCIAL"){ const pv=prevQ(base); remQ={}; ITENS.forEach(i=>{const d=Math.round(((+pv[i.c]||0)-(+q[i.c]||0))*100)/100; if(d>0) remQ[i.c]=d}); if(!Object.keys(remQ).length) remQ=null; }
     body.proxData=""; body.motivo=""; body.substituto=null; body.semSubstituto=false;
     if(m==="baixa" && form.st==="NÃO"){
       const sem=$("#semSub").checked;
@@ -2180,7 +2296,9 @@ $("#form").addEventListener("submit", async ev=>{
     if(remQ){
       const prox=$("#proxData").value, mot=lerMotivo();
       const ref = form.st==="PARCIAL" ? ($("#dataExec").value||base.data) : base.data;
+      const lim=remLimite(ref);
       if(!prox) e.push(form.st==="PARCIAL"?"informe a nova data para o que faltou":"informe a nova data (remarcação)"); else if(prox<=ref || prox<hoje()) e.push("a nova data precisa ser depois de "+fmtD(ref>hoje()?ref:hoje()));
+      else if(prox>lim) e.push("a remarcação tem que ser na mesma semana ou na semana seguinte (até "+fmtD(lim)+")");
       if($("#motivo").value==="Outro"&&!mot) e.push("digite o motivo"); else if(!mot) e.push(form.st==="PARCIAL"?"informe o motivo de não ter terminado":"informe o motivo da não execução");
       Object.assign(body,{proxData:prox, motivo:mot, qtdRemarcada:remQ});
       if(!e.length){
@@ -2191,7 +2309,7 @@ $("#form").addEventListener("submit", async ev=>{
           extra = {id:nid, body:{...(existing||{}),
             supervisao:base.supervisao, encarregado:base.encarregado, grupo:base.grupo, turno:base.turno, equipe:base.equipe, viatura:base.viatura,
             data:prox, dia:diaDe(prox), semana:semanaDe(prox), bairro:base.bairro, logradouro:base.logradouro, tipo:base.tipo, processo:base.processo||"",
-            status:"PROGRAMADO", qtdPrevista:remQ, receitaPrevista:receitaDe(remQ), qtd:{}, receita:0, obs:form.st==="PARCIAL"?"Restante do serviço executado parcialmente em "+fmtD($("#dataExec").value||base.data):"",
+            status:"PROGRAMADO", qtdPrevista:remQ, receitaPrevista:receitaDe(remQ), qtd:{}, receita:0, obs:form.st==="PARCIAL"?(usaPct?`Restante do serviço (${Object.entries(pcts).filter(([c,v])=>v<100).map(([c,v])=>`${c}: ${100-v}%`).join(", ")}) – parte executada em `:"Restante do serviço executado parcialmente em ")+fmtD($("#dataExec").value||base.data):"", pctRestante:usaPct?Object.fromEntries(Object.entries(pcts).filter(([c,v])=>v<100).map(([c,v])=>[c,100-v])):null,
             remarcadaDe:base.id, historico:hist, origem:base.origem||"app",
             autor:existing?.autor||myId||null, criadoEm:existing?.criadoEm||now, atualizadoEm:now, atualizadoPor:myId||null}};
           delete extra.body.id; delete extra.body._fila;
@@ -2210,12 +2328,13 @@ $("#form").addEventListener("submit", async ev=>{
     : m==="ocorr" ? (base?"Corrigiu atendimento de ":"Registrou atendimento de ")+(OC[form.oc]||"queda").toLowerCase()+(body.ocorrencia.impacto?.houve?" · afetou "+body.ocorrencia.impacto.servicos.length+" serviço(s) programado(s)":" · sem impacto na programação")
     : m==="avulso" ? "Lançou serviço sem programação"
     : form.st==="SIM" ? (base&&!isProg(base)?"Corrigiu a baixa (executado)":"Deu baixa: executado")
-    : form.st==="PARCIAL" ? (base&&!isProg(base)?"Corrigiu a baixa (parcial)":"Deu baixa: parcial")+(body.proxData?" · restante p/ "+fmtD(body.proxData):"")
+    : form.st==="PARCIAL" ? (base&&!isProg(base)?"Corrigiu a baixa (parcial)":"Deu baixa: parcial")+(body.pctItens?" "+(body.pctExec!=null?body.pctExec+"%":Object.entries(body.pctItens).map(([c,v])=>c+" "+v+"%").join(", ")):"")+(body.proxData?" · restante p/ "+fmtD(body.proxData):"")
     : "Não executado · remarcado p/ "+fmtD(body.proxData);
   if(extra) extra.body._acao="Criado por remarcação de "+fmtD(base.data)+(form.st==="PARCIAL"?" (restante do parcial)":"");
   let res = "ok";
   if(extra){ res = await saveDoc(extra.id, extra.body); }
   if(res==="ok"||res==="fila"){ const r2 = await saveDoc(id, body); if(r2!=="ok") res=r2; }
+  if(extraMulti&&(res==="ok"||res==="fila")){ for(const x of extraMulti){ x.body._acao="Programou para "+fmtD(x.body.data)+` (parte ${x.body.multiDia.n} de ${x.body.multiDia.de})`; const r3=await saveDoc(x.id,x.body); if(r3!=="ok") res=r3; } }
   if(m==="ocorr" && (res==="ok"||res==="fila")){
     const novos=(body.ocorrencia.impacto?.servicos||[]), antigos=(base?.ocorrencia?.impacto?.servicos||[]);
     const ids=new Set([...novos.map(s=>s.id),...antigos.map(s=>s.id)]);
@@ -2231,7 +2350,7 @@ $("#form").addEventListener("submit", async ev=>{
   if(res==="quota"){ $("#err").textContent="O banco está cheio. Avise a gerência para arquivar semanas antigas."; $("#err").hidden=false; return; }
   if(res==="fila") toast("Sem sinal: guardado no aparelho. Será enviado quando a conexão voltar.");
   else if(m==="ocorr") toast(body.ocorrencia.impacto?.houve?"Atendimento registrado. "+body.ocorrencia.impacto.servicos.length+" serviço(s) da programação marcado(s) como afetado(s): dê a baixa deles na aba Serviços em abertas.":"Atendimento registrado.",6000);
-  else toast(m==="prog" ? (base?"Programação corrigida.":"Programado para "+fmtD(body.data)+".") : body.proxData ? (form.st==="PARCIAL"?"Baixa salva. O que faltou foi remarcado para ":"Baixa salva. Remarcado para ")+fmtD(body.proxData)+"." : "Baixa salva.");
+  else toast(m==="prog" ? (base?"Programação corrigida.":extraMulti?`Programado em ${extraMulti.length+1} dias: de ${fmtD(body.data)} a ${fmtD(extraMulti[extraMulti.length-1].body.data)}.`:"Programado para "+fmtD(body.data)+".") : body.proxData ? (form.st==="PARCIAL"?"Baixa salva. O que faltou foi remarcado para ":"Baixa salva. Remarcado para ")+fmtD(body.proxData)+"." : "Baixa salva.");
   if(m==="prog"){ const av=avisoContrato(id,body); if(av) setTimeout(()=>toast(av,7000),3100); }
   if(m==="prog" && !base){ ls.set("gpe_progdata", body.data); limpar("prog",{sup:body.supervisao,equipe:body.equipe,viatura:body.viatura,data:body.data}); scrollTo(0,0); }
   else { limpar("prog"); show(m==="prog"?"lista":m==="ocorr"?"oc":"campo"); scrollTo(0,0); }
@@ -2333,13 +2452,20 @@ async function senhaPorMat(idPin,a){
   if(!r){ const inp=document.querySelector(`.sigmat[data-pin="${idPin}"]`); if(inp) sigMatUI(inp); }
   return r?(r==="a senha de entrar no app não confere"?"a senha de entrar no app de "+a[1].nome+" não confere":"primeira senha de assinatura: "+r):"";
 }
+const gerAssina=()=>isGerente()&&!modoTeste();
+const assGerente=sup=>({uid:sessao.id,nome:sessao.nome,sup:sup||"",cargo:"Gerente"+(sup?" – assinando pela "+sup:""),mat:matDe(acesso?.[sessao.id]||{}),como:"pelo próprio acesso (gerente)",gerente:true});
+const sigGerHtml=(px,sup,matIds,rot)=>`<p class="note" style="margin:6px 0 0"><b>Assinatura do gerente</b> · assina como <b>${esc(sessao.nome)}</b>, Gerente${sup?`, pela <b>${esc(sup)}</b>`:""}, com a sua senha de assinatura.</p>${sigFormHtml(px,sessao.id)}
+  <details class="sigoutro"><summary>Outro supervisor vai assinar neste aparelho</summary><p class="note" style="margin:6px 0">Preenchendo a matrícula abaixo, vale a assinatura do supervisor (e não a do gerente).</p>${sigMatHtml(matIds[0],matIds[1],rot)}</details>`;
 const sigBlocoHtml=(px,sup)=>modoTeste()
   ? `<p class="note" style="margin:6px 0 0"><span class="tagteste">🧪 TESTE</span> <b>Assinatura de teste do gerente</b>${sup?` pela <b>${esc(sup)}</b>`:""} · use a sua senha de assinatura. Fica marcada como TESTE.</p>${sigFormHtml(px,sessao.id)}`
+  : gerAssina()
+  ? sigGerHtml(px,sup,[px+"Mat",px+"Pin"],"Matrícula do supervisor")
   : supAssinaProprio(sup)
   ? `<p class="note" style="margin:6px 0 0"><b>Supervisor que entrega</b> · assina como <b>${esc(sessao.nome)}</b>, ${esc(cargoDe(acesso?.[sessao.id]||sessao))}</p>${sigFormHtml(px,sessao.id)}`
   : `<p class="note" style="margin:6px 0 0"><b>Assinatura do supervisor da turma</b> (${esc(nomeSupDe(sup)||"supervisor")}) · ele assina aqui com a matrícula e a senha de assinatura dele. Se for a primeira assinatura, ele cria a senha aqui mesmo.</p>${sigMatHtml(px+"Mat",px+"Pin","Matrícula do supervisor")}`;
 async function assinante(px,sup){
   if(modoTeste()){ const r=await conferirAss(px,sessao.id); if(r) return {erro:r}; return assTeste(sup); }
+  if(gerAssina()&&!matKey($("#"+px+"Mat")?.value||"")){ const r=await conferirAss(px,sessao.id); if(r) return {erro:r}; return assGerente(sup); }
   if(supAssinaProprio(sup)){ const r=await conferirAss(px,sessao.id); if(r) return {erro:r}; return {uid:sessao.id,nome:sessao.nome,sup:sessao.sup,cargo:cargoDe(acesso?.[sessao.id]||sessao),mat:matDe(acesso?.[sessao.id]||{}),como:"pelo próprio acesso"}; }
   const m=$("#"+px+"Mat")?.value;
   if(!matKey(m)) return {erro:"matrícula e senha de assinatura do supervisor"};
@@ -2611,6 +2737,7 @@ function abrirChk(c){
         <label class="f">Ressalva no recebimento (se houver)<textarea id="kfRecObs" placeholder="Ex.: vazamento na mangueira não informado na entrega"></textarea></label>
         <label class="ck"><input type="checkbox" id="kfCiencia"><span class="note" style="color:var(--ink)"><b>Ciência:</b> declaro que recebi o equipamento e tomei ciência das condições registradas neste checklist${chkAlertas(c).length?" (inclusive das anomalias apontadas)":""}${c.ocorr?" e das ocorrências / observações":""}.</span></label>
         ${modoTeste()?`<p class="note" style="margin:0"><span class="tagteste">🧪 TESTE</span> Assina como gerente, <b>em teste</b>, pela <b>${esc(c.recebe?.sup||"—")}</b> com a sua senha de assinatura.</p>${sigFormHtml("kR",sessao.id)}`
+          :gerAssina()?sigGerHtml("kR",c.recebe?.sup||"",["kfRecMat","kfRecPin"],"Matrícula de quem recebe")
           :travado()&&sessao.sup===c.recebe?.sup?`<p class="note" style="margin:0">Assina como <b>${esc(sessao.nome)}</b>, ${esc(cargoDe(acesso?.[sessao.id]||sessao))}.</p>${sigFormHtml("kR",sessao.id)}`
           :`<p class="note" style="margin:0">O supervisor que está recebendo o equipamento assina aqui com a matrícula e a <b>senha de assinatura</b> dele${c.recebe?.sup?` (indicado na entrega: ${esc(c.recebe.sup)}; se outro supervisor receber, vale a matrícula de quem assinar)`:""}.</p>${sigMatHtml("kfRecMat","kfRecPin","Matrícula de quem recebe")}`}
         <div class="actions" style="grid-template-columns:1fr;margin:4px 0 0"><button type="button" class="btn pri" id="kReceber">Assinar recebimento</button>
@@ -2643,6 +2770,7 @@ function abrirChk(c){
   // quem assina o recebimento (ou a recusa): o próprio supervisor que recebe, ou com a matrícula dele neste aparelho
   const quemRecebe=async()=>{
     if(modoTeste()){ const r=await conferirAss("kR",sessao.id); if(r) return {erro:"Falta / erro: "+r+"."}; return assTeste(c.recebe?.sup||""); }
+    if(gerAssina()&&!matKey($("#kfRecMat")?.value||"")){ const r=await conferirAss("kR",sessao.id); if(r) return {erro:"Falta / erro: "+r+"."}; return assGerente(c.recebe?.sup||""); }
     if(travado()&&sessao.sup===c.recebe?.sup){
       const r=await conferirAss("kR",sessao.id); if(r) return {erro:"Falta / erro: "+r+"."};
       return {uid:sessao.id,nome:sessao.nome,sup:sessao.sup,cargo:cargoDe(acesso?.[sessao.id]||sessao),mat:matDe(acesso?.[sessao.id]||{}),como:"pelo próprio acesso"};
@@ -3453,18 +3581,45 @@ $("#campoList").onclick=e=>{
 /* ---------- lista ---------- */
 function fillSemanas(sel,all,keep){
   const ss=[...new Set(all.map(r=>r.semana).filter(Boolean))].sort((a,b)=>b-a);
-  const cur=sel.value; sel.innerHTML=`<option value="">Todas as semanas</option>`+ss.map(s=>`<option value="${s}">${semTxt(s)}</option>`).join("");
-  if(cur&&ss.includes(+cur)) sel.value=cur; else if(keep&&ss.length&&!cur&&!sel._init){const atual=semanaDe(hoje());sel.value=ss.includes(atual)?atual:ss[0];sel._init=1}
+  const cur=sel.value, marc=sel.multiple?[...sel.selectedOptions].map(o=>o.value).filter(Boolean):[]; sel.innerHTML=`<option value="">Todas as semanas</option>`+ss.map(s=>`<option value="${s}">${semTxt(s)}</option>`).join("");
+  if(marc.length){ [...sel.options].forEach(o=>o.selected=marc.includes(o.value)); }
+  else if(cur&&ss.includes(+cur)) sel.value=cur; else if(keep&&ss.length&&!cur&&!sel._init){const atual=semanaDe(hoje());sel.value=ss.includes(atual)?atual:ss[0];sel._init=1}
 }
 $("#fSup").innerHTML=`<option value="">Todas as turmas</option>`+SUPS.map(s=>`<option value="${esc(s.id)}">${esc(s.id)}</option>`).join("");
-function renderLista(){
-  const all=$("#fPend").value==="hist" ? todos(true).filter(r=>r.arquivado) : todos(); fillSemanas($("#fSem"),all,false);
-  const fs=$("#fSem").value, fp=$("#fSup").value, ft=$("#fSt").value, fpend=$("#fPend").value, q=$("#fTxt").value.trim().toUpperCase();
-  const rows=all.filter(r=>(!fs||r.semana==fs)&&(!fp||r.supervisao===fp)&&(!ft||stKey(r)===ft)
+// filtros da Lista com várias opções marcadas ao mesmo tempo (nenhuma marcada = todas)
+const selVals=id=>{ const el=$("#"+id); return el?[...el.selectedOptions].map(o=>o.value).filter(Boolean):[]; };
+const listaFonte=()=>{ const pd=selVals("fPend"); return pd.length&&pd.every(x=>x==="hist") ? todos(true).filter(r=>r.arquivado) : pd.includes("hist") ? todos(true) : todos(); };
+function listaFiltrar(all){
+  const fs=selVals("fSem"), fp=selVals("fSup"), ft=selVals("fSt"), fpend=selVals("fPend"), q=$("#fTxt").value.trim().toUpperCase();
+  return all.filter(r=>(!fs.length||fs.includes(String(r.semana)))&&(!fp.length||fp.includes(r.supervisao))&&(!ft.length||ft.includes(stKey(r)))
     &&(!q||[r.bairro,r.logradouro,r.processo,r.substituto?.bairro,r.substituto?.logradouro].join(" ").toUpperCase().includes(q))
-    &&(!fpend||(fpend==="rem"&&r.remarcadaDe)||(fpend==="avulso"&&r.avulso&&!r.ocorrencia)||(fpend==="oc"&&r.ocorrencia)||(fpend==="hist"&&r.arquivado)));
+    &&(!fpend.length||fpend.some(fp1=>(fp1==="rem"&&r.remarcadaDe)||(fp1==="avulso"&&r.avulso&&!r.ocorrencia)||(fp1==="oc"&&r.ocorrencia)||(fp1==="hist"&&r.arquivado))));
+}
+const MS_NOME={fSem:["semana","semanas"],fSup:["turma","turmas"],fSt:["situação","situações"],fPend:["pendência","pendências"]};
+function msTexto(sel){ const m=[...sel.selectedOptions].filter(o=>o.value); const nm=MS_NOME[sel.id]||["item","itens"];
+  if(!m.length) return sel.options[0]?.textContent||"Todas"; if(m.length===1) return m[0].textContent; return `${m.length} ${nm[1]}: `+m.map(o=>o.textContent.replace(/^Semana\s*/,"").split(" · ")[0]).join(", "); }
+function msSync(sel){ const b=sel._msbtn; if(!b) return; b.querySelector("span").textContent=msTexto(sel); b.disabled=sel.disabled; b.classList.toggle("on",[...sel.selectedOptions].some(o=>o.value)); }
+function msSyncAll(){ ["fSem","fSup","fSt","fPend"].forEach(id=>{ const el=$("#"+id); if(el) msSync(el); }); }
+function msMontar(sel){
+  if(sel._msbtn) return; sel.multiple=true; if(![...sel.selectedOptions].some(o=>o.value)) [...sel.options].forEach(o=>o.selected=false);
+  const w=document.createElement("div"); w.className="msw"; sel.before(w); w.appendChild(sel); sel.style.display="none";
+  const b=document.createElement("button"); b.type="button"; b.className="msbtn"; b.setAttribute("aria-haspopup","listbox"); b.innerHTML=`<span></span><i aria-hidden="true">▾</i>`; w.appendChild(b); sel._msbtn=b;
+  const pop=document.createElement("div"); pop.className="mspop"; pop.hidden=true; w.appendChild(pop);
+  const abrir=()=>{ document.querySelectorAll(".mspop").forEach(x=>{ if(x!==pop) x.hidden=true; });
+    const ops=[...sel.options].filter(o=>o.value);
+    pop.innerHTML=`<div class="msl">${ops.map((o,i)=>`<label class="msi"><input type="checkbox" data-i="${i}" ${o.selected?"checked":""}><span>${esc(o.textContent)}</span></label>`).join("")||`<p class="note" style="margin:6px">Sem opções.</p>`}</div><div class="msa"><button type="button" class="btn sec" data-ms="limpar">Limpar</button><button type="button" class="btn pri" data-ms="ok">OK</button></div>`;
+    pop.hidden=false; const dir=w.getBoundingClientRect().left+w.offsetWidth/2>innerWidth/2; pop.style.left=dir?"auto":"0"; pop.style.right=dir?"0":"auto";
+    pop.onchange=e=>{ const c=e.target.closest("[data-i]"); if(!c) return; ops[+c.dataset.i].selected=c.checked; sel.options[0]&&(sel.options[0].selected=false); msSync(sel); renderLista(); };
+    pop.onclick=e=>{ const a=e.target.closest("[data-ms]"); if(!a) return; if(a.dataset.ms==="limpar"){ [...sel.options].forEach(o=>o.selected=false); pop.querySelectorAll("input").forEach(x=>x.checked=false); msSync(sel); renderLista(); } else pop.hidden=true; }; };
+  b.onclick=e=>{ e.stopPropagation(); if(pop.hidden) abrir(); else pop.hidden=true; };
+  msSync(sel);
+}
+document.addEventListener("click",e=>{ if(!e.target.closest(".msw")) document.querySelectorAll(".mspop").forEach(x=>x.hidden=true); });
+function renderLista(){
+  const all=listaFonte(); fillSemanas($("#fSem"),all,false); msSyncAll();
+  const rows=listaFiltrar(all);
   if(!all.length){ $("#list").innerHTML=`<div class="empty">${loaded?"Nada lançado ainda.<br>Comece pela aba <b>Programar</b>.":"Carregando…"}</div>`; return; }
-  try{ $("#lxInfo").textContent=rows.length?`PDF e imagem saem com os ${rows.length} serviço${rows.length===1?"":"s"} filtrado${rows.length===1?"":"s"}, agrupados.`:""; }catch(e){}
+  try{ $("#lxInfo").textContent=rows.length?`PDF, imagem e planilha saem com os ${rows.length} serviço${rows.length===1?"":"s"} filtrado${rows.length===1?"":"s"}, agrupados.`:""; }catch(e){}
   if(!rows.length){ $("#list").innerHTML=`<div class="empty">Nenhum lançamento com esses filtros.</div>`; return; }
   $("#list").innerHTML = rows.slice(0,300).map(r=>{
     const pq=prevQ(r), eq=execQ(r);
@@ -3476,14 +3631,11 @@ function renderLista(){
       <div class="nums">${val}${r.status==="NÃO"?" · remarcado p/ "+fmtD(r.proxData)+(r.substituto?" · no lugar: "+esc(r.substituto.bairro):""):""}</div>
     </button>`}).join("") + (rows.length>300?`<p class="note">Mostrando 300 de ${rows.length}. Use os filtros para refinar.</p>`:"");
 }
-["fSem","fSup","fSt","fPend"].forEach(id=>$("#"+id).onchange=renderLista); $("#fTxt").oninput=renderLista;
+["fSem","fSup","fSt","fPend"].forEach(id=>{ $("#"+id).onchange=renderLista; msMontar($("#"+id)); }); $("#fTxt").oninput=renderLista;
 /* ---------- Lista: PDF e imagem de todos os serviços filtrados, agrupados ---------- */
 function listaRows(){
-  const all=$("#fPend").value==="hist" ? todos(true).filter(r=>r.arquivado) : todos();
-  const fs=$("#fSem").value, fp=$("#fSup").value, ft=$("#fSt").value, fpend=$("#fPend").value, q=$("#fTxt").value.trim().toUpperCase();
-  const rows=all.filter(r=>(!fs||r.semana==fs)&&(!fp||r.supervisao===fp)&&(!ft||stKey(r)===ft)
-    &&(!q||[r.bairro,r.logradouro,r.processo,r.substituto?.bairro,r.substituto?.logradouro].join(" ").toUpperCase().includes(q))
-    &&(!fpend||(fpend==="rem"&&r.remarcadaDe)||(fpend==="avulso"&&r.avulso&&!r.ocorrencia)||(fpend==="oc"&&r.ocorrencia)||(fpend==="hist"&&r.arquivado)));
+  const all=listaFonte();
+  const rows=listaFiltrar(all);
   return {all,rows};
 }
 const LX_CSS=`.lx .grp{margin-top:6px}.lx .gh{display:flex;justify-content:space-between;align-items:center;background:#005f27;color:#fff;padding:5px 9px;font-weight:700;font-size:12px;letter-spacing:.03em}
@@ -3493,7 +3645,7 @@ const LX_CSS=`.lx .grp{margin-top:6px}.lx .gh{display:flex;justify-content:space
 .lx .qp{color:#2a78d6;font-weight:700}.lx .qe{color:#eb6834;font-weight:700}.lx .tot td{background:#eef1ec;font-weight:700}
 .lx .res{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.lx .res div{border:1px solid #c9d1c4;border-radius:8px;padding:6px 8px}.lx .res b{display:block;font-size:16px;color:#005f27}.lx .res span{font-size:9.5px;text-transform:uppercase;color:#555;font-weight:700}`;
 function listaDocHtml(rows,agr,det){
-  const f=[$("#fSem").selectedOptions[0]?.textContent,$("#fSup").value||"Todas as turmas",$("#fSt").value?$("#fSt").selectedOptions[0].textContent:"",$("#fPend").value?$("#fPend").selectedOptions[0].textContent:"",$("#fTxt").value.trim()?"busca: "+$("#fTxt").value.trim():""].filter(Boolean).join(" · ");
+  const f=[msTexto($("#fSem")),selVals("fSup").length?msTexto($("#fSup")):"Todas as turmas",selVals("fSt").length?msTexto($("#fSt")):"",selVals("fPend").length?msTexto($("#fPend")):"",$("#fTxt").value.trim()?"busca: "+$("#fTxt").value.trim():""].filter(Boolean).join(" · ");
   const chave=r=>agr==="turma"?(r.supervisao||"—"):agr==="sit"?stTxt[stKey(r)]:fmtD(r.data)+" · "+(r.dia||diaDe(r.data));
   const ordem=agr==="turma"?(a,b)=>(SUPS.findIndex(s=>s.id===a.supervisao)-SUPS.findIndex(s=>s.id===b.supervisao))||(a.data||"").localeCompare(b.data||""):(a,b)=>(a.data||"").localeCompare(b.data||"")||(SUPS.findIndex(s=>s.id===a.supervisao)-SUPS.findIndex(s=>s.id===b.supervisao))||(a.equipe||"").localeCompare(b.equipe||"");
   const rs=[...rows].sort(ordem), grupos=[]; rs.forEach(r=>{ const k=chave(r); let g=grupos.find(x=>x.k===k); if(!g){g={k,rs:[]};grupos.push(g);} g.rs.push(r); });
@@ -3531,7 +3683,7 @@ function lxCard(r){ const pq=prevQ(r), s=r.substituto;
   if(r.geo) L.push(["GPS",fmtCoord(r.geo)]);
   if(r.fiscal) L.push(["Fiscal",esc(r.fiscal)]); if(r.obs) L.push(["Obs.",esc(r.obs)]); if(r.ultimoUsuario) L.push(["Lançado por",esc(r.ultimoUsuario)]);
   return `<div class="card"><div class="ch"><b>${fmtD(r.data)} · ${esc(r.dia||diaDe(r.data))}${r.semana?" · "+r.semana+"ª semana":""}</b><span class="st st-${stKey(r)}">${esc(stTxt[stKey(r)])}</span></div><dl class="cb">${L.map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl></div>`; }
-const lxNome=ext=>("lista-servicos-"+[$("#fSem").value?"semana-"+$("#fSem").value:"",$("#fSup").value].filter(Boolean).join("-")+"-"+hoje()).normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9]+/g,"-").replace(/-+/g,"-").toLowerCase()+"."+ext;
+const lxNome=ext=>("lista-servicos-"+[selVals("fSem").length?"semana-"+selVals("fSem").join("-"):"",selVals("fSup").length===1?selVals("fSup")[0]:selVals("fSup").length?selVals("fSup").length+"-turmas":""].filter(Boolean).join("-")+"-"+hoje()).normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9]+/g,"-").replace(/-+/g,"-").toLowerCase()+"."+ext;
 async function listaPdf(btn){
   const {rows}=listaRows(); if(!rows.length){ toast("Nenhum serviço com esses filtros."); return; }
   if(rows.length>800){ toast("São "+rows.length+" serviços. Filtre por semana ou turma (no máximo 800)."); return; }
@@ -3556,7 +3708,7 @@ async function listaImg(btn){
   finally{ btn.disabled=false; btn.textContent=t; }
 }
 
-$("#lxPdf").onclick=()=>listaPdf($("#lxPdf")); $("#lxImg").onclick=()=>listaImg($("#lxImg"));
+$("#lxPdf").onclick=()=>listaPdf($("#lxPdf")); $("#lxImg").onclick=()=>listaImg($("#lxImg")); $("#lxXls").onclick=()=>listaXls($("#lxXls"));
 $("#list").onclick=e=>{const b=e.target.closest(".rec");if(!b)return;const r=byId(b.dataset.id);if(r)detalhe(r,false,true)};
 
 /* ---------- detalhe / remarcar sem execução ---------- */
@@ -4363,6 +4515,49 @@ const XL=(()=>{
   const serial=d=>{const p=parseD(d);return p?Math.round((Date.UTC(p.getFullYear(),p.getMonth(),p.getDate())-Date.UTC(1899,11,30))/864e5):null};
   return {Styles,Sheet,book,ref,col,serial,zip};
 })();
+
+// Lista: planilha Excel (.xlsx) com os serviços filtrados
+function listaPlanilha(rows){
+  const st=XL.Styles(), C=XL.col, G="005F27", LN="C9D1C4", MU="56655A";
+  const tit=st({font:{b:1,sz:16,color:"FFFFFF"},fill:G,align:{indent:1}}), sub=st({font:{sz:10,color:"FFFFFF"},fill:G,align:{indent:1}});
+  const th=st({font:{b:1,sz:9,color:"FFFFFF"},fill:G,border:{l:{c:"3C6B4B"},r:{c:"3C6B4B"},t:{c:G},b:{c:G}},align:{h:"center",wrap:1}});
+  const thP=st({font:{b:1,sz:9,color:"0D366B"},fill:"CDE2FB",border:"thin",align:{h:"center"}}), thE=st({font:{b:1,sz:9,color:"FFFFFF"},fill:"256ABF",border:"thin",align:{h:"center"}});
+  const c=(z,o={})=>st({font:{sz:9,b:o.b?1:0,color:o.color||"1F2A22"},fill:z?"F4F7F2":"FFFFFF",border:{l:{c:"E2E6DF"},r:{c:"E2E6DF"},b:{c:"E2E6DF"}},align:{h:o.h,wrap:o.wrap},num:o.num});
+  const tot=o=>st({font:{b:1,sz:10,color:G},fill:"EEF1EC",border:{t:{s:"medium",c:G}},align:{h:o.h},num:o.num});
+  const ws=XL.Sheet("Lista"); ws.tab="F37020";
+  const H=["Data","Dia","Sem.","Supervisão","Supervisor","Equipe","Viatura","Bairro","Logradouro","Tipo / serviço","Nº processo / O.S.","Situação",...ITENS.map(i=>i.c),...ITENS.map(i=>i.c),"Receita prevista","Receita executada","Remarcado para","Motivo","Observação"];
+  const NI=ITENS.length, P0=12, E0=P0+NI, R0=E0+NI, NC=H.length;
+  ws.widths=[11,6,6,20,15,11,15,22,32,22,18,16,...ITENS.map(()=>7.5),...ITENS.map(()=>7.5),15,15,13,26,32];
+  ws.set(0,0,"PROGRAMAÇÃO GPE — Lista de serviços",tit).fill(0,1,NC-1,tit).merge(0,0,0,NC-1).h(0,26);
+  const filtros=[msTexto($("#fSem")),selVals("fSup").length?msTexto($("#fSup")):"Todas as turmas",selVals("fSt").length?msTexto($("#fSt")):"",selVals("fPend").length?msTexto($("#fPend")):"",$("#fTxt").value.trim()?"busca: "+$("#fTxt").value.trim():""].filter(Boolean).join(" · ");
+  ws.set(1,0,`COMURG · Gerência de Poda e Extirpação – ${escDirop()?"DIROP":"DIRSEN"} · ${filtros} · ${rows.length} serviço(s) · gerado em ${dataBR(new Date().toISOString())} ${horaAgora()}`,sub).fill(1,1,NC-1,sub).merge(1,0,1,NC-1);
+  ws.set(3,P0,"QUANTIDADE PREVISTA",thP).fill(3,P0+1,E0-1,thP).merge(3,P0,3,E0-1); ws.set(3,E0,"QUANTIDADE EXECUTADA",thE).fill(3,E0+1,R0-1,thE).merge(3,E0,3,R0-1);
+  const hr=4; H.forEach((t,k)=>ws.set(hr,k,t,th)); ws.h(hr,30);
+  let r=hr+1;
+  rows.forEach((x,i)=>{ const z=i%2, pv=x.avulso?{}:prevQ(x), ex=execQ(x); let k=0; const put=(v,o)=>ws.set(r,k++,v,c(z,o));
+    put(XL.serial(x.data)??fmtD(x.data),{num:"data",h:"center"}); put(x.dia||diaDe(x.data),{h:"center"}); put(x.semana||"",{h:"center"});
+    put(x.supervisao||"",{b:1}); put(x.encarregado||supOf(x.supervisao)?.enc||""); put(x.equipe||""); put(x.viatura||"");
+    put(x.bairro||""); put(x.logradouro||""); put(tipoTxt(x)); put(x.processo||""); put(stTxt[stKey(x)]||"",{b:1,color:stKey(x)==="SIM"?"14612B":stKey(x)==="NÃO"||stKey(x)==="ATRASADO"?"9B1F18":stKey(x)==="PARCIAL"?"7A4A00":"384049"});
+    ITENS.forEach(it=>put(+pv[it.c]||"",{h:"center",num:"int",color:"0D366B"})); ITENS.forEach(it=>put(+ex[it.c]||"",{h:"center",num:"int",b:1,color:"184F95"}));
+    put(x.avulso?0:receitaDe(pv),{num:"brl"}); put(execRec(x)||0,{num:"brl"}); put(x.proxData?(XL.serial(x.proxData)??fmtD(x.proxData)):"",{num:"data",h:"center"}); put(x.motivo||"",{wrap:1}); put(x.obs||"",{wrap:1});
+    r++; });
+  const last=r-1;
+  ws.set(r,0,"TOTAL",tot({})).fill(r,1,P0-1,tot({})).merge(r,0,r,P0-1);
+  for(let k=P0;k<R0;k++) ws.fx(r,k,`SUM(${C(k)}${hr+2}:${C(k)}${Math.max(last,hr+1)+1})`,tot({h:"center",num:"int"}));
+  ws.fx(r,R0,`SUM(${C(R0)}${hr+2}:${C(R0)}${Math.max(last,hr+1)+1})`,tot({num:"brl"})); ws.fx(r,R0+1,`SUM(${C(R0+1)}${hr+2}:${C(R0+1)}${Math.max(last,hr+1)+1})`,tot({num:"brl"}));
+  ws.fill(r,R0+2,NC-1,tot({}));
+  ws.freeze={r:hr+1,c:4}; ws.filter=`A${hr+1}:${C(NC-1)}${Math.max(last,hr+1)+1}`; ws.titles=[hr,hr+1];
+  return XL.book([ws],st);
+}
+async function listaXls(btn){
+  const {rows}=listaRows(); if(!rows.length){ toast("Nenhum serviço com esses filtros."); return; }
+  if(!downloads){ toast("Download não disponível aqui."); return; }
+  const t=btn.textContent; btn.disabled=true; btn.textContent="Gerando planilha…";
+  try{ const ord=rows.slice().sort((a,b)=>(a.data||"").localeCompare(b.data||"")||(SUPS.findIndex(s=>s.id===a.supervisao)-SUPS.findIndex(s=>s.id===b.supervisao)));
+    await downloads.save({filename:lxNome("xlsx"),data:listaPlanilha(ord)}); toast("Planilha baixada."); }
+  catch(e){ if(e?.code!=="cancelled"&&e?.code!=="declined") toast("Não foi possível gerar a planilha."); }
+  finally{ btn.disabled=false; btn.textContent=t; }
+}
 
 function planilhaGPE(){
   const f=rptFiltro(), rows=rptRows(f).slice().sort((a,b)=>(a.data||"").localeCompare(b.data||"")||(a.supervisao||"").localeCompare(b.supervisao||"")||(a.equipe||"").localeCompare(b.equipe||""));
