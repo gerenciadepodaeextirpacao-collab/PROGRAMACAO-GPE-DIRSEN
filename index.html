@@ -1691,8 +1691,9 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.28zm";
+const APP_VERSAO="2026.10.28zn";
 const VERSOES=[
+  {v:"2026.10.28zn", d:"28/10/2026", itens:["Início para valer: registros zerados pelo script do banco (ficam só os acessos e as senhas de assinatura)","Banco: o supervisor passa a salvar a própria escala de trabalho e a gerência/coordenação a cancelar avisos"]},
   {v:"2026.10.28zm", d:"28/10/2026", itens:["Semanas numeradas pela sequência do ano: a 1ª semana é a que contém 1º de janeiro (domingo a sábado) – a semana de 25/10 a 31/10/2026 é a 44ª; a numeração recomeça em 1 a cada ano"]},
   {v:"2026.10.28zl", d:"28/10/2026", itens:["\"Zerar dados de teste\" agora zera tudo: programação, baixas, registros emergenciais, checklists, comunicados de defeito, orçamentos, escalas e avisos cancelados (senhas de assinatura opcional); só os acessos ficam"]},
   {v:"2026.10.28zk", d:"28/10/2026", itens:["Gerente: Mais → \"Zerar dados de teste\" – baixa uma cópia de segurança e apaga programação/baixas, checklists e comunicados de defeito (acessos, senhas, escalas e orçamentos ficam)","Checklist obrigatório a partir do turno noturno que começou em 28/10 às 18h (entregue em 29/10); comunicado de defeito sempre que houver defeito"]},
