@@ -1720,8 +1720,10 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.28zt";
+const APP_VERSAO="2026.10.29a";
 const VERSOES=[
+  {v:"2026.10.29a", d:"29/10/2026", itens:["Aba Atualizar no app do Netlify: explica que o download da versão nova é feito no app do Claude e tem o botão para abrir lá (no Netlify os arquivos novos não existem ainda)"]},
+  {v:"2026.10.28zu", d:"28/10/2026", itens:["Meta de produção: R$ 50 mil por dia em cada supervisão, somando todas as equipes e equipamentos da turma (não é por equipamento)","Acompanhamento do Painel mostra, por supervisão e dia, o % programado (prog.) e o % executado (prod.) contra a meta"]},
   {v:"2026.10.28zt", d:"28/10/2026", itens:["Programar PROCESSO ou O.S: pode salvar sem QD., LT. e número","Na baixa de processo / O.S com endereço incompleto aparece \"Complete o endereço\": tipo e nome da via + QD. e LT. (ou Nº do imóvel) são obrigatórios para dar baixa"]},
   {v:"2026.10.28zs", d:"28/10/2026", itens:["Programar ÁREA PÚBLICA, ENTRE-PISTA e PRAÇA: QD., LT., tipo de via e número/nome da via não são obrigatórios – basta a via ou uma referência do local"]},
   {v:"2026.10.28zr", d:"28/10/2026", itens:["Início: \"Lista e exportar\" com \"(PROGRAMAÇÃO)\" embaixo"]},
@@ -1849,7 +1851,7 @@ async function baixarDeploy(i){
   const d=DEPLOY[i]; if(!downloads){ toast("Download indisponível nesta visualização."); return; }
   try{ const r=await fetch("deploy/"+d.arq,{cache:"no-store"}); if(!r.ok) throw new Error(r.status);
     const txt=await r.text(); await downloads.save({filename:d.nome, data:new Blob([txt],{type:d.tipo})}); toast(d.nome+" pronto. Veja os downloads do aparelho."); }
-  catch(e){ toast("Não foi possível baixar "+d.nome+". Tente de novo em alguns segundos."); }
+  catch(e){ console.error(e); toast("Não foi possível baixar "+d.nome+" ("+(e?.message||"erro")+"). Use o pacote .zip que o Claude manda na conversa.",7000); }
 }
 function changelogMd(){ return "# Programação GPE — o que mudou\n\nVersão atual: "+APP_VERSAO+"\n\n"+VERSOES.map(v=>"## "+v.v+" ("+v.d+")\n\n"+v.itens.map(t=>"- "+t).join("\n")).join("\n\n")+"\n"; }
 async function baixarTudo(btn){
@@ -1861,12 +1863,20 @@ async function baixarTudo(btn){
     const blob=XL.zip(files,"application/zip");
     await downloads.save({filename:"GPE-atualizacao-"+APP_VERSAO+".zip", data:blob});
     toast("Arquivos da atualização prontos. Veja os downloads do aparelho.");
-  }catch(e){ toast("Não foi possível montar o pacote. Tente de novo em alguns segundos."); }
+  }catch(e){ console.error(e); toast("Não foi possível montar o pacote ("+(e?.message||"erro")+"). Use o pacote .zip que o Claude manda na conversa.",7000); }
   finally{ if(btn){ btn.disabled=false; btn.innerHTML=t0; } }
 }
 function renderUpd(){
   const host=$("#updBox"); if(!host) return;
   if(!isGerente()){ host.innerHTML=`<div class="empty">Só o gerente acessa esta aba.</div>`; return; }
+  if(window.GPE_NETLIFY||!/claude|claudeusercontent/.test(location.hostname)){ // os arquivos novos ficam publicados junto do app no Claude, não no Netlify
+    host.innerHTML=`<section class="card" style="display:grid;gap:12px">
+    <div class="step">Baixar a atualização</div>
+    <p class="note" style="margin:0">Você está no app do <b>Netlify</b> (versão ${APP_VERSAO}). Os arquivos de cada versão nova ficam publicados no <b>app do Claude</b>, por isso o download é feito por lá:</p>
+    <ol class="ajlist" style="margin:0"><li>Toque em <b>Abrir o app no Claude</b> (entre com a sua conta do Claude).</li><li>Lá, abra <b>Mais → Atualizar</b> e toque em <b>Baixar os arquivos da atualização (.zip)</b>.</li><li>Descompacte e suba os 3 arquivos no GitHub, como sempre.</li></ol>
+    <a class="btn pri" href="https://claude.ai/artifact/GmyiVqG1JySNfn77yrriiN" target="_blank" rel="noopener" style="text-decoration:none;display:grid;place-items:center;text-align:center">Abrir o app no Claude</a>
+    <p class="note" style="margin:0">O pacote GPE-vN.zip que o Claude manda na conversa também serve: é o mesmo conteúdo.</p></section>`;
+    return; }
   host.innerHTML=`<section class="card" style="display:grid;gap:12px">
     <div class="step">Arquivos da atualização <b>${APP_VERSAO}</b></div>
     <div class="vdl"><button type="button" class="btn pri" data-dlall><span>⬇ Baixar os arquivos da atualização (.zip)<small>index.html, camada-gpe.js e netlify.toml – descompacte e suba os 3 no GitHub.</small></span></button></div>
@@ -1974,7 +1984,7 @@ function metaUI(){
   if(!trabalha(form.sup,dia)){ box.hidden=false; box.innerHTML=`<div><b>${diaDe(dia)} ${fmtDs(dia)} é folga desta equipe</b> pela escala de trabalho cadastrada. Sem programação nem meta neste dia.</div>${tot?`<div class="mt-wr">Programado para a folga: ${brl(tot)}. Confira se a data está certa.</div>`:""}`; return; }
   const w=v=>Math.min(100,v/META_PODA_DIA*100);
   box.hidden=false;
-  box.innerHTML=`<div><b>Meta do dia:</b> ${brl(META_PODA_DIA)} programados por supervisão · ${diaDe(dia)} ${fmtDs(dia)}</div>
+  box.innerHTML=`<div><b>Meta do dia:</b> ${brl(META_PODA_DIA)} por supervisão (todas as equipes e equipamentos juntos) · ${diaDe(dia)} ${fmtDs(dia)}</div>
     <div class="mb" role="img" aria-label="${brl(tot)} de ${brl(META_PODA_DIA)}"><div style="width:${w(ja)}%;background:var(--brand)"></div><i style="left:${w(ja)}%;width:${Math.max(0,w(tot)-w(ja))}%"></i></div>
     <div><span class="mt-${c}"><b>${brl(tot)} de ${brl(META_PODA_DIA)}</b> (${Math.round(tot/META_PODA_DIA*100)}%)</span> · já programado ${brl(ja)}${novo?` + ${brl(novo)} neste lançamento`:""}${falta?` · <b>faltam ${brl(falta)}</b>`:` · <b class="mt-ok">meta atingida</b>`}</div>`;
 }
@@ -5650,7 +5660,7 @@ function renderSemProg(){
   const semDias=[...Array(7)].map((_,i)=>{const x=new Date(b0);x.setDate(b0.getDate()+i);return iso(x)}).filter((x,i)=>i>0||rows.some(r=>r.data===x));
   const semDias7=[...Array(7)].map((_,i)=>{const x=new Date(b0);x.setDate(b0.getDate()+i);return iso(x)}), diasTrab=semDias7.filter(x=>trabalha(form.sup,x));
   const diasVer=semDias7.filter((x,i)=>i>0||podasProgDia(form.sup,x)>0);
-  const metaHtml=`<p class="maphint" style="margin-top:6px">Meta: <b>${brl(META_PODA_DIA)} programados por dia</b> nesta supervisão.</p><div class="metadias">${diasVer.map(x=>{const v=podasProgDia(form.sup,x), t=trabalha(form.sup,x);return t?`<span class="${metaCls(v)}${x===d?" hj":""}" title="${fmtD(x)}: ${brl(v)} de ${brl(META_PODA_DIA)}">${diaDe(x)} ${fmtDs(x)} · ${kR(v)} / 50 mil</span>`:`<span class="${x===d?"hj":""}" style="opacity:.6" title="${fmtD(x)}: folga na escala 12x36">${diaDe(x)} ${fmtDs(x)} · folga${v?" · "+kR(v):""}</span>`}).join("")}</div>`;
+  const metaHtml=`<p class="maphint" style="margin-top:6px">Meta: <b>${brl(META_PODA_DIA)} por dia</b> nesta supervisão – soma de todas as equipes e equipamentos da turma no dia.</p><div class="metadias">${diasVer.map(x=>{const v=podasProgDia(form.sup,x), t=trabalha(form.sup,x);return t?`<span class="${metaCls(v)}${x===d?" hj":""}" title="${fmtD(x)}: ${brl(v)} de ${brl(META_PODA_DIA)}">${diaDe(x)} ${fmtDs(x)} · ${kR(v)} / 50 mil</span>`:`<span class="${x===d?"hj":""}" style="opacity:.6" title="${fmtD(x)}: folga na escala 12x36">${diaDe(x)} ${fmtDs(x)} · folga${v?" · "+kR(v):""}</span>`}).join("")}</div>`;
   host.innerHTML=`<div class="grp-h"><h3>Programação da ${sem}ª semana <small style="font:500 13px var(--body);letter-spacing:0;text-transform:none;color:var(--muted)">de ${periodoSem(sem).replace(" a "," a ")}</small></h3><span>${rows.length} serviço${rows.length!==1?"s":""} · ${brl(prev)}</span></div>`+
     metaHtml+(rows.length?`<p class="maphint" style="margin-top:6px">Ver as marcações de cada dia no mapa:</p><div class="maprow">${dias.map(d=>{const rs=rows.filter(r=>r.data===d);return rotaLink(rs,diaDe(d)+" "+fmtDs(d)+" ("+rs.length+")")}).join("")}</div>`:"")+
     (rows.length?`<div class="list">${rows.map(r=>`<div class="rec" style="cursor:default"><div class="l1"><span class="when">${fmtD(r.data)} · ${esc(r.dia||diaDe(r.data))} · ${esc(r.equipe)}</span><span class="pill ${stKey(r)}">${stTxt[stKey(r)]}</span></div><div class="where">${esc(r.bairro)} — ${esc(r.logradouro)}</div><div class="nums">${qtdTxt(prevQ(r))} · previsto ${brl(receitaDe(prevQ(r)))}</div><div style="margin-top:8px">${mapLink(r)}</div></div>`).join("")}</div>`
@@ -5858,7 +5868,7 @@ function acompHtml(F){
   const tot=base.length, baix=(cont.SIM||0)+(cont.PARCIAL||0)+(cont["NÃO"]||0), hj=hoje();
   if(acSel&&!dias.includes(acSel.d)) acSel=null;
   let h=`<div class="dcard full" id="acomp"><h3>Acompanhamento da programação · ${sw}ª semana (${periodoSem(sw)}) <small>${tot} programado${tot===1?"":"s"} · ${baix} com baixa · ${cont.ATRASADO||0} sem baixa</small></h3>
-    <p class="dcap">Número = serviços programados; <b>%</b> = valor programado no dia contra a meta de ${brl(META_PODA_DIA)} por supervisão (verde: atingiu · amarelo: 70% ou mais · vermelho: abaixo). Cada bolinha é um serviço; toque num dia para ver a lista.</p>
+    <p class="dcap">Meta de <b>${brl(META_PODA_DIA)} por dia em cada supervisão</b> – soma de todas as equipes e equipamentos da turma no dia (não é por equipamento). Número = serviços programados; <b>prog.</b> = % do valor programado; <b>prod.</b> = % do valor executado (produção). Verde: atingiu · amarelo: 70% ou mais · vermelho: abaixo. Cada bolinha é um serviço; toque num dia para ver a lista.</p>
     <div class="alg">${ord.map(k=>`<span><i style="background:${ST_COR[k]}"></i>${ST_NOME[k]}${cont[k]?" ("+cont[k]+")":""}</span>`).join("")}</div>
     <div class="agrid"><table><thead><tr><th class="tm">Turma</th>${dias.map(d=>`<th class="${d===hj?"hj":""}${F.dia===d?" hj":""}">${diaDe(d)}<small>${d.slice(8,10)}/${d.slice(5,7)}</small></th>`).join("")}</tr></thead><tbody>`;
   sups.forEach(s=>{ h+=`<tr><td class="tm">${esc(s.id)}<small>${esc(s.enc)}</small></td>`;
@@ -5866,8 +5876,8 @@ function acompHtml(F){
       if(!rs.length){ h+=`<td><div class="acell vazio" aria-hidden="true">${trabalha(s.id,d)?"—":"<small>folga</small>"}</div></td>`; return; }
       const al=rs.some(r=>{const k=stKey(r);return k==="ATRASADO"||k==="NÃO"});
       const sel=acSel&&acSel.s===s.id&&acSel.d===d;
-      const pd=rs.reduce((a,r)=>a+receitaDe(prevQ(r)),0);
-      h+=`<td><button type="button" class="acell${al?" alerta":""}" data-ac="${esc(s.id)}|${d}" aria-pressed="${sel}" title="${esc(s.id)} · ${fmtD(d)}: ${brl(pd)} de ${brl(META_PODA_DIA)} programados · ${rs.map(r=>ST_NOME[stKey(r)]).join(", ")}"><b>${rs.length}</b>${trabalha(s.id,d)?`<span class="mt mt-${metaCls(pd)}">${pd?Math.round(pd/META_PODA_DIA*100):0}% meta</span>`:`<span class="mt">folga</span>`}<span class="adots">${rs.map(r=>`<i style="background:${ST_COR[stKey(r)]||"var(--idle)"}"></i>`).join("")}</span></button></td>`; });
+      const pd=rs.reduce((a,r)=>a+receitaDe(prevQ(r)),0), ex=rs.reduce((a,r)=>a+execRec(r),0);
+      h+=`<td><button type="button" class="acell${al?" alerta":""}" data-ac="${esc(s.id)}|${d}" aria-pressed="${sel}" title="${esc(s.id)} · ${fmtD(d)}: programado ${brl(pd)} · executado ${brl(ex)} · meta ${brl(META_PODA_DIA)} por dia na supervisão · ${rs.map(r=>ST_NOME[stKey(r)]).join(", ")}"><b>${rs.length}</b>${trabalha(s.id,d)?`<span class="mt mt-${metaCls(pd)}">prog. ${pd?Math.round(pd/META_PODA_DIA*100):0}%</span>${ex||d<=hj?`<span class="mt mt-${metaCls(ex)}">prod. ${ex?Math.round(ex/META_PODA_DIA*100):0}%</span>`:""}`:`<span class="mt">folga</span>`}<span class="adots">${rs.map(r=>`<i style="background:${ST_COR[stKey(r)]||"var(--idle)"}"></i>`).join("")}</span></button></td>`; });
     h+=`</tr>`; });
   h+=`</tbody></table></div>`;
   if(acSel){ const rs=base.filter(r=>r.supervisao===acSel.s&&r.data===acSel.d);
