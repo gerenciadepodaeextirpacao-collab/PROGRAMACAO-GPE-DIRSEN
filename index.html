@@ -924,6 +924,7 @@ nav.tabs .tbadge{animation:gpeBadge 1.1s ease-in-out infinite}
 .intile .insub{display:block;font-size:13px;font-weight:700;letter-spacing:.03em;color:var(--muted);margin-top:2px}
 #areaWrap:not([hidden]){display:grid;gap:6px}#areaWrap #areaAdd{justify-self:start}.arealin{display:grid;gap:6px;margin-top:4px}.arearow{display:flex;align-items:center;gap:8px}.arearow>span{flex:none;width:52px;font-weight:700;font-size:14px;color:var(--muted)}.arearow input{flex:1;min-width:0}.arearow button{flex:none;width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:#b3261e;font-weight:700;cursor:pointer}
 .lxeqs{display:grid;gap:6px;padding:10px 12px;background:#eef6f0;border-bottom:1px solid var(--line)}.lxeqs>span{font-size:13px;font-weight:700;color:#005f27}.lxeq{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center}.lxeq b{font-size:13px;grid-column:1}.lxeq small{grid-column:1;grid-row:2;font-size:12px;color:var(--muted)}.lxeq .btn{min-height:40px;font-size:13px;padding:0 10px;grid-row:1/span 2}
+.ckpdfw{display:flex;flex-direction:column;gap:0}.ckpdfw>.rec{border-bottom-left-radius:0!important;border-bottom-right-radius:0!important}.ckpdfb{min-height:44px;font-size:14px;border-top-left-radius:0!important;border-top-right-radius:0!important;margin-top:-1px;width:100%}
 </style>
 
 <div id="login" class="login" hidden>
@@ -1734,7 +1735,7 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.29p";
+const APP_VERSAO="2026.10.29r";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -1991,7 +1992,13 @@ function contratoSemana(f){
 /* ---------- escala 12x36: cada equipe trabalha dia sim, dia não, pela paridade do dia do mês ----------
    (A) nos dias ímpares e (B) nos pares por padrão; o gerente pode trocar por turma. Em mês de 31 dias a equipe dos
    ímpares trabalha 31 e 1 seguidos, e a escala da semana muda (3 ou 4 dias) */
-let escala={}; // {turma: "impar"|"par"}
+let escala={}; // {turma: cfg da escala}
+// a escala de cada turma fica num documento próprio (coleção assinaturas, id "esc_<turma>"), que qualquer perfil autorizado no app consegue gravar;
+// o cfg/escala antigo continua sendo lido (só o que ainda não foi regravado por turma)
+let escCfgDoc={}, escTurmas={};
+const escDocId=t=>"esc_"+String(t).replace(/[^A-Za-z0-9]+/g,"_");
+function escMesclar(){ const m={...escCfgDoc}; Object.values(escTurmas).forEach(d=>{ if(!d?.turma) return; if(d.cfg) m[d.turma]=d.cfg; else delete m[d.turma]; }); escala=m; }
+async function escGravar(sup,val){ const doc={turma:sup,cfg:val||null,em:new Date().toISOString(),por:sessao?.nome||""}; await db.collection(ASS_COL).doc(escDocId(sup)).set(doc); escTurmas[escDocId(sup)]=doc; escMesclar(); }
 const parDe=sup=>escala[sup]||(/\(B\)\s*$/.test(sup)?"par":"impar");
 const ESCALA_ATIVA=false; // escala 12x36 retirada do app a pedido da gerência
 // escala de trabalho cadastrada pelo supervisor: {tipo:"ciclo", trab, folga, base} (12x36 = 1 dia sim, 1 não) ou {tipo:"semana", dias:[0..6]}, + folgas avulsas
@@ -2814,7 +2821,7 @@ function renderChk(){
   if(man){ host.innerHTML=manListaHtml(sup,dia); return; }
   h+=`<div class="grp-h"><h3>Checklists · ${fmtD(dia)} · ${diaDe(dia)}</h3><span>${lst.length} checklist${lst.length===1?"":"s"}${naoApto?` · <b style="color:var(--bad)">${naoApto} não apto</b>`:""}${ress?` · ${ress} com ressalva`:""} · ${semRec} sem recebimento</span></div>`;
   if(cota.length) h+=`<p class="note" style="margin:6px 0 0">Checklists por turma no dia (PODA I: 2 equipamentos · PODA II: 3 equipamentos + a van):</p><div class="ckpend">${cota.map(x=>`<span class="${x.feitos.length>=x.meta?"ok":""}" title="${esc(x.feitos.join(", "))}">${esc(x.t)} · <b>${x.feitos.length} de ${x.meta}</b>${x.feitos.length>=x.meta?" ✔":x.faltam.length?" · falta: "+x.faltam.map(esc).join(", "):""}</span>`).join("")}</div>${pend.length?"":`<p class="note" style="margin:4px 0 0">Todas as turmas que trabalharam no dia completaram os checklists.</p>`}`;
-  h+= lst.length ? `<div class="list">${lst.map(chkCard).join("")}</div>` : `<div class="empty" style="margin-top:8px">Nenhum checklist neste dia.</div>`;
+  h+= lst.length ? `${downloads&&lst.length>1?`<button type="button" class="btn" data-chkpdftodos="1" style="min-height:44px;font-size:15px;width:100%;margin:6px 0">⬇ Baixar os ${lst.length} checklists em PDF (um por um)</button>`:""}<div class="list">${lst.map(c=>downloads?`<div class="ckpdfw">${chkCard(c)}<button type="button" class="btn ckpdfb" data-chkpdf="${esc(c.id)}">⬇ Baixar PDF · ${esc(c.viatura||"checklist")}</button></div>`:chkCard(c)).join("")}</div>` : `<div class="empty" style="margin-top:8px">Nenhum checklist neste dia.</div>`;
   host.innerHTML=h;
 }
 // parte do comunicado de defeito (separada do checklist)
@@ -2858,7 +2865,9 @@ function chkCard(c){
   </button>`;
 }
 $("#kList").addEventListener("change",e=>{ if(e.target.id==="kManPer"){ manPer=e.target.value; renderChk(); } });
-$("#kList").onclick=e=>{const po=e.target.closest("[data-preos]"); if(po){ const m=mans.find(x=>x.id===po.dataset.preos); if(m) abrirPreOS(m); return; } const cd=e.target.closest("[data-comdef]"); if(cd){ const c=chks.find(x=>x.id===cd.dataset.comdef); if(c) abrirMan(null,comDefPre(c)); return; } const bm=e.target.closest("[data-man]"); if(bm){const m=mans.find(x=>x.id===bm.dataset.man); if(m) abrirMan(m); return;} const b=e.target.closest("[data-chk]"); if(!b) return; const c=chks.find(x=>x.id===b.dataset.chk); if(c) abrirChk(c);};
+$("#kList").onclick=e=>{const kp=e.target.closest("[data-chkpdf]"); if(kp){ const c=chks.find(x=>x.id===kp.dataset.chkpdf); if(c) chkPdfBaixar(c,kp); return; }
+  const kt=e.target.closest("[data-chkpdftodos]"); if(kt){ chkPdfTodos(kt); return; }
+const po=e.target.closest("[data-preos]"); if(po){ const m=mans.find(x=>x.id===po.dataset.preos); if(m) abrirPreOS(m); return; } const cd=e.target.closest("[data-comdef]"); if(cd){ const c=chks.find(x=>x.id===cd.dataset.comdef); if(c) abrirMan(null,comDefPre(c)); return; } const bm=e.target.closest("[data-man]"); if(bm){const m=mans.find(x=>x.id===bm.dataset.man); if(m) abrirMan(m); return;} const b=e.target.closest("[data-chk]"); if(!b) return; const c=chks.find(x=>x.id===b.dataset.chk); if(c) abrirChk(c);};
 
 function abrirChk(c){
   const dia=c?.data||$("#kData").value||hoje();
@@ -3371,6 +3380,12 @@ async function baixarFormPdf(btn,html,nome,label){
   catch(e){ if(e?.message==="load") toast("Sem internet para montar o PDF. Tente de novo com conexão."); else if(e?.code!=="cancelled"&&e?.code!=="declined"&&e?.code) toast("Não foi possível gerar o PDF."); }
   finally{ btn.disabled=false; btn.textContent=t; }
 }
+// PDF do checklist direto da lista: um botão por equipamento e um que baixa todos do dia, um arquivo por vez
+async function chkPdfBaixar(c,btn){ await Promise.all(MID_SLOTS.map(s=>midCarregar(c.midia?.[s.k]))); await baixarFormPdf(btn,chkDocHtml(c),arqNome("checklist",c.data,c.viatura),"Checklist "+(c.viatura||"")+" · "+fmtD(c.data)); }
+async function chkPdfTodos(btn){ const bs=[...document.querySelectorAll("#kList [data-chkpdf]")]; const t0=btn.textContent; btn.disabled=true;
+  try{ for(let i=0;i<bs.length;i++){ const c=chks.find(x=>x.id===bs[i].dataset.chkpdf); if(!c) continue; btn.textContent=`Baixando ${i+1} de ${bs.length}: ${c.viatura||""}…`; await chkPdfBaixar(c,bs[i]); await new Promise(r=>setTimeout(r,600)); }
+    toast(`${bs.length} PDFs baixados.`); }
+  finally{ btn.disabled=false; btn.textContent=t0; } }
 const arqNome=(pre,data,vt)=>`${pre}-${(vt||"").replace(/[^A-Za-z0-9]+/g,"-")}-${data||hoje()}.pdf`.replace(/-+/g,"-");
 
 /* ---------- fotos e vídeo do checklist ---------- */
@@ -5570,7 +5585,7 @@ function chkObrigAlerta(modo){
 }
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-chkfazer]"); if(!b) return; const d=b.dataset.chkfazer; if($("#kData")) $("#kData").value=d; irPara("chk","chkNovo"); setTimeout(()=>{ const f=$("#kfData"); if(f){ f.value=d; f.dispatchEvent(new Event("change")); } },250); });
 // ---------- ESCALA DE TRABALHO: cada supervisor cadastra a da sua turma (gerente, coordenador e gerente operacional cadastram para as turmas da sua área) ----------
-const podeEditarEscala=sup=>!!sessao&&!soLeitura()&&((ehSup()&&sessao.sup===sup)||isGerente()||((sessao.perfil==="coordenador"||sessao.perfil==="gerencia_op")&&noEscopo(sup)));
+const podeEditarEscala=sup=>!!sessao&&!soLeitura()&&(((ehSup()||sessao.perfil==="supervisor1")&&sessao.sup===sup)||isGerente()||((sessao.perfil==="coordenador"||sessao.perfil==="gerencia_op")&&noEscopo(sup)));
 const DSEM=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
 const escTxt=e=>!e?"Sem escala cadastrada (segue a programação)":e.tipo==="semana"?"Trabalha "+(e.dias||[]).slice().sort().map(d=>DSEM[d]).join(", "):(+e.trab===1&&+e.folga===1?"Dia sim, dia não (12x36)":`Trabalha ${e.trab} dia(s), folga ${e.folga}`)+(e.base?` · a partir de ${fmtDs(e.base)}`:"");
 function abrirEscala(sup0){
@@ -5601,7 +5616,7 @@ function abrirEscala(sup0){
   </div>`; };
   ui(); document.body.appendChild(box);
   const salvar=async val=>{ if(!db){ toast("Sem conexão com o banco."); return; } const novo={...escala}; if(val) novo[sup]=val; else delete novo[sup];
-    try{ await db.doc("cfg/escala").set({turmas:novo}); escala=novo; renderAll(); box.remove(); toast(val?"Escala salva: "+escTxt(val)+".":"Escala retirada: a turma volta a seguir a programação."); }catch(e){ toast("Não foi possível salvar a escala."); } };
+    try{ await escGravar(sup,val); renderAll(); box.remove(); toast(val?"Escala salva: "+escTxt(val)+".":"Escala retirada: a turma volta a seguir a programação."); }catch(e){ toast("Não foi possível salvar a escala"+(e?.message?" ("+e.message+")":"")+". Verifique a internet e tente de novo.",7000); } };
   box.addEventListener("change",e=>{ if(e.target.id==="esSup"){ sup=e.target.value; carregar(); ui(); } else if(e.target.id==="esBase"){ st.base=e.target.value||hoje(); ui(); } });
   box.addEventListener("click",async e=>{ if(e.target===box||e.target.closest("[data-ex]")) return box.remove();
     const t=e.target.closest("[data-et]"); if(t){ const k=t.dataset.et; if(k==="ciclo11"){ st.tipo="ciclo"; st.trab=1; st.folga=1; } else if(k==="ciclo"){ st.tipo="ciclo"; if(+st.trab===1&&+st.folga===1){ st.trab=2; st.folga=2; } } else st.tipo="semana"; ui(); return; }
@@ -5648,7 +5663,7 @@ function abrirZerar(){
       const tot=lotes.reduce((a,[,ids])=>a+ids.length,0); let n=0;
       for(const [c,ids] of lotes){ for(const id of ids){ await db.collection(c).doc(id).delete(); n++; if(n%10===0) st(`Apagando… ${n} de ${tot}`); } }
       if(sel.some(([k])=>k==="canc")){ await db.doc("cfg/notifcanc").set({itens:{}}); notifCanc={}; }
-      if(sel.some(([k])=>k==="esc")){ await db.doc("cfg/escala").set({turmas:{}}); escala={}; }
+      if(sel.some(([k])=>k==="esc")){ try{ await db.doc("cfg/escala").set({turmas:{}}); }catch(e){} escCfgDoc={}; for(const id of Object.keys(escTurmas)){ try{ await db.collection(ASS_COL).doc(id).delete(); }catch(e){} } escTurmas={}; escala={}; }
       st(`Pronto: ${n} registros apagados. Cópia salva: ${nome}.`); toast("Dados zerados. A partir de agora vale de verdade.",7000);
       setTimeout(()=>{ box.remove(); location.reload(); },2500);
     }catch(err){ console.error(err); st("Parou no meio por erro de conexão. Toque de novo para continuar apagando o que faltou."); bt.disabled=false; box.querySelector("[data-zrno]").disabled=false; }
@@ -6362,7 +6377,7 @@ limpar("prog"); ajudaMontar(); show(sessao?"inicio":ls.get("gpe_tab","campo")); 
   if(!downloads){ $("#csvBtn").hidden=true; $("#xlsxBtn").hidden=true; $("#csvNote").hidden=true; }
   if(!db){ loaded=true; renderAll(); db=false; renderLogin(); db=null; return; }
   db.doc("cfg/notifcanc").onSnapshot(s=>{ notifCanc = s.exists ? (s.data().itens||{}) : {}; try{renderAll()}catch(e){} }, ()=>{});
-  db.doc("cfg/escala").onSnapshot(s=>{ escala = s.exists ? (s.data().turmas||{}) : {}; try{renderAll()}catch(e){} }, ()=>{});
+  db.doc("cfg/escala").onSnapshot(s=>{ escCfgDoc = s.exists ? (s.data().turmas||{}) : {}; escMesclar(); try{renderAll()}catch(e){} }, ()=>{});
   db.doc("cfg/acesso").onSnapshot(s=>{ acesso = s.exists ? (s.data().usuarios||{}) : null; acessoLoaded=true; try{syncEnc()}catch(e){} renderLogin(); if(!$("#sheetHost").innerHTML.includes('aria-label="Acessos"')) return; abrirAcessos(); },
     err=>{ acessoLoaded=true; renderLogin(); });
   // janela recente (por data) + toda a programação em aberto; histórico antigo só quando pedido
@@ -6375,7 +6390,7 @@ limpar("prog"); ajudaMontar(); show(sessao?"inicio":ls.get("gpe_tab","campo")); 
   }, err=>{});
   db.collection(ORC_COL).limit(1000).onSnapshot(snap=>{ orcs=snap.docs.map(d=>({...d.data(),id:d.id})); try{ if(curView==="orc") renderOrc(); }catch(e){} }, err=>{});
   db.collection(MAN_COL).where("data",">=",MAN_CORTE).limit(1000).onSnapshot(snap=>{ mans=snap.docs.map(d=>({...d.data(),id:d.id})); try{renderChk();renderChkGraf()}catch(e){} }, err=>{});
-  db.collection(ASS_COL).limit(500).onSnapshot(snap=>{ assins={}; snap.docs.forEach(d=>assins[d.id]=d.data()); }, err=>{});
+  db.collection(ASS_COL).limit(500).onSnapshot(snap=>{ assins={}; const et={}; snap.docs.forEach(d=>{ if(d.id.startsWith("esc_")) et[d.id]=d.data(); else assins[d.id]=d.data(); }); escTurmas=et; escMesclar(); try{renderAll()}catch(e){} }, err=>{});
   db.collection(COL).where("status","==","PROGRAMADO").limit(1000).onSnapshot(snap=>{
     pendentes=snap.docs.map(d=>({...d.data(),id:d.id})); mergeRegs(); renderAll();
   }, err=>{});
