@@ -1740,7 +1740,7 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.29w";
+const APP_VERSAO="2026.10.29x";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -2393,10 +2393,13 @@ function msgDup0(r){
   return mesma ? `Este endereço já está programado pela sua supervisão para ${fmtD(r.data)} (${r.equipe}). Não é possível programar novamente.`
                : `Programação em duplicidade: este endereço já está programado pela ${quem} para ${fmtD(r.data)}. Não é possível programar o mesmo endereço em outra supervisão. Se for preciso, fale com a gerência.`;
 }
+let dupAceito="";
 function checaDup(){
   const box=$("#dupMsg"); if(form.mode!=="prog"){box.hidden=true;return null}
   const r=progNoEndereco($("#bairro").value,$("#logradouro").value,form.base?.id);
-  box.hidden=!r; if(r) box.innerHTML=`<b>⚠ Endereço já programado</b><br>${esc(msgDup(r))}`; return r;
+  box.hidden=!r; if(!r){ dupAceito=""; return r; }
+  box.innerHTML=`<b>⚠ Endereço já programado</b><br>${esc(msgDup(r))}<label class="ck" style="margin-top:8px;color:var(--ink)"><input type="checkbox" id="dupOk" ${dupAceito===r.id?"checked":""}><span><b>Programar mesmo assim</b> (fica registrado que a programação foi feita sabendo da duplicidade)</span></label>`;
+  box.querySelector("#dupOk").onchange=e=>{ dupAceito=e.target.checked?r.id:""; if(e.target.checked) $("#err").hidden=true; }; return r;
 }
 $("#bairro").addEventListener("change",checaDup); $("#logradouro").addEventListener("change",checaDup); $("#logradouro").addEventListener("blur",checaDup);
 { let _dupT; $("#logradouro").addEventListener("input",()=>{ clearTimeout(_dupT); _dupT=setTimeout(checaDup,500); }); }
@@ -2432,12 +2435,13 @@ $("#form").addEventListener("submit", async ev=>{
   if(m==="prog"){
     const q=readQ("q_"); if(!Object.keys(q).length) e.push("lance ao menos uma quantidade prevista");
     const dup=checaDup();
-    if(dup){ $("#err").textContent=msgDup(dup); $("#err").hidden=false; $("#dupMsg").scrollIntoView({block:"center"}); return; }
+    if(dup&&dupAceito!==dup.id){ $("#err").textContent=msgDup(dup)+" Para programar assim mesmo, marque \"Programar mesmo assim\"."; $("#err").hidden=false; $("#dupMsg").scrollIntoView({block:"center"}); return; }
     const manterBaixa=!!(base&&base.status&&base.status!=="PROGRAMADO"); // gerente editando a programação de um serviço que já tem baixa: a baixa fica como está
     body = manterBaixa ? {...base, ...common, qtdPrevista:q, receitaPrevista:receitaDe(q), obs, _acao:"Gerente editou a programação", atualizadoEm:now, atualizadoPor:myId||null} : {...(base||{}), ...common, status:"PROGRAMADO", qtdPrevista:q, receitaPrevista:receitaDe(q), qtd:{}, receita:0, obs,
       origem:base?.origem||"app", historico:base?.historico||[], remarcadaDe:base?.remarcadaDe||null,
       autor:base?.autor||myId||null, criadoEm:base?.criadoEm||now, atualizadoEm:now, atualizadoPor:myId||null};
     delete body.id; delete body._fila;
+    if(dup) body.dupCiente={com:dup.id,em:now,por:nomeAutor()||""};
     const nd=!base?Math.max(1,Math.min(15,parseInt($("#mdDias").value)||1)):1;
     if(nd>1&&Object.keys(q).length){ const ds=mdDatas(common.supervisao||form.sup,common.data,nd), ps=mdPartes(q,nd), gid="md"+Date.now().toString(36), tot=qtdTxtPlano(q);
       const partes=ds.map((d,k)=>({d,q:ps[k]})).filter(x=>Object.keys(x.q).length);
@@ -4038,6 +4042,7 @@ function detalhe(r, abrirAdiar=false, soVer=false){
       ${r.origem==="planilha"?`<dt>Origem</dt><dd>Importado da planilha</dd>`:""}
     </dl>
     ${hist.length?`<div class="hist"><b style="color:var(--ink)">Histórico de remarcações</b>${hist.map(h=>`<span>${fmtD(h.de)} → ${fmtD(h.para)} · ${esc(h.motivo||"")}</span>`).join("")}</div>`:""}
+    ${r.dupCiente?`<p class="note" style="margin:6px 0 0;color:var(--warn)">⚠ Programado mesmo com outra programação no mesmo endereço${r.dupCiente.por?" – ciente: <b>"+esc(r.dupCiente.por)+"</b>":""}${r.dupCiente.em?" em "+fmtHora(r.dupCiente.em):""}.</p>`:""}
     ${(r.log||[]).length?`<div class="hist"><b style="color:var(--ink)">Histórico de alterações</b><div class="logl">${r.log.slice().reverse().map(l=>`<span>${new Date(l.em).toLocaleDateString("pt-BR")} ${new Date(l.em).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})} · <b>${esc(l.por)}</b> · ${esc(l.acao)}</span>`).join("")}</div></div>`:""}
     ${(!isProg(r)&&!r.arquivado)?`<button type="button" class="btn sec" id="shMsg">Copiar mensagem para o grupo</button>`:""}
     ${(!r.ocorrencia&&!r.avulso&&!r._fila&&!r.arquivado&&(isGerente()||(!soVer&&isProg(r)&&isGer())))?`<button type="button" class="btn sec" id="shProg">✏ ${isGerente()?"Editar programação (gerente)":"Corrigir programação (gerência)"}</button>`:""}
