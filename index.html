@@ -1734,8 +1734,9 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.29m";
+const APP_VERSAO="2026.10.29n";
 const VERSOES=[
+  {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
   {v:"2026.10.29m", d:"29/10/2026", itens:["Lista: em cada dia (ou grupo) aparece \"Baixar uma equipe por vez\" – PDF ou imagem da programação de cada turma/equipe separada"]},
   {v:"2026.10.29l", d:"29/10/2026", itens:["Lista: filtros de Dia e Equipe (1ª, 2ª, 3ª) – o PDF, a imagem e a planilha saem só com a programação daquele dia e daquela equipe"]},
   {v:"2026.10.29k", d:"29/10/2026", itens:["Detalhes do serviço: linha \"Área URBANTRIM\" com o(s) ID(s) da área; também em destaque na mensagem e na imagem do WhatsApp"]},
@@ -3743,6 +3744,7 @@ function renderCampo(){
   const eqs=[...new Set(doDia.map(chave))];
   if(doDia.length) h+=`<div class="maprow">${eqs.map(q=>{const rs=doDia.filter(r=>chave(r)===q);return rotaLink(rs,(eqs.length>1?"Rota "+(q||"sem equipe").replace(" EQUIPE",""):"Ver o dia no mapa")+" ("+rs.length+")")}).join("")}</div>`;
   h+= doDia.length ? `<div class="list">${doDia.map(r=>progCard(r,false)).join("")}</div>` : `<div class="empty" style="margin-top:8px">${loaded?"Nenhum serviço programado para este dia"+(sup?" nesta turma":"")+".<br>Lance a programação na aba <b>Programar</b>.":"Carregando…"}</div>`;
+  { const dRows=[...doDia,...feitos.filter(r=>r.data===dia||r.dataExec===dia)]; if(dRows.length) h+=osBotoes(dRows,"BAIXA DE SERVIÇO",fmtD(dia)+" · "+diaDe(dia),"Baixa de serviço – ordem de serviço por equipe ("+fmtDs(dia)+")"); }
   if(feitos.length) h+=head("Baixas do dia", feitos.length)+`<div class="list">${feitos.map(r=>doneCard(r,varias)).join("")}</div>`;
   if(varias&&(doDia.length||feitos.length)){ const ts=SUPS.filter(s=>casaTurma(sup,{supervisao:s.id,grupo:s.grupo}));
     h=`<div class="tres">${ts.map(s=>{const a=doDia.filter(r=>r.supervisao===s.id).length,b=feitos.filter(r=>r.supervisao===s.id).length;return `<button type="button" class="trb" data-tsup="${esc(s.id)}"><b>${esc(s.id)}</b><span>${esc(s.enc)}</span><i>${a} a baixar · ${b} baixada${b===1?"":"s"}</i></button>`}).join("")}</div>`+h; }
@@ -3854,7 +3856,7 @@ function agrInfo(r,agr){ const d=r.data||"";
 const agrTempo=agr=>["dia","sem","mes","ano"].includes(agr);
 function agrupar(rows,agr,recentePrimeiro){ const G=new Map(); rows.forEach(r=>{ const a=agrInfo(r,agr); if(!G.has(a.k)) G.set(a.k,{k:a.k,o:a.o,rs:[]}); G.get(a.k).rs.push(r); });
   const gs=[...G.values()].sort((a,b)=>a.o.localeCompare(b.o)); if(recentePrimeiro&&agrTempo(agr)) gs.reverse(); return gs; }
-function listaDocHtml(rows,agr,det,ftxt){
+function listaDocHtml(rows,agr,det,ftxt,sub){
   const f=ftxt||[$("#fDia").value?"dia "+fmtD($("#fDia").value)+" ("+diaDe($("#fDia").value)+")":"",$("#fEq").value||"",msTexto($("#fSem")),selVals("fSup").length?msTexto($("#fSup")):"Todas as turmas",selVals("fSt").length?msTexto($("#fSt")):"",selVals("fPend").length?msTexto($("#fPend")):"",$("#fTxt").value.trim()?"busca: "+$("#fTxt").value.trim():""].filter(Boolean).join(" · ");
   const chave=r=>agrInfo(r,agr).k;
   const ordem=!["dia","turma"].includes(agr)?(a,b)=>agrInfo(a,agr).o.localeCompare(agrInfo(b,agr).o)||(a.data||"").localeCompare(b.data||"")||(SUPS.findIndex(s=>s.id===a.supervisao)-SUPS.findIndex(s=>s.id===b.supervisao)):agr==="turma"?(a,b)=>(SUPS.findIndex(s=>s.id===a.supervisao)-SUPS.findIndex(s=>s.id===b.supervisao))||(a.data||"").localeCompare(b.data||""):(a,b)=>(a.data||"").localeCompare(b.data||"")||(SUPS.findIndex(s=>s.id===a.supervisao)-SUPS.findIndex(s=>s.id===b.supervisao))||(a.equipe||"").localeCompare(b.equipe||"");
@@ -3864,7 +3866,7 @@ function listaDocHtml(rows,agr,det,ftxt){
   const tp=rs.reduce((a,r)=>a+(r.avulso?0:receitaDe(prevQ(r))),0), te=rs.reduce((a,r)=>a+execRec(r),0);
   const nEx=rs.filter(r=>r.status==="SIM").length, nPa=rs.filter(r=>r.status==="PARCIAL").length, nNa=rs.filter(r=>r.status==="NÃO").length, nPr=rs.filter(isProg).length;
   const linha=r=>`<tr><td style="white-space:nowrap">${agr==="dia"?"":fmtDs(r.data)+"<br>"}${esc(r.equipe||"")}</td>${agr==="turma"?"":`<td>${esc(r.supervisao||"")}</td>`}<td><b>${esc(r.bairro||"")}</b><br>${esc(r.logradouro||"")}</td><td>${esc(tipoTxt(r)||"—")}${r.processo?`<br><small>${esc(r.processo)}</small>`:""}</td><td>${qtxt(isProg(r)||r.status==="NÃO"?prevQ(r):(r.qtd||{}))}</td><td><span class="st st-${stKey(r)}">${esc(stTxt[stKey(r)])}</span>${r.status==="NÃO"&&r.proxData?`<br><small>p/ ${fmtDs(r.proxData)}</small>`:""}</td><td style="text-align:right;white-space:nowrap">${brl(val(r))}</td></tr>`;
-  return `<div class="fdoc lx"><style>${FDOC_CSS}${LX_CSS}${det?LXD_CSS:""}</style><div class="r-body">${fhead("LISTA DE SERVIÇOS",det?"PROGRAMAÇÕES ABERTAS · DETALHES DE CADA SERVIÇO":"PROGRAMAÇÃO E BAIXAS")}
+  return `<div class="fdoc lx"><style>${FDOC_CSS}${LX_CSS}${det?LXD_CSS:""}</style><div class="r-body">${fhead("ORDEM DE SERVIÇO",(sub||(rows.every(isProg)?"PROGRAMAÇÃO DE SERVIÇO":"BAIXA DE SERVIÇO"))+(det?" · DETALHES DE CADA SERVIÇO":""))}
     <p class="leg" style="margin:0"><b>Filtros:</b> ${esc(f||"nenhum")} · agrupado por ${AGR_NOME[agr]||"dia"}</p>
     <div class="res"><div><span>Serviços</span><b>${rs.length}</b></div><div><span>Executados / parciais</span><b>${nEx} / ${nPa}</b></div><div><span>Não exec. / a executar</span><b>${nNa} / ${nPr}</b></div><div><span>Previsto · executado</span><b style="font-size:13px">${brlS(tp)} · ${brlS(te)}</b></div></div>
     ${det?grupos.map(g=>`<div><div class="gh">${esc(g.k)}<span>${g.rs.length} serviço${g.rs.length===1?"":"s"} · ${brl(g.rs.reduce((a,r)=>a+val(r),0))}</span></div>${lxCard(g.rs[0])}</div>`+g.rs.slice(1).map(lxCard).join("")).join(""):""}
@@ -3893,12 +3895,12 @@ function lxCard(r){ const pq=prevQ(r), s=r.substituto;
   if(r.geo) L.push(["GPS",fmtCoord(r.geo)]);
   if(r.fiscal) L.push(["Fiscal",esc(r.fiscal)]); if(r.obs) L.push(["Obs.",esc(r.obs)]); if(r.ultimoUsuario) L.push(["Lançado por",esc(r.ultimoUsuario)]);
   return `<div class="card"><div class="ch"><b>${fmtD(r.data)} · ${esc(r.dia||diaDe(r.data))}${r.semana?" · "+r.semana+"ª semana":""}</b><span class="st st-${stKey(r)}">${esc(stTxt[stKey(r)])}</span></div><dl class="cb">${L.map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl></div>`; }
-const lxNome=ext=>("lista-servicos-"+[$("#fDia").value?"dia-"+$("#fDia").value:"",$("#fEq").value||"",selVals("fSem").length?"semana-"+selVals("fSem").join("-"):"",selVals("fSup").length===1?selVals("fSup")[0]:selVals("fSup").length?selVals("fSup").length+"-turmas":""].filter(Boolean).join("-")+"-"+hoje()).normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9]+/g,"-").replace(/-+/g,"-").toLowerCase()+"."+ext;
+const lxNome=ext=>("ordem-de-servico-"+[$("#fDia").value?"dia-"+$("#fDia").value:"",$("#fEq").value||"",selVals("fSem").length?"semana-"+selVals("fSem").join("-"):"",selVals("fSup").length===1?selVals("fSup")[0]:selVals("fSup").length?selVals("fSup").length+"-turmas":""].filter(Boolean).join("-")+"-"+hoje()).normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9]+/g,"-").replace(/-+/g,"-").toLowerCase()+"."+ext;
 async function listaPdf(btn,sel){
   const rows=sel?sel.rows:listaRows().rows; if(!rows.length){ toast("Nenhum serviço com esses filtros."); return; }
   if(rows.length>800){ toast("São "+rows.length+" serviços. Filtre por semana ou turma (no máximo 800)."); return; }
   const det=$("#fFmt").value==="det"; if(det&&rows.length>300){ toast("No formato detalhado o PDF aceita até 300 serviços. Filtre por semana ou turma."); return; }
-  await baixarFormPdf(btn,listaDocHtml(rows,sel?"dia":$("#fAgr").value,det,sel?.ftxt),sel?sel.nome+".pdf":lxNome("pdf"),det?"Lista detalhada de serviços":"Lista de serviços");
+  await baixarFormPdf(btn,listaDocHtml(rows,sel?"dia":$("#fAgr").value,det,sel?.ftxt,sel?.sub),sel?sel.nome+".pdf":lxNome("pdf"),"Ordem de serviço");
 }
 async function listaImg(btn,sel){
   const rows=sel?sel.rows:listaRows().rows; if(!rows.length){ toast("Nenhum serviço com esses filtros."); return; }
@@ -3906,7 +3908,7 @@ async function listaImg(btn,sel){
   if(rows.length>lim){ toast("São "+rows.length+" serviços: para imagem"+(det?" detalhada":"")+", filtre até "+lim+" (ou use o PDF)."); return; }
   const t=btn.textContent; btn.disabled=true; btn.textContent="Gerando imagem…";
   try{ await loadH2P(); try{await document.fonts.ready}catch(e){}
-    const host=document.createElement("div"); host.style.cssText="position:absolute;left:-12000px;top:0;width:794px;background:#fff"; host.innerHTML=listaDocHtml(rows,sel?"dia":$("#fAgr").value,det,sel?.ftxt); document.body.appendChild(host);
+    const host=document.createElement("div"); host.style.cssText="position:absolute;left:-12000px;top:0;width:794px;background:#fff"; host.innerHTML=listaDocHtml(rows,sel?"dia":$("#fAgr").value,det,sel?.ftxt,sel?.sub); document.body.appendChild(host);
     const sx=scrollX, sy=scrollY; scrollTo(0,0);
     let cv; try{ const el=host.firstElementChild, H=el.scrollHeight, k=Math.max(1,Math.min(2,Math.sqrt(14e6/(794*H))));
       cv=await html2pdf().set({html2canvas:{scale:k,backgroundColor:"#ffffff",logging:false,scrollX:0,scrollY:0,x:0,y:0,useCORS:true,windowWidth:1280,onclone:repaginarCopia}}).from(el).toCanvas().get("canvas"); }
@@ -3919,8 +3921,15 @@ async function listaImg(btn,sel){
 }
 
 const LXEQ=[], LXG_K=[];
+// ordem de serviço por turma/equipe de um dia: sub = "PROGRAMAÇÃO DE SERVIÇO" (aba Programar) ou "BAIXA DE SERVIÇO" (aba Em aberto)
+const OS_SEL={}; let OS_N=0;
+function osBotoes(rows,sub,rotDia,titulo){ const eqs=[]; rows.filter(r=>!r.ocorrencia).forEach(r=>{ const k=(r.supervisao||"")+"|"+(r.equipe||""); let x=eqs.find(e=>e.k===k); if(!x){ x={k,sup:r.supervisao||"",eq:r.equipe||"",rs:[]}; eqs.push(x); } x.rs.push(r); });
+  if(!eqs.length) return ""; eqs.sort((a,b)=>(SUPS.findIndex(s=>s.id===a.sup)-SUPS.findIndex(s=>s.id===b.sup))||a.eq.localeCompare(b.eq));
+  return `<div class="lxeqs"><span>${esc(titulo||"Ordem de serviço – uma equipe por vez")}</span>${eqs.map(e=>{ const id="os"+(++OS_N); OS_SEL[id]={rows:e.rs,sub,ftxt:`${rotDia} · ${e.sup} · ${e.eq||"equipe"}`,nome:("ordem-de-servico-"+(sub.startsWith("BAIXA")?"baixa-":"programacao-")+rotDia+"-"+e.sup+"-"+(e.eq||"")).normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Za-z0-9]+/g,"-").replace(/-+$/,"").toLowerCase().slice(0,100)};
+    return `<div class="lxeq"><b>${esc(e.sup)} · ${esc(e.eq||"—")}</b><small>${e.rs.length} serviço${e.rs.length===1?"":"s"}</small><button type="button" class="btn sec" data-os="${id}" data-ost="pdf">📄 PDF</button><button type="button" class="btn sec" data-os="${id}" data-ost="img">🖼 Imagem</button></div>`; }).join("")}</div>`; }
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-os]"); if(!b) return; e.preventDefault(); const sel=OS_SEL[b.dataset.os]; if(!sel) return; b.dataset.ost==="img"?listaImg(b,sel):listaPdf(b,sel); });
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-lxeq]"); if(!b) return; e.preventDefault(); const [i,j]=b.dataset.lxeq.split("|").map(Number), x=LXEQ[i]?.[j]; if(!x) return;
-  const ftxt=`${LXG_K[i]} · ${x.sup} · ${x.eq||"equipe"}`, nome=("programacao-"+LXG_K[i]+"-"+x.sup+"-"+(x.eq||"")).normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Za-z0-9]+/g,"-").replace(/-+$/,"").toLowerCase().slice(0,90);
+  const ftxt=`${LXG_K[i]} · ${x.sup} · ${x.eq||"equipe"}`, nome=("ordem-de-servico-"+LXG_K[i]+"-"+x.sup+"-"+(x.eq||"")).normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Za-z0-9]+/g,"-").replace(/-+$/,"").toLowerCase().slice(0,90);
   const sel={rows:x.rs,ftxt,nome}; b.dataset.lxt==="img"?listaImg(b,sel):listaPdf(b,sel); });
 $("#lxPdf").onclick=()=>listaPdf($("#lxPdf")); $("#lxImg").onclick=()=>listaImg($("#lxImg")); $("#lxXls").onclick=()=>listaXls($("#lxXls"));
 $("#list").onclick=e=>{const b=e.target.closest(".rec");if(!b)return;const r=byId(b.dataset.id);if(r)detalhe(r,false,true)};
@@ -5714,7 +5723,7 @@ function renderSemProg(){
   const diasVer=semDias7.filter((x,i)=>i>0||podasProgDia(form.sup,x)>0);
   const metaHtml=`<p class="maphint" style="margin-top:6px">Meta: <b>${brl(META_PODA_DIA)} por dia</b> nesta supervisão – soma de todas as equipes e equipamentos da turma no dia.</p><div class="metadias">${diasVer.map(x=>{const v=podasProgDia(form.sup,x), t=trabalha(form.sup,x);return t?`<span class="${metaCls(v)}${x===d?" hj":""}" title="${fmtD(x)}: ${brl(v)} de ${brl(META_PODA_DIA)}">${diaDe(x)} ${fmtDs(x)} · ${kR(v)} / 50 mil</span>`:`<span class="${x===d?"hj":""}" style="opacity:.6" title="${fmtD(x)}: folga na escala 12x36">${diaDe(x)} ${fmtDs(x)} · folga${v?" · "+kR(v):""}</span>`}).join("")}</div>`;
   host.innerHTML=`<div class="grp-h"><h3>Programação da ${sem}ª semana <small style="font:500 13px var(--body);letter-spacing:0;text-transform:none;color:var(--muted)">de ${periodoSem(sem).replace(" a "," a ")}</small></h3><span>${rows.length} serviço${rows.length!==1?"s":""} · ${brl(prev)}</span></div>`+
-    metaHtml+(rows.length?`<p class="maphint" style="margin-top:6px">Ver as marcações de cada dia no mapa:</p><div class="maprow">${dias.map(d=>{const rs=rows.filter(r=>r.data===d);return rotaLink(rs,diaDe(d)+" "+fmtDs(d)+" ("+rs.length+")")}).join("")}</div>`:"")+
+    metaHtml+dias.slice().sort().map(d=>osBotoes(rows.filter(r=>r.data===d),"PROGRAMAÇÃO DE SERVIÇO",fmtD(d)+" · "+diaDe(d),"Programação de serviço · "+diaDe(d)+" "+fmtDs(d))).join("")+(rows.length?`<p class="maphint" style="margin-top:6px">Ver as marcações de cada dia no mapa:</p><div class="maprow">${dias.map(d=>{const rs=rows.filter(r=>r.data===d);return rotaLink(rs,diaDe(d)+" "+fmtDs(d)+" ("+rs.length+")")}).join("")}</div>`:"")+
     (rows.length?`<div class="list">${rows.map(r=>`<div class="rec" style="cursor:default"><div class="l1"><span class="when">${fmtD(r.data)} · ${esc(r.dia||diaDe(r.data))} · ${esc(r.equipe)}</span><span class="pill ${stKey(r)}">${stTxt[stKey(r)]}</span></div><div class="where">${esc(r.bairro)} — ${esc(r.logradouro)}</div><div class="nums">${qtdTxt(prevQ(r))} · previsto ${brl(receitaDe(prevQ(r)))}</div><div style="margin-top:8px">${mapLink(r)}</div></div>`).join("")}</div>`
       :`<div class="empty" style="margin-top:8px">Nenhum serviço programado nesta semana para ${esc(form.sup)}.</div>`);
 }
