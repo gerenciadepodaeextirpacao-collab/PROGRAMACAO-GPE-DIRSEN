@@ -1042,6 +1042,8 @@ input::placeholder,textarea::placeholder{text-transform:none}
     <div class="endsep" data-end="e_">
       <div class="es-row1"><label class="f">Tipo de via<select id="e_via"><option value="">Selecione…</option><option value="R.">R. (rua)</option><option value="AV.">AV. (avenida)</option><option value="AL.">AL. (alameda)</option><option value="PÇ." hidden>PÇ. (praça)</option><option value="ROD.">ROD. (rodovia)</option><option value="TV.">TV. (travessa)</option><option value="ESTR.">ESTR. (estrada)</option></select></label>
         <label class="f">Nome / número da via<input id="e_nome" autocomplete="off" autocapitalize="characters" placeholder="Ex.: 240, T-63, DO POVO"></label></div>
+      <div class="es-row1" id="e_esqW" hidden><label class="f">Esquina com (2ª rua)<select id="e_esqvia"><option value="">Selecione…</option><option value="R.">R. (rua)</option><option value="AV.">AV. (avenida)</option><option value="AL.">AL. (alameda)</option><option value="ROD.">ROD. (rodovia)</option><option value="TV.">TV. (travessa)</option><option value="ESTR.">ESTR. (estrada)</option></select></label>
+        <label class="f">Nome / número da 2ª rua<input id="e_esqnome" autocomplete="off" autocapitalize="characters" placeholder="Ex.: 5"></label></div>
       <div class="es-row2"><label class="f">QD. (quadra)<input id="e_qd" autocomplete="off" autocapitalize="characters" placeholder="Ex.: 12"></label>
         <label class="f">LT. (lote)<input id="e_lt" autocomplete="off" autocapitalize="characters" placeholder="Ex.: 4"></label></div>
       <label class="f">Complemento / referência (opcional)<input id="e_comp" autocomplete="off" autocapitalize="characters" placeholder="Ex.: ESQ. C/ R. 10, Nº 96, EM FRENTE AO CMEI"></label>
@@ -1054,7 +1056,7 @@ input::placeholder,textarea::placeholder{text-transform:none}
     <div class="err" id="dupMsg" hidden></div>
     <div style="display:grid;gap:5px"><span class="auto" style="font-weight:600">Tipo de local</span><div class="chips" id="tipoChips"></div></div>
     <div id="servWrap" hidden style="display:grid;gap:8px">
-      <label class="f">Serviço a executar<select id="servico"><option value="">Selecione…</option></select></label>
+      <div class="f"><span style="font-weight:600">Serviço a executar <small style="font-weight:500;color:var(--muted)">(pode marcar mais de um)</small></span><div class="chips" id="servChips" role="group" aria-label="Serviço a executar"></div></div>
       <input id="servOutro" placeholder="Qual serviço?" hidden>
     </div>
     <div class="f" id="areaWrap" hidden><span id="areaLbl" style="font-weight:600">ID da área no URBANTRIM</span><input type="hidden" id="areaId">
@@ -1369,7 +1371,7 @@ const ITENS = [
 const TIPOS = ["O.S","PROCESSO","ENTRE-PISTA","PRAÇA","ÁREA PÚBLICA","CALÇADA"];
 // serviço específico (obrigatório em O.S, processo, entre-pista, praça e área pública)
 const TIPOS_SERV = new Set(["O.S","PROCESSO","ENTRE-PISTA","PRAÇA","ÁREA PÚBLICA"]);
-const SERVICOS = ["PODA DE MANUTENÇÃO","PODA/EXTIRPAÇÃO","PODA DE LIMPEZA","PODA DE LEVANTAMENTO DE SAIA","PODA DE ADEQUAÇÃO (REDE ELÉTRICA)","PODA DE REDUÇÃO DE COPA","PODA DE EMERGÊNCIA","ÁRVORE CAÍDA","GALHO CAÍDO","EXTIRPAÇÃO","OUTRO"];
+const SERVICOS = ["PODA DE MANUTENÇÃO","PODA/EXTIRPAÇÃO","PODA DE LIMPEZA","PODA DE LIMPEZA E MANUTENÇÃO COM DESOBSTRUÇÃO DA FIAÇÃO AÉREA","PODA DE LEVANTAMENTO DE SAIA","PODA DE ADEQUAÇÃO (REDE ELÉTRICA)","PODA DE REDUÇÃO DE COPA","PODA DE EMERGÊNCIA","ÁRVORE CAÍDA","GALHO CAÍDO","EXTIRPAÇÃO","OUTRO"];
 // ID(s) da área no URBANTRIM: um ou vários (avenida), guardados como "2947, 2950"
 const areaLista = v => [...new Set(String(v||"").toUpperCase().replace(/ÁREAS?|AREAS?/g," ").split(/[^0-9A-Z-]+/).map(x=>x.trim()).filter(Boolean))];
 const areaTxt = r => { const l=areaLista(r.areaId); return l.length?(l.length>1?"ÁREAS ":"ÁREA ")+l.join(", "):""; };
@@ -1744,7 +1746,7 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.30";
+const APP_VERSAO="2026.10.30e";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -1979,8 +1981,11 @@ function equipeOpts(){ const s=supOf(form.sup); const o3=$("#equipe").querySelec
   if(form.mode==="prog"&&!form.base) eqVtSync("eq"); }
 $("#s_tipo").addEventListener("change",sProcUI);
 chipRow($("#tipoChips"), TIPOS.map(t=>({v:t,h:esc(t)})), v=>{form.tipo=v;setPressed($("#tipoChips"),v);if(!temProc(v))$("#processo").value="";if(!TIPOS_180.has(v))$("#areaId").value="";procUI();servUI();checaDup()});
-$("#servico").innerHTML='<option value="">Selecione…</option>'+SERVICOS.map(x=>`<option value="${esc(x)}">${x==="OUTRO"?"Outro (especificar)":esc(x.charAt(0)+x.slice(1).toLowerCase())}</option>`).join("");
-$("#servico").onchange=servUI;
+// serviço a executar: pode marcar vários; grava junto, separado por " + " (ex.: "PODA DE MANUTENÇÃO + EXTIRPAÇÃO")
+const servSel=new Set();
+$("#servChips").innerHTML=SERVICOS.map(x=>`<button type="button" class="chip" data-sv="${esc(x)}" aria-pressed="false">${x==="OUTRO"?"Outro (especificar)":esc(x.charAt(0)+x.slice(1).toLowerCase())}</button>`).join("");
+const servPint=()=>$("#servChips").querySelectorAll("[data-sv]").forEach(b=>b.setAttribute("aria-pressed",String(servSel.has(b.dataset.sv))));
+$("#servChips").onclick=e=>{ const b=e.target.closest("[data-sv]"); if(!b) return; const v=b.dataset.sv; servSel.has(v)?servSel.delete(v):servSel.add(v); servPint(); servUI(); if(v==="OUTRO"&&servSel.has(v)) $("#servOutro").focus(); };
 chipRow($("#stChips"), [{v:"SIM",h:"Executado"},{v:"PARCIAL",h:"Parcial"},{v:"NÃO",h:"Não executado"},{v:"PROGRAMADO",h:"Aguardando atendimento"}], v=>{form.st=v;setPressed($("#stChips"),v);modeUI()});
 const OC={GALHO:"Galho caído",ARVORE:"Árvore caída"};
 chipRow($("#ocChips"), Object.entries(OC).map(([v,h])=>({v,h})), v=>{form.oc=v;setPressed($("#ocChips"),v);$("#ocQLbl").textContent=v==="ARVORE"?"Quantidade de árvores":"Quantidade de galhos"});
@@ -1997,9 +2002,10 @@ document.addEventListener("click",e=>{ if(e.target.closest("#areaAdd")){ areaLer
   const d=e.target.closest("#areaLinhas [data-ad]"); if(d){ d.parentElement.remove(); areaLer(); areaUI(); } });
 function servUI(){ try{ const aw=$("#areaWrap"); if(aw){ aw.hidden=!(TIPOS_180.has(form.tipo)||$("#areaId").value.trim()); const ep=form.tipo==="ENTRE-PISTA";
     $("#areaLbl").textContent=ep?"IDs das áreas no URBANTRIM (um em cada linha)":"ID da área no URBANTRIM";
-    $("#areaHint").innerHTML=ep?"Entre-pista: coloque o 1º ID, toque em <b>+ Adicionar outro ID</b> para o 2º, o 3º e assim por diante.":"Copie o ID da área cadastrado no URBANTRIM."; areaUI(); } }catch(e){} try{ const lv=$("#e_livre"); if(lv){ const pr=temProc(form.tipo)&&form.mode==="prog"; lv.hidden=!(TIPOS_180.has(form.tipo)||pr); lv.innerHTML=pr?"Processo / O.S: pode salvar <b>sem QD., LT. e número</b>. Na hora de dar baixa o app pede para completar o endereço.":"Área pública, entre-pista ou praça: <b>QD., LT. e número não são obrigatórios</b>. Informe a via ou uma referência do local."; } }catch(e){} const on=TIPOS_SERV.has(form.tipo); $("#servWrap").hidden=!on; $("#servOutro").hidden=!on||$("#servico").value!=="OUTRO"; }
-function servLer(){ if(!TIPOS_SERV.has(form.tipo)) return ""; const v=$("#servico").value; return v==="OUTRO"?($("#servOutro").value.trim().toUpperCase()||""):v; }
-function servCarregar(v){ v=v||""; if(!v){$("#servico").value="";$("#servOutro").value="";} else if(SERVICOS.includes(v)){$("#servico").value=v;$("#servOutro").value="";} else {$("#servico").value="OUTRO";$("#servOutro").value=v;} servUI(); }
+    $("#areaHint").innerHTML=ep?"Entre-pista: coloque o 1º ID, toque em <b>+ Adicionar outro ID</b> para o 2º, o 3º e assim por diante.":"Copie o ID da área cadastrado no URBANTRIM."; areaUI(); } }catch(e){} try{ const ew=$("#e_esqW"); if(ew) ew.hidden=!(form.tipo==="PRAÇA"||$("#e_esqnome").value.trim()); }catch(e){} try{ const lv=$("#e_livre"); if(lv){ const pr=temProc(form.tipo)&&form.mode==="prog"; lv.hidden=!(TIPOS_180.has(form.tipo)||pr); lv.innerHTML=pr?"Processo / O.S: pode salvar <b>sem QD., LT. e número</b>. Na hora de dar baixa o app pede para completar o endereço.":form.tipo==="PRAÇA"?"Praça: <b>QD., LT. e número não são obrigatórios</b>, mas informe as <b>duas ruas de referência</b> (ex.: R. 1 esquina com R. 5).":"Área pública ou entre-pista: <b>QD., LT. e número não são obrigatórios</b>. Informe a via ou uma referência do local."; } }catch(e){} const on=TIPOS_SERV.has(form.tipo); $("#servWrap").hidden=!on; $("#servOutro").hidden=!on||!servSel.has("OUTRO"); }
+function servLer(){ if(!TIPOS_SERV.has(form.tipo)) return ""; const L=SERVICOS.filter(x=>x!=="OUTRO"&&servSel.has(x)); const o=$("#servOutro").value.trim().toUpperCase(); if(servSel.has("OUTRO")&&o) L.push(o); return L.join(" + "); }
+function servCarregar(v){ servSel.clear(); const outros=[]; String(v||"").split(/\s+\+\s+/).map(x=>x.trim()).filter(Boolean).forEach(x=>{ if(SERVICOS.includes(x)&&x!=="OUTRO") servSel.add(x); else outros.push(x); });
+  if(outros.length) servSel.add("OUTRO"); $("#servOutro").value=outros.join(" + "); servPint(); servUI(); }
 // nº do processo / O.S: o campo só aparece quando o tipo de local é PROCESSO ou O.S
 const temProc=t=>t==="O.S"||t==="PROCESSO";
 function procUI(){ const tem=temProc(form.tipo); $("#procWrap").hidden=!(tem||$("#processo").value.trim());
@@ -2090,9 +2096,9 @@ qtyBlock($("#qtdSub"),"s_",$("#totSub"));
 function dataUI(){const v=$("#data").value;$("#dia").value=diaDe(v);$("#semana").value=v?semanaDe(v)+"ª":""; avisoDataUI();}
 /* ---------- regra: a programação é feita numa semana para execução na semana seguinte; pronta até quinta da semana anterior ---------- */
 function domDe(d){ const x=new Date(d); x.setHours(12,0,0,0); x.setDate(x.getDate()-x.getDay()); return x; }
-// próxima semana = domingo a sábado seguinte; dias de trabalho contados de segunda a sábado; prazo = quinta da semana atual
+// próxima semana = domingo a sábado seguinte (começa no domingo); dias de trabalho de domingo a sábado, pela escala da turma; prazo = quinta da semana atual
 function proxSemInfo(){ const domAtual=domDe(new Date()), dom=new Date(domAtual); dom.setDate(dom.getDate()+7);
-  const qui=new Date(domAtual); qui.setDate(qui.getDate()+4); const dias=[...Array(6)].map((_,i)=>{const x=new Date(dom);x.setDate(dom.getDate()+1+i);return iso(x)});
+  const qui=new Date(domAtual); qui.setDate(qui.getDate()+4); const dias=[...Array(7)].map((_,i)=>{const x=new Date(dom);x.setDate(dom.getDate()+i);return iso(x)});
   return {ini:iso(dom), seg:dias[0], sem:semanaDe(iso(dom)), qui:iso(qui), dias, atrasado:hoje()>iso(qui)}; }
 function proxSemTurma(sup,P){ const dias=P.dias.filter(x=>trabalha(sup,x)); const L=todosGlobal?todosGlobal():todos();
   const feitos=dias.filter(x=>L.some(r=>r.supervisao===sup&&r.data===x&&!r.avulso&&!r.arquivado&&!r.ocorrencia));
@@ -2338,12 +2344,15 @@ const VIAS=["R.","AV.","AL.","PÇ.","ROD.","TV.","ESTR."];
 function endMontar(pre){ const v=$("#"+pre+"via")?.value||"", n=($("#"+pre+"nome")?.value||"").toUpperCase().trim(), qd=($("#"+pre+"qd")?.value||"").toUpperCase().trim().replace(/^QD\.?\s*/,""), lt=($("#"+pre+"lt")?.value||"").toUpperCase().trim().replace(/^LT\.?\s*/,""), c=abrevEnd($("#"+pre+"comp")?.value||"");
   if(!v&&!n&&!qd&&!lt&&!c) return "";
   const num=($("#"+pre+"num")?.value||"").toUpperCase().trim().replace(/^N[º°O]?\.?\s*/,"");
-  return [[v,n].filter(Boolean).join(" "), qd?"QD. "+qd:"", lt?"LT. "+lt:"", num?"Nº "+num:"", c].filter(Boolean).join(", "); }
+  const ev=$("#"+pre+"esqvia")?.value||"", en=($("#"+pre+"esqnome")?.value||"").toUpperCase().trim(), esq=en?"ESQ. C/ "+[ev,en].filter(Boolean).join(" "):"";
+  return [[v,n].filter(Boolean).join(" "), esq, qd?"QD. "+qd:"", lt?"LT. "+lt:"", num?"Nº "+num:"", c].filter(Boolean).join(", "); }
 const END_ALVO={e_:"logradouro",se_:"s_logradouro",ox_:"oxLogr",bx_:"bxLogr"};
 function endSync(pre){ const alvo=$("#"+END_ALVO[pre]); if(!alvo) return; const v=endMontar(pre); const mudou=alvo.value!==v; alvo.value=v;
   const pv=$("#"+pre+"prev"); if(pv) pv.innerHTML=v?`Fica cadastrado como: <b>${esc(v)}</b>`:"";
   if(mudou){ alvo.dispatchEvent(new Event("input")); alvo.dispatchEvent(new Event("change")); } }
-function endCarregar(pre, s){ const t=abrevEnd(s||""); let via="",nome="",qd="",lt="",comp="";
+function endCarregar(pre, s){ let t=abrevEnd(s||""), via="",nome="",qd="",lt="",comp="";
+  if($("#"+pre+"esqvia")){ let ev="",en=""; const me=t.match(/,?\s*ESQ\.?\s*C\/?\s*(R\.|AV\.|AL\.|ROD\.|TV\.|ESTR\.)?\s*([^,]+)/); if(me){ ev=me[1]||""; en=me[2].trim(); t=t.replace(me[0],"").trim(); }
+    $("#"+pre+"esqvia").value=ev; $("#"+pre+"esqnome").value=en; }
   const m=t.match(/^(R\.|AV\.|AL\.|PÇ\.|PC\.|ROD\.|TV\.|ESTR\.)\s*(.*)$/); let resto=m?m[2]:t; if(m) via=m[1]==="PC."?"PÇ.":m[1];
   const parts=resto.split(/\s*,\s*/); const corpo=[];
   parts.forEach((x,i)=>{ let y=x;
@@ -2354,8 +2363,8 @@ function endCarregar(pre, s){ const t=abrevEnd(s||""); let via="",nome="",qd="",
   if(!m&&nome&&!via){ comp=[nome,comp].filter(Boolean).join(", "); nome=""; } // endereço antigo fora do padrão: vai para o complemento
   $("#"+pre+"via").value=via; $("#"+pre+"nome").value=nome; $("#"+pre+"qd").value=qd; $("#"+pre+"lt").value=lt; $("#"+pre+"comp").value=comp;
   endSync(pre); }
-function endLigar(pre){ ["via","nome","qd","lt","num","comp"].forEach(k=>{ const el=$("#"+pre+k); if(!el) return;
-  el.addEventListener(k==="via"?"change":"input",()=>endSync(pre));
+function endLigar(pre){ ["via","nome","qd","lt","num","comp","esqvia","esqnome"].forEach(k=>{ const el=$("#"+pre+k); if(!el) return;
+  el.addEventListener(k==="via"||k==="esqvia"?"change":"input",()=>endSync(pre));
   if(k==="comp") el.addEventListener("blur",()=>{ const v=abrevEnd(el.value); if(v!==el.value){ el.value=v; endSync(pre); } });
   if(k==="nome") el.addEventListener("blur",()=>{ let v=el.value.toUpperCase().trim(); const mm=v.match(/^(RUA|R\.?|AVENIDA|AV\.?|ALAMEDA|AL\.?)\s+(.*)$/); if(mm&&!$("#"+pre+"via").value){ $("#"+pre+"via").value=abrevEnd(mm[1]+" X").split(" ")[0]; v=mm[2]; } el.value=v; endSync(pre); });
 }); }
@@ -2451,10 +2460,12 @@ $("#form").addEventListener("submit", async ev=>{
     const endProc=temProc(common.tipo)&&m==="prog"; // processo / O.S: pode programar sem QD., LT. e número (completa na baixa)
     const endLivre=TIPOS_180.has(common.tipo)||endProc; // área pública, entre-pista e praça: QD., LT. e número/nome da via não são obrigatórios
     if(!common.bairro) e.push("informe o setor / bairro"); else if(!$("#bairroT").value&&(!base||base.bairro!==common.bairro)) e.push("escolha se é setor, bairro, vila, jardim… (ao lado do nome do setor / bairro)"); if(!common.logradouro&&!endProc) e.push(endLivre?"informe a via ou uma referência do local (complemento)":"informe o logradouro");
+    if(common.tipo==="PRAÇA"&&(!base||base.logradouro!==common.logradouro||base.tipo!=="PRAÇA")&&(!$("#e_via").value||!$("#e_nome").value.trim()||!$("#e_esqnome").value.trim()||!$("#e_esqvia").value)) e.push("praça: informe as duas ruas de referência – a 1ª rua (tipo e nome) e a rua da esquina (ex.: R. 1 esquina com R. 5)");
     if(!endLivre){ if(!$("#e_via").value) e.push("escolha o tipo de via (R., AV., AL.…)"); if(!$("#e_nome").value.trim()) e.push("informe o nome ou número da via"); }
     { const ee=erroEnd(common.logradouro,"logradouro"); if(ee&&!(endLivre&&/comece pelo tipo de via/.test(ee))) e.push(ee); }
     if(!common.tipo) e.push("escolha o tipo de local"); if(common.tipo==="O.S"&&!common.processo) e.push("informe o nº da O.S"); if(common.tipo==="PROCESSO"&&!common.processo) e.push("informe o nº do processo");
-    if(TIPOS_SERV.has(common.tipo)&&!common.servico) e.push($("#servico").value==="OUTRO"?"escreva qual é o serviço":"escolha o serviço a executar (ex.: poda de manutenção)");
+    if(TIPOS_SERV.has(common.tipo)&&servSel.has("OUTRO")&&!$("#servOutro").value.trim()) e.push("escreva qual é o outro serviço");
+    else if(TIPOS_SERV.has(common.tipo)&&!common.servico) e.push("marque o serviço a executar (ex.: poda de manutenção) – pode marcar mais de um");
   }
   const obs=$("#obs").value.trim();
   let body, extra=null, extraMulti=null;
@@ -4335,7 +4346,7 @@ function periodoSem(s){const b=semIni(s);const e=new Date(b);e.setDate(b.getDate
 function rptFiltro(){const dia=$("#rDia").value; return {dia, sem:dia?String(semanaDe(dia)||""):$("#rSem").value, grp:$("#rGrp").value, sup:$("#rSup").value}}
 // um lançamento entra no dia se foi programado, executado ou teve serviço feito no lugar naquela data
 const noDia=(r,d)=>r.data===d||r.dataExec===d||r.substituto?.data===d;
-// período do filtro como intervalo de datas (dia específico ou semana de segunda a domingo)
+// período do filtro como intervalo de datas (dia específico ou semana de domingo a sábado)
 const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 function faixa(f){ if(f.dia) return [f.dia,f.dia]; if(f.sem){ const b=semIni(+f.sem); const e=new Date(b); e.setDate(b.getDate()+6); return [iso(b),iso(e)]; } return null; }
 const naFaixa=(d,fx)=>!fx||(!!d&&d>=fx[0]&&d<=fx[1]);
@@ -4582,7 +4593,7 @@ function buildReport(){
     ${(()=>{ const fx=faixa(f); if(!fx) return "";
       const ini=new Date(fx[0]+"T12:00"), n=Math.round((new Date(fx[1]+"T12:00")-ini)/864e5)+1;
       let ds=[...Array(n)].map((_,i)=>{const x=new Date(ini);x.setDate(ini.getDate()+i);return iso(x)});
-      ds=ds.filter(x=>diaDe(x)!=="DOM"||sups.some(s=>podasProgDia(s.id,x)>0));
+      // semana de domingo a sábado, como no calendário: o domingo sempre aparece
 
       const cor=v=>v>=META_PODA_DIA?"#14612b":v>=META_PODA_DIA*.7?"#7a4a00":"#9b1f18", bg=v=>v>=META_PODA_DIA?"#dcefe1":v>=META_PODA_DIA*.7?"#fbebcf":"#f8dcd9";
       return `<div class="blk"><h3>Meta de programação diária</h3><p class="cap">Meta: ${brl(META_PODA_DIA)} programados por dia em cada supervisão (valor previsto, pela data programada). Verde = atingiu · amarelo = 70% ou mais · vermelho = abaixo.</p>
@@ -5863,9 +5874,9 @@ function renderSemProg(){
   const prev=rows.reduce((a,r)=>a+receitaDe(prevQ(r)),0);
   const dias=[...new Set(rows.map(r=>r.data))];
   const b0=semIni(sem);
-  const semDias=[...Array(7)].map((_,i)=>{const x=new Date(b0);x.setDate(b0.getDate()+i);return iso(x)}).filter((x,i)=>i>0||rows.some(r=>r.data===x));
+  const semDias=[...Array(7)].map((_,i)=>{const x=new Date(b0);x.setDate(b0.getDate()+i);return iso(x)}); // domingo a sábado
   const semDias7=[...Array(7)].map((_,i)=>{const x=new Date(b0);x.setDate(b0.getDate()+i);return iso(x)}), diasTrab=semDias7.filter(x=>trabalha(form.sup,x));
-  const diasVer=semDias7.filter((x,i)=>i>0||podasProgDia(form.sup,x)>0);
+  const diasVer=semDias7; // a semana começa no domingo
   const metaHtml=`<p class="maphint" style="margin-top:6px">Meta: <b>${brl(META_PODA_DIA)} por dia</b> nesta supervisão – soma de todas as equipes e equipamentos da turma no dia.</p><div class="metadias">${diasVer.map(x=>{const v=podasProgDia(form.sup,x), t=trabalha(form.sup,x);return t?`<span class="${metaCls(v)}${x===d?" hj":""}" title="${fmtD(x)}: ${brl(v)} de ${brl(META_PODA_DIA)}">${diaDe(x)} ${fmtDs(x)} · ${kR(v)} / 50 mil${(()=>{ const q=eqDia(form.sup,x); return q.length?`<small>${q.map(esc).join(" · ")}</small>`:""; })()}</span>`:`<span class="${x===d?"hj":""}" style="opacity:.6" title="${fmtD(x)}: folga na escala 12x36">${diaDe(x)} ${fmtDs(x)} · folga${v?" · "+kR(v):""}</span>`}).join("")}</div>`;
   host.innerHTML=`<div class="grp-h"><h3>Programação da ${sem}ª semana <small style="font:500 13px var(--body);letter-spacing:0;text-transform:none;color:var(--muted)">de ${periodoSem(sem).replace(" a "," a ")}</small></h3><span>${rows.length} serviço${rows.length!==1?"s":""} · ${brl(prev)}</span></div>`+
     metaHtml+dias.slice().sort().map(d=>osBotoes(rows.filter(r=>r.data===d),"PROGRAMAÇÃO DE SERVIÇO",fmtD(d)+" · "+diaDe(d),"Programação de serviço · "+diaDe(d)+" "+fmtDs(d))).join("")+(rows.length?`<p class="maphint" style="margin-top:6px">Ver as marcações de cada dia no mapa:</p><div class="maprow">${dias.map(d=>{const rs=rows.filter(r=>r.data===d);return rotaLink(rs,diaDe(d)+" "+fmtDs(d)+" ("+rs.length+")")}).join("")}</div>`:"")+
