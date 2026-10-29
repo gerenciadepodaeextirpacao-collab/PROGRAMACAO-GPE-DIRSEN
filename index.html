@@ -1386,6 +1386,8 @@ function semIni(sem){ sem=+sem; const h=new Date(); h.setHours(12,0,0,0); let be
   return best; }
 function receitaDe(q){return Math.round(ITENS.reduce((a,i)=>a+(+q?.[i.c]||0)*i.p,0)*100)/100}
 function somaG(q,g){return ITENS.filter(i=>i.g===g).reduce((a,i)=>a+(+q?.[i.c]||0),0)}
+// árvores de um lançamento: total + poda e extirpação
+function arvTxt(q){ const p=somaG(q,"P"), e=somaG(q,"E"), t=p+e; if(!t) return "0 árvore"; return `<b>${t} ${t===1?"árvore":"árvores"}</b> (${[p?p+(p===1?" poda":" podas"):"",e?e+(e===1?" extirpação":" extirpações"):""].filter(Boolean).join(" + ")})`; }
 function supOf(id){return SUPS_ALL.find(s=>s.id===id)}
 // quantidades por extenso: separa poda e extirpação e diz o porte de cada item (DAP e altura), com o código do contrato
 const itPorte=i=>i.d.replace(/^(Poda|Extirpação)\s*·\s*/,"").replace(/DAP\s*>\s*/,"DAP acima de ").replace(/H\s*<\s*/,"altura até ").replace(/H\s*>\s*/,"altura acima de ").replace(/\bH\s+/,"altura ").replace(/\s*·\s*/g," e ");
@@ -1728,8 +1730,10 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.29e";
+const APP_VERSAO="2026.10.29g";
 const VERSOES=[
+  {v:"2026.10.29g", d:"29/10/2026", itens:["Lista: cada serviço mostra o valor e a quantidade de árvores do previsto (poda + extirpação) e, depois da baixa, também do executado; os grupos mostram o total de árvores"]},
+  {v:"2026.10.29f", d:"29/10/2026", itens:["Gerente (Victor): botão \"✏ Editar programação (gerente)\" em qualquer serviço programado, de qualquer turma, aberto pela Lista, Em aberto ou Painel – mesmo depois da baixa (a baixa é mantida)"]},
   {v:"2026.10.29e", d:"29/10/2026", itens:["ENTRE-PISTA: IDs das áreas um em cada linha – 1º ID, 2º ID, 3º ID… com o botão \"+ Adicionar outro ID\" e ✕ para tirar"]},
   {v:"2026.10.29d", d:"29/10/2026", itens:["ENTRE-PISTA: o campo vira \"IDs das áreas no URBANTRIM (pode colocar vários)\" – coloque todos os IDs separados por vírgula; teclado normal para poder digitar a vírgula"]},
   {v:"2026.10.29c", d:"29/10/2026", itens:["ID da área no URBANTRIM: em avenida dá para colocar vários IDs (ex.: 2947, 2950, 3011) – aparece como \"ÁREAS 2947, 2950, 3011\""]},
@@ -2386,7 +2390,8 @@ $("#form").addEventListener("submit", async ev=>{
     const q=readQ("q_"); if(!Object.keys(q).length) e.push("lance ao menos uma quantidade prevista");
     const dup=checaDup();
     if(dup){ $("#err").textContent=msgDup(dup); $("#err").hidden=false; $("#dupMsg").scrollIntoView({block:"center"}); return; }
-    body = {...(base||{}), ...common, status:"PROGRAMADO", qtdPrevista:q, receitaPrevista:receitaDe(q), qtd:{}, receita:0, obs,
+    const manterBaixa=!!(base&&base.status&&base.status!=="PROGRAMADO"); // gerente editando a programação de um serviço que já tem baixa: a baixa fica como está
+    body = manterBaixa ? {...base, ...common, qtdPrevista:q, receitaPrevista:receitaDe(q), obs, _acao:"Gerente editou a programação", atualizadoEm:now, atualizadoPor:myId||null} : {...(base||{}), ...common, status:"PROGRAMADO", qtdPrevista:q, receitaPrevista:receitaDe(q), qtd:{}, receita:0, obs,
       origem:base?.origem||"app", historico:base?.historico||[], remarcadaDe:base?.remarcadaDe||null,
       autor:base?.autor||myId||null, criadoEm:base?.criadoEm||now, atualizadoEm:now, atualizadoPor:myId||null};
     delete body.id; delete body._fila;
@@ -3786,17 +3791,19 @@ function renderLista(){
   const agr=$("#fAgr").value||"dia", gs=agrupar(rows,agr,true); let mostrados=0;
   const recHtml=r=>{
     const pq=prevQ(r), eq=execQ(r);
-    const val = isProg(r) ? "previsto "+brl(receitaDe(pq)) : "executado <b>"+brl(execRec(r))+"</b>";
+    const xq={...eq}; Object.entries(subQ(r)).forEach(([c,v])=>xq[c]=(+xq[c]||0)+(+v||0));
+    const val = r.avulso ? "executado <b>"+brl(execRec(r))+"</b> · "+arvTxt(xq) : "previsto <b>"+brl(receitaDe(pq))+"</b> · "+arvTxt(pq)+(isProg(r)?"":"<br>executado <b>"+brl(execRec(r))+"</b> · "+arvTxt(xq));
     return `<button type="button" class="rec" data-id="${esc(r.id)}">
       <div class="l1"><span class="when">${fmtD(r.data)} · ${esc(r.dia||diaDe(r.data))} · ${r.semana?r.semana+"ª":""}</span>${r._fila?`<span class="pill FILA">No aparelho</span>`:`<span class="pill ${stKey(r)}">${stTxt[stKey(r)]}</span>`}</div>
       <div class="where">${tagOc(r)}${esc(r.bairro)} — ${esc(r.logradouro)}</div>
       <div class="meta">${esc(r.supervisao)} · ${esc(r.equipe)} · ${esc(tipoTxt(r)||"sem tipo")}${r.processo?" · "+esc(r.processo):""}${r.avulso?" · sem programação":""}${r.remarcadaDe?" · remarcação":""}</div>
       <div class="nums">${val}${r.status==="NÃO"?" · remarcado p/ "+fmtD(r.proxData)+(r.substituto?" · no lugar: "+esc(r.substituto.bairro):""):""}</div>
     </button>`};
-  const tot=rs=>{ const p=rs.reduce((a,r)=>a+(r.avulso?0:receitaDe(prevQ(r))),0), e=rs.reduce((a,r)=>a+execRec(r),0), ex=rs.filter(r=>r.status==="SIM"||r.status==="PARCIAL").length; return {p,e,ex}; };
+  const tot=rs=>{ const p=rs.reduce((a,r)=>a+(r.avulso?0:receitaDe(prevQ(r))),0), e=rs.reduce((a,r)=>a+execRec(r),0), ex=rs.filter(r=>r.status==="SIM"||r.status==="PARCIAL").length;
+    const ap=rs.reduce((a,r)=>a+(r.avulso?0:somaG(prevQ(r),"P")+somaG(prevQ(r),"E")),0), ae=rs.reduce((a,r)=>{const q=execQ(r),s2=subQ(r);return a+somaG(q,"P")+somaG(q,"E")+somaG(s2,"P")+somaG(s2,"E")},0); return {p,e,ex,ap,ae}; };
   const abre=agr==="nada"||gs.length<=3;
   $("#list").innerHTML = (gs.length>1?`<div class="lxag"><b>${gs.length}</b> ${AGR_NOME[agr]==="mês"?"meses":AGR_NOME[agr]==="situação"?"situações":AGR_NOME[agr]+"s"} · ${rows.length} serviço${rows.length===1?"":"s"} · toque no grupo para abrir</div>`:"")+gs.map((g,i)=>{ const t=tot(g.rs); const lim=Math.max(0,300-mostrados); const vis=g.rs.slice(0,lim); mostrados+=vis.length;
-    return `<details class="lxg" ${abre||i===0?"open":""}><summary><span class="lxgk">${esc(g.k)}</span><span class="lxgn">${g.rs.length} serviço${g.rs.length===1?"":"s"} · previsto ${brlS(t.p)} · executado ${brlS(t.e)}</span></summary>${vis.map(recHtml).join("")}${g.rs.length>vis.length?`<p class="note">Mostrando ${vis.length} de ${g.rs.length}. Use os filtros para refinar.</p>`:""}</details>`; }).join("");
+    return `<details class="lxg" ${abre||i===0?"open":""}><summary><span class="lxgk">${esc(g.k)}</span><span class="lxgn">${g.rs.length} serviço${g.rs.length===1?"":"s"} · previsto ${brlS(t.p)} (${nf0(t.ap)} ${t.ap===1?"árvore":"árvores"}) · executado ${brlS(t.e)} (${nf0(t.ae)} ${t.ae===1?"árvore":"árvores"})</span></summary>${vis.map(recHtml).join("")}${g.rs.length>vis.length?`<p class="note">Mostrando ${vis.length} de ${g.rs.length}. Use os filtros para refinar.</p>`:""}</details>`; }).join("");
 }
 ["fSem","fSup","fSt","fPend"].forEach(id=>{ $("#"+id).onchange=renderLista; msMontar($("#"+id)); }); $("#fTxt").oninput=renderLista;
 $("#fAgr").addEventListener("change",()=>{ ls.set("gpe_agr",$("#fAgr").value); renderLista(); }); try{ const a0=ls.get("gpe_agr",""); if(a0&&[...$("#fAgr").options].some(o=>o.value===a0)) $("#fAgr").value=a0; }catch(e){}
@@ -3925,7 +3932,7 @@ function detalhe(r, abrirAdiar=false, soVer=false){
     ${hist.length?`<div class="hist"><b style="color:var(--ink)">Histórico de remarcações</b>${hist.map(h=>`<span>${fmtD(h.de)} → ${fmtD(h.para)} · ${esc(h.motivo||"")}</span>`).join("")}</div>`:""}
     ${(r.log||[]).length?`<div class="hist"><b style="color:var(--ink)">Histórico de alterações</b><div class="logl">${r.log.slice().reverse().map(l=>`<span>${new Date(l.em).toLocaleDateString("pt-BR")} ${new Date(l.em).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})} · <b>${esc(l.por)}</b> · ${esc(l.acao)}</span>`).join("")}</div></div>`:""}
     ${(!isProg(r)&&!r.arquivado)?`<button type="button" class="btn sec" id="shMsg">Copiar mensagem para o grupo</button>`:""}
-    ${(!soVer&&isProg(r)&&!r.ocorrencia&&isGer()&&!r._fila)?`<button type="button" class="btn sec" id="shProg">Corrigir programação (gerência)</button>`:""}
+    ${(!r.ocorrencia&&!r.avulso&&!r._fila&&!r.arquivado&&(isGerente()||(!soVer&&isProg(r)&&isGer())))?`<button type="button" class="btn sec" id="shProg">✏ ${isGerente()?"Editar programação (gerente)":"Corrigir programação (gerência)"}</button>`:""}
     ${(soVer||soLeitura()||r.arquivado)?`${soVer&&isProg(r)&&!soLeitura()&&!r.arquivado?`<button type="button" class="btn pri" id="shBaixa" style="min-height:52px;font-size:16px">${r.ocorrencia?"Registrar atendimento":"✔ Dar baixa"}</button>`:""}<button type="button" class="btn sec" id="shClose">Fechar</button>${(soVer&&isGerente()&&!r._fila&&db&&!r.arquivado)?`<button type="button" class="btn danger" id="shDel">${isProg(r)?"Excluir programação":"Excluir lançamento"} (gerente)</button>`:""}`:`<div class="actions" style="grid-template-columns:1fr 1fr">
       ${isProg(r)?`<button type="button" class="btn pri" id="shBaixa">Dar baixa</button>`:`<button type="button" class="btn pri" id="shEdit">Corrigir baixa</button>`}
       <button type="button" class="btn sec" id="shClose">Fechar</button>
