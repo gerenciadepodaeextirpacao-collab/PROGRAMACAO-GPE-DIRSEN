@@ -1115,7 +1115,7 @@ nav.tabs .tbadge{animation:gpeBadge 1.1s ease-in-out infinite}
 
   <section class="card" id="multiCard" hidden>
     <div class="step">Quantos dias para executar? <b>serviço grande</b></div>
-    <p class="note" style="margin:0">Ex.: 100 podas no mesmo local em 3 dias. Informe em quantos dias o serviço será feito: o app divide as quantidades e programa um serviço por dia (o 1º na data escolhida, os outros nos dias de trabalho seguintes da turma).</p>
+    <p class="note" style="margin:0">Ex.: 100 podas no mesmo local em 3 dias. Informe em quantos dias o serviço será feito: o app divide as quantidades e programa um serviço por dia (o 1º na data escolhida, os outros em dias intercalados, como a escala 12x36 – ou pela escala de trabalho cadastrada da turma).</p>
     <label class="f">Dias para concluir<div class="step-in mdstep"><button type="button" data-md="-1" aria-label="Menos um dia">−</button><input id="mdDias" inputmode="numeric" value="1" aria-label="Dias para concluir"><button type="button" data-md="1" aria-label="Mais um dia">+</button></div></label>
     <div id="mdPrev" class="mdprev"></div>
   </section>
@@ -1730,8 +1730,9 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.29i";
+const APP_VERSAO="2026.10.29j";
 const VERSOES=[
+  {v:"2026.10.29j", d:"29/10/2026", itens:["Serviço grande fracionado: os dias são marcados intercalados (um sim, um não), como a escala 12x36; se a turma tiver escala cadastrada, segue a escala"]},
   {v:"2026.10.29i", d:"29/10/2026", itens:["Programação respeita a escala de trabalho da turma: não deixa programar em dia de folga e o serviço grande em vários dias usa só os dias de trabalho da escala (inclusive domingo, se a escala trabalhar)"]},
   {v:"2026.10.29h", d:"29/10/2026", itens:["Programar: o quadro \"Quantos dias para executar? (serviço grande)\" passou para antes das quantidades, para ficar à vista"]},
   {v:"2026.10.29g", d:"29/10/2026", itens:["Lista: cada serviço mostra o valor e a quantidade de árvores do previsto (poda + extirpação) e, depois da baixa, também do executado; os grupos mostram o total de árvores"]},
@@ -2080,8 +2081,9 @@ $("#pctVal").addEventListener("input",()=>{ let v=parseInt($("#pctVal").value); 
 $("#pctBox").addEventListener("input",e=>{ const c=e.target.dataset?.pit; if(!c) return; let v=parseInt(e.target.value); if(v>100){ v=100; e.target.value=100; } form.pcts[c]=v>=0?v:0; pctUI(); });
 // serviço grande em vários dias: divide as quantidades previstas pelos dias de trabalho seguintes
 function mdDatas(sup,ini,n){ const out=[]; let d=parseD(ini); if(!d) return out; let guard=0;
-  const esc0=!!escCfg(sup); // com escala cadastrada vale só a escala (inclusive domingo de trabalho); sem escala, pula os domingos
-  while(out.length<n&&guard<90){ const x=iso(d); if(esc0?trabalha(sup,x):(d.getDay()!==0&&(out.length===0||trabalha(sup,x)))) out.push(x); d.setDate(d.getDate()+1); guard++; } return out; }
+  // com escala cadastrada vale a escala da turma; sem escala, segue a 12x36: dias intercalados (um sim, um não) a partir da data escolhida
+  if(!escCfg(sup)){ for(let k=0;k<n;k++){ const x=new Date(d); x.setDate(d.getDate()+2*k); out.push(iso(x)); } return out; }
+  while(out.length<n&&guard<90){ const x=iso(d); if(trabalha(sup,x)) out.push(x); d.setDate(d.getDate()+1); guard++; } return out; }
 function mdPartes(q,n){ const ps=[...Array(n)].map(()=>({})); ITENS.forEach(i=>{ const Q=+q[i.c]||0; if(!Q) return; const b=Math.floor(Q/n), r=Q%n; ps.forEach((p,k)=>{ const v=b+(k<r?1:0); if(v) p[i.c]=v; }); }); return ps; }
 const mdTxt=q=>ITENS.filter(i=>+q[i.c]).map(i=>`<b>${q[i.c]}</b> ${i.g==="P"?"poda":"extirp."} ${i.c}`).join(" · ");
 function mdUI(){ const on=form.mode==="prog"&&!form.base; $("#multiCard").hidden=!on; if(!on) return;
