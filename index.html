@@ -1738,7 +1738,7 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.29u";
+const APP_VERSAO="2026.10.29v";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -1933,8 +1933,21 @@ chipRow($("#supChips"), SUPS.map(s=>({v:s.id,h:`${esc(s.id)}<small>${esc(s.enc)}
   limpar("prog"); renderAll(); scrollTo(0,0); });
 $("#supTroca").onclick=()=>{ ls.set("gpe_sup",""); limpar("prog"); scrollTo(0,0); };
 function meuSup(){ return travado() ? sessao.sup : (ls.get("gpe_sup","") || ""); }
+// cada equipe tem o seu equipamento; com equipamento reserva a equipe é livre
+const EQ_VT={"PODA II":{"1ª EQUIPE":"SPLINTER 5063.6","2ª EQUIPE":"SPLINTER 5064.6","3ª EQUIPE":"SKY 5073.0"},"PODA I":{"1ª EQUIPE":"SPLINTER 5065.6","2ª EQUIPE":"SPLINTER 5066.6"}};
+const vtReserva=vt=>[...($("#viatura")?.options||[])].some(o=>o.value===vt&&/reserva/i.test(o.textContent));
+const eqVtMapa=sup=>EQ_VT[supOf(sup)?.grupo]||null;
+// equipamento certo para a equipe (vazio = livre)
+function eqVtErro(sup,equipe,vt){ const m=eqVtMapa(sup); if(!m||vtReserva(vt)) return "";
+  if(m[equipe]===vt) return ""; const g=supOf(sup).grupo, dono=Object.entries(m).find(([,v])=>v===vt)?.[0];
+  return m[equipe]?`Na ${g}, a ${equipe} trabalha com a ${m[equipe]}${dono?` (a ${vt} é da ${dono})`:""}. Para usar outro equipamento, escolha um equipamento reserva.`:`A ${equipe} não existe na ${g}.`; }
+function eqVtSync(de){ const m=eqVtMapa(form.sup), eq=$("#equipe"), vt=$("#viatura"); if(!m) return;
+  if(de==="vt"){ if(vtReserva(vt.value)) return; const dono=Object.entries(m).find(([,v])=>v===vt.value)?.[0]; if(dono) eq.value=dono; else { toast(`A ${vt.value} não é equipamento da ${supOf(form.sup).grupo}. Escolha o equipamento da equipe ou um reserva.`,5000); if(m[eq.value]) vt.value=m[eq.value]; } }
+  else { if(vtReserva(vt.value)) return; if(m[eq.value]) vt.value=m[eq.value]; } }
+$("#equipe").addEventListener("change",()=>eqVtSync("eq")); $("#viatura").addEventListener("change",()=>eqVtSync("vt"));
 function equipeOpts(){ const s=supOf(form.sup); const o3=$("#equipe").querySelector('option[value="3ª EQUIPE"],option:nth-child(3)');
-  if(o3){ o3.hidden=o3.disabled=!!(s&&s.grupo==="PODA I"); if(o3.disabled&&$("#equipe").value==="3ª EQUIPE") $("#equipe").value="1ª EQUIPE"; } }
+  if(o3){ o3.hidden=o3.disabled=!!(s&&s.grupo==="PODA I"); if(o3.disabled&&$("#equipe").value==="3ª EQUIPE") $("#equipe").value="1ª EQUIPE"; }
+  if(form.mode==="prog"&&!form.base) eqVtSync("eq"); }
 $("#s_tipo").addEventListener("change",sProcUI);
 chipRow($("#tipoChips"), TIPOS.map(t=>({v:t,h:esc(t)})), v=>{form.tipo=v;setPressed($("#tipoChips"),v);if(!temProc(v))$("#processo").value="";if(!TIPOS_180.has(v))$("#areaId").value="";procUI();servUI();checaDup()});
 $("#servico").innerHTML='<option value="">Selecione…</option>'+SERVICOS.map(x=>`<option value="${esc(x)}">${x==="OUTRO"?"Outro (especificar)":esc(x.charAt(0)+x.slice(1).toLowerCase())}</option>`).join("");
@@ -2398,6 +2411,7 @@ $("#form").addEventListener("submit", async ev=>{
     bairro:$("#bairro").value.trim().toUpperCase(), logradouro:abrevEnd($("#logradouro").value), tipo:form.tipo, servico:servLer(), processo:$("#processo").value.trim(), areaId:TIPOS_180.has(form.tipo)?(areaLer(),areaLista($("#areaId").value).slice(0,form.tipo==="ENTRE-PISTA"?99:1).join(", ")):"" };
   if(m!=="baixa"){
     if(!common.supervisao) e.push("escolha a supervisão");
+    if(m==="prog"&&common.supervisao&&(!base||base.equipe!==common.equipe||base.viatura!==common.viatura)){ const ev=eqVtErro(common.supervisao,common.equipe,common.viatura); if(ev) e.push(ev); }
     if(m==="prog"&&common.supervisao&&common.data&&escCfg(common.supervisao)&&!trabalha(common.supervisao,common.data)) e.push(`${diaDe(common.data)} ${fmtDs(common.data)} é folga da ${common.supervisao} pela escala de trabalho – programe num dia de trabalho`);
     if(m==="prog" ? errDataProg(common.data) : errDataExec(common.data)) e.push(m==="prog"?"informe uma data programada válida":"a data da execução não pode ser futura nem ter ano errado");
     const endProc=temProc(common.tipo)&&m==="prog"; // processo / O.S: pode programar sem QD., LT. e número (completa na baixa)
@@ -3048,7 +3062,7 @@ function abrirChk(c){
     el.innerHTML=`Checklists da ${esc(t)} no turno de ${fmtD(d)}: <b>${feitos.length} de ${meta}</b>${feitos.length?" · já feitos: "+feitos.map(esc).join(", "):""}${feitos.length>=meta?" · todos os equipamentos da turma já têm checklist.":falt.length?" · <b>falta: "+falt.map(esc).join(", ")+"</b>":""}`;
     if(trocar&&feitos.includes($("#kfVt").value)){ const ops=[...$("#kfVt").options].map(o=>o.value), livre=falt.find(v=>ops.includes(v))||ops.find(v=>!feitos.includes(v)); if(livre){$("#kfVt").value=livre; if($("#kfVt").onchange) $("#kfVt").onchange(); else eqpUI();} } };
   const eqpUI=()=>{ const e=$("#kfEqp"); if(e&&(e.value===""||e.value==="CESTO AÉREO"||e.value==="VAN")) e.value=/^VAN/.test($("#kfVt").value)?"VAN":"CESTO AÉREO"; };
-  if(!c){ $("#kfVt").onchange=()=>{eqpUI();cotaUI(false); const ns=chkSlots($("#kfVt").value); if(ns!==kSlots._de){ kSlots.splice(0,kSlots.length,...ns); kSlots._de=ns; kMidCtl.redesenha(); }}; $("#kfData").onchange=()=>cotaUI(true); eqpUI(); cotaUI(true); }
+  if(!c){ $("#kfVt").onchange=()=>{eqpUI();cotaUI(false); { const m=eqVtMapa($("#kfSup").value), dono=m&&Object.entries(m).find(([,v])=>v===$("#kfVt").value)?.[0]; if(dono&&$("#kfEq")) $("#kfEq").value=dono; } const ns=chkSlots($("#kfVt").value); if(ns!==kSlots._de){ kSlots.splice(0,kSlots.length,...ns); kSlots._de=ns; kMidCtl.redesenha(); }}; $("#kfData").onchange=()=>cotaUI(true); eqpUI(); cotaUI(true); }
   $("#kfSup").onchange=()=>{ $("#kfSupNome").value=nomeSupDe($("#kfSup").value); }; const _kfSupOld=null;
   const recAuto=()=>{ const rs=$("#kfRecSup"), dica=$("#kfRecDica"); if(!rs||c) return; const px=proxEquipe($("#kfSup").value,$("#kfData").value);
     if(px&&(!rs.value||rs.dataset.auto==="1")){ rs.value=px; rs.dataset.auto="1"; }
