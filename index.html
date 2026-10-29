@@ -1036,7 +1036,7 @@ nav.tabs .tbadge{animation:gpeBadge 1.1s ease-in-out infinite}
     <p class="err" id="dataAviso" hidden style="margin:0"></p>
     <label class="f">Setor / bairro<input id="bairro" list="bairros" autocomplete="off" placeholder="Comece a digitar e escolha da lista"></label>
     <div class="endsep" data-end="e_">
-      <div class="es-row1"><label class="f">Tipo de via<select id="e_via"><option value="">Selecione…</option><option value="R.">R. (rua)</option><option value="AV.">AV. (avenida)</option><option value="AL.">AL. (alameda)</option><option value="PÇ.">PÇ. (praça)</option><option value="ROD.">ROD. (rodovia)</option><option value="TV.">TV. (travessa)</option><option value="ESTR.">ESTR. (estrada)</option></select></label>
+      <div class="es-row1"><label class="f">Tipo de via<select id="e_via"><option value="">Selecione…</option><option value="R.">R. (rua)</option><option value="AV.">AV. (avenida)</option><option value="AL.">AL. (alameda)</option><option value="PÇ." hidden>PÇ. (praça)</option><option value="ROD.">ROD. (rodovia)</option><option value="TV.">TV. (travessa)</option><option value="ESTR.">ESTR. (estrada)</option></select></label>
         <label class="f">Nome / número da via<input id="e_nome" autocomplete="off" autocapitalize="characters" placeholder="Ex.: 240, T-63, DO POVO"></label></div>
       <div class="es-row2"><label class="f">QD. (quadra)<input id="e_qd" autocomplete="off" autocapitalize="characters" placeholder="Ex.: 12"></label>
         <label class="f">LT. (lote)<input id="e_lt" autocomplete="off" autocapitalize="characters" placeholder="Ex.: 4"></label></div>
@@ -1076,7 +1076,7 @@ nav.tabs .tbadge{animation:gpeBadge 1.1s ease-in-out infinite}
     <div class="step">Complete o endereço</div>
     <p class="note" style="margin:0">Processo / O.S programado sem o endereço completo. Para dar baixa, informe o <b>tipo e o nome/número da via</b> e a <b>QD. e o LT.</b> (ou o <b>número</b> do imóvel).</p>
     <div class="endsep" data-end="bx_">
-      <div class="es-row1"><label class="f">Tipo de via<select id="bx_via"><option value="">Selecione…</option><option value="R.">R. (rua)</option><option value="AV.">AV. (avenida)</option><option value="AL.">AL. (alameda)</option><option value="PÇ.">PÇ. (praça)</option><option value="ROD.">ROD. (rodovia)</option><option value="TV.">TV. (travessa)</option><option value="ESTR.">ESTR. (estrada)</option></select></label>
+      <div class="es-row1"><label class="f">Tipo de via<select id="bx_via"><option value="">Selecione…</option><option value="R.">R. (rua)</option><option value="AV.">AV. (avenida)</option><option value="AL.">AL. (alameda)</option><option value="PÇ." hidden>PÇ. (praça)</option><option value="ROD.">ROD. (rodovia)</option><option value="TV.">TV. (travessa)</option><option value="ESTR.">ESTR. (estrada)</option></select></label>
         <label class="f">Nome / número da via<input id="bx_nome" autocomplete="off" autocapitalize="characters" placeholder="Ex.: 240, T-63, DO POVO"></label></div>
       <div class="es-row2"><label class="f">QD. (quadra)<input id="bx_qd" autocomplete="off" autocapitalize="characters" placeholder="Ex.: 12"></label>
         <label class="f">LT. (lote)<input id="bx_lt" autocomplete="off" autocapitalize="characters" placeholder="Ex.: 4"></label></div>
@@ -1144,7 +1144,7 @@ nav.tabs .tbadge{animation:gpeBadge 1.1s ease-in-out infinite}
       </div>
       <label class="f">Setor / bairro<input id="s_bairro" list="bairros" autocomplete="off"></label>
       <div class="endsep" data-end="se_">
-      <div class="es-row1"><label class="f">Tipo de via<select id="se_via"><option value="">Selecione…</option><option value="R.">R. (rua)</option><option value="AV.">AV. (avenida)</option><option value="AL.">AL. (alameda)</option><option value="PÇ.">PÇ. (praça)</option><option value="ROD.">ROD. (rodovia)</option><option value="TV.">TV. (travessa)</option><option value="ESTR.">ESTR. (estrada)</option></select></label>
+      <div class="es-row1"><label class="f">Tipo de via<select id="se_via"><option value="">Selecione…</option><option value="R.">R. (rua)</option><option value="AV.">AV. (avenida)</option><option value="AL.">AL. (alameda)</option><option value="PÇ." hidden>PÇ. (praça)</option><option value="ROD.">ROD. (rodovia)</option><option value="TV.">TV. (travessa)</option><option value="ESTR.">ESTR. (estrada)</option></select></label>
         <label class="f">Nome / número da via<input id="se_nome" autocomplete="off" autocapitalize="characters" placeholder="Ex.: 240, T-63, DO POVO"></label></div>
       <div class="es-row2"><label class="f">QD. (quadra)<input id="se_qd" autocomplete="off" autocapitalize="characters" placeholder="Ex.: 12"></label>
         <label class="f">LT. (lote)<input id="se_lt" autocomplete="off" autocapitalize="characters" placeholder="Ex.: 4"></label></div>
@@ -1740,7 +1740,7 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.29x";
+const APP_VERSAO="2026.10.29y";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
