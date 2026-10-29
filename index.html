@@ -1734,7 +1734,7 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.29o";
+const APP_VERSAO="2026.10.29p";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -2600,7 +2600,17 @@ const chkPedeComunicado=c=>c?.validacao?.decisao==="PROCEDE"&&!folgaHoje(c.super
 const comDefPre=c=>({supervisao:c.supervisao,data:hoje(),equipe:c.equipe,viatura:c.viatura,km:c.kmFim,
   desc:["Avaria confirmada pelo coordenador na contestação do checklist de "+fmtD(c.data)+".",c.recusa?.motivo?"Motivo da contestação: "+c.recusa.motivo:"",c.validacao?.obs?"Coordenador: "+c.validacao.obs:"",c.ocorr||"",...chkAlertas(c)].filter(Boolean).join("\n"),chkId:c.id});
 const VAL_TXT={PROCEDE:"Procede – a avaria / divergência apontada pelo supervisor que recebe é real",NAO_PROCEDE:"Não procede – o equipamento estava como registrado na entrega"};
-const CHK_META={"PODA I":2,"PODA II":4}; // equipamentos por turma em cada período (PODA II: 3 + van)
+const CHK_META={"PODA I":2,"PODA II":4};
+// dia do TURNO do checklist: o noturno entrega de madrugada/manhã; checklist com a data do dia e feito antes do meio-dia conta para o turno que começou na véspera
+function chkDia(c){ if(!c?.data) return ""; if(supOf(c.supervisao)?.turno!=="NOTURNO") return c.data; const em=c.entrega?.em?new Date(c.entrega.em):null;
+  if(em&&!isNaN(em)&&iso(em)===c.data&&em.getHours()<12){ const x=new Date(c.data+"T12:00"); x.setDate(x.getDate()-1); return iso(x); } return c.data; }
+// equipamentos que a turma costuma usar (programação e checklists dos últimos 30 dias) – para dizer o prefixo que falta
+function chkEsperados(t,d){ const x=new Date(d+"T12:00"); x.setDate(x.getDate()-30); const ini=iso(x), S=new Set();
+  todosGlobal().filter(r=>r.supervisao===t&&!r.arquivado&&r.viatura&&(r.data||"")>=ini&&(r.data||"")<=d).forEach(r=>S.add(r.viatura));
+  chks.filter(c=>c.supervisao===t&&c.viatura&&(c.data||"")>=ini).forEach(c=>S.add(c.viatura));
+  if(/^PODA II\b/.test(t)&&![...S].some(v=>/^VAN/.test(v))) [...($("#viatura")?.options||[])].map(o=>o.value).filter(v=>/^VAN/.test(v)).forEach(v=>S.add(v)); // PODA II sempre tem a van
+  return [...S].filter(v=>v!=="SKAY"&&v!=="SKY").sort(); }
+function chkFaltam(t,d,feitos){ return chkEsperados(t,d).filter(v=>!feitos.includes(v)); } // equipamentos por turma em cada período (PODA II: 3 + van)
 const chkMeta=sup=>CHK_META[supOf(sup)?.grupo]||2;
 // recebe pelo próprio acesso, ou no aparelho de quem entregou (confirmando matrícula e senha de quem recebe)
 // só supervisor assina (entrega, recebimento, comunicação de defeito e retorno)
@@ -2779,13 +2789,13 @@ function renderChk(){
   $("#kLead").textContent=man?"Comunicação de defeito e recolhimento para manutenção: o que está em aberto aparece sempre; abaixo, as comunicações do dia escolhido.":"Checklist de fim de expediente do dia escolhido, com a entrega e o recebimento do turno pelos supervisores.";
   $("#kSoSup").hidden=ehSup()||modoTeste()||!sessao;
   const vis=chkVis();
-  const lst=vis.filter(c=>c.data===dia&&(casaTurma(sup,c)||(travado()&&c.recebe?.sup===sessao.sup))).sort((a,b)=>(a.supervisao||"").localeCompare(b.supervisao||"")||(a.equipe||"").localeCompare(b.equipe||""));
+  const lst=vis.filter(c=>(c.data===dia||chkDia(c)===dia)&&(casaTurma(sup,c)||(travado()&&c.recebe?.sup===sessao.sup))).sort((a,b)=>(a.supervisao||"").localeCompare(b.supervisao||"")||(a.equipe||"").localeCompare(b.equipe||""));
   const meus=travado()?vis.filter(c=>!chkRecebido(c)&&!chkRecusado(c)&&c.recebe?.sup===sessao.sup).sort((a,b)=>(b.data||"").localeCompare(a.data||"")):[];
   // checklists esperados por turma no dia: PODA I = 2 equipamentos; PODA II = 3 + a van = 4
   const trab=new Set();
   todos().filter(r=>casaTurma(sup,r)&&r.supervisao&&(r.dataExec===dia||(r.data===dia&&r.status!=="NÃO"))).forEach(r=>trab.add(r.supervisao));
-  lst.filter(c=>casaTurma(sup,c)).forEach(c=>trab.add(c.supervisao));
-  const cota=[...trab].sort().map(t=>{const feitos=[...new Set(lst.filter(c=>c.supervisao===t).map(c=>c.viatura))];return {t,feitos,meta:chkMeta(t)}});
+  lst.filter(c=>casaTurma(sup,c)&&chkDia(c)===dia).forEach(c=>trab.add(c.supervisao));
+  const cota=[...trab].sort().map(t=>{const feitos=[...new Set(vis.filter(c=>c.supervisao===t&&chkDia(c)===dia).map(c=>c.viatura))];return {t,feitos,meta:chkMeta(t),faltam:chkFaltam(t,dia,feitos)}});
   const pend=cota.filter(x=>x.feitos.length<x.meta);
   const naoApto=lst.filter(c=>chkNivel(c)==="NÃO").length, ress=lst.filter(c=>chkNivel(c)==="PARCIAL").length, semRec=lst.filter(c=>!chkRecebido(c)&&!chkRecusado(c)).length;
   const aguarda=chks.filter(chkAguardaCoord).filter(c=>noEscopo(c.supervisao)).filter(c=>!travado()||c.supervisao===sessao.sup||c.recebe?.sup===sessao.sup).sort((a,b)=>(a.data||"").localeCompare(b.data||""));
@@ -2803,7 +2813,7 @@ function renderChk(){
   if(meus.length) h+=`<div class="alert"><h3>Turno para você receber</h3><p class="note" style="margin:0">Abra, confira o checklist da turma que entregou e assine o recebimento dando ciência das condições do equipamento.</p>${meus.map(c=>`<button type="button" data-chk="${esc(c.id)}"><b>!</b><span>${esc(c.viatura||"")} · ${esc(c.supervisao)} · ${esc(c.equipe)}<small>Entregue por ${esc(c.entrega?.nome||"—")} em ${fmtD(c.data)}${c.hora?" às "+esc(c.hora):""}. Confira e assine o recebimento.</small></span></button>`).join("")}</div>`;
   if(man){ host.innerHTML=manListaHtml(sup,dia); return; }
   h+=`<div class="grp-h"><h3>Checklists · ${fmtD(dia)} · ${diaDe(dia)}</h3><span>${lst.length} checklist${lst.length===1?"":"s"}${naoApto?` · <b style="color:var(--bad)">${naoApto} não apto</b>`:""}${ress?` · ${ress} com ressalva`:""} · ${semRec} sem recebimento</span></div>`;
-  if(cota.length) h+=`<p class="note" style="margin:6px 0 0">Checklists por turma no dia (PODA I: 2 equipamentos · PODA II: 3 equipamentos + a van):</p><div class="ckpend">${cota.map(x=>`<span class="${x.feitos.length>=x.meta?"ok":""}" title="${esc(x.feitos.join(", "))}">${esc(x.t)} · <b>${x.feitos.length} de ${x.meta}</b>${x.feitos.length>=x.meta?" ✔":""}</span>`).join("")}</div>${pend.length?"":`<p class="note" style="margin:4px 0 0">Todas as turmas que trabalharam no dia completaram os checklists.</p>`}`;
+  if(cota.length) h+=`<p class="note" style="margin:6px 0 0">Checklists por turma no dia (PODA I: 2 equipamentos · PODA II: 3 equipamentos + a van):</p><div class="ckpend">${cota.map(x=>`<span class="${x.feitos.length>=x.meta?"ok":""}" title="${esc(x.feitos.join(", "))}">${esc(x.t)} · <b>${x.feitos.length} de ${x.meta}</b>${x.feitos.length>=x.meta?" ✔":x.faltam.length?" · falta: "+x.faltam.map(esc).join(", "):""}</span>`).join("")}</div>${pend.length?"":`<p class="note" style="margin:4px 0 0">Todas as turmas que trabalharam no dia completaram os checklists.</p>`}`;
   h+= lst.length ? `<div class="list">${lst.map(chkCard).join("")}</div>` : `<div class="empty" style="margin-top:8px">Nenhum checklist neste dia.</div>`;
   host.innerHTML=h;
 }
@@ -3021,8 +3031,8 @@ function abrirChk(c){
   // quantos checklists a turma já fez no dia e qual equipamento ainda falta
   const cotaUI=(trocar)=>{ const el=$("#kfCota"); if(!el) return; const t=$("#kfSup").value, d=$("#kfData").value;
     if(!t){el.textContent="";return;}
-    const feitos=[...new Set(chks.filter(x=>x.supervisao===t&&x.data===d).map(x=>x.viatura))], meta=chkMeta(t);
-    el.innerHTML=`Checklists da ${esc(t)} em ${fmtD(d)}: <b>${feitos.length} de ${meta}</b>${feitos.length?" · já feitos: "+feitos.map(esc).join(", "):""}${feitos.length>=meta?" · todos os equipamentos da turma já têm checklist.":""}`;
+    const feitos=[...new Set(chks.filter(x=>x.supervisao===t&&chkDia(x)===d).map(x=>x.viatura))], meta=chkMeta(t), falt=chkFaltam(t,d,feitos);
+    el.innerHTML=`Checklists da ${esc(t)} no turno de ${fmtD(d)}: <b>${feitos.length} de ${meta}</b>${feitos.length?" · já feitos: "+feitos.map(esc).join(", "):""}${feitos.length>=meta?" · todos os equipamentos da turma já têm checklist.":falt.length?" · <b>falta: "+falt.map(esc).join(", ")+"</b>":""}`;
     if(trocar&&feitos.includes($("#kfVt").value)){ const livre=[...$("#kfVt").options].map(o=>o.value).find(v=>!feitos.includes(v)); if(livre){$("#kfVt").value=livre; eqpUI();} } };
   const eqpUI=()=>{ const e=$("#kfEqp"); if(e&&(e.value===""||e.value==="CESTO AÉREO"||e.value==="VAN")) e.value=/^VAN/.test($("#kfVt").value)?"VAN":"CESTO AÉREO"; };
   if(!c){ $("#kfVt").onchange=()=>{eqpUI();cotaUI(false)}; $("#kfData").onchange=()=>cotaUI(true); eqpUI(); cotaUI(true); }
@@ -3030,7 +3040,9 @@ function abrirChk(c){
   const recAuto=()=>{ const rs=$("#kfRecSup"), dica=$("#kfRecDica"); if(!rs||c) return; const px=proxEquipe($("#kfSup").value,$("#kfData").value);
     if(px&&(!rs.value||rs.dataset.auto==="1")){ rs.value=px; rs.dataset.auto="1"; }
     if(dica) dica.textContent=px?`Próxima equipe de plantão (pela programação): ${px}${nomeSupDe(px)?" – "+nomeSupDe(px):""}. Ela recebe o turno e tem que dar ciência e assinar.`:"Nenhuma equipe da próxima jornada tem programação lançada: escolha quem recebe o turno."; };
-  $("#kfSup").addEventListener("change",()=>{const v=$("#kfSup").value, r=$("#kfRecSup").value; $("#kfRecSup").innerHTML=supOpts(r===v?"":r,v); $("#kfTurno").value=supOf(v)?.turno||""; cotaUI(true); recAuto();});
+  const datTurno=()=>{ if(c) return; const f=$("#kfData"); if(supOf($("#kfSup").value)?.turno==="NOTURNO"&&f.value===hoje()&&new Date().getHours()<12){ const x=new Date(hoje()+"T12:00"); x.setDate(x.getDate()-1); f.value=iso(x); } };
+  datTurno(); cotaUI(true);
+  $("#kfSup").addEventListener("change",()=>{datTurno(); const v=$("#kfSup").value, r=$("#kfRecSup").value; $("#kfRecSup").innerHTML=supOpts(r===v?"":r,v); $("#kfTurno").value=supOf(v)?.turno||""; cotaUI(true); recAuto();});
   if($("#kfRecSup")){ $("#kfRecSup").addEventListener("change",()=>{ $("#kfRecSup").dataset.auto="0"; }); $("#kfData").addEventListener("change",recAuto); recAuto(); }
   $("#kSalvar").onclick=async()=>{
     const sup=$("#kfSup").value, data=$("#kfData").value, vt=$("#kfVt").value, recSup=$("#kfRecSup").value, e=[];
@@ -5481,13 +5493,13 @@ function chkObrigPend(){
     const dd=new Date(hj+"T12:00"); dd.setDate(dd.getDate()-k); const d=iso(dd); if(d<CHK_OBRIG_INI) continue;
     const trab=new Set();
     T.filter(r=>r.data===d||r.dataExec===d||(r.historico||[]).some(h=>h?.data===d)).forEach(r=>trab.add(r.supervisao)); // a escala segue a programação: programou no dia, estava de plantão
-    chks.filter(c=>c.data===d&&c.supervisao).forEach(c=>trab.add(c.supervisao));
+    chks.filter(c=>chkDia(c)===d&&c.supervisao).forEach(c=>trab.add(c.supervisao));
     SUPS.filter(x=>escCfg(x.id)&&trabalha(x.id,d)).forEach(x=>trab.add(x.id)); // com escala cadastrada: todo dia de trabalho tem checklist
     [...trab].filter(t=>noEscopo(t)&&(!escCfg(t)||trabalha(t,d))).forEach(t=>{ // de folga não faz checklist
       if(d===CHK_OBRIG_INI&&supOf(t)?.turno!=="NOTURNO") return; // 1º dia: só o noturno
       if(supOf(t)?.turno==="NOTURNO"){ const lim=new Date(d+"T09:00"); lim.setDate(lim.getDate()+1); if(agora<lim) return; } // noturno termina na manhã seguinte
-      const feitos=[...new Set(chks.filter(c=>c.supervisao===t&&c.data===d).map(c=>c.viatura))], meta=chkMeta(t);
-      if(feitos.length<meta) out.push({tipo:"fazer",sup:t,data:d,feitos,meta});
+      const feitos=[...new Set(chks.filter(c=>c.supervisao===t&&chkDia(c)===d).map(c=>c.viatura))], meta=chkMeta(t);
+      if(feitos.length<meta) out.push({tipo:"fazer",sup:t,data:d,feitos,meta,faltam:chkFaltam(t,d,feitos)});
     });
   }
   const ini=(()=>{const x=new Date(hj+"T12:00"); x.setDate(x.getDate()-CHK_OBRIG_DIAS); return iso(x);})();
@@ -5507,7 +5519,7 @@ function proxEquipe(sup,data){
 }
 const chkObrigMeu=()=>chkObrigPend().filter(x=>travado()&&x.sup===sessao.sup);
 const chkObrigTxt=x=>x.tipo==="fazer"
-  ? `${fmtDs(x.data)} ${diaDe(x.data).slice(0,3)} · checklist NÃO FEITO (${x.feitos.length} de ${x.meta} equipamentos${x.feitos.length?": falta "+(x.meta-x.feitos.length):""})`
+  ? `${fmtDs(x.data)} ${diaDe(x.data).slice(0,3)} · checklist NÃO FEITO (${x.feitos.length} de ${x.meta} equipamentos${x.faltam?.length?" · falta: "+x.faltam.join(", "):x.feitos.length?": falta "+(x.meta-x.feitos.length):""})`
   : `${fmtDs(x.data)} ${diaDe(x.data).slice(0,3)} · falta DAR CIÊNCIA e ASSINAR o recebimento: ${x.c.viatura||"equipamento"} entregue pela ${x.c.supervisao}`;
 function chkObrigGrupos(L){ const G={}; L.forEach(x=>(G[x.sup]=G[x.sup]||[]).push(x)); return Object.keys(G).sort().map(sup=>({sup,its:G[sup]})); }
 function msgChkPend(grupos,so){
