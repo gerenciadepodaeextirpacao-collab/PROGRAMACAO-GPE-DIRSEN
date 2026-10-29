@@ -1735,7 +1735,7 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.29r";
+const APP_VERSAO="2026.10.29s";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -2775,7 +2775,7 @@ $("#kBxBtn").onclick=async()=>{
   const btn=$("#kBxBtn"), t=btn.textContent; btn.disabled=true; btn.textContent="Preparando…";
   try{
     try{ await seloPng(); }catch(x){}
-    await Promise.all(lst.flatMap(c=>(man?manSlots(c.midia):MID_SLOTS).map(s=>midCarregar(c.midia?.[s.k]))));
+    await Promise.all(lst.flatMap(c=>(man?manSlots(c.midia):chkSlotsDe(c)).map(s=>midCarregar(c.midia?.[s.k]))));
     const htmls=lst.map(c=>(man?manDocHtml(c):chkDocHtml(c)).replace(/<div class="i"><svg[\s\S]*?<\/svg><\/div>/g,SELO_PNG?`<div class="i"><img src="${SELO_PNG}" alt=""></div>`:"$&"));
     btn.textContent="Gerando PDF (1 de "+lst.length+")…";
     const blob=await rptPdfMulti(htmls,rot+" · "+quem+" · "+nome,{escala:2,qualidade:.92,prog:(i,n)=>{btn.textContent="Gerando PDF ("+i+" de "+n+")…";}});
@@ -2858,7 +2858,7 @@ function chkCard(c){
     <div class="meta">${esc(c.equipe||"")}${c.kmIni||c.kmFim?` · km ${esc(c.kmIni||"?")} → ${esc(c.kmFim||"?")}`:""}${c.hora?" · encerrado às "+esc(c.hora):""}</div>
     ${al.length?`<div class="ckprob">${al.map(t=>`<div>• ${esc(t)}</div>`).join("")}</div>`:""}
     ${c.ocorr?`<div class="meta">Ocorrências: ${esc(c.ocorr)}</div>`:""}
-    ${c.midia?`<div class="meta">📷 ${MID_SLOTS.filter(x=>x.tipo==="foto"&&c.midia[x.k]).length} de 4 fotos${c.midia.video360?" · 🎥 vídeo 360°":""}</div>`:""}
+    ${c.midia?`<div class="meta">📷 ${chkSlotsDe(c).filter(x=>x.tipo==="foto"&&c.midia[x.k]).length} de 4 fotos${c.midia.video360?" · 🎥 vídeo 360°":""}</div>`:""}
     <div class="cksig"><span class="ok">✔ Supervisor que entregou: <b>${esc(c.entrega?.nome||"—")}</b>${c.entrega?.em?" · "+fmtHora(c.entrega.em):""}</span>
     ${chkRecusado(c)?`<span class="bad">✖ Recebimento recusado por <b>${esc(c.recusa.nome)}</b> (${esc(c.recusa.sup||"")}) · ${fmtHora(c.recusa.em)}</span><span class="dv">Motivo: ${esc(c.recusa.motivo||"")}</span>${c.validacao?.em?`<span class="ok">✔ Validado por <b>${esc(c.validacao.nome)}</b>: ${c.validacao.decisao==="PROCEDE"?"procede":"não procede"} · ${fmtHora(c.validacao.em)}</span>`:`<span class="pe urgtxt">⏳ Aguardando validação do coordenador</span>`}`
     :chkRecebido(c)?`<span class="ok">✔ Supervisor que recebeu: <b>${esc(c.recebe.nome)}</b> (${esc(c.recebe.sup)}) · ${fmtHora(c.recebe.em)}</span>${c.recebe.obs?`<span class="dv">Ressalva no recebimento: ${esc(c.recebe.obs)}</span>`:""}`:`<span class="pe">Aguardando o supervisor que recebe${c.recebe?.sup?": "+esc(nomeSupDe(c.recebe.sup))+" ("+esc(c.recebe.sup)+")":""}</span>`}</div>
@@ -2876,6 +2876,7 @@ function abrirChk(c){
   const turma=ls.get("gpe_turma",{});
   const eq0=c?.equipe||turma.equipe||$("#equipe").value||"1ª EQUIPE";
   const vt0=c?.viatura||turma.viatura||"SKY 5073.0";
+  const kSlots=(c?chkSlotsDe(c):chkSlots(vt0)).slice(); // lista que muda quando troca caminhão ↔ van
   const rec=chkRecebido(c);
   const edit=!rec && !chkRecusado(c) && podeEntregar(sup0);
   const receber=!!c && souRecebedor(c);
@@ -2916,7 +2917,7 @@ function abrirChk(c){
     <p class="note cklegal">${esc(CHK_OBS_INSP)}</p>
     <div class="ckgrp">4. Ocorrências / observações</div>
     <textarea id="kfOcorr" aria-label="Ocorrências e observações" placeholder="Obrigatório quando houver anomalia, manutenção, item com NÃO ou equipamento não apto" ${dis}>${esc(c?.ocorr||"")}</textarea>
-    ${midSecHtml(midia,edit)}
+    ${midSecHtml(midia,edit,kSlots)}
     <div class="ckgrp">5. Declaração</div>
     <label class="ck"><input type="checkbox" id="kfDecl" ${c?.declaracao?"checked":""} ${dis}><span class="note" style="color:var(--ink)">${esc(CHK_DECL)}</span></label>
     <div class="ckbox">
@@ -2958,8 +2959,8 @@ function abrirChk(c){
   const close=()=>host.innerHTML="";
   $("#sh").onclick=e=>{if(e.target.id==="sh")close()}; $("#kClose").onclick=close;
   if(edit&&!c) stepify(host.querySelector(".panel"),"Dados do equipamento");
-  midLigar(host,midia,edit);
-  if($("#kPdf")) $("#kPdf").onclick=async()=>{ await Promise.all(MID_SLOTS.map(s=>midCarregar(c.midia?.[s.k]))); baixarFormPdf($("#kPdf"),chkDocHtml(c),arqNome("checklist",c.data,c.viatura),"Checklist "+(c.viatura||"")+" · "+fmtD(c.data)); };
+  const kMidCtl=midLigar(host,midia,edit,kSlots);
+  if($("#kPdf")) $("#kPdf").onclick=async()=>{ await Promise.all(chkSlotsDe(c).map(s=>midCarregar(c.midia?.[s.k]))); baixarFormPdf($("#kPdf"),chkDocHtml(c),arqNome("checklist",c.data,c.viatura),"Checklist "+(c.viatura||"")+" · "+fmtD(c.data)); };
   const err=$("#kfErr"), erro=t=>{err.textContent=t; err.hidden=false; err.scrollIntoView({block:"nearest"});};
   if($("#kComDef")) $("#kComDef").onclick=()=>abrirMan(null,c.validacao?.decisao==="PROCEDE"?comDefPre(c):{supervisao:c.supervisao,data:c.data,equipe:c.equipe,viatura:c.viatura,km:c.kmFim,desc:[c.ocorr,...chkAlertas(c)].filter(Boolean).join("\n"),chkId:c.id});
 
@@ -3042,9 +3043,9 @@ function abrirChk(c){
     if(!t){el.textContent="";return;}
     const feitos=[...new Set(chks.filter(x=>x.supervisao===t&&chkDia(x)===d).map(x=>x.viatura))], meta=chkMeta(t), falt=chkFaltam(t,d,feitos);
     el.innerHTML=`Checklists da ${esc(t)} no turno de ${fmtD(d)}: <b>${feitos.length} de ${meta}</b>${feitos.length?" · já feitos: "+feitos.map(esc).join(", "):""}${feitos.length>=meta?" · todos os equipamentos da turma já têm checklist.":falt.length?" · <b>falta: "+falt.map(esc).join(", ")+"</b>":""}`;
-    if(trocar&&feitos.includes($("#kfVt").value)){ const livre=[...$("#kfVt").options].map(o=>o.value).find(v=>!feitos.includes(v)); if(livre){$("#kfVt").value=livre; eqpUI();} } };
+    if(trocar&&feitos.includes($("#kfVt").value)){ const ops=[...$("#kfVt").options].map(o=>o.value), livre=falt.find(v=>ops.includes(v))||ops.find(v=>!feitos.includes(v)); if(livre){$("#kfVt").value=livre; if($("#kfVt").onchange) $("#kfVt").onchange(); else eqpUI();} } };
   const eqpUI=()=>{ const e=$("#kfEqp"); if(e&&(e.value===""||e.value==="CESTO AÉREO"||e.value==="VAN")) e.value=/^VAN/.test($("#kfVt").value)?"VAN":"CESTO AÉREO"; };
-  if(!c){ $("#kfVt").onchange=()=>{eqpUI();cotaUI(false)}; $("#kfData").onchange=()=>cotaUI(true); eqpUI(); cotaUI(true); }
+  if(!c){ $("#kfVt").onchange=()=>{eqpUI();cotaUI(false); const ns=chkSlots($("#kfVt").value); if(ns!==kSlots._de){ kSlots.splice(0,kSlots.length,...ns); kSlots._de=ns; kMidCtl.redesenha(); }}; $("#kfData").onchange=()=>cotaUI(true); eqpUI(); cotaUI(true); }
   $("#kfSup").onchange=()=>{ $("#kfSupNome").value=nomeSupDe($("#kfSup").value); }; const _kfSupOld=null;
   const recAuto=()=>{ const rs=$("#kfRecSup"), dica=$("#kfRecDica"); if(!rs||c) return; const px=proxEquipe($("#kfSup").value,$("#kfData").value);
     if(px&&(!rs.value||rs.dataset.auto==="1")){ rs.value=px; rs.dataset.auto="1"; }
@@ -3065,8 +3066,9 @@ function abrirChk(c){
     if(semIt) e.push(`marque ${semIt} ${semIt>1?"itens":"item"} da conferência final (seção 2)`);
     const tmp={sit,itens};
     if(chkAlertas(tmp).length && !$("#kfOcorr").value.trim()) e.push("descreva em Ocorrências / observações o problema encontrado");
-    const semFoto=MID_SLOTS.filter(x=>x.tipo==="foto"&&!midia[x.k]).length; if(semFoto) e.push(`anexe ${semFoto===1?"a foto que falta":"as "+semFoto+" fotos que faltam"} (carroceria, cesto, lado direito e lado esquerdo)`);
-    if(assets&&!midia.video360) e.push("anexe o vídeo 360° do cesto");
+    const slt=kSlots, semFoto=slt.filter(x=>x.tipo==="foto"&&!midia[x.k]).length; if(semFoto) e.push(`anexe ${semFoto===1?"a foto que falta":"as "+semFoto+" fotos que faltam"} (${ehVan(vt)?"frente, traseira, lado direito e lado esquerdo":"carroceria, cesto, lado direito e lado esquerdo"})`);
+    if(assets&&!midia.video360) e.push(ehVan(vt)?"anexe o vídeo 360° da van":"anexe o vídeo 360° do cesto");
+    Object.keys(midia).forEach(k=>{ if(!slt.some(x=>x.k===k)) delete midia[k]; }); // tira foto que era do outro tipo de equipamento
     if(document.querySelector("#kfMid .midst")?.textContent.includes("enviando")||[...document.querySelectorAll("#kfMid .midst")].some(x=>/enviando|reduzindo/.test(x.textContent))) e.push("espere terminar o envio das fotos / vídeo");
     if(!$("#kfDecl").checked) e.push("marque a declaração (seção 5)");
     if(!$("#kfHora").value) e.push("horário de encerramento");
@@ -3340,9 +3342,9 @@ function chkDocHtml(c){
   const s3=`<div><p class="sec">3. Observação sobre a inspeção</p><p class="leg">${esc(CHK_OBS_INSP)}</p></div>`;
   const s4=`<div><p class="sec">4. Ocorrências / observações</p><div class="box">${esc(c.ocorr||"Sem ocorrências.")}</div></div>`;
   const s5=`<div><p class="sec">5. Declaração</p><p class="leg">${c.declaracao?"( X ) ":""}${esc(CHK_DECL)}</p></div>`;
-  const fotos=MID_SLOTS.filter(x=>x.tipo==="foto");
+  const fotos=chkSlotsDe(c).filter(x=>x.tipo==="foto");
   const sfot=`<div><p class="sec">Registro fotográfico</p><div class="fgrid">${fotos.map(x=>{const u=midUrl(c.midia?.[x.k]);return `<div class="fcel">${u?`<img src="${esc(u)}" alt="">`:`<div class="fsem">Sem foto</div>`}<span>${esc(x.t)}</span></div>`}).join("")}</div>
-    <p class="leg" style="margin:6px 0 0">Vídeo 360° do cesto: ${c.midia?.video360?"anexado no sistema Programação GPE (assista pelo app, abrindo este checklist).":"não anexado."}</p></div>`;
+    <p class="leg" style="margin:6px 0 0">Vídeo 360° ${ehVan(c.viatura)?"da van":"do cesto"}: ${c.midia?.video360?"anexado no sistema Programação GPE (assista pelo app, abrindo este checklist).":"não anexado."}</p></div>`;
   const ass=`<div><p class="sec">Assinaturas – entrega e recebimento do equipamento</p>
     </div>
     ${fsig("Supervisor que entregou o turno",c.entrega)}
@@ -3381,7 +3383,7 @@ async function baixarFormPdf(btn,html,nome,label){
   finally{ btn.disabled=false; btn.textContent=t; }
 }
 // PDF do checklist direto da lista: um botão por equipamento e um que baixa todos do dia, um arquivo por vez
-async function chkPdfBaixar(c,btn){ await Promise.all(MID_SLOTS.map(s=>midCarregar(c.midia?.[s.k]))); await baixarFormPdf(btn,chkDocHtml(c),arqNome("checklist",c.data,c.viatura),"Checklist "+(c.viatura||"")+" · "+fmtD(c.data)); }
+async function chkPdfBaixar(c,btn){ await Promise.all(chkSlotsDe(c).map(s=>midCarregar(c.midia?.[s.k]))); await baixarFormPdf(btn,chkDocHtml(c),arqNome("checklist",c.data,c.viatura),"Checklist "+(c.viatura||"")+" · "+fmtD(c.data)); }
 async function chkPdfTodos(btn){ const bs=[...document.querySelectorAll("#kList [data-chkpdf]")]; const t0=btn.textContent; btn.disabled=true;
   try{ for(let i=0;i<bs.length;i++){ const c=chks.find(x=>x.id===bs[i].dataset.chkpdf); if(!c) continue; btn.textContent=`Baixando ${i+1} de ${bs.length}: ${c.viatura||""}…`; await chkPdfBaixar(c,bs[i]); await new Promise(r=>setTimeout(r,600)); }
     toast(`${bs.length} PDFs baixados.`); }
@@ -3397,6 +3399,17 @@ const MID_SLOTS=[
   {k:"ladoDir",t:"Lateral inteira do caminhão – lado direito",tipo:"foto"},
   {k:"ladoEsq",t:"Lateral inteira do caminhão – lado esquerdo",tipo:"foto"},
   {k:"video360",t:"Vídeo curto 360° do cesto (até uns 20 segundos)",tipo:"video"}];
+// VAN: frente, traseira, lado direito, lado esquerdo e vídeo 360°
+const VAN_SLOTS=[
+  {k:"frente",t:"Frente da van",tipo:"foto"},
+  {k:"traseira",t:"Traseira da van (atrás)",tipo:"foto"},
+  {k:"ladoDir",t:"Lateral inteira da van – lado direito",tipo:"foto"},
+  {k:"ladoEsq",t:"Lateral inteira da van – lado esquerdo",tipo:"foto"},
+  {k:"video360",t:"Vídeo curto 360° da van (até uns 20 segundos)",tipo:"video"}];
+const ehVan=vt=>/^VAN/i.test(vt||"");
+const chkSlots=vt=>ehVan(vt)?VAN_SLOTS:MID_SLOTS;
+// checklist já salvo: van antiga feita no padrão do caminhão continua mostrando as fotos que tem
+const chkSlotsDe=c=>ehVan(c?.viatura)&&!c?.midia?.frente&&!c?.midia?.traseira&&(c?.midia?.carroceria||c?.midia?.cesto)?MID_SLOTS:chkSlots(c?.viatura);
 const MID_COL="chkmidia"; let assets=null; const midCache={};
 // fora do Claude as fotos ficam no Supabase (bucket "midia"); vale mesmo com um camada-gpe.js antigo
 const SUPA_URL="https://eyqbihvatzcjismsszvs.supabase.co", SUPA_KEY="sb_publishable_ekN-TZqBKMwRs6aGHPPejg_rLkBgjgv";
@@ -3479,7 +3492,7 @@ const manSlots=midia=>{ const ex=[]; for(let n=2;n<=MAN_VID_MAX;n++) if(midia?.[
   return [MAN_SLOTS[0],...ex,...MAN_SLOTS.slice(1)].concat(MAN_ANT.filter(s=>midia?.[s.k])); };
 function midSecHtml(midia,edit,slots=MID_SLOTS,titulo="Fotos e vídeo do equipamento",nota){
   return `<div class="ckgrp">${titulo}</div>
-    <p class="note" style="margin:0">${nota||(edit?"Fotos e vídeo só pela câmera, tirados na hora (não vale foto antiga da galeria). O vídeo é uma volta de 360° em torno do cesto.":"Registro fotográfico do fim do expediente.")}</p>
+    <p class="note" style="margin:0">${nota||(edit?"Fotos e vídeo só pela câmera, tirados na hora (não vale foto antiga da galeria). O vídeo é uma volta de 360° em torno do cesto (na van, em volta da van).":"Registro fotográfico do fim do expediente.")}</p>
     <div class="midgrid" id="kfMid">${slots.map(s=>midSlotHtml(s,midia[s.k],edit)).join("")}</div>`;
 }
 // foto em tela cheia (toque para fechar)
