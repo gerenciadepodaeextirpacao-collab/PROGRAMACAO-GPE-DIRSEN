@@ -1034,6 +1034,7 @@ nav.tabs .tbadge{animation:gpeBadge 1.1s ease-in-out infinite}
         <label class="f">LT. (lote)<input id="e_lt" autocomplete="off" autocapitalize="characters" placeholder="Ex.: 4"></label></div>
       <label class="f">Complemento / referência (opcional)<input id="e_comp" autocomplete="off" autocapitalize="characters" placeholder="Ex.: ESQ. C/ R. 10, Nº 96, EM FRENTE AO CMEI"></label>
       <p class="maphint es-prev" id="e_prev"></p>
+      <p class="maphint" id="e_livre" hidden></p>
       <input type="hidden" id="logradouro">
     </div>
     
@@ -1058,6 +1059,20 @@ nav.tabs .tbadge{animation:gpeBadge 1.1s ease-in-out infinite}
     <p class="note" id="geoInfo" style="margin:2px 0 8px">Pegue a posição pelo GPS do aparelho no local do serviço.</p>
     <div class="geo-row"><button type="button" class="btn sec" id="geoBtn">Usar GPS do aparelho</button><span id="geoMap"></span></div>
     <label class="f" style="margin-top:8px">Coordenadas (se o GPS não funcionar)<input id="geoTxt" inputmode="text" autocomplete="off" placeholder="Ex.: -16.6869, -49.2648 ou cole o link do Google Maps"></label>
+  </section>
+  <section class="card" id="secEndBx" hidden>
+    <div class="step">Complete o endereço</div>
+    <p class="note" style="margin:0">Processo / O.S programado sem o endereço completo. Para dar baixa, informe o <b>tipo e o nome/número da via</b> e a <b>QD. e o LT.</b> (ou o <b>número</b> do imóvel).</p>
+    <div class="endsep" data-end="bx_">
+      <div class="es-row1"><label class="f">Tipo de via<select id="bx_via"><option value="">Selecione…</option><option value="R.">R. (rua)</option><option value="AV.">AV. (avenida)</option><option value="AL.">AL. (alameda)</option><option value="PÇ.">PÇ. (praça)</option><option value="ROD.">ROD. (rodovia)</option><option value="TV.">TV. (travessa)</option><option value="ESTR.">ESTR. (estrada)</option></select></label>
+        <label class="f">Nome / número da via<input id="bx_nome" autocomplete="off" autocapitalize="characters" placeholder="Ex.: 240, T-63, DO POVO"></label></div>
+      <div class="es-row2"><label class="f">QD. (quadra)<input id="bx_qd" autocomplete="off" autocapitalize="characters" placeholder="Ex.: 12"></label>
+        <label class="f">LT. (lote)<input id="bx_lt" autocomplete="off" autocapitalize="characters" placeholder="Ex.: 4"></label></div>
+      <label class="f">Nº do imóvel (se não tiver QD. e LT.)<input id="bx_num" autocomplete="off" inputmode="numeric" placeholder="Ex.: 96"></label>
+      <label class="f">Complemento / referência (opcional)<input id="bx_comp" autocomplete="off" autocapitalize="characters" placeholder="Ex.: ESQ. C/ R. 10"></label>
+      <p class="maphint es-prev" id="bx_prev"></p>
+      <input type="hidden" id="bxLogr">
+    </div>
   </section>
   <section class="card" id="secSit" hidden>
     <div class="step">Situação <b>o serviço programado foi feito?</b></div>
@@ -1705,8 +1720,10 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.28zr";
+const APP_VERSAO="2026.10.28zt";
 const VERSOES=[
+  {v:"2026.10.28zt", d:"28/10/2026", itens:["Programar PROCESSO ou O.S: pode salvar sem QD., LT. e número","Na baixa de processo / O.S com endereço incompleto aparece \"Complete o endereço\": tipo e nome da via + QD. e LT. (ou Nº do imóvel) são obrigatórios para dar baixa"]},
+  {v:"2026.10.28zs", d:"28/10/2026", itens:["Programar ÁREA PÚBLICA, ENTRE-PISTA e PRAÇA: QD., LT., tipo de via e número/nome da via não são obrigatórios – basta a via ou uma referência do local"]},
   {v:"2026.10.28zr", d:"28/10/2026", itens:["Início: \"Lista e exportar\" com \"(PROGRAMAÇÃO)\" embaixo"]},
   {v:"2026.10.28zq", d:"28/10/2026", itens:["Retirado o \"Histórico importado da planilha\": a opção saiu do filtro da Lista e esses registros não aparecem mais em nenhuma tela, relatório ou cálculo"]},
   {v:"2026.10.28zp", d:"28/10/2026", itens:["Lista: \"Agrupar por\" Dia, Semana, Mês, Ano, Poda, Turma ou Situação – na tela (grupos com total de serviços, previsto e executado) e no PDF/imagem","Lista: botão para carregar o histórico anterior e ver o ano inteiro"]},
@@ -1885,7 +1902,7 @@ const OC={GALHO:"Galho caído",ARVORE:"Árvore caída"};
 chipRow($("#ocChips"), Object.entries(OC).map(([v,h])=>({v,h})), v=>{form.oc=v;setPressed($("#ocChips"),v);$("#ocQLbl").textContent=v==="ARVORE"?"Quantidade de árvores":"Quantidade de galhos"});
 const tagOc=r=>r.ocorrencia?`<span class="tagoc">${OC[r.ocorrencia.tipo]||"Ocorrência"}</span>`:"";
 
-function servUI(){ const on=TIPOS_SERV.has(form.tipo); $("#servWrap").hidden=!on; $("#servOutro").hidden=!on||$("#servico").value!=="OUTRO"; }
+function servUI(){ try{ const lv=$("#e_livre"); if(lv){ const pr=temProc(form.tipo)&&form.mode==="prog"; lv.hidden=!(TIPOS_180.has(form.tipo)||pr); lv.innerHTML=pr?"Processo / O.S: pode salvar <b>sem QD., LT. e número</b>. Na hora de dar baixa o app pede para completar o endereço.":"Área pública, entre-pista ou praça: <b>QD., LT. e número não são obrigatórios</b>. Informe a via ou uma referência do local."; } }catch(e){} const on=TIPOS_SERV.has(form.tipo); $("#servWrap").hidden=!on; $("#servOutro").hidden=!on||$("#servico").value!=="OUTRO"; }
 function servLer(){ if(!TIPOS_SERV.has(form.tipo)) return ""; const v=$("#servico").value; return v==="OUTRO"?($("#servOutro").value.trim().toUpperCase()||""):v; }
 function servCarregar(v){ v=v||""; if(!v){$("#servico").value="";$("#servOutro").value="";} else if(SERVICOS.includes(v)){$("#servico").value=v;$("#servOutro").value="";} else {$("#servico").value="OUTRO";$("#servOutro").value=v;} servUI(); }
 // nº do processo / O.S: o campo só aparece quando o tipo de local é PROCESSO ou O.S
@@ -2061,6 +2078,7 @@ function modeUI(){
   $("#totLbl").textContent = m==="prog" ? "Receita prevista" : "Receita executada";
   $("#dataLbl").textContent = m==="avulso" ? "Data da execução" : m==="ocorr" ? "Data da ocorrência" : "Data programada";
   ["secTurma","secLocal"].forEach(id=>$("#"+id).hidden = m==="baixa");
+  $("#secEndBx").hidden = !(m==="baixa" && form.base && endIncompleto(form.base));
   const semSup = m==="prog" && !form.sup;
   $("#supPick").hidden = !semSup; $("#form").hidden = semSup; $("#semProg").hidden = m!=="prog" || semSup;
   $("#supBar").hidden = semSup || m==="baixa";
@@ -2179,8 +2197,11 @@ $("#geoTxt").addEventListener("input",()=>{ const g=parseCoord($("#geoTxt").valu
 const _modeUIgeo=modeUI; modeUI=function(...a){ const v=_modeUIgeo.apply(this,a); if((form.mode==="baixa"||form.mode==="ocorr"||form.mode==="avulso")&&!form.geo&&!form.geoAuto&&!(form.base&&form.base.geo&&form.mode==="ocorr")){ form.geoAuto=true; try{pegarGPS(true)}catch(e){} } return v; };
 $("#impList").addEventListener("change",e=>{const s=e.target.closest("[data-imp]"); if(s){ if(s.value) form.impSel[s.dataset.imp]=s.value; else delete form.impSel[s.dataset.imp]; }});
 $("#data").addEventListener("change",()=>{ if(form.mode==="ocorr") renderImp(); });
+// processo / O.S programado sem endereço completo: precisa de tipo e nome da via + (QD. e LT.) ou Nº para dar baixa
+function endIncompleto(r){ if(!r||!temProc(r.tipo)) return false; const t=abrevEnd(r.logradouro||""); const via=/^(R\.|AV\.|AL\.|PÇ\.|PC\.|ROD\.|TV\.|ESTR\.)\s*\S/.test(t), qdlt=/\bQD\.\s*\S/.test(t)&&/\bLT\.\s*\S/.test(t), num=/\bN[º°]\s*\d/.test(t); return !(via&&(qdlt||num)); }
 function abrirBaixa(r, pre){
   limpar("baixa"); form.base=r; fillCommon(r);
+  try{ ["via","nome","qd","lt","num","comp"].forEach(k=>{ const el=$("#bx_"+k); if(el) el.value=""; }); if(endIncompleto(r)){ endCarregar("bx_",r.logradouro||""); const mn=/\bN[º°]\s*(\d+\S*)/.exec($("#bx_comp").value||""); if(mn){ $("#bx_num").value=mn[1]; $("#bx_comp").value=$("#bx_comp").value.replace(mn[0],"").replace(/^[,\s]+|[,\s]+$/g,""); } endSync("bx_"); } }catch(e){}
   const pq=prevQ(r);
   $("#baseCard").innerHTML=`<b>${fmtD(r.data)} · ${esc(r.dia||diaDe(r.data))} · ${r.semana?r.semana+"ª semana ("+periodoSem(r.semana)+")":""}</b>
     <span>${esc(r.supervisao)} · ${esc(r.equipe)} · ${esc(r.viatura)}</span>
@@ -2211,8 +2232,9 @@ function abrirBaixa(r, pre){
 const VIAS=["R.","AV.","AL.","PÇ.","ROD.","TV.","ESTR."];
 function endMontar(pre){ const v=$("#"+pre+"via")?.value||"", n=($("#"+pre+"nome")?.value||"").toUpperCase().trim(), qd=($("#"+pre+"qd")?.value||"").toUpperCase().trim().replace(/^QD\.?\s*/,""), lt=($("#"+pre+"lt")?.value||"").toUpperCase().trim().replace(/^LT\.?\s*/,""), c=abrevEnd($("#"+pre+"comp")?.value||"");
   if(!v&&!n&&!qd&&!lt&&!c) return "";
-  return [[v,n].filter(Boolean).join(" "), qd?"QD. "+qd:"", lt?"LT. "+lt:"", c].filter(Boolean).join(", "); }
-const END_ALVO={e_:"logradouro",se_:"s_logradouro",ox_:"oxLogr"};
+  const num=($("#"+pre+"num")?.value||"").toUpperCase().trim().replace(/^N[º°O]?\.?\s*/,"");
+  return [[v,n].filter(Boolean).join(" "), qd?"QD. "+qd:"", lt?"LT. "+lt:"", num?"Nº "+num:"", c].filter(Boolean).join(", "); }
+const END_ALVO={e_:"logradouro",se_:"s_logradouro",ox_:"oxLogr",bx_:"bxLogr"};
 function endSync(pre){ const alvo=$("#"+END_ALVO[pre]); if(!alvo) return; const v=endMontar(pre); const mudou=alvo.value!==v; alvo.value=v;
   const pv=$("#"+pre+"prev"); if(pv) pv.innerHTML=v?`Fica cadastrado como: <b>${esc(v)}</b>`:"";
   if(mudou){ alvo.dispatchEvent(new Event("input")); alvo.dispatchEvent(new Event("change")); } }
@@ -2227,7 +2249,7 @@ function endCarregar(pre, s){ const t=abrevEnd(s||""); let via="",nome="",qd="",
   if(!m&&nome&&!via){ comp=[nome,comp].filter(Boolean).join(", "); nome=""; } // endereço antigo fora do padrão: vai para o complemento
   $("#"+pre+"via").value=via; $("#"+pre+"nome").value=nome; $("#"+pre+"qd").value=qd; $("#"+pre+"lt").value=lt; $("#"+pre+"comp").value=comp;
   endSync(pre); }
-function endLigar(pre){ ["via","nome","qd","lt","comp"].forEach(k=>{ const el=$("#"+pre+k); if(!el) return;
+function endLigar(pre){ ["via","nome","qd","lt","num","comp"].forEach(k=>{ const el=$("#"+pre+k); if(!el) return;
   el.addEventListener(k==="via"?"change":"input",()=>endSync(pre));
   if(k==="comp") el.addEventListener("blur",()=>{ const v=abrevEnd(el.value); if(v!==el.value){ el.value=v; endSync(pre); } });
   if(k==="nome") el.addEventListener("blur",()=>{ let v=el.value.toUpperCase().trim(); const mm=v.match(/^(RUA|R\.?|AVENIDA|AV\.?|ALAMEDA|AL\.?)\s+(.*)$/); if(mm&&!$("#"+pre+"via").value){ $("#"+pre+"via").value=abrevEnd(mm[1]+" X").split(" ")[0]; v=mm[2]; } el.value=v; endSync(pre); });
@@ -2316,9 +2338,11 @@ $("#form").addEventListener("submit", async ev=>{
   if(m!=="baixa"){
     if(!common.supervisao) e.push("escolha a supervisão");
     if(m==="prog" ? errDataProg(common.data) : errDataExec(common.data)) e.push(m==="prog"?"informe uma data programada válida":"a data da execução não pode ser futura nem ter ano errado");
-    if(!common.bairro) e.push("informe o bairro"); if(!common.logradouro) e.push("informe o logradouro");
-    if(!$("#e_via").value) e.push("escolha o tipo de via (R., AV., AL.…)"); if(!$("#e_nome").value.trim()) e.push("informe o nome ou número da via");
-    { const ee=erroEnd(common.logradouro,"logradouro"); if(ee) e.push(ee); }
+    const endProc=temProc(common.tipo)&&m==="prog"; // processo / O.S: pode programar sem QD., LT. e número (completa na baixa)
+    const endLivre=TIPOS_180.has(common.tipo)||endProc; // área pública, entre-pista e praça: QD., LT. e número/nome da via não são obrigatórios
+    if(!common.bairro) e.push("informe o bairro"); if(!common.logradouro&&!endProc) e.push(endLivre?"informe a via ou uma referência do local (complemento)":"informe o logradouro");
+    if(!endLivre){ if(!$("#e_via").value) e.push("escolha o tipo de via (R., AV., AL.…)"); if(!$("#e_nome").value.trim()) e.push("informe o nome ou número da via"); }
+    { const ee=erroEnd(common.logradouro,"logradouro"); if(ee&&!(endLivre&&/comece pelo tipo de via/.test(ee))) e.push(ee); }
     if(!common.tipo) e.push("escolha o tipo de local"); if(common.tipo==="O.S"&&!common.processo) e.push("informe o nº da O.S"); if(common.tipo==="PROCESSO"&&!common.processo) e.push("informe o nº do processo");
     if(TIPOS_SERV.has(common.tipo)&&!common.servico) e.push($("#servico").value==="OUTRO"?"escreva qual é o serviço":"escolha o serviço a executar (ex.: poda de manutenção)");
   }
@@ -2356,6 +2380,8 @@ $("#form").addEventListener("submit", async ev=>{
     if(m==="ocorr" && execOk && !Object.keys(q).length && !e.length && !form.okSemItens){ form.okSemItens=true;
       $("#err").textContent="Nenhum item do contrato foi lançado. Assim este atendimento não entra na receita nem no controle do contrato. Lance os itens ou toque em Salvar de novo para confirmar sem itens."; $("#err").hidden=false; $("#qtdCard").scrollIntoView({block:"center"}); return; }
     if(execOk && errDataExec($("#dataExec").value)) e.push("a data em que foi executado não pode ser futura");
+    if(m==="baixa" && endIncompleto(base)){ const v=$("#bx_via").value, n=$("#bx_nome").value.trim(), qd=$("#bx_qd").value.trim(), lt=$("#bx_lt").value.trim(), nu=$("#bx_num").value.trim();
+      if(!v||!n) e.push("complete o endereço: tipo e nome/número da via"); if(!(qd&&lt)&&!nu) e.push("complete o endereço: QD. e LT. (ou o Nº do imóvel)"); }
     const fiscal = (form.st==="NÃO" ? $("#fiscalN").value : $("#fiscal").value).trim();
     if(form.st==="NÃO"&&!$("#fiscalN").value.trim()) $("#fiscalN").value=$("#fiscal").value;
     body = {...(base||{}), ...common, status:form.st, qtd:q, receita:receitaDe(q), dataExec:execOk?$("#dataExec").value:"", fiscal,
@@ -2363,7 +2389,8 @@ $("#form").addEventListener("submit", async ev=>{
       baixaEm:base?.baixaEm||now, baixaPor:base?.baixaPor||myId||null, atualizadoEm:now, atualizadoPor:myId||null};
     delete body.id; delete body._fila;
     body.pctExec = usaPct ? pct : null; body.pctItens = usaPct ? pcts : null;
-    if(m==="baixa"){ body.qtdPrevista = prevQ(base); body.receitaPrevista = receitaDe(body.qtdPrevista); }
+    if(m==="baixa"){ body.qtdPrevista = prevQ(base); body.receitaPrevista = receitaDe(body.qtdPrevista);
+      if(endIncompleto(base)&&$("#bxLogr").value){ body.logradouro=$("#bxLogr").value; body.endCompletadoNaBaixa={em:now,por:nomeAutor()||""}; } }
     if(m==="ocorr"){ body.avulso=true; body.origem=base?.origem||"app"; body.autor=base?.autor||myId||null; body.criadoEm=base?.criadoEm||now; body.qtdPrevista={};
       body.dataExec=common.data; body.status="SIM";
       body.ocorrencia={tipo:form.oc, hora:$("#ocHora").value, origem:$("#ocOrigem").value, protocolo:$("#ocProt").value.trim(), qtd:parseInt($("#ocQtd").value)||1, via:$("#ocVia").checked, rede:$("#ocRede").checked, danos:$("#ocDano").checked};
