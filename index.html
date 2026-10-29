@@ -1734,8 +1734,9 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.29n";
+const APP_VERSAO="2026.10.29o";
 const VERSOES=[
+  {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
   {v:"2026.10.29m", d:"29/10/2026", itens:["Lista: em cada dia (ou grupo) aparece \"Baixar uma equipe por vez\" – PDF ou imagem da programação de cada turma/equipe separada"]},
   {v:"2026.10.29l", d:"29/10/2026", itens:["Lista: filtros de Dia e Equipe (1ª, 2ª, 3ª) – o PDF, a imagem e a planilha saem só com a programação daquele dia e daquela equipe"]},
@@ -3914,8 +3915,9 @@ async function listaImg(btn,sel){
       cv=await html2pdf().set({html2canvas:{scale:k,backgroundColor:"#ffffff",logging:false,scrollX:0,scrollY:0,x:0,y:0,useCORS:true,windowWidth:1280,onclone:repaginarCopia}}).from(el).toCanvas().get("canvas"); }
     finally{ host.remove(); scrollTo(sx,sy); }
     const blob=await new Promise(ok=>cv.toBlob(ok,"image/png")), nome=sel?sel.nome+".png":lxNome("png"), f=new File([blob],nome,{type:"image/png"});
-    try{ if(navigator.canShare&&navigator.canShare({files:[f]})){ await navigator.share({files:[f],text:"Lista de serviços – Programação GPE"}); return; } }catch(e){ if(e?.name==="AbortError") return; }
-    if(downloads){ await downloads.save({filename:nome,data:blob}); toast("Imagem da lista baixada."); } else toast("Download não disponível aqui.");
+    // baixa a imagem direto no aparelho; só abre o compartilhar se o download não estiver disponível
+    let ok=false; if(downloads){ try{ await downloads.save({filename:nome,data:blob}); ok=true; toast("Imagem baixada: "+nome); }catch(e){ if(e?.code==="cancelled"||e?.code==="declined") return; } }
+    if(!ok){ try{ if(navigator.canShare&&navigator.canShare({files:[f]})){ await navigator.share({files:[f],text:"Ordem de serviço – Programação GPE"}); return; } }catch(e){ if(e?.name==="AbortError") return; } toast("Download não disponível aqui."); }
   }catch(e){ console.error(e); if(e?.message==="load") toast("Sem internet para montar a imagem."); else if(e?.code!=="cancelled"&&e?.code!=="declined") toast("Não foi possível gerar a imagem."); }
   finally{ btn.disabled=false; btn.textContent=t; }
 }
