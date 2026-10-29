@@ -923,6 +923,7 @@ nav.tabs .tbadge{animation:gpeBadge 1.1s ease-in-out infinite}
 .lxhist{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-top:6px}.lxhist .btn{min-height:40px;font-size:13px}
 .intile .insub{display:block;font-size:13px;font-weight:700;letter-spacing:.03em;color:var(--muted);margin-top:2px}
 #areaWrap:not([hidden]){display:grid;gap:6px}#areaWrap #areaAdd{justify-self:start}.arealin{display:grid;gap:6px;margin-top:4px}.arearow{display:flex;align-items:center;gap:8px}.arearow>span{flex:none;width:52px;font-weight:700;font-size:14px;color:var(--muted)}.arearow input{flex:1;min-width:0}.arearow button{flex:none;width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:#b3261e;font-weight:700;cursor:pointer}
+.lxeqs{display:grid;gap:6px;padding:10px 12px;background:#eef6f0;border-bottom:1px solid var(--line)}.lxeqs>span{font-size:13px;font-weight:700;color:#005f27}.lxeq{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center}.lxeq b{font-size:13px;grid-column:1}.lxeq small{grid-column:1;grid-row:2;font-size:12px;color:var(--muted)}.lxeq .btn{min-height:40px;font-size:13px;padding:0 10px;grid-row:1/span 2}
 </style>
 
 <div id="login" class="login" hidden>
@@ -1226,8 +1227,11 @@ nav.tabs .tbadge{animation:gpeBadge 1.1s ease-in-out infinite}
     <select id="fSup" aria-label="Turma"></select>
     <select id="fSt" aria-label="Situação"><option value="">Todas as situações</option><option value="PROGRAMADO">Programado</option><option value="ATRASADO">Atrasado (sem baixa)</option><option value="SIM">Executado</option><option value="PARCIAL">Parcial</option><option value="NÃO">Não executado / remarcado</option></select>
     <select id="fPend" aria-label="Pendências"><option value="">Sem filtro de pendência</option><option value="rem">Só remarcações</option><option value="avulso">Só sem programação</option><option value="oc">Só galho / árvore caída</option></select>
+    <input id="fDia" type="date" aria-label="Dia (opcional)" title="Dia">
+    <select id="fEq" aria-label="Equipe"><option value="">Todas as equipes</option><option>1ª EQUIPE</option><option>2ª EQUIPE</option><option>3ª EQUIPE</option></select>
     <input id="fTxt" type="search" placeholder="Buscar bairro, logradouro ou processo">
   </div>
+  <p class="note" style="margin:4px 0 0">Para o PDF ou a imagem de <b>um dia</b> e <b>uma equipe</b>: escolha o dia e a equipe acima e toque em PDF ou Imagem da lista.</p>
   <div class="lxbar"><label class="f">Agrupar por<select id="fAgr"><option value="dia">Dia</option><option value="sem">Semana</option><option value="mes">Mês</option><option value="ano">Ano</option><option value="poda">Poda</option><option value="turma">Turma</option><option value="sit">Situação</option><option value="nada">Sem agrupar</option></select></label>
     <label class="f">Formato<select id="fFmt"><option value="res">Resumido (tabela)</option><option value="det">Detalhado (cada serviço aberto)</option></select></label>
     <button type="button" class="btn sec" id="lxPdf">📄 PDF da lista</button><button type="button" class="btn sec" id="lxImg">🖼 Imagem da lista</button><button type="button" class="btn sec" id="lxXls">📊 Planilha Excel</button></div>
@@ -1730,8 +1734,10 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.29k";
+const APP_VERSAO="2026.10.29m";
 const VERSOES=[
+  {v:"2026.10.29m", d:"29/10/2026", itens:["Lista: em cada dia (ou grupo) aparece \"Baixar uma equipe por vez\" – PDF ou imagem da programação de cada turma/equipe separada"]},
+  {v:"2026.10.29l", d:"29/10/2026", itens:["Lista: filtros de Dia e Equipe (1ª, 2ª, 3ª) – o PDF, a imagem e a planilha saem só com a programação daquele dia e daquela equipe"]},
   {v:"2026.10.29k", d:"29/10/2026", itens:["Detalhes do serviço: linha \"Área URBANTRIM\" com o(s) ID(s) da área; também em destaque na mensagem e na imagem do WhatsApp"]},
   {v:"2026.10.29j", d:"29/10/2026", itens:["Serviço grande fracionado: os dias são marcados intercalados (um sim, um não), como a escala 12x36; se a turma tiver escala cadastrada, segue a escala"]},
   {v:"2026.10.29i", d:"29/10/2026", itens:["Programação respeita a escala de trabalho da turma: não deixa programar em dia de folga e o serviço grande em vários dias usa só os dias de trabalho da escala (inclusive domingo, se a escala trabalhar)"]},
@@ -3763,8 +3769,8 @@ $("#fSup").innerHTML=`<option value="">Todas as turmas</option>`+SUPS.map(s=>`<o
 const selVals=id=>{ const el=$("#"+id); return el?[...el.selectedOptions].map(o=>o.value).filter(Boolean):[]; };
 const listaFonte=()=>todos();
 function listaFiltrar(all){
-  const fs=selVals("fSem"), fp=selVals("fSup"), ft=selVals("fSt"), fpend=selVals("fPend"), q=$("#fTxt").value.trim().toUpperCase();
-  return all.filter(r=>(!fs.length||fs.includes(String(r.semana)))&&(!fp.length||fp.includes(r.supervisao))&&(!ft.length||ft.includes(stKey(r)))
+  const fs=selVals("fSem"), fp=selVals("fSup"), ft=selVals("fSt"), fpend=selVals("fPend"), q=$("#fTxt").value.trim().toUpperCase(), fd=$("#fDia")?.value||"", fe=$("#fEq")?.value||"";
+  return all.filter(r=>(!fd||r.data===fd||r.dataExec===fd)&&(!fe||(r.equipe||"")===fe)&&(!fs.length||fs.includes(String(r.semana)))&&(!fp.length||fp.includes(r.supervisao))&&(!ft.length||ft.includes(stKey(r)))
     &&(!q||[r.bairro,r.logradouro,r.processo,r.substituto?.bairro,r.substituto?.logradouro].join(" ").toUpperCase().includes(q))
     &&(!fpend.length||fpend.some(fp1=>(fp1==="rem"&&r.remarcadaDe)||(fp1==="avulso"&&r.avulso&&!r.ocorrencia)||(fp1==="oc"&&r.ocorrencia)||(fp1==="hist"&&r.arquivado))));
 }
@@ -3808,11 +3814,14 @@ function renderLista(){
     </button>`};
   const tot=rs=>{ const p=rs.reduce((a,r)=>a+(r.avulso?0:receitaDe(prevQ(r))),0), e=rs.reduce((a,r)=>a+execRec(r),0), ex=rs.filter(r=>r.status==="SIM"||r.status==="PARCIAL").length;
     const ap=rs.reduce((a,r)=>a+(r.avulso?0:somaG(prevQ(r),"P")+somaG(prevQ(r),"E")),0), ae=rs.reduce((a,r)=>{const q=execQ(r),s2=subQ(r);return a+somaG(q,"P")+somaG(q,"E")+somaG(s2,"P")+somaG(s2,"E")},0); return {p,e,ex,ap,ae}; };
-  const abre=agr==="nada"||gs.length<=3;
+  const abre=agr==="nada"||gs.length<=3; LXEQ.length=0; LXG_K.length=0; gs.forEach(g=>LXG_K.push(g.k));
   $("#list").innerHTML = (gs.length>1?`<div class="lxag"><b>${gs.length}</b> ${AGR_NOME[agr]==="mês"?"meses":AGR_NOME[agr]==="situação"?"situações":AGR_NOME[agr]+"s"} · ${rows.length} serviço${rows.length===1?"":"s"} · toque no grupo para abrir</div>`:"")+gs.map((g,i)=>{ const t=tot(g.rs); const lim=Math.max(0,300-mostrados); const vis=g.rs.slice(0,lim); mostrados+=vis.length;
-    return `<details class="lxg" ${abre||i===0?"open":""}><summary><span class="lxgk">${esc(g.k)}</span><span class="lxgn">${g.rs.length} serviço${g.rs.length===1?"":"s"} · previsto ${brlS(t.p)} (${nf0(t.ap)} ${t.ap===1?"árvore":"árvores"}) · executado ${brlS(t.e)} (${nf0(t.ae)} ${t.ae===1?"árvore":"árvores"})</span></summary>${vis.map(recHtml).join("")}${g.rs.length>vis.length?`<p class="note">Mostrando ${vis.length} de ${g.rs.length}. Use os filtros para refinar.</p>`:""}</details>`; }).join("");
+    const eqs=[]; g.rs.forEach(r=>{ if(r.avulso||r.ocorrencia) return; const k=(r.supervisao||"")+"|"+(r.equipe||""); let x=eqs.find(e=>e.k===k); if(!x){ x={k,sup:r.supervisao||"",eq:r.equipe||"",rs:[]}; eqs.push(x); } x.rs.push(r); });
+    eqs.sort((a,b)=>(SUPS.findIndex(s=>s.id===a.sup)-SUPS.findIndex(s=>s.id===b.sup))||a.eq.localeCompare(b.eq)); LXEQ[i]=eqs;
+    const eqHtml=eqs.length?`<div class="lxeqs"><span>Baixar uma equipe por vez:</span>${eqs.map((e,j)=>`<div class="lxeq"><b>${esc(e.sup)} · ${esc(e.eq||"—")}</b><small>${e.rs.length} serviço${e.rs.length===1?"":"s"}</small><button type="button" class="btn sec" data-lxeq="${i}|${j}" data-lxt="pdf">📄 PDF</button><button type="button" class="btn sec" data-lxeq="${i}|${j}" data-lxt="img">🖼 Imagem</button></div>`).join("")}</div>`:"";
+    return `<details class="lxg" ${abre||i===0?"open":""}><summary><span class="lxgk">${esc(g.k)}</span><span class="lxgn">${g.rs.length} serviço${g.rs.length===1?"":"s"} · previsto ${brlS(t.p)} (${nf0(t.ap)} ${t.ap===1?"árvore":"árvores"}) · executado ${brlS(t.e)} (${nf0(t.ae)} ${t.ae===1?"árvore":"árvores"})</span></summary>${eqHtml}${vis.map(recHtml).join("")}${g.rs.length>vis.length?`<p class="note">Mostrando ${vis.length} de ${g.rs.length}. Use os filtros para refinar.</p>`:""}</details>`; }).join("");
 }
-["fSem","fSup","fSt","fPend"].forEach(id=>{ $("#"+id).onchange=renderLista; msMontar($("#"+id)); }); $("#fTxt").oninput=renderLista;
+["fSem","fSup","fSt","fPend"].forEach(id=>{ $("#"+id).onchange=renderLista; msMontar($("#"+id)); }); $("#fTxt").oninput=renderLista; $("#fDia").onchange=renderLista; $("#fEq").onchange=renderLista;
 $("#fAgr").addEventListener("change",()=>{ ls.set("gpe_agr",$("#fAgr").value); renderLista(); }); try{ const a0=ls.get("gpe_agr",""); if(a0&&[...$("#fAgr").options].some(o=>o.value===a0)) $("#fAgr").value=a0; }catch(e){}
 $("#lxHist").onclick=()=>{ $("#lxHist").disabled=true; $("#lxHist").textContent="Carregando histórico…"; carregarHistorico().then(()=>{ $("#lxHist").disabled=false; $("#lxHist").textContent="Carregar histórico anterior"; renderLista(); }); };
 /* ---------- Lista: PDF e imagem de todos os serviços filtrados, agrupados ---------- */
@@ -3845,8 +3854,8 @@ function agrInfo(r,agr){ const d=r.data||"";
 const agrTempo=agr=>["dia","sem","mes","ano"].includes(agr);
 function agrupar(rows,agr,recentePrimeiro){ const G=new Map(); rows.forEach(r=>{ const a=agrInfo(r,agr); if(!G.has(a.k)) G.set(a.k,{k:a.k,o:a.o,rs:[]}); G.get(a.k).rs.push(r); });
   const gs=[...G.values()].sort((a,b)=>a.o.localeCompare(b.o)); if(recentePrimeiro&&agrTempo(agr)) gs.reverse(); return gs; }
-function listaDocHtml(rows,agr,det){
-  const f=[msTexto($("#fSem")),selVals("fSup").length?msTexto($("#fSup")):"Todas as turmas",selVals("fSt").length?msTexto($("#fSt")):"",selVals("fPend").length?msTexto($("#fPend")):"",$("#fTxt").value.trim()?"busca: "+$("#fTxt").value.trim():""].filter(Boolean).join(" · ");
+function listaDocHtml(rows,agr,det,ftxt){
+  const f=ftxt||[$("#fDia").value?"dia "+fmtD($("#fDia").value)+" ("+diaDe($("#fDia").value)+")":"",$("#fEq").value||"",msTexto($("#fSem")),selVals("fSup").length?msTexto($("#fSup")):"Todas as turmas",selVals("fSt").length?msTexto($("#fSt")):"",selVals("fPend").length?msTexto($("#fPend")):"",$("#fTxt").value.trim()?"busca: "+$("#fTxt").value.trim():""].filter(Boolean).join(" · ");
   const chave=r=>agrInfo(r,agr).k;
   const ordem=!["dia","turma"].includes(agr)?(a,b)=>agrInfo(a,agr).o.localeCompare(agrInfo(b,agr).o)||(a.data||"").localeCompare(b.data||"")||(SUPS.findIndex(s=>s.id===a.supervisao)-SUPS.findIndex(s=>s.id===b.supervisao)):agr==="turma"?(a,b)=>(SUPS.findIndex(s=>s.id===a.supervisao)-SUPS.findIndex(s=>s.id===b.supervisao))||(a.data||"").localeCompare(b.data||""):(a,b)=>(a.data||"").localeCompare(b.data||"")||(SUPS.findIndex(s=>s.id===a.supervisao)-SUPS.findIndex(s=>s.id===b.supervisao))||(a.equipe||"").localeCompare(b.equipe||"");
   const rs=[...rows].sort(ordem), grupos=[]; rs.forEach(r=>{ const k=chave(r); let g=grupos.find(x=>x.k===k); if(!g){g={k,rs:[]};grupos.push(g);} g.rs.push(r); });
@@ -3884,31 +3893,35 @@ function lxCard(r){ const pq=prevQ(r), s=r.substituto;
   if(r.geo) L.push(["GPS",fmtCoord(r.geo)]);
   if(r.fiscal) L.push(["Fiscal",esc(r.fiscal)]); if(r.obs) L.push(["Obs.",esc(r.obs)]); if(r.ultimoUsuario) L.push(["Lançado por",esc(r.ultimoUsuario)]);
   return `<div class="card"><div class="ch"><b>${fmtD(r.data)} · ${esc(r.dia||diaDe(r.data))}${r.semana?" · "+r.semana+"ª semana":""}</b><span class="st st-${stKey(r)}">${esc(stTxt[stKey(r)])}</span></div><dl class="cb">${L.map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl></div>`; }
-const lxNome=ext=>("lista-servicos-"+[selVals("fSem").length?"semana-"+selVals("fSem").join("-"):"",selVals("fSup").length===1?selVals("fSup")[0]:selVals("fSup").length?selVals("fSup").length+"-turmas":""].filter(Boolean).join("-")+"-"+hoje()).normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9]+/g,"-").replace(/-+/g,"-").toLowerCase()+"."+ext;
-async function listaPdf(btn){
-  const {rows}=listaRows(); if(!rows.length){ toast("Nenhum serviço com esses filtros."); return; }
+const lxNome=ext=>("lista-servicos-"+[$("#fDia").value?"dia-"+$("#fDia").value:"",$("#fEq").value||"",selVals("fSem").length?"semana-"+selVals("fSem").join("-"):"",selVals("fSup").length===1?selVals("fSup")[0]:selVals("fSup").length?selVals("fSup").length+"-turmas":""].filter(Boolean).join("-")+"-"+hoje()).normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9]+/g,"-").replace(/-+/g,"-").toLowerCase()+"."+ext;
+async function listaPdf(btn,sel){
+  const rows=sel?sel.rows:listaRows().rows; if(!rows.length){ toast("Nenhum serviço com esses filtros."); return; }
   if(rows.length>800){ toast("São "+rows.length+" serviços. Filtre por semana ou turma (no máximo 800)."); return; }
   const det=$("#fFmt").value==="det"; if(det&&rows.length>300){ toast("No formato detalhado o PDF aceita até 300 serviços. Filtre por semana ou turma."); return; }
-  await baixarFormPdf(btn,listaDocHtml(rows,$("#fAgr").value,det),lxNome("pdf"),det?"Lista detalhada de serviços":"Lista de serviços");
+  await baixarFormPdf(btn,listaDocHtml(rows,sel?"dia":$("#fAgr").value,det,sel?.ftxt),sel?sel.nome+".pdf":lxNome("pdf"),det?"Lista detalhada de serviços":"Lista de serviços");
 }
-async function listaImg(btn){
-  const {rows}=listaRows(); if(!rows.length){ toast("Nenhum serviço com esses filtros."); return; }
+async function listaImg(btn,sel){
+  const rows=sel?sel.rows:listaRows().rows; if(!rows.length){ toast("Nenhum serviço com esses filtros."); return; }
   const det=$("#fFmt").value==="det", lim=det?60:250;
   if(rows.length>lim){ toast("São "+rows.length+" serviços: para imagem"+(det?" detalhada":"")+", filtre até "+lim+" (ou use o PDF)."); return; }
   const t=btn.textContent; btn.disabled=true; btn.textContent="Gerando imagem…";
   try{ await loadH2P(); try{await document.fonts.ready}catch(e){}
-    const host=document.createElement("div"); host.style.cssText="position:absolute;left:-12000px;top:0;width:794px;background:#fff"; host.innerHTML=listaDocHtml(rows,$("#fAgr").value,det); document.body.appendChild(host);
+    const host=document.createElement("div"); host.style.cssText="position:absolute;left:-12000px;top:0;width:794px;background:#fff"; host.innerHTML=listaDocHtml(rows,sel?"dia":$("#fAgr").value,det,sel?.ftxt); document.body.appendChild(host);
     const sx=scrollX, sy=scrollY; scrollTo(0,0);
     let cv; try{ const el=host.firstElementChild, H=el.scrollHeight, k=Math.max(1,Math.min(2,Math.sqrt(14e6/(794*H))));
       cv=await html2pdf().set({html2canvas:{scale:k,backgroundColor:"#ffffff",logging:false,scrollX:0,scrollY:0,x:0,y:0,useCORS:true,windowWidth:1280,onclone:repaginarCopia}}).from(el).toCanvas().get("canvas"); }
     finally{ host.remove(); scrollTo(sx,sy); }
-    const blob=await new Promise(ok=>cv.toBlob(ok,"image/png")), nome=lxNome("png"), f=new File([blob],nome,{type:"image/png"});
+    const blob=await new Promise(ok=>cv.toBlob(ok,"image/png")), nome=sel?sel.nome+".png":lxNome("png"), f=new File([blob],nome,{type:"image/png"});
     try{ if(navigator.canShare&&navigator.canShare({files:[f]})){ await navigator.share({files:[f],text:"Lista de serviços – Programação GPE"}); return; } }catch(e){ if(e?.name==="AbortError") return; }
     if(downloads){ await downloads.save({filename:nome,data:blob}); toast("Imagem da lista baixada."); } else toast("Download não disponível aqui.");
   }catch(e){ console.error(e); if(e?.message==="load") toast("Sem internet para montar a imagem."); else if(e?.code!=="cancelled"&&e?.code!=="declined") toast("Não foi possível gerar a imagem."); }
   finally{ btn.disabled=false; btn.textContent=t; }
 }
 
+const LXEQ=[], LXG_K=[];
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-lxeq]"); if(!b) return; e.preventDefault(); const [i,j]=b.dataset.lxeq.split("|").map(Number), x=LXEQ[i]?.[j]; if(!x) return;
+  const ftxt=`${LXG_K[i]} · ${x.sup} · ${x.eq||"equipe"}`, nome=("programacao-"+LXG_K[i]+"-"+x.sup+"-"+(x.eq||"")).normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Za-z0-9]+/g,"-").replace(/-+$/,"").toLowerCase().slice(0,90);
+  const sel={rows:x.rs,ftxt,nome}; b.dataset.lxt==="img"?listaImg(b,sel):listaPdf(b,sel); });
 $("#lxPdf").onclick=()=>listaPdf($("#lxPdf")); $("#lxImg").onclick=()=>listaImg($("#lxImg")); $("#lxXls").onclick=()=>listaXls($("#lxXls"));
 $("#list").onclick=e=>{const b=e.target.closest(".rec");if(!b)return;const r=byId(b.dataset.id);if(r)detalhe(r,false,true)};
 
