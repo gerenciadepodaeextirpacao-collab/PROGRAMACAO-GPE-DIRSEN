@@ -1738,7 +1738,7 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.29t";
+const APP_VERSAO="2026.10.29u";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -3745,6 +3745,22 @@ function gmVia(l){ let t=String(l||"").split(",")[0].replace(/\b(QD|LT|QUADRA|LO
   return m?VIA_EXT[m[1]]+" "+m[2]:t; }
 // formato que o Google Maps usa para ruas ("Rua X - Bairro, Goiânia - GO"): assim ele acha a via inteira e mostra destacada
 const gmUrl=(b,l)=>{ const v=gmVia(l); return "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent((v?v+(b?" - "+b:""):b||"")+", Goiânia - GO"); };
+const ICO_SHARE=`<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>`;
+// texto da localização do serviço: endereço + link do Google Maps (GPS quando tiver, senão a rua no mapa)
+function locTexto(r){ const u=r.geo?gpsUrl(r.geo):gmUrl(r.bairro,r.logradouro);
+  return [`📍 *Local do serviço – COMURG Poda e Extirpação*`,`${fmtD(r.data)} · ${r.dia||diaDe(r.data)}`,`${r.supervisao||""}${r.equipe?" · "+r.equipe:""}`,
+    `${r.bairro||""}${r.logradouro?" — "+r.logradouro:""}`,tipoTxt(r)?`Serviço: ${tipoTxt(r)}`:"",`Mapa: ${u}`].filter(Boolean).join("\n"); }
+async function locCompartilhar(r){ const txt=locTexto(r);
+  if(navigator.share){ try{ await navigator.share({title:"Local do serviço",text:txt}); return; }catch(e){ if(e?.name==="AbortError") return; } }
+  const box=document.createElement("div"); box.className="sheet"; box.style.zIndex=40;
+  box.innerHTML=`<div class="panel" role="dialog" aria-label="Compartilhar localização"><b style="font-family:var(--display);font-size:22px">Compartilhar localização</b>
+    <pre style="white-space:pre-wrap;font:14px/1.45 var(--body,inherit);background:var(--sunk);border-radius:10px;padding:10px;margin:0">${esc(txt)}</pre>
+    <a class="btn pri" href="${zapLink("",txt)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;text-decoration:none">Enviar no WhatsApp</a>
+    <button type="button" class="btn sec" data-lccp>Copiar texto</button><button type="button" class="btn sec" data-lcx>Fechar</button></div>`;
+  document.body.appendChild(box);
+  box.addEventListener("click",async e=>{ if(e.target===box||e.target.closest("[data-lcx]")) return box.remove();
+    if(e.target.closest("[data-lccp]")){ try{ await navigator.clipboard.writeText(txt); toast("Localização copiada."); }catch(x){ toast("Não foi possível copiar."); } } }); }
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-locshare]"); if(!b) return; const r=todosGlobal().find(x=>x.id===b.dataset.locshare); if(r) locCompartilhar(r); });
 const mapLink=(r,txt="Ver no mapa")=>(r&&(r.logradouro||r.bairro))?`<a class="maplink" href="${gmUrl(r.bairro,r.logradouro)}" target="_blank" rel="noopener">${PIN}${txt}</a>`:"";
 // rota com vários endereços no Google Maps (até 11 paradas: origem + 9 intermediárias + destino)
 function rotaUrl(rows){
@@ -3990,7 +4006,7 @@ function detalhe(r, abrirAdiar=false, soVer=false){
       ${r.ocorrencia?(()=>{const o=r.ocorrencia;return `<dt>Ocorrência</dt><dd><b>${OC[o.tipo]||"—"}</b> · ${o.qtd||1} ${o.tipo==="ARVORE"?"árvore(s)":"galho(s)"}${o.hora?" · "+esc(o.hora):""}${o.origem?" · "+esc(o.origem):""}${o.protocolo?" · prot. "+esc(o.protocolo):""}${[o.via&&"via bloqueada",o.rede&&"rede elétrica",o.danos&&"danos"].filter(Boolean).length?"<br>"+[o.via&&"via bloqueada",o.rede&&"rede elétrica",o.danos&&"danos a veículo/imóvel"].filter(Boolean).join(" · "):""}</dd>`})():""}
       <dt>Turma</dt><dd>${esc(r.supervisao)} (${esc(r.encarregado)}) · ${esc(r.equipe)} · ${esc(r.viatura)}</dd>
       <dt>Semana</dt><dd>${r.semana?r.semana+"ª":"—"}</dd>
-      <dt>Local</dt><dd>${esc(r.bairro)} — ${esc(r.logradouro)}<div style="margin-top:6px">${mapLink(r)}</div></dd>
+      <dt>Local</dt><dd>${esc(r.bairro)} — ${esc(r.logradouro)}<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:8px">${mapLink(r)}${(r.logradouro||r.bairro||r.geo)?`<button type="button" class="maplink" data-locshare="${esc(r.id)}">${ICO_SHARE}Compartilhar localização</button>`:""}</div></dd>
       ${r.geo?`<dt>GPS</dt><dd>${fmtCoord(r.geo)}${r.geo.prec?` · ±${Math.round(r.geo.prec)} m`:""} · ${r.geo.fonte==="gps"?"pelo aparelho":"informado"}<div style="margin-top:6px"><a class="maplink" href="${gpsUrl(r.geo)}" target="_blank" rel="noopener">${PIN}Ponto exato no mapa</a></div></dd>`:""}
       <dt>Tipo</dt><dd>${esc(r.tipo||"—")}${r.processo?" · "+esc(r.processo):""}</dd>${r.areaId?`<dt>Área URBANTRIM</dt><dd><b style="color:var(--brand)">${esc(areaTxt(r))}</b></dd>`:""}${r.servico?`<dt>Serviço</dt><dd>${esc(r.servico)}</dd>`:""}
       ${r.avulso?`<dt>Origem</dt><dd>Serviço sem programação</dd>`:`<dt>Previsto</dt><dd>${qtdTxt(pq)}<br>Valor previsto: <b>${brl(receitaDe(pq))}</b></dd>`}
