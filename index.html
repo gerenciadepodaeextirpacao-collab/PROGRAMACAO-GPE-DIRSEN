@@ -1730,8 +1730,9 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.29j";
+const APP_VERSAO="2026.10.29k";
 const VERSOES=[
+  {v:"2026.10.29k", d:"29/10/2026", itens:["Detalhes do serviço: linha \"Área URBANTRIM\" com o(s) ID(s) da área; também em destaque na mensagem e na imagem do WhatsApp"]},
   {v:"2026.10.29j", d:"29/10/2026", itens:["Serviço grande fracionado: os dias são marcados intercalados (um sim, um não), como a escala 12x36; se a turma tiver escala cadastrada, segue a escala"]},
   {v:"2026.10.29i", d:"29/10/2026", itens:["Programação respeita a escala de trabalho da turma: não deixa programar em dia de folga e o serviço grande em vários dias usa só os dias de trabalho da escala (inclusive domingo, se a escala trabalhar)"]},
   {v:"2026.10.29h", d:"29/10/2026", itens:["Programar: o quadro \"Quantos dias para executar? (serviço grande)\" passou para antes das quantidades, para ficar à vista"]},
@@ -3873,7 +3874,7 @@ const LXD_CSS=`.lx .card{border:1px solid #c9d1c4;border-radius:10px;margin-top:
 function lxCard(r){ const pq=prevQ(r), s=r.substituto;
   const L=[["Turma",`${esc(r.supervisao||"")}${r.encarregado?" ("+esc(r.encarregado)+")":""} · ${esc(r.equipe||"")} · ${esc(r.viatura||"")}`],
     ["Local",`<b>${esc(r.bairro||"")}</b> — ${esc(r.logradouro||"")}`],
-    ["Tipo",`${esc(r.tipo||"—")}${r.servico?" · "+esc(r.servico):""}${r.processo?" · nº "+esc(r.processo):""}`]];
+    ["Tipo",`${esc(r.tipo||"—")}${r.servico?" · "+esc(r.servico):""}${r.processo?" · nº "+esc(r.processo):""}${r.areaId?" · "+esc(areaTxt(r)):""}`]];
   if(r.ocorrencia){ const o=r.ocorrencia; L.push(["Ocorrência",`${OC[o.tipo]||""} · ${o.qtd||1} un.${o.hora?" · chamado "+esc(o.hora):""}${o.origem?" · "+esc(o.origem):""}${o.protocolo?" · prot. "+esc(o.protocolo):""}${o.rede?" · rede elétrica":""}${o.via?" · via bloqueada":""}`]); }
   if(!r.avulso) L.push(["Previsto",`${qtdTxt(pq)}<div>Valor previsto: <b>${brl(receitaDe(pq))}</b></div>`]);
   if(r.status==="SIM"||r.status==="PARCIAL") L.push(["Executado",`${qtdTxt(r.qtd)}<div>Valor executado: <b>${brl(receitaDe(r.qtd))}</b>${r.dataExec&&r.dataExec!==r.data?" em "+fmtD(r.dataExec):""}</div>`]);
@@ -3924,7 +3925,7 @@ function detalhe(r, abrirAdiar=false, soVer=false){
       <dt>Semana</dt><dd>${r.semana?r.semana+"ª":"—"}</dd>
       <dt>Local</dt><dd>${esc(r.bairro)} — ${esc(r.logradouro)}<div style="margin-top:6px">${mapLink(r)}</div></dd>
       ${r.geo?`<dt>GPS</dt><dd>${fmtCoord(r.geo)}${r.geo.prec?` · ±${Math.round(r.geo.prec)} m`:""} · ${r.geo.fonte==="gps"?"pelo aparelho":"informado"}<div style="margin-top:6px"><a class="maplink" href="${gpsUrl(r.geo)}" target="_blank" rel="noopener">${PIN}Ponto exato no mapa</a></div></dd>`:""}
-      <dt>Tipo</dt><dd>${esc(r.tipo||"—")}${r.processo?" · "+esc(r.processo):""}</dd>${r.servico?`<dt>Serviço</dt><dd>${esc(r.servico)}</dd>`:""}
+      <dt>Tipo</dt><dd>${esc(r.tipo||"—")}${r.processo?" · "+esc(r.processo):""}</dd>${r.areaId?`<dt>Área URBANTRIM</dt><dd><b style="color:var(--brand)">${esc(areaTxt(r))}</b></dd>`:""}${r.servico?`<dt>Serviço</dt><dd>${esc(r.servico)}</dd>`:""}
       ${r.avulso?`<dt>Origem</dt><dd>Serviço sem programação</dd>`:`<dt>Previsto</dt><dd>${qtdTxt(pq)}<br>Valor previsto: <b>${brl(receitaDe(pq))}</b></dd>`}
       ${(r.status==="SIM"||r.status==="PARCIAL")?`<dt>Executado</dt><dd>${qtdTxt(r.qtd)}<br>Valor executado: <b>${brl(receitaDe(r.qtd))}</b>${r.dataExec&&r.dataExec!==r.data?" em "+fmtD(r.dataExec):""}</dd>`:""}
       ${r.status==="PARCIAL"&&r.proxData?`<dt>Não executado · remarcado</dt><dd>${qtdTxt(r.qtdRemarcada)}<br>remarcado p/ ${fmtD(r.proxData)} · ${esc(r.motivo||"")}</dd>`:""}
@@ -4983,6 +4984,7 @@ function msgGrupo(r){
     `Equipe executora: ${r.supervisao} · ${r.equipe||""} · ${r.viatura||""}`,
     `Supervisor: ${supOf(r.supervisao)?.enc||r.encarregado||""}`,
     `Local: ${r.bairro} — ${r.logradouro}${r.tipo?" ("+tipoTxt(r)+")":""}`,
+    ...(r.areaId?[`ID da área (URBANTRIM): ${areaLista(r.areaId).join(", ")}`]:[]),
     ...(r.geo?[`GPS: ${gpsUrl(r.geo)}`]:[]),
     r.processo?`Atende processo: SIM · nº ${r.processo}`:`Atende processo: NÃO`];
   if(r.ocorrencia){const o=r.ocorrencia;L.push(`Ocorrência: ${OC[o.tipo]||""} · ${o.qtd||1} un.${o.hora?" · chamado "+o.hora:""}${o.origem?" · "+o.origem:""}${o.protocolo?" · prot. "+o.protocolo:""}${o.rede?" · rede elétrica":""}${o.via?" · via bloqueada":""}`); const im=o.impacto; if(im) L.push(im.houve?`Impacto na programação: ${im.servicos.map(s=>s.local+" ("+EFEITO_C[s.efeito]+")").join("; ")}`:"Impacto na programação: nenhum")}
@@ -5034,7 +5036,8 @@ async function msgImagem(r){
   campo("Supervisor",sup?.enc||r.encarregado||"");
   sep();
   campo("Local",`${r.bairro||""} — ${r.logradouro||""}`,{peso:700,tam:38,disp:true});
-  if(r.tipo) campo("Tipo de local / serviço",tipoTxt(r));
+  if(r.tipo) campo("Tipo de local / serviço",(r.tipo||"")+(r.servico?" · "+r.servico:""));
+  if(r.areaId) campo(areaLista(r.areaId).length>1?"IDs das áreas (URBANTRIM)":"ID da área (URBANTRIM)",areaLista(r.areaId).join(", "),{peso:700,cor:C.brand});
   campo("Atende processo",r.processo?`SIM · nº ${r.processo}`:"NÃO",{peso:600,cor:r.processo?C.brand:C.ink});
   if(r.geo) campo("GPS",`${r.geo.lat.toFixed(6)}, ${r.geo.lng.toFixed(6)}`);
   if(r.ocorrencia){ const o=r.ocorrencia; sep(); campo("Ocorrência",`${OC[o.tipo]||""} · ${o.qtd||1} un.${o.hora?" · chamado "+o.hora:""}${o.origem?" · "+o.origem:""}${o.protocolo?" · prot. "+o.protocolo:""}${o.rede?" · rede elétrica":""}${o.via?" · via bloqueada":""}`,{peso:600,cor:"#b3261e"});
