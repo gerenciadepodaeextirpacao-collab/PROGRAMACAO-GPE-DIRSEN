@@ -478,6 +478,8 @@ nav.tabs button[aria-current="page"]{background:linear-gradient(180deg,#ff8c42 0
 .metadias span.ok{background:var(--ok-bg);color:var(--ok);border-color:transparent}
 .metadias span.wr{background:var(--warn-bg);color:var(--warn);border-color:transparent}
 .metadias span.bd{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+.metadias span small{display:block;font-weight:600;font-size:11px;opacity:.85;margin-top:1px}
+.metadias span:has(small){border-radius:12px}
 .metadias span.hj{outline:2px solid var(--accent);outline-offset:1px}
 .acell .mt{font:600 10.5px var(--body);font-variant-numeric:tabular-nums}
 /* endereço em campos separados */
@@ -1738,7 +1740,7 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.29v";
+const APP_VERSAO="2026.10.29w";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -2038,6 +2040,8 @@ document.addEventListener("change",async e=>{ const s=e.target.closest("#escalaB
 const META_PODA_DIA=50000;
 const kR=v=>v?(Math.round(v/100)/10).toLocaleString("pt-BR",{maximumFractionDigits:1})+" mil":"—";
 const podasProgDia=(sup,dia,semId)=>todosGlobal().filter(r=>r.supervisao===sup&&r.data===dia&&!r.avulso&&!r.ocorrencia&&!r.arquivado&&r.id!==semId).reduce((a,r)=>a+receitaDe(prevQ(r)),0);
+// equipes e equipamentos programados da turma no dia (ex.: "1ª SPLINTER 5065.6")
+const eqDia=(sup,dia)=>[...new Set(todosGlobal().filter(r=>r.supervisao===sup&&r.data===dia&&!r.avulso&&!r.ocorrencia&&!r.arquivado).sort((a,b)=>(a.equipe||"").localeCompare(b.equipe||"")).map(r=>`${(r.equipe||"").replace(" EQUIPE","")} ${r.viatura||""}`.trim()))];
 const metaCls=v=>v>=META_PODA_DIA?"ok":v>=META_PODA_DIA*0.7?"wr":"bd";
 function metaUI(){
   const box=$("#metaBox"); if(!box) return;
@@ -5830,7 +5834,7 @@ function renderSemProg(){
   const semDias=[...Array(7)].map((_,i)=>{const x=new Date(b0);x.setDate(b0.getDate()+i);return iso(x)}).filter((x,i)=>i>0||rows.some(r=>r.data===x));
   const semDias7=[...Array(7)].map((_,i)=>{const x=new Date(b0);x.setDate(b0.getDate()+i);return iso(x)}), diasTrab=semDias7.filter(x=>trabalha(form.sup,x));
   const diasVer=semDias7.filter((x,i)=>i>0||podasProgDia(form.sup,x)>0);
-  const metaHtml=`<p class="maphint" style="margin-top:6px">Meta: <b>${brl(META_PODA_DIA)} por dia</b> nesta supervisão – soma de todas as equipes e equipamentos da turma no dia.</p><div class="metadias">${diasVer.map(x=>{const v=podasProgDia(form.sup,x), t=trabalha(form.sup,x);return t?`<span class="${metaCls(v)}${x===d?" hj":""}" title="${fmtD(x)}: ${brl(v)} de ${brl(META_PODA_DIA)}">${diaDe(x)} ${fmtDs(x)} · ${kR(v)} / 50 mil</span>`:`<span class="${x===d?"hj":""}" style="opacity:.6" title="${fmtD(x)}: folga na escala 12x36">${diaDe(x)} ${fmtDs(x)} · folga${v?" · "+kR(v):""}</span>`}).join("")}</div>`;
+  const metaHtml=`<p class="maphint" style="margin-top:6px">Meta: <b>${brl(META_PODA_DIA)} por dia</b> nesta supervisão – soma de todas as equipes e equipamentos da turma no dia.</p><div class="metadias">${diasVer.map(x=>{const v=podasProgDia(form.sup,x), t=trabalha(form.sup,x);return t?`<span class="${metaCls(v)}${x===d?" hj":""}" title="${fmtD(x)}: ${brl(v)} de ${brl(META_PODA_DIA)}">${diaDe(x)} ${fmtDs(x)} · ${kR(v)} / 50 mil${(()=>{ const q=eqDia(form.sup,x); return q.length?`<small>${q.map(esc).join(" · ")}</small>`:""; })()}</span>`:`<span class="${x===d?"hj":""}" style="opacity:.6" title="${fmtD(x)}: folga na escala 12x36">${diaDe(x)} ${fmtDs(x)} · folga${v?" · "+kR(v):""}</span>`}).join("")}</div>`;
   host.innerHTML=`<div class="grp-h"><h3>Programação da ${sem}ª semana <small style="font:500 13px var(--body);letter-spacing:0;text-transform:none;color:var(--muted)">de ${periodoSem(sem).replace(" a "," a ")}</small></h3><span>${rows.length} serviço${rows.length!==1?"s":""} · ${brl(prev)}</span></div>`+
     metaHtml+dias.slice().sort().map(d=>osBotoes(rows.filter(r=>r.data===d),"PROGRAMAÇÃO DE SERVIÇO",fmtD(d)+" · "+diaDe(d),"Programação de serviço · "+diaDe(d)+" "+fmtDs(d))).join("")+(rows.length?`<p class="maphint" style="margin-top:6px">Ver as marcações de cada dia no mapa:</p><div class="maprow">${dias.map(d=>{const rs=rows.filter(r=>r.data===d);return rotaLink(rs,diaDe(d)+" "+fmtDs(d)+" ("+rs.length+")")}).join("")}</div>`:"")+
     (rows.length?`<div class="list">${rows.map(r=>`<div class="rec" style="cursor:default"><div class="l1"><span class="when">${fmtD(r.data)} · ${esc(r.dia||diaDe(r.data))} · ${esc(r.equipe)}</span><span class="pill ${stKey(r)}">${stTxt[stKey(r)]}</span></div><div class="where">${esc(r.bairro)} — ${esc(r.logradouro)}</div><div class="nums">${qtdTxt(prevQ(r))} · previsto ${brl(receitaDe(prevQ(r)))}</div><div style="margin-top:8px">${mapLink(r)}</div></div>`).join("")}</div>`
