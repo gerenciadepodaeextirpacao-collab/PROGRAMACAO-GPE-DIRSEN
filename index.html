@@ -1042,8 +1042,6 @@ input::placeholder,textarea::placeholder{text-transform:none}
     <div class="endsep" data-end="e_">
       <div class="es-row1"><label class="f">Tipo de via<select id="e_via"><option value="">Selecione…</option><option value="R.">R. (rua)</option><option value="AV.">AV. (avenida)</option><option value="AL.">AL. (alameda)</option><option value="PÇ." hidden>PÇ. (praça)</option><option value="ROD.">ROD. (rodovia)</option><option value="TV.">TV. (travessa)</option><option value="ESTR.">ESTR. (estrada)</option></select></label>
         <label class="f">Nome / número da via<input id="e_nome" autocomplete="off" autocapitalize="characters" placeholder="Ex.: 240, T-63, DO POVO"></label></div>
-      <div class="es-row1" id="e_esqW" hidden><label class="f">Esquina com (2ª rua)<select id="e_esqvia"><option value="">Selecione…</option><option value="R.">R. (rua)</option><option value="AV.">AV. (avenida)</option><option value="AL.">AL. (alameda)</option><option value="ROD.">ROD. (rodovia)</option><option value="TV.">TV. (travessa)</option><option value="ESTR.">ESTR. (estrada)</option></select></label>
-        <label class="f">Nome / número da 2ª rua<input id="e_esqnome" autocomplete="off" autocapitalize="characters" placeholder="Ex.: 5"></label></div>
       <div class="es-row2"><label class="f">QD. (quadra)<input id="e_qd" autocomplete="off" autocapitalize="characters" placeholder="Ex.: 12"></label>
         <label class="f">LT. (lote)<input id="e_lt" autocomplete="off" autocapitalize="characters" placeholder="Ex.: 4"></label></div>
       <label class="f">Complemento / referência (opcional)<input id="e_comp" autocomplete="off" autocapitalize="characters" placeholder="Ex.: ESQ. C/ R. 10, Nº 96, EM FRENTE AO CMEI"></label>
@@ -1746,7 +1744,7 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.30e";
+const APP_VERSAO="2026.10.30f";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -2002,7 +2000,7 @@ document.addEventListener("click",e=>{ if(e.target.closest("#areaAdd")){ areaLer
   const d=e.target.closest("#areaLinhas [data-ad]"); if(d){ d.parentElement.remove(); areaLer(); areaUI(); } });
 function servUI(){ try{ const aw=$("#areaWrap"); if(aw){ aw.hidden=!(TIPOS_180.has(form.tipo)||$("#areaId").value.trim()); const ep=form.tipo==="ENTRE-PISTA";
     $("#areaLbl").textContent=ep?"IDs das áreas no URBANTRIM (um em cada linha)":"ID da área no URBANTRIM";
-    $("#areaHint").innerHTML=ep?"Entre-pista: coloque o 1º ID, toque em <b>+ Adicionar outro ID</b> para o 2º, o 3º e assim por diante.":"Copie o ID da área cadastrado no URBANTRIM."; areaUI(); } }catch(e){} try{ const ew=$("#e_esqW"); if(ew) ew.hidden=!(form.tipo==="PRAÇA"||$("#e_esqnome").value.trim()); }catch(e){} try{ const lv=$("#e_livre"); if(lv){ const pr=temProc(form.tipo)&&form.mode==="prog"; lv.hidden=!(TIPOS_180.has(form.tipo)||pr); lv.innerHTML=pr?"Processo / O.S: pode salvar <b>sem QD., LT. e número</b>. Na hora de dar baixa o app pede para completar o endereço.":form.tipo==="PRAÇA"?"Praça: <b>QD., LT. e número não são obrigatórios</b>, mas informe as <b>duas ruas de referência</b> (ex.: R. 1 esquina com R. 5).":"Área pública ou entre-pista: <b>QD., LT. e número não são obrigatórios</b>. Informe a via ou uma referência do local."; } }catch(e){} const on=TIPOS_SERV.has(form.tipo); $("#servWrap").hidden=!on; $("#servOutro").hidden=!on||!servSel.has("OUTRO"); }
+    $("#areaHint").innerHTML=ep?"Entre-pista: coloque o 1º ID, toque em <b>+ Adicionar outro ID</b> para o 2º, o 3º e assim por diante.":"Copie o ID da área cadastrado no URBANTRIM."; areaUI(); } }catch(e){} try{ const lv=$("#e_livre"); if(lv){ const pr=temProc(form.tipo)&&form.mode==="prog"; lv.hidden=!(TIPOS_180.has(form.tipo)||pr); lv.innerHTML=pr?"Processo / O.S: pode salvar <b>sem QD., LT. e número</b>. Na hora de dar baixa o app pede para completar o endereço.":form.tipo==="PRAÇA"?"Praça: <b>QD., LT. e número não são obrigatórios</b>, mas informe a <b>rua principal</b> (tipo de via e nome) e a <b>outra rua no complemento</b> (ex.: R. 01 e no complemento ESQ. C/ R. 5).":"Área pública ou entre-pista: <b>QD., LT. e número não são obrigatórios</b>. Informe a via ou uma referência do local."; } }catch(e){} const on=TIPOS_SERV.has(form.tipo); $("#servWrap").hidden=!on; $("#servOutro").hidden=!on||!servSel.has("OUTRO"); }
 function servLer(){ if(!TIPOS_SERV.has(form.tipo)) return ""; const L=SERVICOS.filter(x=>x!=="OUTRO"&&servSel.has(x)); const o=$("#servOutro").value.trim().toUpperCase(); if(servSel.has("OUTRO")&&o) L.push(o); return L.join(" + "); }
 function servCarregar(v){ servSel.clear(); const outros=[]; String(v||"").split(/\s+\+\s+/).map(x=>x.trim()).filter(Boolean).forEach(x=>{ if(SERVICOS.includes(x)&&x!=="OUTRO") servSel.add(x); else outros.push(x); });
   if(outros.length) servSel.add("OUTRO"); $("#servOutro").value=outros.join(" + "); servPint(); servUI(); }
@@ -2344,15 +2342,12 @@ const VIAS=["R.","AV.","AL.","PÇ.","ROD.","TV.","ESTR."];
 function endMontar(pre){ const v=$("#"+pre+"via")?.value||"", n=($("#"+pre+"nome")?.value||"").toUpperCase().trim(), qd=($("#"+pre+"qd")?.value||"").toUpperCase().trim().replace(/^QD\.?\s*/,""), lt=($("#"+pre+"lt")?.value||"").toUpperCase().trim().replace(/^LT\.?\s*/,""), c=abrevEnd($("#"+pre+"comp")?.value||"");
   if(!v&&!n&&!qd&&!lt&&!c) return "";
   const num=($("#"+pre+"num")?.value||"").toUpperCase().trim().replace(/^N[º°O]?\.?\s*/,"");
-  const ev=$("#"+pre+"esqvia")?.value||"", en=($("#"+pre+"esqnome")?.value||"").toUpperCase().trim(), esq=en?"ESQ. C/ "+[ev,en].filter(Boolean).join(" "):"";
-  return [[v,n].filter(Boolean).join(" "), esq, qd?"QD. "+qd:"", lt?"LT. "+lt:"", num?"Nº "+num:"", c].filter(Boolean).join(", "); }
+  return [[v,n].filter(Boolean).join(" "), qd?"QD. "+qd:"", lt?"LT. "+lt:"", num?"Nº "+num:"", c].filter(Boolean).join(", "); }
 const END_ALVO={e_:"logradouro",se_:"s_logradouro",ox_:"oxLogr",bx_:"bxLogr"};
 function endSync(pre){ const alvo=$("#"+END_ALVO[pre]); if(!alvo) return; const v=endMontar(pre); const mudou=alvo.value!==v; alvo.value=v;
   const pv=$("#"+pre+"prev"); if(pv) pv.innerHTML=v?`Fica cadastrado como: <b>${esc(v)}</b>`:"";
   if(mudou){ alvo.dispatchEvent(new Event("input")); alvo.dispatchEvent(new Event("change")); } }
 function endCarregar(pre, s){ let t=abrevEnd(s||""), via="",nome="",qd="",lt="",comp="";
-  if($("#"+pre+"esqvia")){ let ev="",en=""; const me=t.match(/,?\s*ESQ\.?\s*C\/?\s*(R\.|AV\.|AL\.|ROD\.|TV\.|ESTR\.)?\s*([^,]+)/); if(me){ ev=me[1]||""; en=me[2].trim(); t=t.replace(me[0],"").trim(); }
-    $("#"+pre+"esqvia").value=ev; $("#"+pre+"esqnome").value=en; }
   const m=t.match(/^(R\.|AV\.|AL\.|PÇ\.|PC\.|ROD\.|TV\.|ESTR\.)\s*(.*)$/); let resto=m?m[2]:t; if(m) via=m[1]==="PC."?"PÇ.":m[1];
   const parts=resto.split(/\s*,\s*/); const corpo=[];
   parts.forEach((x,i)=>{ let y=x;
@@ -2363,8 +2358,8 @@ function endCarregar(pre, s){ let t=abrevEnd(s||""), via="",nome="",qd="",lt="",
   if(!m&&nome&&!via){ comp=[nome,comp].filter(Boolean).join(", "); nome=""; } // endereço antigo fora do padrão: vai para o complemento
   $("#"+pre+"via").value=via; $("#"+pre+"nome").value=nome; $("#"+pre+"qd").value=qd; $("#"+pre+"lt").value=lt; $("#"+pre+"comp").value=comp;
   endSync(pre); }
-function endLigar(pre){ ["via","nome","qd","lt","num","comp","esqvia","esqnome"].forEach(k=>{ const el=$("#"+pre+k); if(!el) return;
-  el.addEventListener(k==="via"||k==="esqvia"?"change":"input",()=>endSync(pre));
+function endLigar(pre){ ["via","nome","qd","lt","num","comp"].forEach(k=>{ const el=$("#"+pre+k); if(!el) return;
+  el.addEventListener(k==="via"?"change":"input",()=>endSync(pre));
   if(k==="comp") el.addEventListener("blur",()=>{ const v=abrevEnd(el.value); if(v!==el.value){ el.value=v; endSync(pre); } });
   if(k==="nome") el.addEventListener("blur",()=>{ let v=el.value.toUpperCase().trim(); const mm=v.match(/^(RUA|R\.?|AVENIDA|AV\.?|ALAMEDA|AL\.?)\s+(.*)$/); if(mm&&!$("#"+pre+"via").value){ $("#"+pre+"via").value=abrevEnd(mm[1]+" X").split(" ")[0]; v=mm[2]; } el.value=v; endSync(pre); });
 }); }
@@ -2460,7 +2455,9 @@ $("#form").addEventListener("submit", async ev=>{
     const endProc=temProc(common.tipo)&&m==="prog"; // processo / O.S: pode programar sem QD., LT. e número (completa na baixa)
     const endLivre=TIPOS_180.has(common.tipo)||endProc; // área pública, entre-pista e praça: QD., LT. e número/nome da via não são obrigatórios
     if(!common.bairro) e.push("informe o setor / bairro"); else if(!$("#bairroT").value&&(!base||base.bairro!==common.bairro)) e.push("escolha se é setor, bairro, vila, jardim… (ao lado do nome do setor / bairro)"); if(!common.logradouro&&!endProc) e.push(endLivre?"informe a via ou uma referência do local (complemento)":"informe o logradouro");
-    if(common.tipo==="PRAÇA"&&(!base||base.logradouro!==common.logradouro||base.tipo!=="PRAÇA")&&(!$("#e_via").value||!$("#e_nome").value.trim()||!$("#e_esqnome").value.trim()||!$("#e_esqvia").value)) e.push("praça: informe as duas ruas de referência – a 1ª rua (tipo e nome) e a rua da esquina (ex.: R. 1 esquina com R. 5)");
+    if(common.tipo==="PRAÇA"&&(!base||base.logradouro!==common.logradouro||base.tipo!=="PRAÇA")){
+      if(!$("#e_via").value||!$("#e_nome").value.trim()) e.push("praça: informe a rua principal (tipo de via e nome / número)");
+      if(!/(^|[\s,\/(])(R\.|AV\.|AL\.|ROD\.|TV\.|ESTR\.)\s*[A-Z0-9ÀÁÂÃÉÊÍÓÔÕÚÇ]/.test(abrevEnd($("#e_comp").value))) e.push("praça: informe a outra rua no complemento (ex.: ESQ. C/ R. 5)"); }
     if(!endLivre){ if(!$("#e_via").value) e.push("escolha o tipo de via (R., AV., AL.…)"); if(!$("#e_nome").value.trim()) e.push("informe o nome ou número da via"); }
     { const ee=erroEnd(common.logradouro,"logradouro"); if(ee&&!(endLivre&&/comece pelo tipo de via/.test(ee))) e.push(ee); }
     if(!common.tipo) e.push("escolha o tipo de local"); if(common.tipo==="O.S"&&!common.processo) e.push("informe o nº da O.S"); if(common.tipo==="PROCESSO"&&!common.processo) e.push("informe o nº do processo");
