@@ -930,6 +930,10 @@ nav.tabs .tbadge{animation:gpeBadge 1.1s ease-in-out infinite}
 #areaWrap:not([hidden]){display:grid;gap:6px}#areaWrap #areaAdd{justify-self:start}.arealin{display:grid;gap:6px;margin-top:4px}.arearow{display:flex;align-items:center;gap:8px}.arearow>span{flex:none;width:52px;font-weight:700;font-size:14px;color:var(--muted)}.arearow input{flex:1;min-width:0}.arearow button{flex:none;width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:#b3261e;font-weight:700;cursor:pointer}
 .lxeqs{display:grid;gap:6px;padding:10px 12px;background:#eef6f0;border-bottom:1px solid var(--line)}.lxeqs>span{font-size:13px;font-weight:700;color:#005f27}.lxeq{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center}.lxeq b{font-size:13px;grid-column:1}.lxeq small{grid-column:1;grid-row:2;font-size:12px;color:var(--muted)}.lxeq .btn{min-height:40px;font-size:13px;padding:0 10px;grid-row:1/span 2}
 .ckpdfw{display:flex;flex-direction:column;gap:0}.ckpdfw>.rec{border-bottom-left-radius:0!important;border-bottom-right-radius:0!important}.ckpdfb{min-height:44px;font-size:14px;border-top-left-radius:0!important;border-top-right-radius:0!important;margin-top:-1px;width:100%}
+/* tudo em caixa alta (menos matrícula, senha e campos marcados com autocapitalize="none") */
+input:not([type]):not([autocapitalize="none"]),input[type="text"]:not([autocapitalize="none"]),input[type="search"]:not([autocapitalize="none"]),textarea:not([autocapitalize="none"]){text-transform:uppercase}
+input::placeholder,textarea::placeholder{text-transform:none}
+.bairro2{grid-template-columns:minmax(130px,.8fr) 1.5fr}
 </style>
 
 <div id="login" class="login" hidden>
@@ -1034,7 +1038,7 @@ nav.tabs .tbadge{animation:gpeBadge 1.1s ease-in-out infinite}
       <label class="f">Semana<input id="semana" inputmode="numeric"></label>
     </div>
     <p class="err" id="dataAviso" hidden style="margin:0"></p>
-    <label class="f">Setor / bairro<input id="bairro" list="bairros" autocomplete="off" placeholder="Comece a digitar e escolha da lista"></label>
+    <div class="row2 bairro2"><label class="f">Setor, bairro, vila…<select id="bairroT"><option value="">Selecione…</option></select></label><label class="f">Nome do setor / bairro<input id="bairroN" autocomplete="off" placeholder="Comece a digitar e escolha"></label></div><input type="hidden" id="bairro">
     <div class="endsep" data-end="e_">
       <div class="es-row1"><label class="f">Tipo de via<select id="e_via"><option value="">Selecione…</option><option value="R.">R. (rua)</option><option value="AV.">AV. (avenida)</option><option value="AL.">AL. (alameda)</option><option value="PÇ." hidden>PÇ. (praça)</option><option value="ROD.">ROD. (rodovia)</option><option value="TV.">TV. (travessa)</option><option value="ESTR.">ESTR. (estrada)</option></select></label>
         <label class="f">Nome / número da via<input id="e_nome" autocomplete="off" autocapitalize="characters" placeholder="Ex.: 240, T-63, DO POVO"></label></div>
@@ -1142,7 +1146,7 @@ nav.tabs .tbadge{animation:gpeBadge 1.1s ease-in-out infinite}
         <label class="f">Data<input type="date" id="s_data"></label>
         <label class="f">Tipo<select id="s_tipo"><option value="">Selecione…</option><option>O.S</option><option>PROCESSO</option><option>ENTRE-PISTA</option><option>PRAÇA</option><option>ÁREA PÚBLICA</option><option>CALÇADA</option></select></label>
       </div>
-      <label class="f">Setor / bairro<input id="s_bairro" list="bairros" autocomplete="off"></label>
+      <div class="row2 bairro2"><label class="f">Setor, bairro, vila…<select id="s_bairroT"><option value="">Selecione…</option></select></label><label class="f">Nome do setor / bairro<input id="s_bairroN" autocomplete="off" placeholder="Comece a digitar e escolha"></label></div><input type="hidden" id="s_bairro">
       <div class="endsep" data-end="se_">
       <div class="es-row1"><label class="f">Tipo de via<select id="se_via"><option value="">Selecione…</option><option value="R.">R. (rua)</option><option value="AV.">AV. (avenida)</option><option value="AL.">AL. (alameda)</option><option value="PÇ." hidden>PÇ. (praça)</option><option value="ROD.">ROD. (rodovia)</option><option value="TV.">TV. (travessa)</option><option value="ESTR.">ESTR. (estrada)</option></select></label>
         <label class="f">Nome / número da via<input id="se_nome" autocomplete="off" autocapitalize="characters" placeholder="Ex.: 240, T-63, DO POVO"></label></div>
@@ -1740,7 +1744,7 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.29y";
+const APP_VERSAO="2026.10.30";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -1923,6 +1927,29 @@ $("#updBox").addEventListener("click",e=>{ const cp=e.target.closest("[data-cpli
 
 /* ---------- formulário ---------- */
 // mode: "prog" (lançar/editar programação) | "baixa" (dar baixa numa programação) | "avulso" (serviço sem programação)
+// caixa alta: o que for digitado já é gravado em letra maiúscula; o teclado do celular abre em maiúsculas
+const CAPS_SEL='input:not([type]):not([autocapitalize="none"]),input[type="text"]:not([autocapitalize="none"]),input[type="search"]:not([autocapitalize="none"]),textarea:not([autocapitalize="none"])';
+document.addEventListener("focusin",e=>{ const el=e.target; if(el.matches?.(CAPS_SEL)) el.setAttribute("autocapitalize","characters"); });
+document.addEventListener("input",e=>{ const el=e.target; if(!el.matches?.(CAPS_SEL)||e.isComposing) return; const v=el.value, u=v.toLocaleUpperCase("pt-BR"); if(v===u) return;
+  const a=el.selectionStart, b=el.selectionEnd; el.value=u; try{ el.setSelectionRange(a,b); }catch(x){} },true);
+// setor / bairro em dois campos: tipo (SETOR, BAIRRO, VILA, JARDIM…) + nome; o campo escondido guarda o nome completo ("SETOR OESTE")
+const BAIRRO_TIPOS=["SETOR","BAIRRO","JARDIM","VILA","RESIDENCIAL","PARQUE","CONJUNTO","CHÁCARA","LOTEAMENTO","CONDOMÍNIO","NÚCLEO","POVOADO","OUTRO"];
+const BAIRRO_ABREV={"ST.":"SETOR","ST":"SETOR","JD.":"JARDIM","JD":"JARDIM","JRD.":"JARDIM","VL.":"VILA","VL":"VILA","RES.":"RESIDENCIAL","RES":"RESIDENCIAL","PQ.":"PARQUE","PQ":"PARQUE","CONJ.":"CONJUNTO","CJ.":"CONJUNTO","CH.":"CHÁCARA","CHACARA":"CHÁCARA","LOT.":"LOTEAMENTO","COND.":"CONDOMÍNIO","CONDOMINIO":"CONDOMÍNIO","NUCLEO":"NÚCLEO"};
+function bairroSep(v){ v=String(v||"").trim().toUpperCase().replace(/\s+/g," "); if(!v) return {t:"",n:""};
+  const p=v.split(" ")[0], t=BAIRRO_TIPOS.includes(p)&&p!=="OUTRO"?p:BAIRRO_ABREV[p]; if(t) return {t,n:v.slice(p.length).trim()}; return {t:"",n:v}; }
+function bairroJunta(id){ const t=$("#"+id+"T").value, n0=$("#"+id+"N").value.trim().toUpperCase().replace(/\s+/g," "); const sp=bairroSep(n0);
+  const n=t&&t!=="OUTRO"&&sp.t===t?sp.n:n0; return n?(t&&t!=="OUTRO"?t+" "+n:n):""; }
+function bairroLista(id){ const t=$("#"+id+"T").value, dl=$("#"+id+"L"); if(!dl) return;
+  const nomes=[...new Set(BAIRROS.map(bairroSep).filter(x=>!t?true:t==="OUTRO"?!x.t:x.t===t).map(x=>t&&t!=="OUTRO"?x.n:(x.t?x.t+" "+x.n:x.n)).filter(Boolean))].sort();
+  dl.innerHTML=nomes.map(b=>`<option value="${esc(b)}">`).join(""); }
+function bairroCarregar(id,v){ const sp=bairroSep(v); $("#"+id+"T").value=v?(sp.t||"OUTRO"):""; $("#"+id+"N").value=sp.t?sp.n:(v||""); $("#"+id).value=v||""; bairroLista(id); }
+function bairroLigar(id){ const T=$("#"+id+"T"), N=$("#"+id+"N"), H=$("#"+id); if(!T) return;
+  T.innerHTML=`<option value="">Selecione…</option>`+BAIRRO_TIPOS.map(t=>`<option value="${t}">${t}</option>`).join("");
+  const dl=document.createElement("datalist"); dl.id=id+"L"; document.body.appendChild(dl); N.setAttribute("list",dl.id);
+  const upd=(ev)=>{ H.value=bairroJunta(id); H.dispatchEvent(new Event(ev,{bubbles:true})); };
+  T.addEventListener("change",()=>{ const sp=bairroSep(N.value); if(sp.t&&sp.t===T.value) N.value=sp.n; bairroLista(id); upd("change"); });
+  N.addEventListener("input",()=>upd("input")); N.addEventListener("change",()=>{ const sp=bairroSep(N.value); if(sp.t&&(!T.value||T.value===sp.t)){ T.value=sp.t; N.value=sp.n; bairroLista(id); } upd("change"); });
+  N.addEventListener("blur",()=>upd("change")); bairroLista(id); }
 const form = { mode:"prog", sup:"", tipo:"", st:"", base:null };
 
 function chipRow(host, items, onPick){
@@ -2181,7 +2208,7 @@ function modeUI(){
 function lembrar(){ const t=ls.get("gpe_turma",{}); ls.set("gpe_turma",{...t,sup:form.sup||t.sup,equipe:$("#equipe").value,viatura:$("#viatura").value,fiscal:($("#fiscal").value||$("#fiscalN").value||t.fiscal||"")}) }
 function limpar(mode="prog", keep={}){
   form.mode=mode; form.tipo=""; servCarregar(""); form.st=""; form.pctModo="qtd"; form.pcts={}; if($("#pctItens")) $("#pctItens").innerHTML=""; if($("#mdDias")) $("#mdDias").value=1; if($("#pctVal")) $("#pctVal").value=""; form.base=null; form.geo=null; form.geoAuto=false; if($("#geoTxt")) $("#geoTxt").value="";
-  ["bairro","logradouro","processo","areaId","proxData","motivo","motivoTxt","obs","s_bairro","s_logradouro","s_processo","s_tipo","s_data","dataExec"].forEach(id=>$("#"+id).value=""); try{servUI()}catch(e){}
+  ["bairro","logradouro","processo","areaId","proxData","motivo","motivoTxt","obs","s_bairro","s_logradouro","s_processo","s_tipo","s_data","dataExec"].forEach(id=>$("#"+id).value=""); bairroCarregar("bairro",""); bairroCarregar("s_bairro",""); try{servUI()}catch(e){}
   $("#semSub").checked=false;
   form.okSemItens=false; form.oc=""; ["ocHora","ocOrigem","ocProt","ocQtd"].forEach(id=>$("#"+id).value=""); ["ocVia","ocRede","ocDano"].forEach(id=>$("#"+id).checked=false); setPressed($("#ocChips"),""); $("#ocQLbl").textContent="Quantidade";
   writeQ("q_",{}, $("#qtdMain")); writeQ("s_",{}, $("#qtdSub")); showPrev({});
@@ -2199,7 +2226,7 @@ $("#cancelEdit").onclick=()=>{ const back=form.mode!=="prog", oc=form.mode==="oc
 function fillCommon(r){
   form.sup=r.supervisao||""; $("#equipe").value=r.equipe||"1ª EQUIPE"; $("#viatura").value=(r.viatura==="SKAY"||r.viatura==="SKY")?"SKY 5074.0":(r.viatura||"SPLINTER 5063.6");
   $("#data").value=r.data||""; dataUI(); if(r.semana)$("#semana").value=r.semana+"ª";
-  $("#bairro").value=r.bairro||""; endCarregar("e_", r.logradouro||""); form.tipo=r.tipo||""; $("#processo").value=r.processo||""; $("#areaId").value=r.areaId||""; servCarregar(r.servico);
+  bairroCarregar("bairro",r.bairro||""); endCarregar("e_", r.logradouro||""); form.tipo=r.tipo||""; $("#processo").value=r.processo||""; $("#areaId").value=r.areaId||""; servCarregar(r.servico);
   $("#obs").value=r.obs||"";
   setPressed($("#supChips"),form.sup); setPressed($("#tipoChips"),form.tipo); procUI();
 }
@@ -2298,7 +2325,7 @@ function abrirBaixa(r, pre){
     if(r.pctItens||r.pctExec){ form.pctModo="pct"; form.pcts={...(r.pctItens||{})}; if(!r.pctItens){ const pv=prevQ(r); ITENS.filter(i=>+pv[i.c]).forEach(i=>form.pcts[i.c]=r.pctExec); } $("#pctVal").value=typeof r.pctExec==="number"?r.pctExec:""; }
     $("#proxData").value=r.proxData||""; setMotivo(r.motivo||"");
     const s=r.substituto; $("#semSub").checked=!!r.semSubstituto;
-    if(s){$("#s_data").value=s.data||r.data;$("#s_bairro").value=s.bairro||"";endCarregar("se_", s.logradouro||"");$("#s_tipo").value=s.tipo||"";$("#s_processo").value=s.processo||"";sProcUI();writeQ("s_",s.qtd||{},$("#qtdSub"))}
+    if(s){$("#s_data").value=s.data||r.data;bairroCarregar("s_bairro",s.bairro||"");endCarregar("se_", s.logradouro||"");$("#s_tipo").value=s.tipo||"";$("#s_processo").value=s.processo||"";sProcUI();writeQ("s_",s.qtd||{},$("#qtdSub"))}
     if(r.fiscal){$("#fiscal").value=r.fiscal;$("#fiscalN").value=r.fiscal}
   }
   modeUI(); show("form",true,"campo"); scrollTo(0,0);
@@ -2423,7 +2450,7 @@ $("#form").addEventListener("submit", async ev=>{
     if(m==="prog" ? errDataProg(common.data) : errDataExec(common.data)) e.push(m==="prog"?"informe uma data programada válida":"a data da execução não pode ser futura nem ter ano errado");
     const endProc=temProc(common.tipo)&&m==="prog"; // processo / O.S: pode programar sem QD., LT. e número (completa na baixa)
     const endLivre=TIPOS_180.has(common.tipo)||endProc; // área pública, entre-pista e praça: QD., LT. e número/nome da via não são obrigatórios
-    if(!common.bairro) e.push("informe o bairro"); if(!common.logradouro&&!endProc) e.push(endLivre?"informe a via ou uma referência do local (complemento)":"informe o logradouro");
+    if(!common.bairro) e.push("informe o setor / bairro"); else if(!$("#bairroT").value&&(!base||base.bairro!==common.bairro)) e.push("escolha se é setor, bairro, vila, jardim… (ao lado do nome do setor / bairro)"); if(!common.logradouro&&!endProc) e.push(endLivre?"informe a via ou uma referência do local (complemento)":"informe o logradouro");
     if(!endLivre){ if(!$("#e_via").value) e.push("escolha o tipo de via (R., AV., AL.…)"); if(!$("#e_nome").value.trim()) e.push("informe o nome ou número da via"); }
     { const ee=erroEnd(common.logradouro,"logradouro"); if(ee&&!(endLivre&&/comece pelo tipo de via/.test(ee))) e.push(ee); }
     if(!common.tipo) e.push("escolha o tipo de local"); if(common.tipo==="O.S"&&!common.processo) e.push("informe o nº da O.S"); if(common.tipo==="PROCESSO"&&!common.processo) e.push("informe o nº do processo");
@@ -6455,7 +6482,7 @@ function olhoSenha(root){
 olhoSenha(); new MutationObserver(()=>olhoSenha()).observe(document.body,{childList:true,subtree:true});
 
 /* ---------- início ---------- */
-$("#bairros").innerHTML=BAIRROS.map(b=>`<option value="${esc(b)}">`).join("");
+$("#bairros").innerHTML=BAIRROS.map(b=>`<option value="${esc(b)}">`).join(""); bairroLigar("bairro"); bairroLigar("s_bairro");
 limpar("prog"); ajudaMontar(); show(sessao?"inicio":ls.get("gpe_tab","campo")); renderAll(); renderLogin();
 
 (async()=>{
