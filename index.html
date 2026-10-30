@@ -969,6 +969,7 @@ input::placeholder,textarea::placeholder{text-transform:none}
 .osdc{border:2px solid var(--warn);border-radius:14px;padding:12px;display:grid;gap:8px;background:var(--surface)}.osdc.ok{border-color:var(--ok)}
 .osdt{display:grid;gap:2px}.osdt b{font-size:17px}.osdt span{font-size:13px;color:var(--muted)}
 .osdl{margin:0;padding-left:22px;display:grid;gap:6px}.osdl li{font-size:14px}.osdl li b{display:block;font-size:14px}.osdl li small{display:block;font-size:12.5px;color:var(--muted);line-height:1.35}
+.pxf{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 2px}.pxf .chip{min-height:38px;padding:6px 12px;font-size:13px}
 </style>
 
 <div id="login" class="login" hidden>
@@ -1097,6 +1098,7 @@ input::placeholder,textarea::placeholder{text-transform:none}
       <button type="button" class="btn sec" id="areaAdd" hidden style="min-height:44px">+ Adicionar outro ID</button>
       <small class="note" style="font-weight:400" id="areaHint">Copie o ID da área cadastrado no URBANTRIM.</small></div>
     <label class="f" id="procWrap" hidden><span id="procLbl">Nº do processo</span><input id="processo" placeholder="Ex.: 26.30.000010607-1"></label>
+    <label class="f" id="parWrap" hidden>Nº do parecer técnico (se houver)<input id="parecer" placeholder="Ex.: 123/2026"></label>
   </section>
   <section class="card" id="secImp" hidden>
     <div class="step">Impacto na <b>programação do dia</b></div>
@@ -1803,7 +1805,7 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.31h";
+const APP_VERSAO="2026.10.31j";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -2018,7 +2020,7 @@ const REL_SLOTS=[
 let relMidia={};
 const relMatSup=sup=>{ const u=Object.values(acesso||{}).find(x=>x.perfil==="supervisor"&&x.ativo&&x.sup===sup); return u?String(u.matricula||"").replace(/^m/i,""):""; };
 function relCarregar(r){ const R=r.relat||{}; relMidia={...(R.midia||{})};
-  $("#rlParecer").value=R.parecer||""; $("#rlVist").value=R.vistoria||""; $("#rlSolic").value=R.solicitante||""; $("#rlArv").value=R.arvore||""; $("#rlGalho").value=R.galho||"";
+  $("#rlParecer").value=R.parecer||r.parecer||""; $("#rlVist").value=R.vistoria||""; $("#rlSolic").value=R.solicitante||""; $("#rlArv").value=R.arvore||""; $("#rlGalho").value=R.galho||"";
   $("#rlMat").value=R.matricula||relMatSup(r.supervisao);
   $("#rlSig").innerHTML=sigBlocoHtml("rS",r.supervisao).replace("Supervisor que entrega","Supervisor responsável pelo serviço");
   const h=$("#rlFotos"); h.innerHTML=midSecHtml(relMidia,true,REL_SLOTS,"Registro fotográfico – 3 fotos obrigatórias","Tire na hora pela câmera ou anexe a foto tirada no dia do serviço (antes de começar, durante e depois). As 3 fotos vão para o relatório."); midLigar(h,relMidia,true,REL_SLOTS); }
@@ -2048,7 +2050,7 @@ function relDocHtml(r){ const R=r.relat||{}, q=r.status==="NÃO"?{}:(r.qtd||{}),
   </style>
   <div class="hd"><img src="${LOGO_PREF}" alt="Prefeitura de Goiânia"><div class="t"><b class="g">Companhia de Urbanização de Goiânia – COMURG</b><b>Diretoria de Serviços e Negócios</b><b>Gerência de Poda e Extirpação – GPE</b></div><div style="width:60px"></div></div>
   <table><tr><td colspan="3" class="tit">RELATÓRIO DE SERVIÇO</td></tr>
-   <tr class="pr"><td colspan="3"><span style="display:inline-block;width:48%">${r.tipo==="O.S"?"O.S":"PROCESSO"}: <span style="font-weight:400">${v(r.processo)}</span></span>PARECER TÉCNICO N°: <span style="font-weight:400">${v(R.parecer)}</span></td></tr>
+   <tr class="pr"><td colspan="3"><span style="display:inline-block;width:48%">${r.tipo==="O.S"?"O.S":"PROCESSO"}: <span style="font-weight:400">${v(r.processo)}</span></span>PARECER TÉCNICO N°: <span style="font-weight:400">${v(R.parecer||r.parecer)}</span></td></tr>
    <tr><td class="k">EQUIPE:</td><td colspan="2" class="c">${esc(relEquipe(r))}</td></tr>
    <tr><td class="k">FISCAL DE TURMA:</td><td colspan="2" class="c">${esc(r.fiscal||"")}</td></tr>
    <tr><td class="k">SOLICITANTE SERVIÇO:</td><td colspan="2"><b>Nome:</b> ${v(R.solicitante)}</td></tr>
@@ -2095,7 +2097,7 @@ async function relDocx(r,btn){
     const bin=Uint8Array.from(atob(REL_DOCX_B64),c=>c.charCodeAt(0)); const zip=await JSZip.loadAsync(bin);
     let x=await zip.file("word/document.xml").async("string"), rels=await zip.file("word/_rels/document.xml.rels").async("string");
     const naoExec=r.status==="NÃO"?`Serviço não executado. Motivo: ${r.motivo||"—"}${r.proxData?` · remarcado para ${fmtD(r.proxData)}`:""}`:r.status==="PARCIAL"?`Executado parcialmente. Faltou: ${qtdTxtPlano(r.qtdRemarcada||{})||"—"}. Motivo: ${r.motivo||"—"}${r.proxData?` · restante remarcado para ${fmtD(r.proxData)}`:""}`:"";
-    const V={PROCLBL:r.tipo==="O.S"?"O.S":"PROCESSO",PROC:r.processo||"",PARECER:R.parecer||"",EQUIPE:relEquipe(r),SOLIC:R.solicitante||"",LOCAL:[r.bairro,r.logradouro].filter(Boolean).join(" — "),
+    const V={PROCLBL:r.tipo==="O.S"?"O.S":"PROCESSO",PROC:r.processo||"",PARECER:R.parecer||r.parecer||"",EQUIPE:relEquipe(r),SOLIC:R.solicitante||"",LOCAL:[r.bairro,r.logradouro].filter(Boolean).join(" — "),
       ARV:R.arvore||"",GALHO:R.galho||"",NAOEXEC:naoExec,OBS:r.obs||"",FISCAL:r.fiscal||"",SUPNOME:R.ass?.nome||nomeSupDe(r.supervisao)||"",ASSIN:R.ass?.em?relAssTxt(R.ass):"Relatório ainda sem assinatura eletrônica do supervisor.",MAT:R.matricula||"",VIST:R.vistoria?fmtD(R.vistoria):"",EXEC:r.status==="NÃO"?"":fmtD(r.dataExec||r.data)};
     ITENS.forEach((it,i)=>V["Q"+(i+1)]=+q[it.c]?String(q[it.c]).replace(".",","):"");
     for(let i=0;i<REL_SLOTS.length;i++){ const k="FOTO"+(i+1), f=await relFotoJpg(midUrl(R.midia?.[REL_SLOTS[i].k])); let run="";
@@ -2139,7 +2141,7 @@ function equipeOpts(){ const s=supOf(form.sup); const o3=$("#equipe").querySelec
   if(o3){ o3.hidden=o3.disabled=!!(s&&s.grupo==="PODA I"); if(o3.disabled&&$("#equipe").value==="3ª EQUIPE") $("#equipe").value="1ª EQUIPE"; }
   if(form.mode==="prog"&&!form.base) eqVtSync("eq"); }
 $("#s_tipo").addEventListener("change",sProcUI);
-chipRow($("#tipoChips"), TIPOS.map(t=>({v:t,h:esc(t)})), v=>{form.tipo=v;setPressed($("#tipoChips"),v);if(!temProc(v))$("#processo").value="";if(!TIPOS_180.has(v))$("#areaId").value="";procUI();servUI();checaDup()});
+chipRow($("#tipoChips"), TIPOS.map(t=>({v:t,h:esc(t)})), v=>{form.tipo=v;setPressed($("#tipoChips"),v);if(!temProc(v)){$("#processo").value="";$("#parecer").value="";}if(!TIPOS_180.has(v))$("#areaId").value="";procUI();servUI();checaDup()});
 // serviço a executar: pode marcar vários; grava junto, separado por " + " (ex.: "PODA DE MANUTENÇÃO + EXTIRPAÇÃO")
 const servSel=new Set();
 $("#servChips").innerHTML=SERVICOS.map(x=>`<button type="button" class="chip" data-sv="${esc(x)}" aria-pressed="false">${x==="OUTRO"?"Outro (especificar)":esc(x.charAt(0)+x.slice(1).toLowerCase())}</button>`).join("");
@@ -2167,7 +2169,7 @@ function servCarregar(v){ servSel.clear(); const outros=[]; String(v||"").split(
   if(outros.length) servSel.add("OUTRO"); $("#servOutro").value=outros.join(" + "); servPint(); servUI(); }
 // nº do processo / O.S: o campo só aparece quando o tipo de local é PROCESSO ou O.S
 const temProc=t=>t==="O.S"||t==="PROCESSO";
-function procUI(){ const tem=temProc(form.tipo); $("#procWrap").hidden=!(tem||$("#processo").value.trim());
+function procUI(){ const tem=temProc(form.tipo); $("#procWrap").hidden=!(tem||$("#processo").value.trim()); $("#parWrap").hidden=!(tem||$("#parecer").value.trim());
   $("#procLbl").textContent = form.tipo==="O.S" ? "Nº da O.S (obrigatório)" : form.tipo==="PROCESSO" ? "Nº do processo (obrigatório)" : "Nº do processo / O.S (registrado antes)"; }
 function sProcUI(){ const w=$("#s_procWrap"); if(!w) return; const t=$("#s_tipo").value; if(!temProc(t)&&document.activeElement===$("#s_tipo")) $("#s_processo").value="";
   w.hidden=!(temProc(t)||$("#s_processo").value.trim()); $("#s_procLbl").textContent=t==="O.S"?"Nº da O.S":"Nº do processo"; }
@@ -2267,14 +2269,19 @@ function avisoDataUI(){ const el=$("#dataAviso"); if(!el) return; const v=$("#da
   if(mostra) el.textContent=`Data não permitida: a programação é sempre para a próxima semana (${P.sem}ª semana, de ${periodoSem(P.sem)}). Escolha uma data a partir de ${fmtD(P.ini)}.`; }
 function renderProxSem(){
   const host=$("#proxSem"); if(!host) return; if(!sessao){ host.innerHTML=""; return; }
-  const P=proxSemInfo(), sups=travado()?SUPS.filter(x=>x.id===sessao.sup):SUPS; if(!sups.length){ host.innerHTML=""; return; }
+  const P=proxSemInfo(), sups0=travado()?SUPS.filter(x=>x.id===sessao.sup):SUPS; if(!sups0.length){ host.innerHTML=""; return; }
+  const DIRS={DIRSEN:["PODA I","PODA II"],DIROP:["PODA III","PODA IV"]}, temAmbas=Object.values(DIRS).every(gs=>sups0.some(x=>gs.includes(x.grupo)));
+  let fd=temAmbas?ls.get("gpe_pxdir",""):""; if(fd&&!DIRS[fd]) fd="";
+  const sups=fd?sups0.filter(x=>DIRS[fd].includes(x.grupo)):sups0;
+  const filtro=temAmbas?`<div class="pxf" role="group" aria-label="Filtrar por gerência">${[["","Todas"],["DIRSEN","Gerência de Poda e Extirpação – DIRSEN"],["DIROP","Gerência de Poda e Extirpação – DIROP"]].map(([k,t])=>`<button type="button" class="chip" data-pxdir="${k}" aria-pressed="${fd===k}">${t}</button>`).join("")}</div>`:"";
   const R=sups.map(x=>({sup:x.id,...proxSemTurma(x.id,P)})), prontas=R.filter(r=>r.ok).length, todas=prontas===R.length;
   const cls=todas?"ok":P.atrasado?"bad":"warn";
   const quiTxt=`quinta-feira, ${fmtD(P.qui)}`;
   host.innerHTML=`<section class="pxs ${cls}" style="margin-top:12px"><div class="pxh"><b>Programação da ${P.sem}ª semana</b><span>${periodoSem(P.sem)}</span></div>
-    <p class="note" style="margin:0">A programação é feita nesta semana para execução na semana seguinte e tem que estar <b>pronta até ${quiTxt}</b>.${todas?" ✔ Tudo pronto.":P.atrasado?" <b>Prazo vencido.</b>":""}</p>
+    ${filtro}<p class="note" style="margin:0">A programação é feita nesta semana para execução na semana seguinte e tem que estar <b>pronta até ${quiTxt}</b>.${todas?" ✔ Tudo pronto.":P.atrasado?" <b>Prazo vencido.</b>":""}</p>
     <div class="pxl">${R.map(r=>`<span class="${r.ok?"ok":P.atrasado?"bad":"warn"}" title="${r.falta.length?"Falta: "+r.falta.map(x=>diaDe(x)+" "+fmtDs(x)).join(", "):"Todos os dias programados"}">${esc(r.sup)} · <b>${r.feitos.length} de ${r.dias.length} dias</b>${r.ok?" ✔":P.atrasado?" · ATRASADA":""}</span>`).join("")}</div></section>`;
 }
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-pxdir]"); if(!b) return; ls.set("gpe_pxdir",b.dataset.pxdir); renderProxSem(); });
 $("#data").onchange=dataUI;
 function lerMotivo(){ const v=$("#motivo").value; return v==="Outro" ? $("#motivoTxt").value.trim() : v; }
 function setMotivo(m){ const opts=[...$("#motivo").options].map(o=>o.value); if(!m){$("#motivo").value="";$("#motivoTxt").value=""} else if(opts.includes(m)&&m!=="Outro"){$("#motivo").value=m;$("#motivoTxt").value=""} else {$("#motivo").value="Outro";$("#motivoTxt").value=m==="Outro"?"":m} motivoUI(); }
@@ -2374,7 +2381,7 @@ function modeUI(){
 function lembrar(){ const t=ls.get("gpe_turma",{}); ls.set("gpe_turma",{...t,sup:form.sup||t.sup,equipe:$("#equipe").value,viatura:$("#viatura").value,fiscal:($("#fiscal").value||$("#fiscalN").value||t.fiscal||"")}) }
 function limpar(mode="prog", keep={}){
   form.mode=mode; form.tipo=""; servCarregar(""); form.st=""; form.pctModo="qtd"; form.pcts={}; if($("#pctItens")) $("#pctItens").innerHTML=""; if($("#mdDias")) $("#mdDias").value=1; if($("#pctVal")) $("#pctVal").value=""; form.base=null; form.geo=null; form.geoAuto=false; if($("#geoTxt")) $("#geoTxt").value="";
-  ["bairro","logradouro","processo","areaId","proxData","motivo","motivoTxt","obs","s_bairro","s_logradouro","s_processo","s_tipo","s_data","dataExec"].forEach(id=>$("#"+id).value=""); bairroCarregar("bairro",""); bairroCarregar("s_bairro",""); try{servUI()}catch(e){}
+  ["bairro","logradouro","processo","parecer","areaId","proxData","motivo","motivoTxt","obs","s_bairro","s_logradouro","s_processo","s_tipo","s_data","dataExec"].forEach(id=>$("#"+id).value=""); bairroCarregar("bairro",""); bairroCarregar("s_bairro",""); try{servUI()}catch(e){}
   $("#semSub").checked=false;
   form.okSemItens=false; form.oc=""; ["ocHora","ocOrigem","ocProt","ocQtd"].forEach(id=>$("#"+id).value=""); ["ocVia","ocRede","ocDano"].forEach(id=>$("#"+id).checked=false); setPressed($("#ocChips"),""); $("#ocQLbl").textContent="Quantidade";
   writeQ("q_",{}, $("#qtdMain")); writeQ("s_",{}, $("#qtdSub")); showPrev({});
@@ -2392,7 +2399,7 @@ $("#cancelEdit").onclick=()=>{ const back=form.mode!=="prog", oc=form.mode==="oc
 function fillCommon(r){
   form.sup=r.supervisao||""; $("#equipe").value=r.equipe||"1ª EQUIPE"; $("#viatura").value=(r.viatura==="SKAY"||r.viatura==="SKY")?"SKY 5074.0":(r.viatura||"SPLINTER 5063.6");
   $("#data").value=r.data||""; dataUI(); if(r.semana)$("#semana").value=r.semana+"ª";
-  bairroCarregar("bairro",r.bairro||""); endCarregar("e_", r.logradouro||""); form.tipo=r.tipo||""; $("#processo").value=r.processo||""; $("#areaId").value=r.areaId||""; servCarregar(r.servico);
+  bairroCarregar("bairro",r.bairro||""); endCarregar("e_", r.logradouro||""); form.tipo=r.tipo||""; $("#processo").value=r.processo||""; $("#parecer").value=r.parecer||""; $("#areaId").value=r.areaId||""; servCarregar(r.servico);
   $("#obs").value=r.obs||"";
   setPressed($("#supChips"),form.sup); setPressed($("#tipoChips"),form.tipo); procUI();
 }
@@ -2609,7 +2616,7 @@ $("#form").addEventListener("submit", async ev=>{
     supervisao:form.sup, encarregado:sup.enc||"", grupo:sup.grupo||"", turno:sup.turno||"",
     equipe:$("#equipe").value, viatura:$("#viatura").value,
     data:$("#data").value, dia:$("#dia").value, semana:parseInt($("#semana").value)||semanaDe($("#data").value),
-    bairro:$("#bairro").value.trim().toUpperCase(), logradouro:abrevEnd($("#logradouro").value), tipo:form.tipo, servico:servLer(), processo:$("#processo").value.trim(), areaId:TIPOS_180.has(form.tipo)?(areaLer(),areaLista($("#areaId").value).slice(0,form.tipo==="ENTRE-PISTA"?99:1).join(", ")):"" };
+    bairro:$("#bairro").value.trim().toUpperCase(), logradouro:abrevEnd($("#logradouro").value), tipo:form.tipo, servico:servLer(), processo:$("#processo").value.trim(), parecer:temProc(form.tipo)?$("#parecer").value.trim().toUpperCase():"", areaId:TIPOS_180.has(form.tipo)?(areaLer(),areaLista($("#areaId").value).slice(0,form.tipo==="ENTRE-PISTA"?99:1).join(", ")):"" };
   if(m!=="baixa"){
     if(!common.supervisao) e.push("escolha a supervisão");
     if(m==="prog"&&common.supervisao&&(!base||base.equipe!==common.equipe||base.viatura!==common.viatura)){ const ev=eqVtErro(common.supervisao,common.equipe,common.viatura); if(ev) e.push(ev); }
@@ -4182,7 +4189,7 @@ const LXD_CSS=`.lx .card{border:1px solid #c9d1c4;border-radius:10px;margin-top:
 function lxCard(r){ const pq=prevQ(r), s=r.substituto;
   const L=[["Turma",`${esc(r.supervisao||"")}${r.encarregado?" ("+esc(r.encarregado)+")":""} · ${esc(r.equipe||"")} · ${esc(r.viatura||"")}`],
     ["Local",`<b>${esc(r.bairro||"")}</b> — ${esc(r.logradouro||"")}`],
-    ["Tipo",`${esc(r.tipo||"—")}${r.servico?" · "+esc(r.servico):""}${r.processo?" · nº "+esc(r.processo):""}${r.areaId?" · "+esc(areaTxt(r)):""}`]];
+    ["Tipo",`${esc(r.tipo||"—")}${r.servico?" · "+esc(r.servico):""}${r.processo?" · nº "+esc(r.processo):""}${r.parecer?" · parecer nº "+esc(r.parecer):""}${r.areaId?" · "+esc(areaTxt(r)):""}`]];
   if(r.ocorrencia){ const o=r.ocorrencia; L.push(["Ocorrência",`${OC[o.tipo]||""} · ${o.qtd||1} un.${o.hora?" · chamado "+esc(o.hora):""}${o.origem?" · "+esc(o.origem):""}${o.protocolo?" · prot. "+esc(o.protocolo):""}${o.rede?" · rede elétrica":""}${o.via?" · via bloqueada":""}`]); }
   if(!r.avulso) L.push(["Previsto",`${qtdTxt(pq)}<div>Valor previsto: <b>${brl(receitaDe(pq))}</b></div>`]);
   if(r.status==="SIM"||r.status==="PARCIAL") L.push(["Executado",`${qtdTxt(r.qtd)}<div>Valor executado: <b>${brl(receitaDe(r.qtd))}</b>${r.dataExec&&r.dataExec!==r.data?" em "+fmtD(r.dataExec):""}</div>`]);
@@ -4253,7 +4260,7 @@ function detalhe(r, abrirAdiar=false, soVer=false){
       <dt>Semana</dt><dd>${r.semana?r.semana+"ª":"—"}</dd>
       <dt>Local</dt><dd>${esc(r.bairro)} — ${esc(r.logradouro)}<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:8px">${mapLink(r)}${(r.logradouro||r.bairro||r.geo)?`<button type="button" class="maplink" data-locshare="${esc(r.id)}">${ICO_SHARE}Compartilhar localização</button>`:""}${!r.arquivado?`<button type="button" class="maplink" id="shMsg">🖼 Compartilhar imagem</button>`:""}</div></dd>
       ${r.geo?`<dt>GPS</dt><dd>${fmtCoord(r.geo)}${r.geo.prec?` · ±${Math.round(r.geo.prec)} m`:""} · ${r.geo.fonte==="gps"?"pelo aparelho":"informado"}<div style="margin-top:6px"><a class="maplink" href="${gpsUrl(r.geo)}" target="_blank" rel="noopener">${PIN}Ponto exato no mapa</a></div></dd>`:""}
-      <dt>Tipo</dt><dd>${esc(r.tipo||"—")}${r.processo?" · "+esc(r.processo):""}</dd>${r.areaId?`<dt>Área URBANTRIM</dt><dd><b style="color:var(--brand)">${esc(areaTxt(r))}</b></dd>`:""}${r.servico?`<dt>Serviço</dt><dd>${esc(r.servico)}</dd>`:""}
+      <dt>Tipo</dt><dd>${esc(r.tipo||"—")}${r.processo?" · "+esc(r.processo):""}${r.parecer?" · parecer técnico nº "+esc(r.parecer):""}</dd>${r.areaId?`<dt>Área URBANTRIM</dt><dd><b style="color:var(--brand)">${esc(areaTxt(r))}</b></dd>`:""}${r.servico?`<dt>Serviço</dt><dd>${esc(r.servico)}</dd>`:""}
       ${r.avulso?`<dt>Origem</dt><dd>Serviço sem programação</dd>`:`<dt>Previsto</dt><dd>${qtdTxt(pq)}<br>Valor previsto: <b>${brl(receitaDe(pq))}</b></dd>`}
       ${(r.status==="SIM"||r.status==="PARCIAL")?`<dt>Executado</dt><dd>${qtdTxt(r.qtd)}<br>Valor executado: <b>${brl(receitaDe(r.qtd))}</b>${r.dataExec&&r.dataExec!==r.data?" em "+fmtD(r.dataExec):""}</dd>`:""}
       ${r.status==="PARCIAL"&&r.proxData?`<dt>Não executado · remarcado</dt><dd>${qtdTxt(r.qtdRemarcada)}<br>remarcado p/ ${fmtD(r.proxData)} · ${esc(r.motivo||"")}</dd>`:""}
