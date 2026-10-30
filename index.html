@@ -965,6 +965,10 @@ input::placeholder,textarea::placeholder{text-transform:none}
 .pcsem{font-size:12px;color:var(--warn);font-weight:600}
 @media (max-width:560px){.alert .pcrow .pcinfo{flex-basis:100%!important}.pcacts{width:100%;justify-content:flex-start}}
 .alert .pcrow button.pcz{width:auto!important;margin:0!important;min-height:40px!important;padding:0 10px!important;border-radius:10px!important;background:#1f9d55!important;color:#fff!important;border:1px solid #1f9d55!important;font:700 13px var(--body)!important;text-transform:none!important;letter-spacing:normal!important;display:inline-flex!important;align-items:center;flex:0 0 auto!important}
+.detos{display:grid;gap:6px;margin:8px 0;padding:10px;border:2px dashed var(--accent,#f37020);border-radius:12px}.detos.ok{border:2px solid var(--ok);background:var(--ok-bg)}.detos small{font-size:13px;color:var(--muted)}.detos b{font-size:15px}.detos .btn[disabled]{opacity:.55;cursor:not-allowed}
+.osdc{border:2px solid var(--warn);border-radius:14px;padding:12px;display:grid;gap:8px;background:var(--surface)}.osdc.ok{border-color:var(--ok)}
+.osdt{display:grid;gap:2px}.osdt b{font-size:17px}.osdt span{font-size:13px;color:var(--muted)}
+.osdl{margin:0;padding-left:22px;display:grid;gap:6px}.osdl li{font-size:14px}.osdl li b{display:block;font-size:14px}.osdl li small{display:block;font-size:12.5px;color:var(--muted);line-height:1.35}
 </style>
 
 <div id="login" class="login" hidden>
@@ -1799,7 +1803,7 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.31b";
+const APP_VERSAO="2026.10.31f";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -4239,7 +4243,7 @@ function detalhe(r, abrirAdiar=false, soVer=false){
       ${r.ocorrencia?(()=>{const o=r.ocorrencia;return `<dt>Ocorrência</dt><dd><b>${OC[o.tipo]||"—"}</b> · ${o.qtd||1} ${o.tipo==="ARVORE"?"árvore(s)":"galho(s)"}${o.hora?" · "+esc(o.hora):""}${o.origem?" · "+esc(o.origem):""}${o.protocolo?" · prot. "+esc(o.protocolo):""}${[o.via&&"via bloqueada",o.rede&&"rede elétrica",o.danos&&"danos"].filter(Boolean).length?"<br>"+[o.via&&"via bloqueada",o.rede&&"rede elétrica",o.danos&&"danos a veículo/imóvel"].filter(Boolean).join(" · "):""}</dd>`})():""}
       <dt>Turma</dt><dd>${esc(r.supervisao)} (${esc(r.encarregado)}) · ${esc(r.equipe)} · ${esc(r.viatura)}</dd>
       <dt>Semana</dt><dd>${r.semana?r.semana+"ª":"—"}</dd>
-      <dt>Local</dt><dd>${esc(r.bairro)} — ${esc(r.logradouro)}<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:8px">${mapLink(r)}${(r.logradouro||r.bairro||r.geo)?`<button type="button" class="maplink" data-locshare="${esc(r.id)}">${ICO_SHARE}Compartilhar localização</button>`:""}</div></dd>
+      <dt>Local</dt><dd>${esc(r.bairro)} — ${esc(r.logradouro)}<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:8px">${mapLink(r)}${(r.logradouro||r.bairro||r.geo)?`<button type="button" class="maplink" data-locshare="${esc(r.id)}">${ICO_SHARE}Compartilhar localização</button>`:""}${!r.arquivado?`<button type="button" class="maplink" id="shMsg">🖼 Compartilhar imagem</button>`:""}</div></dd>
       ${r.geo?`<dt>GPS</dt><dd>${fmtCoord(r.geo)}${r.geo.prec?` · ±${Math.round(r.geo.prec)} m`:""} · ${r.geo.fonte==="gps"?"pelo aparelho":"informado"}<div style="margin-top:6px"><a class="maplink" href="${gpsUrl(r.geo)}" target="_blank" rel="noopener">${PIN}Ponto exato no mapa</a></div></dd>`:""}
       <dt>Tipo</dt><dd>${esc(r.tipo||"—")}${r.processo?" · "+esc(r.processo):""}</dd>${r.areaId?`<dt>Área URBANTRIM</dt><dd><b style="color:var(--brand)">${esc(areaTxt(r))}</b></dd>`:""}${r.servico?`<dt>Serviço</dt><dd>${esc(r.servico)}</dd>`:""}
       ${r.avulso?`<dt>Origem</dt><dd>Serviço sem programação</dd>`:`<dt>Previsto</dt><dd>${qtdTxt(pq)}<br>Valor previsto: <b>${brl(receitaDe(pq))}</b></dd>`}
@@ -4256,7 +4260,7 @@ function detalhe(r, abrirAdiar=false, soVer=false){
     ${r.dupCiente?`<p class="note" style="margin:6px 0 0;color:var(--warn)">⚠ Programado mesmo com outra programação no mesmo endereço${r.dupCiente.por?" – ciente: <b>"+esc(r.dupCiente.por)+"</b>":""}${r.dupCiente.em?" em "+fmtHora(r.dupCiente.em):""}.</p>`:""}
     ${(r.log||[]).length?`<div class="hist"><b style="color:var(--ink)">Histórico de alterações</b><div class="logl">${r.log.slice().reverse().map(l=>`<span>${new Date(l.em).toLocaleDateString("pt-BR")} ${new Date(l.em).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})} · <b>${esc(l.por)}</b> · ${esc(l.acao)}</span>`).join("")}</div></div>`:""}
     ${(!isProg(r)&&relTem(r)&&downloads)?`<div class="row2" style="margin-top:4px"><button type="button" class="btn sec" data-relpdf="${esc(r.id)}">📄 Relatório (PDF)</button><button type="button" class="btn sec" data-reldocx="${esc(r.id)}">📝 Relatório (Word)</button></div>`:""}
-    ${(!isProg(r)&&!r.arquivado)?`<button type="button" class="btn sec" id="shMsg">Copiar mensagem para o grupo</button>`:""}
+    ${detOsHtml(r)}
     ${(!r.ocorrencia&&!r.avulso&&!r._fila&&!r.arquivado&&(isGerente()||(!soVer&&isProg(r)&&isGer())))?`<button type="button" class="btn sec" id="shProg">✏ ${isGerente()?"Editar programação (gerente)":"Corrigir programação (gerência)"}</button>`:""}
     ${(soVer||soLeitura()||r.arquivado)?`${soVer&&isProg(r)&&!soLeitura()&&!r.arquivado?`<button type="button" class="btn pri" id="shBaixa" style="min-height:52px;font-size:16px">${r.ocorrencia?"Registrar atendimento":"✔ Dar baixa"}</button>`:""}<button type="button" class="btn sec" id="shClose">Fechar</button>${(soVer&&isGerente()&&!r._fila&&db&&!r.arquivado)?`<button type="button" class="btn danger" id="shDel">${isProg(r)?"Excluir programação":"Excluir lançamento"} (gerente)</button>`:""}`:`<div class="actions" style="grid-template-columns:1fr 1fr">
       ${isProg(r)?`<button type="button" class="btn pri" id="shBaixa">Dar baixa</button>`:`<button type="button" class="btn pri" id="shEdit">Corrigir baixa</button>`}
@@ -6688,13 +6692,35 @@ function osDiaTxt(g){ const o=g.os||{}, d=hoje(), pv=g.rs.reduce((a,r)=>a+receit
   return [`*ORDEM DE SERVIÇO Nº ${o.num||osNum(g.sup,g.eq,d)} – INICIADA*`,`COMURG · Gerência de Poda e Extirpação`,``,`📅 ${fmtD(d)} (${diaDe(d)})`,`👷 ${g.sup} · ${g.eq}${g.rs[0]?.viatura?" · "+g.rs[0].viatura:""}`,`Supervisor: ${nomeSupDe(g.sup)||"—"}`,`Fiscal: ${o.fiscal?.nome||g.fis?.nome||"—"}`,``,
     `*Serviços do dia (${g.rs.length}):*`,...g.rs.map((r,i)=>`${i+1}. ${r.bairro||""} — ${r.logradouro||""}${tipoTxt(r)?` · ${tipoTxt(r)}`:""}${r.processo?` · nº ${r.processo}`:""}\n   ${qtdTxtPlano(prevQ(r))||"—"}`),``,
     `Previsto: ${brl(pv)}`,o.em?`Iniciada às ${new Date(o.em).toTimeString().slice(0,5)} por ${o.por||"—"}.`:""].filter(x=>x!==null).join("\n"); }
-function osDiaHtml(){ const L=osDiaGrupos(); if(!L.length) return "";
+function osDiaHtml(){ const L=osDiaGrupos().filter(g=>sessao.perfil==="fiscal"||!g.os); if(!L.length) return ""; // depois de iniciada e enviada ao fiscal, a O.S some do Início (o fiscal continua vendo a dele)
   return `<div class="osdia"><div class="osdh">ORDEM DE SERVIÇO DO DIA · ${fmtDs(hoje())}</div>${L.map(g=>{ const k=esc(g.k), n=g.rs.length;
     const fis=g.fis?`fiscal: <b>${esc(g.fis.nome)}</b>${g.fis.zap?"":" (sem WhatsApp no cadastro)"}`:`<span style="color:var(--bad)">sem fiscal cadastrado para esta equipe (Acessos)</span>`;
     if(g.os) return `<div class="osl ok"><div><b>✅ ${esc(g.sup)} · ${esc(g.eq)}</b><small>O.S nº ${esc(g.os.num)} iniciada às ${new Date(g.os.em).toTimeString().slice(0,5)} por ${esc(g.os.por||"—")} · ${n} serviço${n===1?"":"s"} · enviada para ${esc(g.os.fiscal?.nome||"o fiscal")}</small></div>
       <div class="osb"><button type="button" class="btn sec" data-osenv="${k}">💬 ${sessao.perfil==="fiscal"?"Ver mensagem":"Reenviar ao fiscal"}</button><button type="button" class="btn sec" data-ospdf="${k}">📄 PDF</button><button type="button" class="btn sec" data-osimg="${k}">🖼 Imagem</button></div></div>`;
     return `<div class="osl"><div><b>🟠 ${esc(g.sup)} · ${esc(g.eq)}</b><small>${n} serviço${n===1?"":"s"} programado${n===1?"":"s"} para hoje · ${fis}</small></div>
       <div class="osb">${osPodeIniciar(g.sup)?`<button type="button" class="btn pri" data-osini="${k}">▶ Iniciar O.S e enviar ao fiscal</button>`:`<small style="color:var(--muted)">Aguardando o supervisor iniciar a O.S.</small>`}</div></div>`; }).join("")}</div>`; }
+// O.S no detalhe do serviço: iniciar (só no dia da execução) ou reenviar ao fiscal
+function detOsHtml(r){ if(!r||r.ocorrencia||r.avulso||r.arquivado||!r.supervisao) return ""; const k=esc(r.supervisao+"|"+(r.equipe||""));
+  if(r.osDia) return `<div class="detos ok"><b>✅ O.S nº ${esc(r.osDia.num)} iniciada</b><small>${new Date(r.osDia.em).toTimeString().slice(0,5)} de ${fmtDs(iso(new Date(r.osDia.em)))} por ${esc(r.osDia.por||"—")} · enviada para ${esc(r.osDia.fiscal?.nome||"o fiscal")}</small>${r.data===hoje()?`<button type="button" class="btn sec" data-osenv="${k}">💬 Reenviar ao fiscal</button>`:""}</div>`;
+  if(!isProg(r)||!osPodeIniciar(r.supervisao)) return "";
+  if(r.data!==hoje()) return `<div class="detos"><button type="button" class="btn sec" disabled>▶ Iniciar O.S e enviar ao fiscal</button><small>Disponível só no dia da execução: ${diaDe(r.data)} ${fmtD(r.data)}.</small></div>`;
+  const f=fiscalDe(r.supervisao,r.equipe);
+  return `<div class="detos"><button type="button" class="btn pri" data-osini="${k}">▶ Iniciar O.S da ${esc(r.equipe||"equipe")} e enviar ao fiscal</button><small>${f?`Fiscal: ${esc(f.nome)}${f.zap?"":" (sem WhatsApp no cadastro)"}`:"Sem fiscal cadastrado para esta equipe em Acessos."} A O.S vale para todos os serviços da equipe hoje.</small></div>`; }
+// tela "Iniciar O.S do dia": os serviços de hoje de cada equipe, prontos para iniciar e enviar ao fiscal
+function abrirOsDia(){ const host=$("#sheetHost"), G=osDiaGrupos(), d=hoje();
+  const card=g=>{ const k=esc(g.k), n=g.rs.length, pv=g.rs.reduce((a,r)=>a+receitaDe(prevQ(r)),0), fis=g.os?.fiscal||g.fis;
+    const lista=`<ol class="osdl">${g.rs.map(r=>`<li><b>${esc(r.bairro||"")} — ${esc(r.logradouro||"")}</b><small>${esc(tipoTxt(r)||"")}${r.processo?" · nº "+esc(r.processo):""} · ${esc(qtdTxtPlano(prevQ(r))||"—")}</small></li>`).join("")}</ol>`;
+    return `<div class="osdc ${g.os?"ok":""}"><div class="osdt"><b>${g.os?"✅":"🟠"} ${esc(g.sup)} · ${esc(g.eq||"equipe")}</b><span>${n} serviço${n===1?"":"s"} · ${brl(pv)}${g.rs[0]?.viatura?" · "+esc(g.rs[0].viatura):""}</span>
+      <span>${fis?`Fiscal: <b>${esc(fis.nome)}</b>`:`<em style="color:var(--bad);font-style:normal">Sem fiscal cadastrado para esta equipe (Acessos)</em>`}</span>
+      ${g.os?`<span style="color:var(--ok)">O.S nº <b>${esc(g.os.num)}</b> iniciada às ${new Date(g.os.em).toTimeString().slice(0,5)} por ${esc(g.os.por||"—")}</span>`:""}</div>${lista}
+      <div class="osb">${g.os?`<button type="button" class="btn sec" data-osenv="${k}">💬 ${sessao.perfil==="fiscal"?"Ver mensagem":"Reenviar ao fiscal"}</button>`:osPodeIniciar(g.sup)?`<button type="button" class="btn pri" data-osini="${k}">▶ Iniciar O.S e enviar ao fiscal</button>`:`<small>Aguardando o supervisor iniciar.</small>`}
+      <button type="button" class="btn sec" data-ospdf="${k}">📄 PDF</button><button type="button" class="btn sec" data-osimg="${k}">🖼 Imagem</button></div></div>`; };
+  host.innerHTML=`<div class="sheet" id="sh"><div class="panel" role="dialog" aria-label="Iniciar O.S do dia">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:22px">O.S do dia · ${diaDe(d)} ${fmtDs(d)}</b><button type="button" class="btn sec" data-osdx style="min-height:44px;padding:0 14px">Fechar</button></div>
+    <p class="note" style="margin:0">Os serviços programados para hoje já estão aqui, separados por equipe. Confira, toque em <b>Iniciar O.S e enviar ao fiscal</b> e mande pelo WhatsApp. A O.S só pode ser iniciada no dia da execução.</p>
+    ${G.length?G.map(card).join(""):`<section class="alert ok"><h3>Nenhum serviço programado para hoje</h3><p class="note" style="margin:0">Quando houver programação para o dia, os serviços aparecem aqui para iniciar a O.S.</p></section>`}
+  </div></div>`;
+  host.querySelector("#sh").addEventListener("click",e=>{ if(e.target.id==="sh"||e.target.closest("[data-osdx]")) host.innerHTML=""; }); }
 function osSel(g){ return {rows:g.rs,sub:"O.S Nº "+(g.os?.num||osNum(g.sup,g.eq,hoje()))+" – EXECUÇÃO DO DIA",ftxt:`${fmtD(hoje())} · ${diaDe(hoje())} · ${g.sup} · ${g.eq}${g.os?.fiscal?.nome?" · fiscal: "+g.os.fiscal.nome:""}`,
   nome:("os-"+(g.os?.num||osNum(g.sup,g.eq,hoje()))+"-"+g.sup+"-"+g.eq).normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Za-z0-9]+/g,"-").replace(/-+$/,"").toLowerCase()}; }
 function osEnviar(g){ const txt=osDiaTxt(g), f=g.os?.fiscal||g.fis, z=f?.zap||(f?.id?acesso?.[f.id]?.zap:"")||"";
@@ -6714,7 +6740,7 @@ async function osIniciar(g,btn){
   const em=new Date().toISOString(), fis=g.fis, os={num:osNum(g.sup,g.eq,hoje()),em,por:sessao.nome||"",porId:sessao.id,fiscal:fis?{id:fis.id,nome:fis.nome}:null};
   let ok=true; for(const r of g.rs){ const upd={...r}; delete upd.id; delete upd._fila; upd.osDia=os; upd._acao=`Iniciou a O.S nº ${os.num}${fis?" e enviou ao fiscal "+fis.nome:""}`; const res=await saveDoc(r.id,upd); if(res!=="ok"&&res!=="fila") ok=false; else r.osDia=os; }
   if(!ok){ toast("Não foi possível iniciar a O.S agora. Tente de novo."); btn.disabled=false; btn.textContent="▶ Iniciar O.S e enviar ao fiscal"; btn.dataset.armed=""; return; }
-  toast("O.S nº "+os.num+" iniciada."); try{renderAll()}catch(e){} osEnviar({...g,os}); }
+  toast("O.S nº "+os.num+" iniciada."); try{ if(btn.closest("#sheetHost")) $("#sheetHost").innerHTML=""; }catch(e){} try{renderAll()}catch(e){} osEnviar({...g,os}); }
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-osini],[data-osenv],[data-ospdf],[data-osimg]"); if(!b) return;
   const k=b.dataset.osini||b.dataset.osenv||b.dataset.ospdf||b.dataset.osimg, g=osDiaGrupos().find(x=>x.k===k); if(!g){ toast("O.S não encontrada."); return; }
   if(b.dataset.osini) return osIniciar(g,b); if(b.dataset.osenv) return osEnviar(g);
@@ -6739,6 +6765,7 @@ function renderInicio(){
   if(!av) av=`<div class="inav okk">${ICO.ok}<span><b>Tudo em dia</b><small>Nenhum serviço atrasado nem pendência no checklist</small></span></div>`;
   if(!avLigado()&&!soLeitura()) av+=`<button type="button" class="inav warn" data-iv="pend">${ICO.pend}<span><b>Ligue o aviso sonoro</b><small>O celular toca e avisa quando aparecer pendência para você</small></span><em>Ligar</em></button>`;
   const tiles=[
+    {a:"osdia",t:"Iniciar O.S do dia",sub:(()=>{ const G=osDiaGrupos(), n=G.filter(g=>!g.os).length; return G.length?(n?`(${n} a iniciar)`:"(todas iniciadas)"):"(sem serviço hoje)"; })(),i:svgI('<path d="M7 3h10v18H7z"/><path d="M10 8l5 4-5 4z" fill="currentColor"/>'),c:"t-or",ok:!soLeitura()&&(SUPS.some(x=>osPodeIniciar(x.id))||sessao.perfil==="fiscal")},
     {v:"campo",t:"Dar baixa no serviço",i:ICO.campo,c:"t-or",ok:pode("campo")&&lanca},
     {v:"form",t:"Programar a semana",i:ICO.form,c:"t-gr",ok:pode("form")},
     {v:"chk",a:"chkNovo",t:"Checklist do equipamento",i:ICO.chk,ok:pode("chk")&&lanca},
@@ -6755,11 +6782,10 @@ function renderInicio(){
   const escHj=travado()&&escCfg(sessao.sup)?(trabalha(sessao.sup,hoje())?" · hoje: dia de trabalho":" · hoje: FOLGA"):"";
   h.innerHTML=`<div class="inhead"><span>${sau},</span><b>${esc(nome)}</b><small>${esc(onde)} · ${dsTxt}${escHj}${hj?` · ${hj} ${hj===1?"serviço programado":"serviços programados"} hoje`:""}</small></div>
     ${INICIO_AVISOS?`<div class="inavs">${av}</div>`:""}
-    ${osDiaHtml()}
     <div class="inq">O QUE VOCÊ QUER FAZER?</div>
     <div class="intiles">${tiles.map(x=>`<button type="button" class="intile ${x.c||""}" data-iv="${x.v||""}" data-ia="${x.a||""}">${x.i}<span>${esc(x.t)}${x.sub?`<small class="insub">${esc(x.sub)}</small>`:""}</span></button>`).join("")}</div>`;
 }
-document.addEventListener("click",e=>{ const b=e.target.closest("#inicioBox [data-iv]"); if(!b) return; if(b.dataset.ia==="acessos") return abrirAcessos(); irPara(b.dataset.iv,b.dataset.ia); });
+document.addEventListener("click",e=>{ const b=e.target.closest("#inicioBox [data-iv]"); if(!b) return; if(b.dataset.ia==="acessos") return abrirAcessos(); if(b.dataset.ia==="osdia") return abrirOsDia(); irPara(b.dataset.iv,b.dataset.ia); });
 const AJUDA={
   pend:{c:"Tudo o que precisa de atenção, em um só lugar.",p:["Cada aviso mostra a quantidade e do que se trata. Toque nele para resolver.","Gerente e coordenador têm os botões de cobrar no WhatsApp.","O número no sino do rodapé é o total de pendências."]},
   inicio:{c:"Sua tela inicial.",p:["Os avisos no topo mostram o que precisa de atenção. Toque em Resolver ou Ver.","Os botões grandes levam direto ao que você faz no dia.","No rodapé ficam as telas principais; o resto está em Mais."]},
