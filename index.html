@@ -1803,7 +1803,7 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.31f";
+const APP_VERSAO="2026.10.31h";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -4196,12 +4196,20 @@ const lxNome=ext=>("ordem-de-servico-"+[$("#fDia").value?"dia-"+$("#fDia").value
 async function listaPdf(btn,sel){
   const rows=sel?sel.rows:listaRows().rows; if(!rows.length){ toast("Nenhum serviço com esses filtros."); return; }
   if(rows.length>800){ toast("São "+rows.length+" serviços. Filtre por semana ou turma (no máximo 800)."); return; }
-  const det=$("#fFmt").value==="det"; if(det&&rows.length>300){ toast("No formato detalhado o PDF aceita até 300 serviços. Filtre por semana ou turma."); return; }
+  const det=sel?.det??($("#fFmt").value==="det"); if(det&&rows.length>300){ toast("No formato detalhado o PDF aceita até 300 serviços. Filtre por semana ou turma."); return; }
   await baixarFormPdf(btn,listaDocHtml(rows,sel?"dia":$("#fAgr").value,det,sel?.ftxt,sel?.sub),sel?sel.nome+".pdf":lxNome("pdf"),"Ordem de serviço");
 }
+// imagem (PNG) do documento da Ordem de Serviço
+async function listaImgBlob(rows,agr,det,ftxt,sub){ await loadH2P(); try{await document.fonts.ready}catch(e){}
+  const host=document.createElement("div"); host.style.cssText="position:absolute;left:-12000px;top:0;width:794px;background:#fff"; host.innerHTML=listaDocHtml(rows,agr,det,ftxt,sub); document.body.appendChild(host);
+  const sx=scrollX, sy=scrollY; scrollTo(0,0); let cv;
+  try{ const el=host.firstElementChild, H=el.scrollHeight, k=Math.max(1,Math.min(2,Math.sqrt(14e6/(794*H))));
+    cv=await html2pdf().set({html2canvas:{scale:k,backgroundColor:"#ffffff",logging:false,scrollX:0,scrollY:0,x:0,y:0,useCORS:true,windowWidth:1280,onclone:repaginarCopia}}).from(el).toCanvas().get("canvas"); }
+  finally{ host.remove(); scrollTo(sx,sy); }
+  return await new Promise(ok=>cv.toBlob(ok,"image/png")); }
 async function listaImg(btn,sel){
   const rows=sel?sel.rows:listaRows().rows; if(!rows.length){ toast("Nenhum serviço com esses filtros."); return; }
-  const det=$("#fFmt").value==="det", lim=det?60:250;
+  const det=sel?.det??($("#fFmt").value==="det"), lim=det?60:250;
   if(rows.length>lim){ toast("São "+rows.length+" serviços: para imagem"+(det?" detalhada":"")+", filtre até "+lim+" (ou use o PDF)."); return; }
   const t=btn.textContent; btn.disabled=true; btn.textContent="Gerando imagem…";
   try{ await loadH2P(); try{await document.fonts.ready}catch(e){}
@@ -6721,18 +6729,30 @@ function abrirOsDia(){ const host=$("#sheetHost"), G=osDiaGrupos(), d=hoje();
     ${G.length?G.map(card).join(""):`<section class="alert ok"><h3>Nenhum serviço programado para hoje</h3><p class="note" style="margin:0">Quando houver programação para o dia, os serviços aparecem aqui para iniciar a O.S.</p></section>`}
   </div></div>`;
   host.querySelector("#sh").addEventListener("click",e=>{ if(e.target.id==="sh"||e.target.closest("[data-osdx]")) host.innerHTML=""; }); }
-function osSel(g){ return {rows:g.rs,sub:"O.S Nº "+(g.os?.num||osNum(g.sup,g.eq,hoje()))+" – EXECUÇÃO DO DIA",ftxt:`${fmtD(hoje())} · ${diaDe(hoje())} · ${g.sup} · ${g.eq}${g.os?.fiscal?.nome?" · fiscal: "+g.os.fiscal.nome:""}`,
+function osSel(g){ return {det:true,rows:g.rs,sub:"O.S Nº "+(g.os?.num||osNum(g.sup,g.eq,hoje()))+" – EXECUÇÃO DO DIA",ftxt:`${fmtD(hoje())} · ${diaDe(hoje())} · ${g.sup} · ${g.eq}${g.os?.fiscal?.nome?" · fiscal: "+g.os.fiscal.nome:""}`,
   nome:("os-"+(g.os?.num||osNum(g.sup,g.eq,hoje()))+"-"+g.sup+"-"+g.eq).normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Za-z0-9]+/g,"-").replace(/-+$/,"").toLowerCase()}; }
 function osEnviar(g){ const txt=osDiaTxt(g), f=g.os?.fiscal||g.fis, z=f?.zap||(f?.id?acesso?.[f.id]?.zap:"")||"";
   const box=document.createElement("div"); box.className="sheet"; box.style.zIndex=40;
   box.innerHTML=`<div class="panel" role="dialog" aria-label="Enviar O.S ao fiscal"><b style="font-family:var(--display);font-size:22px">O.S nº ${esc(g.os?.num||"")} ${sessao.perfil==="fiscal"?"":"– enviar ao fiscal"}</b>
-    <p class="note" style="margin:0">${f?`Fiscal da equipe: <b>${esc(f.nome)}</b>${z?" · 📱 "+esc(zapFmt(z)):" · sem WhatsApp no cadastro (escolha o contato no WhatsApp)"}`:"Nenhum fiscal cadastrado para esta equipe em Acessos: escolha o contato no WhatsApp."} Anexe também o PDF ou a imagem da O.S na conversa.</p>
-    <pre style="white-space:pre-wrap;font:13px/1.45 var(--body,inherit);background:var(--sunk);border-radius:10px;padding:10px;margin:0;max-height:38vh;overflow:auto">${esc(txt)}</pre>
-    ${sessao.perfil==="fiscal"?"":`<a class="btn pri" href="${zapLink(z,txt)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;text-decoration:none">💬 Enviar no WhatsApp${f?" para "+esc(f.nome.split(" ")[0]):""}</a>`}
+    <p class="note" style="margin:0">${f?`Fiscal da equipe: <b>${esc(f.nome)}</b>${z?" · 📱 "+esc(zapFmt(z)):" · sem WhatsApp no cadastro (escolha o contato no WhatsApp)"}`:"Nenhum fiscal cadastrado para esta equipe em Acessos: escolha o contato no WhatsApp."} A O.S vai em imagem, com o detalhe de cada serviço.</p>
+    <details class="zaptx"><summary>Ver o texto da O.S</summary><pre style="white-space:pre-wrap;font:13px/1.45 var(--body,inherit);background:var(--sunk);border-radius:10px;padding:10px;margin:6px 0 0;max-height:38vh;overflow:auto">${esc(txt)}</pre></details>
+    <div class="zapprev" data-osprev><div class="midph">Montando a imagem da O.S…</div></div>
+    ${sessao.perfil==="fiscal"?"":`<a class="btn pri" data-osimgzap href="${z?`https://wa.me/${z}`:"https://api.whatsapp.com/send"}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;text-decoration:none;text-align:center">🖼 Copiar a imagem da O.S e abrir a conversa${f?" do "+esc(f.nome.split(" ")[0]):""}</a>
+    <p class="note" style="margin:0">Na conversa, segure no campo de mensagem e escolha <b>Colar</b>: a imagem da O.S aparece pronta para enviar.</p>
+    <button type="button" class="btn sec" data-osimgshare>📤 Compartilhar a imagem da O.S${f?" (escolha o "+esc(f.nome.split(" ")[0])+" no WhatsApp)":""}</button>
+    <a class="btn sec" href="${zapLink(z,txt)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;text-decoration:none">💬 Mandar em texto</a>`}
     <div class="row2"><button type="button" class="btn sec" data-ospdf="${esc(g.k)}">📄 PDF da O.S</button><button type="button" class="btn sec" data-osimg="${esc(g.k)}">🖼 Imagem da O.S</button></div>
     <button type="button" class="btn sec" data-oscp>Copiar texto</button><button type="button" class="btn sec" data-osx>Fechar</button></div>`;
   document.body.appendChild(box);
+  const sel=osSel(g); let blob=null;
+  const pend=listaImgBlob(sel.rows,"dia",true,sel.ftxt,sel.sub).then(b=>{ blob=b; const pv=box.querySelector("[data-osprev]"); if(pv){ const u=URL.createObjectURL(b); pv.innerHTML=`<img src="${u}" alt="Imagem da O.S">`; pv.querySelector("img").onclick=()=>verFoto(u,"Ordem de serviço"); } })
+    .catch(e=>{ const pv=box.querySelector("[data-osprev]"); if(pv) pv.innerHTML=`<div class="midph">${e?.message==="load"?"Sem internet para montar a imagem.":"Não foi possível montar a imagem."} Use “Mandar em texto”.</div>`; });
   box.addEventListener("click",async e=>{ if(e.target===box||e.target.closest("[data-osx]")) return box.remove();
+    const az=e.target.closest("[data-osimgzap]"); if(az){ if(!blob){ e.preventDefault(); toast("Aguarde a imagem da O.S ficar pronta."); return; }
+      try{ navigator.clipboard.write([new ClipboardItem({"image/png":blob})]).then(()=>toast("Imagem da O.S copiada. Na conversa, segure no campo de mensagem e escolha Colar.",7000),()=>toast("Não deu para copiar neste aparelho: use “Compartilhar a imagem da O.S”.",7000)); }catch(x){ toast("Não deu para copiar neste aparelho: use “Compartilhar a imagem da O.S”.",7000); } return; }
+    if(e.target.closest("[data-osimgshare]")){ await pend; if(!blob) return; const fl=new File([blob],sel.nome+".png",{type:"image/png"});
+      try{ if(navigator.canShare&&navigator.canShare({files:[fl]})){ await navigator.share({files:[fl],text:"Ordem de serviço nº "+(g.os?.num||"")}); return; } }catch(x){ if(x?.name==="AbortError") return; }
+      if(downloads){ try{ await downloads.save({filename:sel.nome+".png",data:blob}); toast("Imagem baixada: anexe no WhatsApp do fiscal."); }catch(x){} } else toast("Compartilhar não disponível aqui."); return; }
     if(e.target.closest("[data-oscp]")){ try{ await navigator.clipboard.writeText(txt); toast("Texto copiado."); }catch(x){ toast("Não foi possível copiar."); } } }); }
 async function osIniciar(g,btn){
   if(btn.dataset.armed!=="1"){ btn.dataset.armed="1"; btn.textContent="Confirmar: iniciar a O.S agora"; return; }
