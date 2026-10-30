@@ -506,6 +506,9 @@ nav.tabs button[aria-current="page"]{background:linear-gradient(180deg,#ff8c42 0
 .ckpend{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 2px}
 .ckpend span{font:600 12px var(--body);padding:5px 9px;border-radius:99px;background:var(--warn-bg);color:var(--warn)}
 .ckpend span.ok{background:var(--ok-bg);color:var(--ok)}
+.ckpend span:not(.ok){background:#fde2df;color:#a3150b;border:1.5px solid #d93025;font-weight:700;animation:ckPisca 1s ease-in-out infinite}
+@keyframes ckPisca{0%,100%{background:#fde2df;color:#a3150b;box-shadow:0 0 0 0 rgba(217,48,37,0)}50%{background:#d93025;color:#fff;box-shadow:0 0 0 4px rgba(217,48,37,.35)}}
+@media (prefers-reduced-motion:reduce){.ckpend span:not(.ok){animation:none}}
 .ckbox{display:grid;gap:8px;border-top:2px solid var(--line);padding-top:10px}
 .sigpad{display:grid;gap:4px}
 .sigpad .sigh{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:600;font-size:13px;color:var(--muted)}
@@ -1790,7 +1793,7 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.30u";
+const APP_VERSAO="2026.10.30v";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
