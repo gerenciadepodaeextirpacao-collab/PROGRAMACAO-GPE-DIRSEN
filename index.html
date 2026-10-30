@@ -1711,7 +1711,7 @@ function abrirAcessos(){
       <div class="inline" data-editbox="${esc(id)}" hidden>
         <div class="row2"><label class="f">Matrícula<input data-edmat autocapitalize="none" value="${esc(matDe(u))}" placeholder="Ex.: m859209"></label>
         <label class="f">Nome<input data-ednome value="${esc(u.nome)}"></label></div>
-        <label class="f">WhatsApp (com DDD)<input data-edzap inputmode="tel" value="${esc(zapFmt(u.zap))}" placeholder="Ex.: (62) 99999-1234"></label>
+        <label class="f">WhatsApp (com DDD)<input data-edzap inputmode="tel" value="${esc(zapFmt(u.zap))}" placeholder="(00) 00000-0000" maxlength="15"></label>
         <label class="ck"><input type="checkbox" data-edcobra ${cobraFlag(u)?"checked":""}><span>💬 Pode cobrar no WhatsApp as turmas da Poda I e II</span></label>
         <div class="row2"><label class="f">Perfil<select data-edperf>${Object.entries(PERF).map(([k,t])=>`<option value="${k}" ${k===u.perfil?"selected":""}>${PERF_DESC[k]}</option>`).join("")}</select></label>
         <label class="f" data-edsupw>${lotRot(u.perfil)}<select data-edsup>${lotOpts(u.perfil,u.sup)}</select></label></div>
@@ -1722,7 +1722,7 @@ function abrirAcessos(){
     ${canAdmin?`<section class="card" style="margin:0"><div class="step">Adicionar pessoa</div>
       <div class="row2"><label class="f">Matrícula<input id="nuMat" autocapitalize="none" placeholder="Ex.: m859209"></label>
       <label class="f">Nome<input id="nuNome" placeholder="Ex.: JOÃO DA SILVA"></label></div>
-      <label class="f">WhatsApp (com DDD)<input id="nuZap" inputmode="tel" placeholder="Ex.: (62) 99999-1234"></label>
+      <label class="f">WhatsApp (com DDD)<input id="nuZap" inputmode="tel" placeholder="(00) 00000-0000" maxlength="15"></label>
       <label class="ck"><input type="checkbox" id="nuCobra"><span>💬 Pode cobrar no WhatsApp as turmas da Poda I e II</span></label>
       <div class="row2"><label class="f">Perfil<select id="nuPerf">${["supervisor","supervisor1","fiscal","coordenador","ger_equipe","gerencia","gerencia_op","diretoria"].map(k=>`<option value="${k}">${PERF_DESC[k]}</option>`).join("")}</select></label>
       <label class="f">Senha<input id="nuPin" type="password" placeholder="Mínimo 6 caracteres"></label></div>
@@ -1793,7 +1793,7 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.30v";
+const APP_VERSAO="2026.10.30x";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -5648,6 +5648,12 @@ $("#histBtn").onclick=carregarHistorico;
 
 // WhatsApp de cada pessoa (cadastrado em Acessos): abre a conversa dela já com a mensagem
 const zapNorm=v=>{ let d=String(v||"").replace(/\D/g,""); if(!d) return ""; if(d.startsWith("0")) d=d.replace(/^0+/,""); if(d.length===10||d.length===11) d="55"+d; return /^55\d{10,11}$/.test(d)?d:""; };
+// máscara do WhatsApp enquanto digita: (62) 99393-0507 – parênteses do DDD, espaço e traço automáticos
+function telMask(v){ let d=String(v||"").replace(/\D/g,""); if(d.startsWith("55")&&d.length>11) d=d.slice(2); d=d.replace(/^0+/,"").slice(0,11);
+  if(!d) return ""; if(d.length<=2) return "("+d; const ddd=d.slice(0,2), n=d.slice(2);
+  if(n.length<=4) return `(${ddd}) ${n}`; if(n.length<=8) return `(${ddd}) ${n.slice(0,4)}-${n.slice(4)}`; return `(${ddd}) ${n.slice(0,5)}-${n.slice(5)}`; }
+document.addEventListener("input",e=>{ const el=e.target; if(!el.matches?.('input[inputmode="tel"]')||e.inputType==="deleteContentBackward") return; const v=telMask(el.value); if(v!==el.value){ el.value=v; try{ el.setSelectionRange(v.length,v.length); }catch(x){} } });
+document.addEventListener("blur",e=>{ const el=e.target; if(el.matches?.('input[inputmode="tel"]')&&el.value) el.value=telMask(el.value); },true);
 const zapFmt=d=>{ d=String(d||""); if(!d) return ""; const n=d.startsWith("55")?d.slice(2):d; return n.length===11?`(${n.slice(0,2)}) ${n.slice(2,7)}-${n.slice(7)}`:n.length===10?`(${n.slice(0,2)}) ${n.slice(2,6)}-${n.slice(6)}`:d; };
 const zapSup=sup=>{ const u=Object.values(acesso||{}).find(x=>x.perfil==="supervisor"&&x.ativo&&x.sup===sup&&x.zap); return u?{num:u.zap,nome:u.nome.split(" ")[0]}:null; };
 const zapLink=(num,txt)=>num?`https://wa.me/${num}?text=${encodeURIComponent(txt)}`:`https://api.whatsapp.com/send?text=${encodeURIComponent(txt)}`;
