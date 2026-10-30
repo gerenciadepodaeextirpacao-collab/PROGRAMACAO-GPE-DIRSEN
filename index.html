@@ -964,6 +964,7 @@ input::placeholder,textarea::placeholder{text-transform:none}
 .alert .pcrow .pcz{background:#1f9d55;color:#fff;border:1px solid #1f9d55}.alert .pcrow .pct{background:#fff;color:#0b5a26;border:1px solid #9ccfa9}
 .pcsem{font-size:12px;color:var(--warn);font-weight:600}
 @media (max-width:560px){.alert .pcrow .pcinfo{flex-basis:100%!important}.pcacts{width:100%;justify-content:flex-start}}
+.alert .pcrow button.pcz{width:auto!important;margin:0!important;min-height:40px!important;padding:0 10px!important;border-radius:10px!important;background:#1f9d55!important;color:#fff!important;border:1px solid #1f9d55!important;font:700 13px var(--body)!important;text-transform:none!important;letter-spacing:normal!important;display:inline-flex!important;align-items:center;flex:0 0 auto!important}
 </style>
 
 <div id="login" class="login" hidden>
@@ -1798,7 +1799,7 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.30y";
+const APP_VERSAO="2026.10.30z";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -5776,13 +5777,14 @@ function pendDet(it){
   box.innerHTML=`<div class="panel" role="dialog" aria-label="Detalhe da pendência"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:21px">${esc(CANC_CAT[it.cat]?.[0]||"Pendência")}</b><button type="button" class="btn sec" data-pdx style="min-height:40px;padding:0 14px">Fechar</button></div>
     <div class="pdsup"><b>${esc(it.sup)}</b><span>Supervisor: ${esc(nm||"—")}${z?" · 📱 "+esc(zapFmt(z.num)):" · sem WhatsApp no cadastro"}</span></div>
     ${corpo}${extra}
-    ${zapTxt?`<a class="btn zapcob" href="${zapLink(z?.num||"",zapTxt)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;text-decoration:none">💬 Mandar mensagem para ${esc((nm||"a turma").split(" ")[0])} no WhatsApp</a>`:""}
+    ${zapTxt?`<button type="button" class="btn zapcob" data-pdimg>🖼 Mandar em imagem para ${esc((nm||"a turma").split(" ")[0])} no WhatsApp</button>`:""}
     ${z?`<div class="row2"><a class="btn sec" href="https://wa.me/${z.num}" target="_blank" rel="noopener" data-ligzap="1" style="display:flex;align-items:center;justify-content:center;text-decoration:none">📞 Ligar pelo WhatsApp</a><a class="btn sec" href="tel:+${z.num}" style="display:flex;align-items:center;justify-content:center;text-decoration:none">☎ Ligar (telefone)</a></div>`:`<p class="note" style="margin:0;color:var(--warn)">Supervisor sem WhatsApp no cadastro: cadastre em Acessos para mandar mensagem e ligar direto.</p>`}
     <button type="button" class="btn sec" data-pdcanc style="color:var(--bad)">✕ Cancelar este aviso</button></div>`;
   document.body.appendChild(box);
   box.addEventListener("click",e=>{ if(e.target===box||e.target.closest("[data-pdx]")) return box.remove();
     const pc=e.target.closest("[data-pdchk]"); if(pc){ box.remove(); irPara("chk"); setTimeout(()=>{ const k=$("#kData"); if(k){ k.value=pc.dataset.pdchk; k.dispatchEvent(new Event("change")); try{renderChk()}catch(x){} } },150); return; }
     const pa=e.target.closest("[data-pdabrchk]"); if(pa){ const c=chks.find(x=>x.id===pa.dataset.pdabrchk); box.remove(); if(c) abrirChk(c); return; }
+    if(e.target.closest("[data-pdimg]")){ abrirZapImg({z,sup:it.sup,txt:zapTxt}); return; }
     if(e.target.closest("[data-pdcanc]")){ box.remove(); abrirCancelar(it.key,it.sup+" · "+it.txt); } }); }
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-pcdet]"); if(!b) return; const it=(window.__PCL||[])[+b.dataset.pcdet]; if(it) pendDet(it); });
 // mensagem pronta de uma pendência só, para mandar direto ao supervisor
@@ -5791,7 +5793,8 @@ function pendMsg(it){ try{ if(it.cat==="chk") return msgChkPend([{sup:it.sup,its
   if(it.cat==="prog") return msgCobranca(it.sup); }catch(e){} return ""; }
 // botões da linha: WhatsApp já no contato do supervisor (com a mensagem) e ligar
 function pendAcoes(it){ const z=zapSup(it.sup); if(!z) return `<span class="pcsem" title="Cadastre o WhatsApp do supervisor em Acessos">sem WhatsApp</span>`;
-  return `<a class="pcz" href="${zapLink(z.num,pendMsg(it))}" target="_blank" rel="noopener" aria-label="Mandar mensagem no WhatsApp para ${esc(z.nome)}">💬 Mensagem</a><a class="pct" href="https://wa.me/${z.num}" target="_blank" rel="noopener" data-ligzap="1" aria-label="Ligar pelo WhatsApp para ${esc(z.nome)}">📞 Ligar</a>`; }
+  return `<button type="button" class="pcz" data-pczimg="${(window.__PCL||[]).indexOf(it)}" aria-label="Mandar a pendência em imagem no WhatsApp para ${esc(z.nome)}">🖼 Mensagem</button><a class="pct" href="https://wa.me/${z.num}" target="_blank" rel="noopener" data-ligzap="1" aria-label="Ligar pelo WhatsApp para ${esc(z.nome)}">📞 Ligar</a>`; }
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-pczimg]"); if(!b) return; const it=(window.__PCL||[])[+b.dataset.pczimg]; if(!it) return; abrirZapImg({z:zapSup(it.sup),sup:it.sup,txt:pendMsg(it)}); });
 document.addEventListener("click",e=>{ if(e.target.closest("[data-ligzap]")) toast("No WhatsApp, toque no ícone 📞 do contato para fazer a ligação.",6000); });
 const CANC_CAT={chk:["Checklist obrigatório","data-cobchk"],bx:["Serviços sem baixa","data-cobbx"],prog:["Programação da próxima semana","id=\"cobrarZap\""]};
 function pendCancHtml(L){
