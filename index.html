@@ -946,6 +946,16 @@ input::placeholder,textarea::placeholder{text-transform:none}
 .acdet{border-top:1px solid var(--line);margin-top:4px;padding-top:4px}.acdet>summary{cursor:pointer;font-weight:700;font-size:13px;color:var(--brand);padding:6px 0;list-style:none}.acdet>summary::-webkit-details-marker{display:none}
 .acdet>summary::before{content:"▸ ";}.acdet[open]>summary::before{content:"▾ ";}.acdetb{display:grid;gap:8px;margin-top:4px}
 .acinfo>summary{cursor:pointer;font-size:13px;color:var(--muted);font-weight:600}
+.pcinfo{all:unset;cursor:pointer;display:grid;gap:2px;flex:1;min-width:0;padding:4px 6px;border-radius:8px}.pcinfo:hover,.pcinfo:focus-visible{background:var(--sunk);outline:none}
+.pcinfo b{font-size:15px}.pcinfo small{font-size:13px;color:var(--muted);line-height:1.35}.pcinfo em{font-style:normal;font-size:12px;font-weight:700;color:var(--brand)}
+.pdsup{display:grid;gap:2px;background:var(--sunk);border-radius:10px;padding:8px 10px}.pdsup b{font-size:16px}.pdsup span{font-size:13px;color:var(--muted)}
+.pdh{font:700 13px var(--body);letter-spacing:.4px;color:var(--brand);margin-top:4px}
+.pdl{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-left:5px solid var(--line);border-radius:10px;padding:8px 10px}.pdl.ok{border-left-color:var(--ok)}.pdl.bad{border-left-color:var(--bad)}
+.pdl .pdi{font-size:18px;line-height:1.2}.pdl b{display:block;font-size:15px}.pdl small{display:block;font-size:13px;color:var(--muted);line-height:1.35}
+.alert .pcrow .pcinfo{display:grid!important;gap:2px!important;flex:1 1 auto!important;min-width:0!important;width:auto!important;min-height:0!important;margin:0!important;padding:4px 6px!important;background:transparent!important;border:0!important;box-shadow:none!important;color:var(--ink)!important;text-align:left!important;font:inherit!important;text-transform:none!important;letter-spacing:normal!important;cursor:pointer;border-radius:8px!important}
+.alert .pcrow .pcinfo:hover{background:var(--sunk)!important}.alert .pcrow .pcinfo b{font:700 15px var(--body)!important;color:var(--ink)!important}.alert .pcrow .pcinfo small{font:400 13px/1.35 var(--body)!important;color:var(--muted)!important}.alert .pcrow .pcinfo em{font:700 12px var(--body)!important;color:var(--brand)!important;font-style:normal!important}
+#avSomBox .alert .btn{display:flex!important;align-items:center;justify-content:center;width:100%;min-height:48px!important;border-radius:12px!important;font:700 15px var(--body)!important;text-transform:none!important;letter-spacing:normal!important}
+#avSomBox .alert .btn.pri{background:var(--accent,#f37020)!important;color:#fff!important;border:0!important}#avSomBox .alert .btn.sec{background:var(--surface)!important;color:var(--ink)!important;border:1px solid var(--line)!important}
 </style>
 
 <div id="login" class="login" hidden>
@@ -1780,7 +1790,7 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.30t";
+const APP_VERSAO="2026.10.30u";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -5717,16 +5727,54 @@ const cancBx=r=>!!notifCanc["bx:"+r.id];
 const cancProg=(sup,PX)=>!!notifCanc[`prog:${(PX||proxSemInfo()).sem}:${sup}`];
 function pendCancItens(){
   const out=[];
-  chkObrigPend().filter(x=>podeCobrarSup(x.sup)).forEach(x=>out.push({cat:"chk",key:x.key,sup:x.sup,txt:chkObrigTxt(x)}));
-  semBaixaPorTurma().forEach(({s,rs})=>{ if(podeCobrarSup(s.id)) rs.forEach(r=>out.push({cat:"bx",key:"bx:"+r.id,sup:s.id,txt:`${fmtDs(r.data)} ${diaDe(r.data).slice(0,3)} · ${r.bairro||""} – ${r.logradouro||""} · sem baixa`})); });
-  const PX=proxSemInfo(); SUPS.filter(x=>podeCobrarSup(x.id)&&noEscopo(x.id)&&!proxSemTurma(x.id,PX).ok&&!cancProg(x.id,PX)).forEach(x=>{ const t=proxSemTurma(x.id,PX); out.push({cat:"prog",key:`prog:${PX.sem}:${x.id}`,sup:x.id,txt:`programação da ${PX.sem}ª semana incompleta (${t.feitos.length} de ${t.dias.length} dias)`}); });
+  chkObrigPend().filter(x=>podeCobrarSup(x.sup)).forEach(x=>out.push({cat:"chk",key:x.key,sup:x.sup,txt:chkObrigTxt(x),x}));
+  semBaixaPorTurma().forEach(({s,rs})=>{ if(podeCobrarSup(s.id)) rs.forEach(r=>out.push({cat:"bx",key:"bx:"+r.id,sup:s.id,rid:r.id,txt:`${fmtDs(r.data)} ${diaDe(r.data).slice(0,3)} · ${r.bairro||""} – ${r.logradouro||""} · sem baixa`})); });
+  const PX=proxSemInfo(); SUPS.filter(x=>podeCobrarSup(x.id)&&noEscopo(x.id)&&!proxSemTurma(x.id,PX).ok&&!cancProg(x.id,PX)).forEach(x=>{ const t=proxSemTurma(x.id,PX); out.push({cat:"prog",key:`prog:${PX.sem}:${x.id}`,sup:x.id,t,PX,txt:`programação da ${PX.sem}ª semana incompleta (${t.feitos.length} de ${t.dias.length} dias)`}); });
   return out;
 }
+// detalhe de uma pendência (toque na linha da aba Pendências)
+function pendDet(it){
+  if(it.cat==="bx"){ const r=todosGlobal().find(x=>x.id===it.rid); if(r) detalhe(r,false,true); return; }
+  const z=zapSup(it.sup), nm=nomeSupDe(it.sup), s=supOf(it.sup)||{}; let corpo="", zapTxt="", extra="";
+  const linha=(ic,t,sub,cls)=>`<div class="pdl ${cls||""}"><span class="pdi">${ic}</span><div><b>${t}</b>${sub?`<small>${sub}</small>`:""}</div></div>`;
+  if(it.cat==="chk"&&it.x.tipo==="fazer"){ const x=it.x, d=x.data, prox=(()=>{const y=new Date(d+"T12:00"); y.setDate(y.getDate()+1); return iso(y);})();
+    const turno=s.turno==="NOTURNO"?`Turno NOTURNO: ${fmtDs(d)} às 18h até ${fmtDs(prox)} às 6h · cobrado a partir das 7h de ${fmtDs(prox)}`:`Turno DIURNO: ${fmtDs(d)} das 6h às 18h · cobrado a partir das 19h de ${fmtDs(d)}`;
+    const cs=chks.filter(c=>c.supervisao===it.sup&&chkDia(c)===d), E=chkEsp(it.sup,d), esper=E.lista||chkEsperados(it.sup,d);
+    const todos=[...new Set([...esper,...cs.map(c=>c.viatura)])];
+    corpo=`<p class="note" style="margin:0">${esc(turno)}</p><div class="pdh">Equipamentos (${x.feitos.length} de ${x.meta} com checklist)</div>`+todos.map(v=>{ const c=cs.find(k=>k.viatura===v);
+      return c?linha("✅",esc(v),`Checklist feito por ${esc(c.entrega?.nome||"—")}${c.entrega?.em?" às "+new Date(c.entrega.em).toTimeString().slice(0,5)+" de "+fmtDs(iso(new Date(c.entrega.em))):""} · ${chkRecebido(c)?"recebido por "+esc(c.recebe?.nome||c.recebe?.sup||""):c.recebe?.sup?"aguardando recebimento de "+esc(c.recebe.sup):"sem quem recebe"}`,"ok")
+        :linha("❌",esc(v),esper.includes(v)?"Checklist NÃO FEITO":"","bad"); }).join("")
+      +(x.faltam?.length||E.lista?"":`<p class="note" style="margin:6px 0 0">Faltam ${x.meta-x.feitos.length} checklist(s) – o app não sabe o prefixo (sem programação com equipamento neste dia).</p>`)
+      +`<p class="note" style="margin:6px 0 0">${E.lista?"Esperado: um checklist por equipamento que estava na programação do dia"+(/^PODA II/.test(s.grupo||"")?" + a van":"")+".":"Sem programação neste dia: vale a quantidade padrão da poda ("+x.meta+")."}</p>`;
+    zapTxt=msgChkPend([{sup:it.sup,its:[x]}],it.sup);
+    extra=`<button type="button" class="btn sec" data-pdchk="${esc(d)}">📋 Abrir os checklists de ${fmtDs(d)}</button>`; }
+  else if(it.cat==="chk"){ const c=it.x.c;
+    corpo=linha("⏳",`${esc(c.viatura||"Equipamento")} · entregue pela ${esc(supNome(c.supervisao))}`,`Checklist de ${fmtDs(c.data)} entregue ${c.entrega?.em?"em "+fmtHora(c.entrega.em):""} · falta ${esc(supNome(c.recebe?.sup))} dar ciência e assinar o recebimento.`,"bad");
+    zapTxt=msgChkPend([{sup:it.sup,its:[it.x]}],it.sup); extra=`<button type="button" class="btn sec" data-pdabrchk="${esc(c.id)}">📋 Abrir este checklist</button>`; }
+  else if(it.cat==="prog"){ const t=it.t, P=it.PX, L=todosGlobal();
+    corpo=`<p class="note" style="margin:0">${P.sem}ª semana (${esc(periodoSem(P.sem))}) · prazo: quinta ${fmtDs(P.qui)}${P.atrasado?" · <b style='color:var(--bad)'>PRAZO VENCIDO</b>":""}</p><div class="pdh">Dias (${t.feitos.length} de ${t.dias.length} programados)</div>`+
+      P.dias.map(d=>{ const rs=L.filter(r=>r.supervisao===it.sup&&r.data===d&&!r.avulso&&!r.arquivado&&!r.ocorrencia), tr=trabalha(it.sup,d);
+        if(!tr) return linha("🟦",`${diaDe(d)} ${fmtDs(d)}`,"folga pela escala","");
+        return rs.length?linha("✅",`${diaDe(d)} ${fmtDs(d)}`,`${rs.length} serviço${rs.length===1?"":"s"} · ${brl(rs.reduce((a,r)=>a+receitaDe(prevQ(r)),0))} · ${esc([...new Set(rs.map(r=>r.equipe))].join(", "))}`,"ok"):linha("❌",`${diaDe(d)} ${fmtDs(d)}`,"sem programação","bad"); }).join("")
+      +(escCfg(it.sup)?"":`<p class="note" style="margin:6px 0 0">A turma não tem escala cadastrada: todos os dias da semana contam.</p>`);
+    zapTxt=msgCobranca(it.sup); }
+  const box=document.createElement("div"); box.className="sheet"; box.style.zIndex=40;
+  box.innerHTML=`<div class="panel" role="dialog" aria-label="Detalhe da pendência"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:21px">${esc(CANC_CAT[it.cat]?.[0]||"Pendência")}</b><button type="button" class="btn sec" data-pdx style="min-height:40px;padding:0 14px">Fechar</button></div>
+    <div class="pdsup"><b>${esc(it.sup)}</b><span>Supervisor: ${esc(nm||"—")}${z?" · 📱 "+esc(zapFmt(z.num)):" · sem WhatsApp no cadastro"}</span></div>
+    ${corpo}${extra}
+    ${zapTxt?`<a class="btn zapcob" href="${zapLink(z?.num||"",zapTxt)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;text-decoration:none">💬 Cobrar ${esc((nm||"a turma").split(" ")[0])} no WhatsApp</a>`:""}
+    <button type="button" class="btn sec" data-pdcanc style="color:var(--bad)">✕ Cancelar este aviso</button></div>`;
+  document.body.appendChild(box);
+  box.addEventListener("click",e=>{ if(e.target===box||e.target.closest("[data-pdx]")) return box.remove();
+    const pc=e.target.closest("[data-pdchk]"); if(pc){ box.remove(); irPara("chk"); setTimeout(()=>{ const k=$("#kData"); if(k){ k.value=pc.dataset.pdchk; k.dispatchEvent(new Event("change")); try{renderChk()}catch(x){} } },150); return; }
+    const pa=e.target.closest("[data-pdabrchk]"); if(pa){ const c=chks.find(x=>x.id===pa.dataset.pdabrchk); box.remove(); if(c) abrirChk(c); return; }
+    if(e.target.closest("[data-pdcanc]")){ box.remove(); abrirCancelar(it.key,it.sup+" · "+it.txt); } }); }
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-pcdet]"); if(!b) return; const it=(window.__PCL||[])[+b.dataset.pcdet]; if(it) pendDet(it); });
 const CANC_CAT={chk:["Checklist obrigatório","data-cobchk"],bx:["Serviços sem baixa","data-cobbx"],prog:["Programação da próxima semana","id=\"cobrarZap\""]};
 function pendCancHtml(L){
-  let h="";
+  let h=""; window.__PCL=L;
   Object.entries(CANC_CAT).forEach(([k,[tit,cob]])=>{ const it=L.filter(x=>x.cat===k); if(!it.length) return;
-    h+=`<section class="alert"><h3>⚠ ${tit} (${it.length})</h3>${it.map(x=>`<div class="pcrow"><span><b>${esc(supNome(x.sup))}</b><small>${esc(x.txt)}</small></span><button type="button" class="pcx" data-canc="${esc(x.key)}" data-canctxt="${esc(x.sup+" · "+x.txt)}" aria-label="Cancelar este aviso">✕ Cancelar</button></div>`).join("")}<button type="button" class="btn zapcob" ${cob}>💬 Cobrar no WhatsApp</button></section>`; });
+    h+=`<section class="alert"><h3>⚠ ${tit} (${it.length})</h3>${it.map(x=>`<div class="pcrow"><button type="button" class="pcinfo" data-pcdet="${L.indexOf(x)}" aria-label="Ver detalhes"><b>${esc(supNome(x.sup))}</b><small>${esc(x.txt)}</small><em>Ver detalhes ›</em></button><button type="button" class="pcx" data-canc="${esc(x.key)}" data-canctxt="${esc(x.sup+" · "+x.txt)}" aria-label="Cancelar este aviso">✕ Cancelar</button></div>`).join("")}<button type="button" class="btn zapcob" ${cob}>💬 Cobrar no WhatsApp</button></section>`; });
   const canc=Object.entries(notifCanc).filter(([k,v])=>{ const sup=v?.sup||""; return !sup||podeCobrarSup(sup); }).sort((a,b)=>(b[1].em||"").localeCompare(a[1].em||""));
   if(canc.length) h+=`<details class="card pcanc"><summary>Avisos cancelados (${canc.length})</summary>${canc.slice(0,60).map(([k,v])=>`<div class="pcrow"><span><b>${esc(v.txt||k)}</b><small>Cancelado por ${esc(v.nome||"")} em ${v.em?fmtHora(v.em):""}${v.motivo?" · motivo: "+esc(v.motivo):""}</small></span><button type="button" class="pcx des" data-descanc="${esc(k)}">↺ Desfazer</button></div>`).join("")}</details>`;
   return h;
