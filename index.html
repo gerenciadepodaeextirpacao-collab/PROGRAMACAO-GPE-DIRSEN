@@ -931,12 +931,16 @@ nav.tabs .tbadge{animation:gpeBadge 1.1s ease-in-out infinite}
 .lxeqs{display:grid;gap:6px;padding:10px 12px;background:#eef6f0;border-bottom:1px solid var(--line)}.lxeqs>span{font-size:13px;font-weight:700;color:#005f27}.lxeq{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center}.lxeq b{font-size:13px;grid-column:1}.lxeq small{grid-column:1;grid-row:2;font-size:12px;color:var(--muted)}.lxeq .btn{min-height:40px;font-size:13px;padding:0 10px;grid-row:1/span 2}
 .ckpdfw{display:flex;flex-direction:column;gap:0}.ckpdfw>.rec{border-bottom-left-radius:0!important;border-bottom-right-radius:0!important}.ckpdfb{min-height:44px;font-size:14px;border-top-left-radius:0!important;border-top-right-radius:0!important;margin-top:-1px;width:100%}
 /* tudo em caixa alta (menos matrícula, senha e campos marcados com autocapitalize="none") */
-input:not([type]):not([autocapitalize="none"]),input[type="text"]:not([autocapitalize="none"]),input[type="search"]:not([autocapitalize="none"]),textarea:not([autocapitalize="none"]){text-transform:uppercase}
+input:not([type]):not([autocapitalize="none"]),input[type="text"]:not([autocapitalize="none"]),input[type="search"]:not([autocapitalize="none"]),textarea:not([autocapitalize="none"]):not(.msgbox):not(#cbTxt){text-transform:uppercase}
 input::placeholder,textarea::placeholder{text-transform:none}
 .bairro2{grid-template-columns:minmax(130px,.8fr) 1.5fr}
 .osdia{display:grid;gap:8px;margin:12px 0 4px}.osdh{font:700 13px var(--body);letter-spacing:.6px;color:var(--brand)}
 .osl{border:2px solid var(--warn);border-radius:14px;padding:10px 12px;background:var(--surface);display:grid;gap:8px}.osl.ok{border-color:var(--ok)}
 .osl b{display:block;font-size:15px}.osl small{display:block;color:var(--muted);font-size:13px;line-height:1.35}.osb{display:flex;flex-wrap:wrap;gap:6px}.osb .btn{min-height:44px;font-size:14px;flex:1 1 auto}
+.inprev{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:4px}
+.inprev li{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:baseline;font-size:13px;line-height:1.3;padding:5px 8px;border-radius:8px;background:var(--sunk);color:var(--ink)}
+.inprev li span{font-weight:700}.inprev li b{font-size:13px;min-width:22px;text-align:center;border-radius:99px;background:var(--bad);color:#fff;padding:0 7px}
+.inav.warn .inprev li b{background:var(--warn)}.inprev li small{grid-column:1/-1;font-size:12px;opacity:.85;margin:0!important}.inprev li.mais{display:block;background:none;font-style:italic;opacity:.8;padding:0 8px}
 </style>
 
 <div id="login" class="login" hidden>
@@ -1765,7 +1769,7 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.30p";
+const APP_VERSAO="2026.10.30s";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -1949,7 +1953,7 @@ $("#updBox").addEventListener("click",e=>{ const cp=e.target.closest("[data-cpli
 /* ---------- formulário ---------- */
 // mode: "prog" (lançar/editar programação) | "baixa" (dar baixa numa programação) | "avulso" (serviço sem programação)
 // caixa alta: o que for digitado já é gravado em letra maiúscula; o teclado do celular abre em maiúsculas
-const CAPS_SEL='input:not([type]):not([autocapitalize="none"]),input[type="text"]:not([autocapitalize="none"]),input[type="search"]:not([autocapitalize="none"]),textarea:not([autocapitalize="none"])';
+const CAPS_SEL='input:not([type]):not([autocapitalize="none"]),input[type="text"]:not([autocapitalize="none"]),input[type="search"]:not([autocapitalize="none"]),textarea:not([autocapitalize="none"]):not(.msgbox):not(#cbTxt)';
 document.addEventListener("focusin",e=>{ const el=e.target; if(el.matches?.(CAPS_SEL)) el.setAttribute("autocapitalize","characters"); });
 document.addEventListener("input",e=>{ const el=e.target; if(!el.matches?.(CAPS_SEL)||e.isComposing) return; const v=el.value, u=v.toLocaleUpperCase("pt-BR"); if(v===u) return;
   const a=el.selectionStart, b=el.selectionEnd; el.value=u; try{ el.setSelectionRange(a,b); }catch(x){} },true);
@@ -3021,7 +3025,7 @@ function renderChk(){
   if(meus.length) h+=`<div class="alert"><h3>Turno para você receber</h3><p class="note" style="margin:0">Abra, confira o checklist da turma que entregou e assine o recebimento dando ciência das condições do equipamento.</p>${meus.map(c=>`<button type="button" data-chk="${esc(c.id)}"><b>!</b><span>${esc(c.viatura||"")} · ${esc(c.supervisao)} · ${esc(c.equipe)}<small>Entregue por ${esc(c.entrega?.nome||"—")} em ${fmtD(c.data)}${c.hora?" às "+esc(c.hora):""}. Confira e assine o recebimento.</small></span></button>`).join("")}</div>`;
   if(man){ host.innerHTML=manListaHtml(sup,dia); return; }
   h+=`<div class="grp-h"><h3>Checklists · ${fmtD(dia)} · ${diaDe(dia)}</h3><span>${lst.length} checklist${lst.length===1?"":"s"}${naoApto?` · <b style="color:var(--bad)">${naoApto} não apto</b>`:""}${ress?` · ${ress} com ressalva`:""} · ${semRec} sem recebimento</span></div>`;
-  if(cota.length) h+=`<p class="note" style="margin:6px 0 0">Checklists por turma no dia (um por equipamento que estava na programação do dia; na PODA II, mais a van):</p><div class="ckpend">${cota.map(x=>`<span class="${x.feitos.length>=x.meta?"ok":""}" title="${esc(x.feitos.join(", "))}">${esc(x.t)} · <b>${x.feitos.length} de ${x.meta}</b>${x.feitos.length>=x.meta?" ✔":x.faltam.length?" · falta: "+x.faltam.map(esc).join(", "):""}</span>`).join("")}</div>${pend.length?"":`<p class="note" style="margin:4px 0 0">Todas as turmas que trabalharam no dia completaram os checklists.</p>`}`;
+  if(cota.length) h+=`<p class="note" style="margin:6px 0 0">Checklists por turma no dia (um por equipamento que estava na programação do dia; na PODA II, mais a van):</p><div class="ckpend">${cota.map(x=>`<span class="${x.feitos.length>=x.meta?"ok":""}" title="${esc(x.feitos.join(", "))}">${esc(supNome(x.t))} · <b>${x.feitos.length} de ${x.meta}</b>${x.feitos.length>=x.meta?" ✔":x.faltam.length?" · falta: "+x.faltam.map(esc).join(", "):""}</span>`).join("")}</div>${pend.length?"":`<p class="note" style="margin:4px 0 0">Todas as turmas que trabalharam no dia completaram os checklists.</p>`}`;
   h+= lst.length ? `${downloads&&lst.length>1?`<button type="button" class="btn" data-chkpdftodos="1" style="min-height:44px;font-size:15px;width:100%;margin:6px 0">⬇ Baixar os ${lst.length} checklists em PDF (um por um)</button>`:""}<div class="list">${lst.map(c=>downloads?`<div class="ckpdfw">${chkCard(c)}<button type="button" class="btn ckpdfb" data-chkpdf="${esc(c.id)}">⬇ Baixar PDF · ${esc(c.viatura||"checklist")}</button></div>`:chkCard(c)).join("")}</div>` : `<div class="empty" style="margin-top:8px">Nenhum checklist neste dia.</div>`;
   host.innerHTML=h;
 }
@@ -5711,7 +5715,7 @@ const CANC_CAT={chk:["Checklist obrigatório","data-cobchk"],bx:["Serviços sem 
 function pendCancHtml(L){
   let h="";
   Object.entries(CANC_CAT).forEach(([k,[tit,cob]])=>{ const it=L.filter(x=>x.cat===k); if(!it.length) return;
-    h+=`<section class="alert"><h3>⚠ ${tit} (${it.length})</h3>${it.map(x=>`<div class="pcrow"><span><b>${esc(x.sup)}</b><small>${esc(x.txt)}</small></span><button type="button" class="pcx" data-canc="${esc(x.key)}" data-canctxt="${esc(x.sup+" · "+x.txt)}" aria-label="Cancelar este aviso">✕ Cancelar</button></div>`).join("")}<button type="button" class="btn zapcob" ${cob}>💬 Cobrar no WhatsApp</button></section>`; });
+    h+=`<section class="alert"><h3>⚠ ${tit} (${it.length})</h3>${it.map(x=>`<div class="pcrow"><span><b>${esc(supNome(x.sup))}</b><small>${esc(x.txt)}</small></span><button type="button" class="pcx" data-canc="${esc(x.key)}" data-canctxt="${esc(x.sup+" · "+x.txt)}" aria-label="Cancelar este aviso">✕ Cancelar</button></div>`).join("")}<button type="button" class="btn zapcob" ${cob}>💬 Cobrar no WhatsApp</button></section>`; });
   const canc=Object.entries(notifCanc).filter(([k,v])=>{ const sup=v?.sup||""; return !sup||podeCobrarSup(sup); }).sort((a,b)=>(b[1].em||"").localeCompare(a[1].em||""));
   if(canc.length) h+=`<details class="card pcanc"><summary>Avisos cancelados (${canc.length})</summary>${canc.slice(0,60).map(([k,v])=>`<div class="pcrow"><span><b>${esc(v.txt||k)}</b><small>Cancelado por ${esc(v.nome||"")} em ${v.em?fmtHora(v.em):""}${v.motivo?" · motivo: "+esc(v.motivo):""}</small></span><button type="button" class="pcx des" data-descanc="${esc(k)}">↺ Desfazer</button></div>`).join("")}</details>`;
   return h;
@@ -5780,8 +5784,8 @@ function proxEquipe(sup,data){
 }
 const chkObrigMeu=()=>chkObrigPend().filter(x=>travado()&&x.sup===sessao.sup);
 const chkObrigTxt=x=>x.tipo==="fazer"
-  ? `${fmtDs(x.data)} ${diaDe(x.data).slice(0,3)} · checklist NÃO FEITO (${x.feitos.length} de ${x.meta} equipamento${x.meta===1?"":"s"}${x.faltam?.length?" · falta: "+x.faltam.join(", "):x.feitos.length?": falta "+(x.meta-x.feitos.length):""})`
-  : `${fmtDs(x.data)} ${diaDe(x.data).slice(0,3)} · falta DAR CIÊNCIA e ASSINAR o recebimento: ${x.c.viatura||"equipamento"} entregue pela ${x.c.supervisao}`;
+  ? `${fmtDs(x.data)} ${diaDe(x.data).slice(0,3)} · checklist NÃO FEITO (${x.feitos.length} de ${x.meta} equipamento${x.meta===1?"":"s"}) · ✅ feito: ${x.feitos.length?x.feitos.join(", "):"nenhum"} · ❌ falta: ${x.faltam?.length?x.faltam.join(", "):(x.meta-x.feitos.length)+" equipamento"+(x.meta-x.feitos.length===1?"":"s")}`
+  : `${fmtDs(x.data)} ${diaDe(x.data).slice(0,3)} · falta DAR CIÊNCIA e ASSINAR o recebimento: ${x.c.viatura||"equipamento"} entregue pela ${supNome(x.c.supervisao)}`;
 function chkObrigGrupos(L){ const G={}; L.forEach(x=>(G[x.sup]=G[x.sup]||[]).push(x)); return Object.keys(G).sort().map(sup=>({sup,its:G[sup]})); }
 function msgChkPend(grupos,so){
   const ger=escDirop()?"DIROP":"DIRSEN", n=grupos.reduce((a,g)=>a+g.its.length,0);
@@ -5789,7 +5793,10 @@ function msgChkPend(grupos,so){
   const L=[`*⚠️ CHECKLIST DO EQUIPAMENTO – PENDENTE*`,`_COMURG · Gerência de Poda e Extirpação – ${ger}_`,"",
     so?`${pri}a *${so}* tem ${n===1?"*1 pendência*":`*${n} pendências*`} no checklist de fim de expediente.`:`Senhores supervisores, há *${n} ${n===1?"pendência":"pendências"}* no checklist de fim de expediente.`,
     `O checklist é *obrigatório todos os dias*: quem *entrega* o turno preenche e assina; quem *recebe* o turno dá *ciência* e assina.`];
-  grupos.forEach(g=>{ const s=nomeSupDe(g.sup); L.push("",`*${g.sup}${s&&s!=="A DEFINIR"?" – "+s:""}* (${g.its.length})`); g.its.forEach(x=>L.push("▫️ "+chkObrigTxt(x))); });
+  grupos.forEach(g=>{ const s=nomeSupDe(g.sup); L.push("",`*${g.sup}${s&&s!=="A DEFINIR"?" – "+s:""}* (${g.its.length})`); g.its.forEach(x=>{ if(x.tipo!=="fazer"){ L.push("▫️ "+chkObrigTxt(x)); return; }
+    L.push(`▫️ ${fmtDs(x.data)} ${diaDe(x.data).slice(0,3)} – checklist NÃO FEITO (${x.feitos.length} de ${x.meta} equipamento${x.meta===1?"":"s"})`);
+    L.push(`      ✅ Feito: ${x.feitos.length?x.feitos.join(", "):"nenhum"}`);
+    L.push(`      ❌ Falta: ${x.faltam?.length?x.faltam.join(", "):(x.meta-x.feitos.length)+" equipamento"+(x.meta-x.feitos.length===1?"":"s")}`); }); });
   L.push("","Regularize *hoje* na aba *Checklist* do app *Programação GPE*:","https://gpe-dirsen.netlify.app","","Obrigado.",`${sessao?.nome||""} · ${PERF[sessao?.perfil]||""}`);
   return L.join("\n");
 }
@@ -5817,6 +5824,11 @@ function abrirCobrancaChk(){
 }
 document.addEventListener("click",e=>{ if(e.target.closest("[data-cobchk]")) abrirCobrancaChk(); });
 // alerta do checklist obrigatório (Início, Painel e aba Checklist)
+// turma + nome do supervisor (ex.: "PODA II NOTURNO (B) – OSMAR ROCHA NEVES DE SOUZA")
+const supNome=sup=>{ const n=nomeSupDe(sup); return `${sup||""}${n&&n!=="A DEFINIR"?" – "+n:""}`; };
+// prévia de quem está com pendência (turma – supervisor · quantidade), para os avisos do Início
+function inPrev(L,max=6){ if(!L.length) return ""; const v=L.slice(0,max);
+  return `<ul class="inprev">${v.map(([t,n,x])=>`<li><span>${esc(t)}</span><b>${n}</b>${x?`<small>${esc(x)}</small>`:""}</li>`).join("")}${L.length>max?`<li class="mais">e mais ${L.length-max} turma${L.length-max===1?"":"s"}</li>`:""}</ul>`; }
 function chkObrigAlerta(modo){
   if(!sessao) return "";
   if(travado()){ const L=chkObrigMeu(); if(!L.length) return "";
@@ -5826,8 +5838,8 @@ function chkObrigAlerta(modo){
   const L=chkObrigPend(); if(!L.length) return ""; const G=chkObrigGrupos(L), nf=L.filter(x=>x.tipo==="fazer").length, nc=L.length-nf;
   const det=[nf?`${nf} não ${nf===1?"feito":"feitos"}`:"",nc?`${nc} sem ciência do recebimento`:""].filter(Boolean).join(" · ")+` · ${G.length} ${G.length===1?"turma":"turmas"}`;
   const cob=G.some(g=>podeCobrarSup(g.sup));
-  if(modo==="inicio") return `<div class="inav bad">${ICO.chk}<span><b>Checklist obrigatório: ${L.length} ${L.length===1?"pendência":"pendências"}</b><small>${esc(det)}</small></span><div class="inbts"><button type="button" class="inbt" data-iv="chk">Ver</button>${cob?`<button type="button" class="inbt zap" data-cobchk="1">💬 Cobrar</button>`:""}</div></div>`;
-  return `<div class="alert"><h3>⚠ Checklist obrigatório não feito</h3><p class="note" style="margin:0">${esc(det)} (últimos ${CHK_OBRIG_DIAS} dias).</p>${G.map(g=>`<button type="button" class="urg" ${podeCobrarSup(g.sup)?'data-cobchk="1"':'data-pendv="chk"'}><b>${g.its.length}</b><span>${esc(g.sup)}<small>${esc(g.its.map(chkObrigTxt).join(" · "))}</small></span></button>`).join("")}${cob?`<button type="button" class="btn zapcob" data-cobchk="1">💬 Cobrar no WhatsApp o checklist</button>`:""}</div>`;
+  if(modo==="inicio") return `<div class="inav bad">${ICO.chk}<span><b>Checklist obrigatório: ${L.length} ${L.length===1?"pendência":"pendências"}</b><small>${esc(det)}</small>${inPrev(G.map(g=>[supNome(g.sup),g.its.length,g.its.map(x=>x.tipo==="fazer"?`${fmtDs(x.data)}: ✅ feito ${x.feitos.length?x.feitos.join(", "):"nenhum"} · ❌ falta ${x.faltam?.length?x.faltam.join(", "):x.meta-x.feitos.length}`:`${fmtDs(x.data)} sem ciência`).join(" · ")]))}</span><div class="inbts"><button type="button" class="inbt" data-iv="chk">Ver</button>${cob?`<button type="button" class="inbt zap" data-cobchk="1">💬 Cobrar</button>`:""}</div></div>`;
+  return `<div class="alert"><h3>⚠ Checklist obrigatório não feito</h3><p class="note" style="margin:0">${esc(det)} (últimos ${CHK_OBRIG_DIAS} dias).</p>${G.map(g=>`<button type="button" class="urg" ${podeCobrarSup(g.sup)?'data-cobchk="1"':'data-pendv="chk"'}><b>${g.its.length}</b><span>${esc(supNome(g.sup))}<small>${esc(g.its.map(chkObrigTxt).join(" · "))}</small></span></button>`).join("")}${cob?`<button type="button" class="btn zapcob" data-cobchk="1">💬 Cobrar no WhatsApp o checklist</button>`:""}</div>`;
 }
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-chkfazer]"); if(!b) return; const d=b.dataset.chkfazer; if($("#kData")) $("#kData").value=d; irPara("chk","chkNovo"); setTimeout(()=>{ const f=$("#kfData"); if(f){ f.value=d; f.dispatchEvent(new Event("change")); } },250); });
 // ---------- ESCALA DE TRABALHO: cada supervisor cadastra a da sua turma (gerente, coordenador e gerente operacional cadastram para as turmas da sua área) ----------
@@ -6536,7 +6548,7 @@ function avBip(ok){ if(ok){ try{ avCtx=avCtx||new (window.AudioContext||window.w
     [0,0.28,0.56].forEach((t,i)=>{ const o=avCtx.createOscillator(), g=avCtx.createGain(); o.type="square"; o.frequency.value=i===2?1320:880; g.gain.setValueAtTime(0.0001,avCtx.currentTime+t); g.gain.exponentialRampToValueAtTime(0.35,avCtx.currentTime+t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,avCtx.currentTime+t+0.22); o.connect(g); g.connect(avCtx.destination); o.start(avCtx.currentTime+t); o.stop(avCtx.currentTime+t+0.24); }); }catch(e){}
   try{ navigator.vibrate&&navigator.vibrate([300,150,300,150,500]); }catch(e){} }
 async function avSwReg(){ if(avReg||!("serviceWorker" in navigator)||!window.GPE_NETLIFY) return avReg; try{ avReg=await navigator.serviceWorker.register("sw.js"); }catch(e){ avReg=null; } return avReg; }
-function avResumo(tot){ const L=[]; try{ chkObrigMeu().slice(0,2).forEach(x=>L.push(chkObrigTxt(x))); }catch(e){}
+function avResumo(tot){ const L=[]; try{ (travado()?chkObrigMeu():(podeCobrarChk()?chkObrigPend():[])).slice(0,2).forEach(x=>L.push(supNome(x.sup)+": "+chkObrigTxt(x))); }catch(e){}
   try{ const late=todos().filter(r=>!r.arquivado&&isLate(r)&&!cancBx(r)&&(!travado()||r.supervisao===sessao.sup)).length; if(late) L.push(`${late} serviço${late===1?"":"s"} sem baixa`); }catch(e){}
   return (L.join(" · ")||"Abra o app para ver.").slice(0,180); }
 async function avNotificar(tot){ const t=`⚠ ${tot} pendência${tot===1?"":"s"} – Programação GPE`, body=avResumo(tot);
@@ -6551,9 +6563,9 @@ function avChkFeitos(){ if(!sessao) return; const k="gpe_avchk_"+sessao.id, vist
   if(!vistos){ ls.set(k,L.map(c=>c.id).slice(-300)); return; } // primeira vez: só marca o que já existe
   const novos=L.filter(c=>!vistos.includes(c.id)); if(!novos.length) return;
   ls.set(k,[...vistos,...novos.map(c=>c.id)].slice(-300));
-  const t=novos.length===1?`✅ Checklist feito: ${novos[0].viatura||"equipamento"} · ${novos[0].supervisao}`:`✅ ${novos.length} checklists feitos`;
-  const body=novos.slice(0,4).map(c=>`${c.viatura||"equipamento"} · ${c.supervisao} · entregue por ${(c.entrega.nome||"").split(" ")[0]} às ${new Date(c.entrega.em).toTimeString().slice(0,5)}${c.recebe?.sup?` → recebe: ${c.recebe.sup}`:""}`).join(" | ");
-  toast(t+(novos.length===1?" (entregue por "+(novos[0].entrega.nome||"")+")":""),6000);
+  const t=novos.length===1?`✅ Checklist feito: ${novos[0].viatura||"equipamento"} · ${novos[0].supervisao} · supervisor ${novos[0].entrega?.nome||nomeSupDe(novos[0].supervisao)||"—"}`:`✅ ${novos.length} checklists feitos`;
+  const body=novos.slice(0,4).map(c=>`${c.viatura||"equipamento"} · ${c.supervisao} · supervisor ${c.entrega.nome||nomeSupDe(c.supervisao)||"—"} às ${new Date(c.entrega.em).toTimeString().slice(0,5)}${c.recebe?.sup?` → recebe: ${c.recebe.sup}`:""}`).join(" | ");
+  toast(t,6000);
   if(!avLigado()) return; avBip(true);
   if(!("Notification" in window)||Notification.permission!=="granted") return;
   (async()=>{ try{ const r=await avSwReg(); if(r?.showNotification){ await r.showNotification(t,{body,tag:"gpe-chk-"+novos[0].id,vibrate:[120,80,120],icon:LOGO_FULL}); return; } }catch(e){}
@@ -6631,10 +6643,12 @@ function renderInicio(){
   const ds=new Date(hoje()+"T12:00"), dsTxt=["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"][ds.getDay()]+", "+hoje().slice(8,10)+"/"+hoje().slice(5,7);
   const pode=v=>NAV_PERM.has(v), lanca=sessao.perfil!=="diretoria";
   let av="";
-  if(late) av+=`<div class="inav bad">${ICO.alerta}<span><b>${late} ${late===1?"serviço sem baixa":"serviços sem baixa"}</b><small>Programados até ontem e ainda abertos</small></span><div class="inbts"><button type="button" class="inbt" data-iv="${pode("campo")?"campo":"lista"}">Resolver</button>${semBaixaPorTurma().some(x=>podeCobrarSup(x.s.id))?`<button type="button" class="inbt zap" data-cobbx="1">💬 Cobrar</button>`:""}</div></div>`;
+  if(late) av+=`<div class="inav bad">${ICO.alerta}<span><b>${late} ${late===1?"serviço sem baixa":"serviços sem baixa"}</b><small>Programados até ontem e ainda abertos</small>${travado()?"":inPrev(semBaixaPorTurma().map(({s,rs})=>[supNome(s.id),rs.length,"desde "+fmtDs(rs[0].data)]))}</span><div class="inbts"><button type="button" class="inbt" data-iv="${pode("campo")?"campo":"lista"}">Resolver</button>${semBaixaPorTurma().some(x=>podeCobrarSup(x.s.id))?`<button type="button" class="inbt zap" data-cobbx="1">💬 Cobrar</button>`:""}</div></div>`;
   av+=chkObrigAlerta("inicio");
   if(nbChk&&pode("chk")) av+=`<button type="button" class="inav warn" data-iv="chk">${ICO.chk}<span><b>${nbChk} ${nbChk===1?"pendência":"pendências"} no checklist</b><small>Recebimento, recusa ou comunicado a fazer</small></span><em>Ver</em></button>`;
-  if(av&&(window.__nPend||0)) av+=`<button type="button" class="inav warn" data-iv="pend">${ICO.pend}<span><b>Ver todas as pendências (${window.__nPend})</b><small>Aba Pendências</small></span><em>Abrir</em></button>`;
+  const prevTodas=(()=>{ try{ if(travado()||!SUPS.some(x=>podeCobrarSup(x.id))) return ""; const C={}; pendCancItens().forEach(x=>{ const c=C[x.sup]=C[x.sup]||{n:0,cat:{}}; c.n++; c.cat[x.cat]=(c.cat[x.cat]||0)+1; });
+    const nm={chk:"checklist",bx:"sem baixa",prog:"programação"}; return inPrev(Object.entries(C).sort((a,b)=>b[1].n-a[1].n).map(([sup,c])=>[supNome(sup),c.n,Object.entries(c.cat).map(([k,v])=>v+" "+nm[k]).join(" · ")]),8); }catch(e){ return ""; } })();
+  if(av&&(window.__nPend||0)) av+=`<button type="button" class="inav warn" data-iv="pend">${ICO.pend}<span><b>Ver todas as pendências (${window.__nPend})</b><small>Aba Pendências${prevTodas?" · por turma:":""}</small>${prevTodas}</span><em>Abrir</em></button>`;
   if(!av) av=`<div class="inav okk">${ICO.ok}<span><b>Tudo em dia</b><small>Nenhum serviço atrasado nem pendência no checklist</small></span></div>`;
   if(!avLigado()&&!soLeitura()) av+=`<button type="button" class="inav warn" data-iv="pend">${ICO.pend}<span><b>Ligue o aviso sonoro</b><small>O celular toca e avisa quando aparecer pendência para você</small></span><em>Ligar</em></button>`;
   const tiles=[
