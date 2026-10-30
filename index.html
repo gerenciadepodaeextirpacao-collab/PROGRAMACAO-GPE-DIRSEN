@@ -1271,6 +1271,7 @@ input::placeholder,textarea::placeholder{text-transform:none}
 <div id="v-pend" hidden>
   <h2>Pendências</h2>
   <p class="lead">Tudo o que precisa de atenção, em um só lugar.</p>
+  <div id="avSomBox"></div>
   <div id="pendBox"></div>
 </div>
 
@@ -1764,7 +1765,7 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.30k";
+const APP_VERSAO="2026.10.30p";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -2810,6 +2811,15 @@ function chkEsperados(t,d){ const x=new Date(d+"T12:00"); x.setDate(x.getDate()-
   return [...S].filter(v=>v!=="SKAY"&&v!=="SKY").sort(); }
 function chkFaltam(t,d,feitos){ return chkEsperados(t,d).filter(v=>!feitos.includes(v)); } // equipamentos por turma em cada período (PODA II: 3 + van)
 const chkMeta=sup=>CHK_META[supOf(sup)?.grupo]||2;
+// quantos e quais equipamentos têm que ter checklist no dia: os que estavam na programação da turma no dia (+ a van na PODA II);
+// sem programação (só escala), vale a quantidade padrão da poda. Serviço não executado e sem outro serviço no lugar = a turma não saiu.
+const chkSaiu=r=>!(r.status==="NÃO"&&r.semSubstituto);
+function chkEsp(t,d){ const vts=[...new Set(todosGlobal().filter(r=>r.supervisao===t&&r.data===d&&!r.arquivado&&!r.ocorrencia&&!r.avulso&&r.viatura&&chkSaiu(r)).map(r=>r.viatura==="SKAY"||r.viatura==="SKY"?"SKY 5074.0":r.viatura))];
+  if(!vts.length) return {meta:chkMeta(t),lista:null};
+  if(/^PODA II\b/.test(supOf(t)?.grupo||"")&&!vts.some(v=>/^VAN/.test(v))) [...($("#viatura")?.options||[])].map(o=>o.value).filter(v=>/^VAN/.test(v)).forEach(v=>vts.push(v));
+  return {meta:vts.length,lista:vts.sort()}; }
+function chkCota(t,d,lst){ const feitos=[...new Set((lst||chks).filter(c=>c.supervisao===t&&chkDia(c)===d).map(c=>c.viatura))], E=chkEsp(t,d);
+  const faltam=feitos.length>=E.meta?[]:(E.lista?E.lista.filter(v=>!feitos.includes(v)):chkFaltam(t,d,feitos)); return {feitos,meta:E.meta,faltam}; }
 // recebe pelo próprio acesso, ou no aparelho de quem entregou (confirmando matrícula e senha de quem recebe)
 // só supervisor assina (entrega, recebimento, comunicação de defeito e retorno)
 const ehSup=()=>sessao?.perfil==="supervisor";
@@ -2993,7 +3003,7 @@ function renderChk(){
   const trab=new Set();
   todos().filter(r=>casaTurma(sup,r)&&r.supervisao&&(r.dataExec===dia||(r.data===dia&&r.status!=="NÃO"))).forEach(r=>trab.add(r.supervisao));
   lst.filter(c=>casaTurma(sup,c)&&chkDia(c)===dia).forEach(c=>trab.add(c.supervisao));
-  const cota=[...trab].sort().map(t=>{const feitos=[...new Set(vis.filter(c=>c.supervisao===t&&chkDia(c)===dia).map(c=>c.viatura))];return {t,feitos,meta:chkMeta(t),faltam:chkFaltam(t,dia,feitos)}});
+  const cota=[...trab].sort().map(t=>({t,...chkCota(t,dia,vis)}));
   const pend=cota.filter(x=>x.feitos.length<x.meta);
   const naoApto=lst.filter(c=>chkNivel(c)==="NÃO").length, ress=lst.filter(c=>chkNivel(c)==="PARCIAL").length, semRec=lst.filter(c=>!chkRecebido(c)&&!chkRecusado(c)).length;
   const aguarda=chks.filter(chkAguardaCoord).filter(c=>noEscopo(c.supervisao)).filter(c=>!travado()||c.supervisao===sessao.sup||c.recebe?.sup===sessao.sup).sort((a,b)=>(a.data||"").localeCompare(b.data||""));
@@ -3011,7 +3021,7 @@ function renderChk(){
   if(meus.length) h+=`<div class="alert"><h3>Turno para você receber</h3><p class="note" style="margin:0">Abra, confira o checklist da turma que entregou e assine o recebimento dando ciência das condições do equipamento.</p>${meus.map(c=>`<button type="button" data-chk="${esc(c.id)}"><b>!</b><span>${esc(c.viatura||"")} · ${esc(c.supervisao)} · ${esc(c.equipe)}<small>Entregue por ${esc(c.entrega?.nome||"—")} em ${fmtD(c.data)}${c.hora?" às "+esc(c.hora):""}. Confira e assine o recebimento.</small></span></button>`).join("")}</div>`;
   if(man){ host.innerHTML=manListaHtml(sup,dia); return; }
   h+=`<div class="grp-h"><h3>Checklists · ${fmtD(dia)} · ${diaDe(dia)}</h3><span>${lst.length} checklist${lst.length===1?"":"s"}${naoApto?` · <b style="color:var(--bad)">${naoApto} não apto</b>`:""}${ress?` · ${ress} com ressalva`:""} · ${semRec} sem recebimento</span></div>`;
-  if(cota.length) h+=`<p class="note" style="margin:6px 0 0">Checklists por turma no dia (PODA I: 2 equipamentos · PODA II: 3 equipamentos + a van):</p><div class="ckpend">${cota.map(x=>`<span class="${x.feitos.length>=x.meta?"ok":""}" title="${esc(x.feitos.join(", "))}">${esc(x.t)} · <b>${x.feitos.length} de ${x.meta}</b>${x.feitos.length>=x.meta?" ✔":x.faltam.length?" · falta: "+x.faltam.map(esc).join(", "):""}</span>`).join("")}</div>${pend.length?"":`<p class="note" style="margin:4px 0 0">Todas as turmas que trabalharam no dia completaram os checklists.</p>`}`;
+  if(cota.length) h+=`<p class="note" style="margin:6px 0 0">Checklists por turma no dia (um por equipamento que estava na programação do dia; na PODA II, mais a van):</p><div class="ckpend">${cota.map(x=>`<span class="${x.feitos.length>=x.meta?"ok":""}" title="${esc(x.feitos.join(", "))}">${esc(x.t)} · <b>${x.feitos.length} de ${x.meta}</b>${x.feitos.length>=x.meta?" ✔":x.faltam.length?" · falta: "+x.faltam.map(esc).join(", "):""}</span>`).join("")}</div>${pend.length?"":`<p class="note" style="margin:4px 0 0">Todas as turmas que trabalharam no dia completaram os checklists.</p>`}`;
   h+= lst.length ? `${downloads&&lst.length>1?`<button type="button" class="btn" data-chkpdftodos="1" style="min-height:44px;font-size:15px;width:100%;margin:6px 0">⬇ Baixar os ${lst.length} checklists em PDF (um por um)</button>`:""}<div class="list">${lst.map(c=>downloads?`<div class="ckpdfw">${chkCard(c)}<button type="button" class="btn ckpdfb" data-chkpdf="${esc(c.id)}">⬇ Baixar PDF · ${esc(c.viatura||"checklist")}</button></div>`:chkCard(c)).join("")}</div>` : `<div class="empty" style="margin-top:8px">Nenhum checklist neste dia.</div>`;
   host.innerHTML=h;
 }
@@ -3232,7 +3242,7 @@ function abrirChk(c){
   // quantos checklists a turma já fez no dia e qual equipamento ainda falta
   const cotaUI=(trocar)=>{ const el=$("#kfCota"); if(!el) return; const t=$("#kfSup").value, d=$("#kfData").value;
     if(!t){el.textContent="";return;}
-    const feitos=[...new Set(chks.filter(x=>x.supervisao===t&&chkDia(x)===d).map(x=>x.viatura))], meta=chkMeta(t), falt=chkFaltam(t,d,feitos);
+    const {feitos,meta,faltam:falt}=chkCota(t,d);
     el.innerHTML=`Checklists da ${esc(t)} no turno de ${fmtD(d)}: <b>${feitos.length} de ${meta}</b>${feitos.length?" · já feitos: "+feitos.map(esc).join(", "):""}${feitos.length>=meta?" · todos os equipamentos da turma já têm checklist.":falt.length?" · <b>falta: "+falt.map(esc).join(", ")+"</b>":""}`;
     if(trocar&&feitos.includes($("#kfVt").value)){ const ops=[...$("#kfVt").options].map(o=>o.value), livre=falt.find(v=>ops.includes(v))||ops.find(v=>!feitos.includes(v)); if(livre){$("#kfVt").value=livre; if($("#kfVt").onchange) $("#kfVt").onchange(); else eqpUI();} } };
   const eqpUI=()=>{ const e=$("#kfEqp"); if(e&&(e.value===""||e.value==="CESTO AÉREO"||e.value==="VAN")) e.value=/^VAN/.test($("#kfVt").value)?"VAN":"CESTO AÉREO"; };
@@ -5682,6 +5692,11 @@ const cobraFlag=u=>!!u&&(u.cobra===true||(u.cobra!==false&&/^CLEOMAR\b/i.test(u.
 const podeCobrarSup=sup=>{ if(!sessao||travado()||soLeitura()) return false; if(isGerente()) return true; if(GRP_COBRA_DIRSEN.has(supOf(sup)?.grupo)) return cobraFlag(acesso?.[sessao.id]); return sessao.perfil==="gerencia_op"; };
 // ---------- CANCELAR NOTIFICAÇÃO: quem cobra a turma (gerente, Cleomar na Poda I/II, Pedro na Poda III/IV) cancela o aviso para todos, com motivo ----------
 let notifCanc={};
+// cancelamentos de aviso: cada um num documento próprio (coleção assinaturas, id "canc_…"), que gerente e coordenador conseguem gravar;
+// o cfg/notifcanc antigo continua sendo lido
+let cancCfg={}, cancDocs={};
+const cancDocId=k=>"canc_"+String(k).replace(/[^A-Za-z0-9]+/g,"_").slice(0,140);
+function cancMesclar(){ const m={...cancCfg}; Object.values(cancDocs).forEach(d=>{ if(!d?.key) return; if(d.ativo===false) delete m[d.key]; else if(d.v) m[d.key]=d.v; }); notifCanc=m; }
 const chkKey=x=>x.tipo==="fazer"?`chk:fazer:${x.sup}:${x.data}`:`chk:ciencia:${x.c?.id}`;
 const cancBx=r=>!!notifCanc["bx:"+r.id];
 const cancProg=(sup,PX)=>!!notifCanc[`prog:${(PX||proxSemInfo()).sem}:${sup}`];
@@ -5701,7 +5716,13 @@ function pendCancHtml(L){
   if(canc.length) h+=`<details class="card pcanc"><summary>Avisos cancelados (${canc.length})</summary>${canc.slice(0,60).map(([k,v])=>`<div class="pcrow"><span><b>${esc(v.txt||k)}</b><small>Cancelado por ${esc(v.nome||"")} em ${v.em?fmtHora(v.em):""}${v.motivo?" · motivo: "+esc(v.motivo):""}</small></span><button type="button" class="pcx des" data-descanc="${esc(k)}">↺ Desfazer</button></div>`).join("")}</details>`;
   return h;
 }
-async function salvarCanc(novo){ if(!db){ toast("Sem conexão com o banco."); return false; } try{ await db.doc("cfg/notifcanc").set({itens:novo}); notifCanc=novo; renderAll(); return true; }catch(e){ toast("Não foi possível salvar. Tente de novo."); return false; } }
+async function salvarCanc(novo){ if(!db){ toast("Sem conexão com o banco."); return false; }
+  const ks=new Set([...Object.keys(notifCanc),...Object.keys(novo)]);
+  try{ for(const k of ks){ const a=notifCanc[k], b=novo[k]; if(JSON.stringify(a)===JSON.stringify(b)) continue;
+      const doc=b?{key:k,v:b,ativo:true,em:new Date().toISOString()}:{key:k,ativo:false,em:new Date().toISOString(),por:sessao?.nome||""};
+      await db.collection(ASS_COL).doc(cancDocId(k)).set(doc); cancDocs[cancDocId(k)]=doc; }
+    cancMesclar(); renderAll(); return true; }
+  catch(e){ toast("Não foi possível salvar"+(e?.message?" ("+e.message+")":"")+". Tente de novo.",6000); return false; } }
 function abrirCancelar(key,txt){
   const sup=(txt||"").split(" · ")[0];
   const box=document.createElement("div"); box.className="sheet"; box.style.zIndex=30;
@@ -5726,17 +5747,20 @@ function chkObrigPend(){
   if(!sessao) return [];
   const agora=new Date(), out=[], hj=hoje();
   const T=todos().filter(r=>!r.arquivado&&!r.ocorrencia&&r.supervisao);
-  for(let k=CHK_OBRIG_DIAS;k>=1;k--){
+  for(let k=CHK_OBRIG_DIAS;k>=0;k--){ // k=0: hoje (só o diurno, depois das 19h)
     const dd=new Date(hj+"T12:00"); dd.setDate(dd.getDate()-k); const d=iso(dd); if(d<CHK_OBRIG_INI) continue;
     const trab=new Set();
-    T.filter(r=>r.data===d||r.dataExec===d||(r.historico||[]).some(h=>h?.data===d)).forEach(r=>trab.add(r.supervisao)); // a escala segue a programação: programou no dia, estava de plantão
+    T.filter(r=>(r.data===d&&chkSaiu(r))||r.dataExec===d||r.substituto?.data===d).forEach(r=>trab.add(r.supervisao)); // a escala segue a programação: programou no dia, estava de plantão
     chks.filter(c=>chkDia(c)===d&&c.supervisao).forEach(c=>trab.add(c.supervisao));
     SUPS.filter(x=>escCfg(x.id)&&trabalha(x.id,d)).forEach(x=>trab.add(x.id)); // com escala cadastrada: todo dia de trabalho tem checklist
     [...trab].filter(t=>noEscopo(t)&&(!escCfg(t)||trabalha(t,d))).forEach(t=>{ // de folga não faz checklist
       if(d===CHK_OBRIG_INI&&supOf(t)?.turno!=="NOTURNO") return; // 1º dia: só o noturno
-      if(supOf(t)?.turno==="NOTURNO"){ const lim=new Date(d+"T09:00"); lim.setDate(lim.getDate()+1); if(agora<lim) return; } // noturno termina na manhã seguinte
-      const feitos=[...new Set(chks.filter(c=>c.supervisao===t&&chkDia(c)===d).map(c=>c.viatura))], meta=chkMeta(t);
-      if(feitos.length<meta) out.push({tipo:"fazer",sup:t,data:d,feitos,meta,faltam:chkFaltam(t,d,feitos)});
+      // turnos: DIURNO abre ~6h e fecha ~18h do mesmo dia (checklist do dia d cobrado a partir das 19h de d);
+      // NOTURNO abre às 18h do dia d e fecha às 6h do dia seguinte (checklist do turno d cobrado a partir das 7h de d+1)
+      if(supOf(t)?.turno==="NOTURNO"){ const lim=new Date(d+"T07:00"); lim.setDate(lim.getDate()+1); if(agora<lim) return; }
+      else { const lim=new Date(d+"T19:00"); if(agora<lim) return; }
+      const {feitos,meta,faltam}=chkCota(t,d);
+      if(feitos.length<meta) out.push({tipo:"fazer",sup:t,data:d,feitos,meta,faltam});
     });
   }
   const ini=(()=>{const x=new Date(hj+"T12:00"); x.setDate(x.getDate()-CHK_OBRIG_DIAS); return iso(x);})();
@@ -5756,7 +5780,7 @@ function proxEquipe(sup,data){
 }
 const chkObrigMeu=()=>chkObrigPend().filter(x=>travado()&&x.sup===sessao.sup);
 const chkObrigTxt=x=>x.tipo==="fazer"
-  ? `${fmtDs(x.data)} ${diaDe(x.data).slice(0,3)} · checklist NÃO FEITO (${x.feitos.length} de ${x.meta} equipamentos${x.faltam?.length?" · falta: "+x.faltam.join(", "):x.feitos.length?": falta "+(x.meta-x.feitos.length):""})`
+  ? `${fmtDs(x.data)} ${diaDe(x.data).slice(0,3)} · checklist NÃO FEITO (${x.feitos.length} de ${x.meta} equipamento${x.meta===1?"":"s"}${x.faltam?.length?" · falta: "+x.faltam.join(", "):x.feitos.length?": falta "+(x.meta-x.feitos.length):""})`
   : `${fmtDs(x.data)} ${diaDe(x.data).slice(0,3)} · falta DAR CIÊNCIA e ASSINAR o recebimento: ${x.c.viatura||"equipamento"} entregue pela ${x.c.supervisao}`;
 function chkObrigGrupos(L){ const G={}; L.forEach(x=>(G[x.sup]=G[x.sup]||[]).push(x)); return Object.keys(G).sort().map(sup=>({sup,its:G[sup]})); }
 function msgChkPend(grupos,so){
@@ -5918,7 +5942,7 @@ function abrirZerar(){
       if(!salvo){ st("Não foi possível baixar a cópia de segurança neste aparelho. Nada foi apagado."); bt.disabled=false; box.querySelector("[data-zrno]").disabled=false; return; }
       const tot=lotes.reduce((a,[,ids])=>a+ids.length,0); let n=0;
       for(const [c,ids] of lotes){ for(const id of ids){ await db.collection(c).doc(id).delete(); n++; if(n%10===0) st(`Apagando… ${n} de ${tot}`); } }
-      if(sel.some(([k])=>k==="canc")){ await db.doc("cfg/notifcanc").set({itens:{}}); notifCanc={}; }
+      if(sel.some(([k])=>k==="canc")){ try{ await db.doc("cfg/notifcanc").set({itens:{}}); }catch(e){} cancCfg={}; for(const id of Object.keys(cancDocs)){ try{ await db.collection(ASS_COL).doc(id).delete(); }catch(e){} } cancDocs={}; notifCanc={}; }
       if(sel.some(([k])=>k==="esc")){ try{ await db.doc("cfg/escala").set({turmas:{}}); }catch(e){} escCfgDoc={}; for(const id of Object.keys(escTurmas)){ try{ await db.collection(ASS_COL).doc(id).delete(); }catch(e){} } escTurmas={}; escala={}; }
       st(`Pronto: ${n} registros apagados. Cópia salva: ${nome}.`); toast("Dados zerados. A partir de agora vale de verdade.",7000);
       setTimeout(()=>{ box.remove(); location.reload(); },2500);
@@ -6501,8 +6525,56 @@ function renderPend(){
   const tot=n1+(pode("chk")?nbChk:0);
   if(!tot) box.innerHTML=(canc?pendCancHtml([]):"")+`<section class="alert ok"><h3>Tudo em dia</h3><p class="note" style="margin:0">Nenhuma pendência para você agora. Quando aparecer alguma, ela fica aqui e o número aparece no sino.</p></section>`;
   const tb=document.querySelector('nav.tabs button[data-v="pend"]'); if(tb) tb.innerHTML=ICO.pend+`<span class="tl">Pendências</span>`+(tot?`<span class="tbadge" aria-label="${tot} pendência(s)">${tot>99?"99+":tot}</span>`:"");
-  window.__nPend=tot;
+  window.__nPend=tot; try{ avisoSonoro(tot); avSomUI(); }catch(e){}
 }
+/* ---------- aviso sonoro + notificação no celular quando aparece pendência (com o app aberto ou em segundo plano) ---------- */
+let avCtx=null, avReg=null;
+const avLigado=()=>!!sessao&&ls.get("gpe_avsom_"+sessao.id,false);
+function avBip(ok){ if(ok){ try{ avCtx=avCtx||new (window.AudioContext||window.webkitAudioContext)(); if(avCtx.state==="suspended") avCtx.resume();
+    [[0,660],[0.18,990]].forEach(([t,f])=>{ const o=avCtx.createOscillator(), g=avCtx.createGain(); o.type="sine"; o.frequency.value=f; g.gain.setValueAtTime(0.0001,avCtx.currentTime+t); g.gain.exponentialRampToValueAtTime(0.3,avCtx.currentTime+t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,avCtx.currentTime+t+0.25); o.connect(g); g.connect(avCtx.destination); o.start(avCtx.currentTime+t); o.stop(avCtx.currentTime+t+0.27); }); navigator.vibrate&&navigator.vibrate([120,80,120]); }catch(e){} return; }
+  try{ avCtx=avCtx||new (window.AudioContext||window.webkitAudioContext)(); if(avCtx.state==="suspended") avCtx.resume();
+    [0,0.28,0.56].forEach((t,i)=>{ const o=avCtx.createOscillator(), g=avCtx.createGain(); o.type="square"; o.frequency.value=i===2?1320:880; g.gain.setValueAtTime(0.0001,avCtx.currentTime+t); g.gain.exponentialRampToValueAtTime(0.35,avCtx.currentTime+t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,avCtx.currentTime+t+0.22); o.connect(g); g.connect(avCtx.destination); o.start(avCtx.currentTime+t); o.stop(avCtx.currentTime+t+0.24); }); }catch(e){}
+  try{ navigator.vibrate&&navigator.vibrate([300,150,300,150,500]); }catch(e){} }
+async function avSwReg(){ if(avReg||!("serviceWorker" in navigator)||!window.GPE_NETLIFY) return avReg; try{ avReg=await navigator.serviceWorker.register("sw.js"); }catch(e){ avReg=null; } return avReg; }
+function avResumo(tot){ const L=[]; try{ chkObrigMeu().slice(0,2).forEach(x=>L.push(chkObrigTxt(x))); }catch(e){}
+  try{ const late=todos().filter(r=>!r.arquivado&&isLate(r)&&!cancBx(r)&&(!travado()||r.supervisao===sessao.sup)).length; if(late) L.push(`${late} serviço${late===1?"":"s"} sem baixa`); }catch(e){}
+  return (L.join(" · ")||"Abra o app para ver.").slice(0,180); }
+async function avNotificar(tot){ const t=`⚠ ${tot} pendência${tot===1?"":"s"} – Programação GPE`, body=avResumo(tot);
+  avBip(); if(!("Notification" in window)||Notification.permission!=="granted") return;
+  try{ const r=await avSwReg(); if(r?.showNotification){ await r.showNotification(t,{body,tag:"gpe-pend",renotify:true,requireInteraction:true,vibrate:[300,150,300],icon:LOGO_FULL}); return; } }catch(e){}
+  try{ const n=new Notification(t,{body,tag:"gpe-pend",renotify:true}); n.onclick=()=>{ window.focus(); show("pend"); n.close(); }; }catch(e){} }
+// aviso quando o checklist É FEITO: gerência/coordenação (turmas do seu escopo) e o supervisor que vai receber o turno (ou da própria turma, se outro fez)
+function avChkInteressa(c){ if(!sessao||!c?.entrega?.em) return false; if(c.entrega.uid===sessao.id) return false;
+  if(travado()) return c.recebe?.sup===sessao.sup||c.supervisao===sessao.sup; return isGer()&&noEscopo(c.supervisao); }
+function avChkFeitos(){ if(!sessao) return; const k="gpe_avchk_"+sessao.id, vistos=ls.get(k,null), lim=Date.now()-12*3600e3;
+  const L=chks.filter(c=>avChkInteressa(c)&&new Date(c.entrega.em).getTime()>lim);
+  if(!vistos){ ls.set(k,L.map(c=>c.id).slice(-300)); return; } // primeira vez: só marca o que já existe
+  const novos=L.filter(c=>!vistos.includes(c.id)); if(!novos.length) return;
+  ls.set(k,[...vistos,...novos.map(c=>c.id)].slice(-300));
+  const t=novos.length===1?`✅ Checklist feito: ${novos[0].viatura||"equipamento"} · ${novos[0].supervisao}`:`✅ ${novos.length} checklists feitos`;
+  const body=novos.slice(0,4).map(c=>`${c.viatura||"equipamento"} · ${c.supervisao} · entregue por ${(c.entrega.nome||"").split(" ")[0]} às ${new Date(c.entrega.em).toTimeString().slice(0,5)}${c.recebe?.sup?` → recebe: ${c.recebe.sup}`:""}`).join(" | ");
+  toast(t+(novos.length===1?" (entregue por "+(novos[0].entrega.nome||"")+")":""),6000);
+  if(!avLigado()) return; avBip(true);
+  if(!("Notification" in window)||Notification.permission!=="granted") return;
+  (async()=>{ try{ const r=await avSwReg(); if(r?.showNotification){ await r.showNotification(t,{body,tag:"gpe-chk-"+novos[0].id,vibrate:[120,80,120],icon:LOGO_FULL}); return; } }catch(e){}
+    try{ const n=new Notification(t,{body,tag:"gpe-chk"}); n.onclick=()=>{ window.focus(); show("chk"); n.close(); }; }catch(e){} })(); }
+const AV_REPETE=60*60*1000; // lembra de novo a cada 1 hora enquanto houver pendência
+function avisoSonoro(tot){ if(!avLigado()) return; const k="gpe_avn_"+sessao.id, u=ls.get(k,{n:0,em:0}), agora=Date.now();
+  if(tot>u.n||(tot>0&&agora-u.em>AV_REPETE)){ ls.set(k,{n:tot,em:agora}); avNotificar(tot); } else if(tot!==u.n) ls.set(k,{n:tot,em:u.em}); }
+function avSomUI(){ const h=$("#avSomBox"); if(!h||!sessao) return; const on=avLigado(), perm=("Notification" in window)?Notification.permission:"indisponivel";
+  h.innerHTML=on?`<section class="alert ok" style="margin-bottom:10px"><h3>🔔 Aviso sonoro ligado</h3><p class="note" style="margin:0">Quando aparecer pendência nova (ex.: checklist não feito), o celular toca 3 bipes e vibra; quando um checklist da sua turma ou do turno que você recebe for feito, toca 2 bipes curtos de confirmação${perm==="granted"?" e mostra a notificação":""}. Enquanto houver pendência, lembra de novo a cada 1 hora.${perm==="denied"?" <b>As notificações estão bloqueadas no navegador:</b> libere nas configurações do site para receber com a tela desligada.":""}</p>
+      <div class="row2" style="margin-top:8px"><button type="button" class="btn sec" data-avtest>🔊 Testar</button><button type="button" class="btn sec" data-avoff>Desligar</button></div></section>`
+    :`<section class="alert" style="margin-bottom:10px"><h3>🔔 Ligue o aviso sonoro no seu celular</h3><p class="note" style="margin:0">O app toca, vibra e mostra uma notificação quando aparecer pendência para você (checklist, serviço sem baixa, recebimento de turno, programação da semana).</p>
+      <button type="button" class="btn pri" data-avon style="margin-top:8px">🔔 Ligar aviso sonoro e notificações</button></section>`; }
+document.addEventListener("click",async e=>{
+  if(e.target.closest("[data-avon]")){ ls.set("gpe_avsom_"+sessao.id,true); avBip();
+    try{ if("Notification" in window&&Notification.permission==="default") await Notification.requestPermission(); }catch(x){}
+    await avSwReg(); ls.set("gpe_avn_"+sessao.id,{n:0,em:0}); toast("Aviso sonoro ligado."); renderAll(); return; }
+  if(e.target.closest("[data-avoff]")){ ls.set("gpe_avsom_"+sessao.id,false); toast("Aviso sonoro desligado."); avSomUI(); return; }
+  if(e.target.closest("[data-avtest]")){ avNotificar(window.__nPend||0); return; } });
+try{ navigator.serviceWorker?.addEventListener("message",e=>{ if(e.data?.gpe==="pend") show("pend"); }); }catch(e){}
+if(location.hash==="#pend") setTimeout(()=>{ try{ if(sessao) show("pend"); }catch(e){} },1500);
+setInterval(()=>{ try{ if(sessao&&avLigado()) renderPend(); }catch(e){} },5*60*1000);
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-pendv]"); if(b){ show(b.dataset.pendv); scrollTo(0,0); } });
 /* ---------- O.S do dia: o supervisor inicia a ordem de serviço de cada equipe no dia da execução e envia ao fiscal da equipe ---------- */
 const fiscalDe=(sup,eq)=>{ const L=Object.entries(acesso||{}).filter(([,u])=>u.perfil==="fiscal"&&u.ativo&&u.sup===sup); const f=L.find(([,u])=>u.equipe===eq)||L.find(([,u])=>!u.equipe); return f?{id:f[0],nome:f[1].nome,zap:f[1].zap||""}:null; };
@@ -6564,6 +6636,7 @@ function renderInicio(){
   if(nbChk&&pode("chk")) av+=`<button type="button" class="inav warn" data-iv="chk">${ICO.chk}<span><b>${nbChk} ${nbChk===1?"pendência":"pendências"} no checklist</b><small>Recebimento, recusa ou comunicado a fazer</small></span><em>Ver</em></button>`;
   if(av&&(window.__nPend||0)) av+=`<button type="button" class="inav warn" data-iv="pend">${ICO.pend}<span><b>Ver todas as pendências (${window.__nPend})</b><small>Aba Pendências</small></span><em>Abrir</em></button>`;
   if(!av) av=`<div class="inav okk">${ICO.ok}<span><b>Tudo em dia</b><small>Nenhum serviço atrasado nem pendência no checklist</small></span></div>`;
+  if(!avLigado()&&!soLeitura()) av+=`<button type="button" class="inav warn" data-iv="pend">${ICO.pend}<span><b>Ligue o aviso sonoro</b><small>O celular toca e avisa quando aparecer pendência para você</small></span><em>Ligar</em></button>`;
   const tiles=[
     {v:"campo",t:"Dar baixa no serviço",i:ICO.campo,c:"t-or",ok:pode("campo")&&lanca},
     {v:"form",t:"Programar a semana",i:ICO.form,c:"t-gr",ok:pode("form")},
@@ -6678,7 +6751,7 @@ limpar("prog"); ajudaMontar(); show(sessao?"inicio":ls.get("gpe_tab","campo")); 
   if(usr){ try{ myId=await usr.id(); }catch(e){} try{ canAdmin = !!(await usr.isOwner()) || !!(await usr.canEdit()); }catch(e){} }
   if(!downloads){ $("#csvBtn").hidden=true; $("#xlsxBtn").hidden=true; $("#csvNote").hidden=true; }
   if(!db){ loaded=true; renderAll(); db=false; renderLogin(); db=null; return; }
-  db.doc("cfg/notifcanc").onSnapshot(s=>{ notifCanc = s.exists ? (s.data().itens||{}) : {}; try{renderAll()}catch(e){} }, ()=>{});
+  db.doc("cfg/notifcanc").onSnapshot(s=>{ cancCfg = s.exists ? (s.data().itens||{}) : {}; cancMesclar(); try{renderAll()}catch(e){} }, ()=>{});
   db.doc("cfg/escala").onSnapshot(s=>{ escCfgDoc = s.exists ? (s.data().turmas||{}) : {}; escMesclar(); try{renderAll()}catch(e){} }, ()=>{});
   db.doc("cfg/acesso").onSnapshot(s=>{ acesso = s.exists ? (s.data().usuarios||{}) : null; acessoLoaded=true; try{syncEnc()}catch(e){} renderLogin(); if(!$("#sheetHost").innerHTML.includes('aria-label="Acessos"')) return; abrirAcessos(); },
     err=>{ acessoLoaded=true; renderLogin(); });
@@ -6688,11 +6761,11 @@ limpar("prog"); ajudaMontar(); show(sessao?"inicio":ls.get("gpe_tab","campo")); 
     if(recentes.length>=1000) toast("Muitos lançamentos no período recente. Avise o desenvolvedor para reduzir a janela de carregamento.",7000);
   }, err=>{ loaded=true; toast("A conexão com o banco caiu. Recarregue a página."); renderAll(); });
   db.collection(CHK_COL).where("data",">=",CHK_CORTE).limit(1000).onSnapshot(snap=>{
-    chks=snap.docs.map(d=>({...d.data(),id:d.id})); try{renderChk();renderChkGraf()}catch(e){} try{renderAvisoGlobal()}catch(e){}
+    chks=snap.docs.map(d=>({...d.data(),id:d.id})); try{renderChk();renderChkGraf()}catch(e){} try{renderAvisoGlobal()}catch(e){} try{avChkFeitos()}catch(e){} try{renderPend()}catch(e){}
   }, err=>{});
   db.collection(ORC_COL).limit(1000).onSnapshot(snap=>{ orcs=snap.docs.map(d=>({...d.data(),id:d.id})); try{ if(curView==="orc") renderOrc(); }catch(e){} }, err=>{});
   db.collection(MAN_COL).where("data",">=",MAN_CORTE).limit(1000).onSnapshot(snap=>{ mans=snap.docs.map(d=>({...d.data(),id:d.id})); try{renderChk();renderChkGraf()}catch(e){} }, err=>{});
-  db.collection(ASS_COL).limit(500).onSnapshot(snap=>{ assins={}; const et={}; snap.docs.forEach(d=>{ if(d.id.startsWith("esc_")) et[d.id]=d.data(); else assins[d.id]=d.data(); }); escTurmas=et; escMesclar(); try{renderAll()}catch(e){} }, err=>{});
+  db.collection(ASS_COL).limit(500).onSnapshot(snap=>{ assins={}; const et={}; const cd={}; snap.docs.forEach(d=>{ if(d.id.startsWith("esc_")) et[d.id]=d.data(); else if(d.id.startsWith("canc_")) cd[d.id]=d.data(); else assins[d.id]=d.data(); }); escTurmas=et; escMesclar(); cancDocs=cd; cancMesclar(); try{renderAll()}catch(e){} }, err=>{});
   db.collection(COL).where("status","==","PROGRAMADO").limit(1000).onSnapshot(snap=>{
     pendentes=snap.docs.map(d=>({...d.data(),id:d.id})); mergeRegs(); renderAll();
   }, err=>{});
