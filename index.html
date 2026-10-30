@@ -1799,7 +1799,7 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.30z";
+const APP_VERSAO="2026.10.31";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -2258,9 +2258,9 @@ function proxSemInfo(){ const domAtual=domDe(new Date()), dom=new Date(domAtual)
 function proxSemTurma(sup,P){ const dias=P.dias.filter(x=>trabalha(sup,x)); const L=todosGlobal?todosGlobal():todos();
   const feitos=dias.filter(x=>L.some(r=>r.supervisao===sup&&r.data===x&&!r.avulso&&!r.arquivado&&!r.ocorrencia));
   return {dias,feitos,falta:dias.filter(x=>!feitos.includes(x)),ok:dias.length>0&&feitos.length>=dias.length}; }
-function avisoDataUI(){ const el=$("#dataAviso"); if(!el) return; const v=$("#data").value, P=proxSemInfo();
+function avisoDataUI(){ const el=$("#dataAviso"); if(!el) return; const v=$("#data").value, P=proxSemInfo(); try{ $("#data").min=(form.mode==="prog"&&!form.base)?P.ini:""; }catch(e){}
   const mostra=form.mode==="prog"&&!form.base&&v&&v<P.ini; el.hidden=!mostra;
-  if(mostra) el.textContent=`Atenção: a programação é para a semana seguinte (${P.sem}ª semana, de ${periodoSem(P.sem)}). Confira se a data está certa.`; }
+  if(mostra) el.textContent=`Data não permitida: a programação é sempre para a próxima semana (${P.sem}ª semana, de ${periodoSem(P.sem)}). Escolha uma data a partir de ${fmtD(P.ini)}.`; }
 function renderProxSem(){
   const host=$("#proxSem"); if(!host) return; if(!sessao){ host.innerHTML=""; return; }
   const P=proxSemInfo(), sups=travado()?SUPS.filter(x=>x.id===sessao.sup):SUPS; if(!sups.length){ host.innerHTML=""; return; }
@@ -2609,6 +2609,7 @@ $("#form").addEventListener("submit", async ev=>{
   if(m!=="baixa"){
     if(!common.supervisao) e.push("escolha a supervisão");
     if(m==="prog"&&common.supervisao&&(!base||base.equipe!==common.equipe||base.viatura!==common.viatura)){ const ev=eqVtErro(common.supervisao,common.equipe,common.viatura); if(ev) e.push(ev); }
+    if(m==="prog"&&common.data&&(!base||base.data!==common.data)){ const P=proxSemInfo(); if(common.data<P.ini) e.push(`a programação é sempre para a próxima semana: escolha uma data a partir de ${diaDe(P.ini)} ${fmtD(P.ini)} (${P.sem}ª semana). Não é permitido programar para a semana atual nem para datas passadas`); }
     if(m==="prog"&&common.supervisao&&common.data&&escCfg(common.supervisao)&&!trabalha(common.supervisao,common.data)) e.push(`${diaDe(common.data)} ${fmtDs(common.data)} é folga da ${common.supervisao} pela escala de trabalho – programe num dia de trabalho`);
     if(m==="prog" ? errDataProg(common.data) : errDataExec(common.data)) e.push(m==="prog"?"informe uma data programada válida":"a data da execução não pode ser futura nem ter ano errado");
     const endProc=temProc(common.tipo)&&m==="prog"; // processo / O.S: pode programar sem QD., LT. e número (completa na baixa)
