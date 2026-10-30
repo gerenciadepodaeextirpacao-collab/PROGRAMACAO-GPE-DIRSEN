@@ -941,6 +941,11 @@ input::placeholder,textarea::placeholder{text-transform:none}
 .inprev li{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:baseline;font-size:13px;line-height:1.3;padding:5px 8px;border-radius:8px;background:var(--sunk);color:var(--ink)}
 .inprev li span{font-weight:700}.inprev li b{font-size:13px;min-width:22px;text-align:center;border-radius:99px;background:var(--bad);color:#fff;padding:0 7px}
 .inav.warn .inprev li b{background:var(--warn)}.inprev li small{grid-column:1/-1;font-size:12px;opacity:.85;margin:0!important}.inprev li.mais{display:block;background:none;font-style:italic;opacity:.8;padding:0 8px}
+.acsec .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:8px;align-items:start}
+.accard{padding:10px 12px!important;gap:4px!important}.accard .note{font-size:13px;line-height:1.35}
+.acdet{border-top:1px solid var(--line);margin-top:4px;padding-top:4px}.acdet>summary{cursor:pointer;font-weight:700;font-size:13px;color:var(--brand);padding:6px 0;list-style:none}.acdet>summary::-webkit-details-marker{display:none}
+.acdet>summary::before{content:"▸ ";}.acdet[open]>summary::before{content:"▾ ";}.acdetb{display:grid;gap:8px;margin-top:4px}
+.acinfo>summary{cursor:pointer;font-size:13px;color:var(--muted);font-weight:600}
 </style>
 
 <div id="login" class="login" hidden>
@@ -1667,17 +1672,21 @@ $("#testeBtn").onclick=()=>{ if(!isGerente()) return; const on=!modoTeste(); ls.
 // acessos separados por parte: PODA I e II (DIRSEN) e PODA III e IV (DIROP)
 const AC_AREAS=[{k:"dirsen",t:"PODA I e PODA II",d:"Gerência de Poda e Extirpação – DIRSEN"},{k:"dirop",t:"PODA III e PODA IV",d:"Gerência de Poda e Extirpação – DIROP"},{k:"dir",t:"Diretoria",d:"consulta geral"}];
 function areaAcesso(u){ if(u.perfil==="gerencia_op"||u.sup===LOT_DIROP) return "dirop"; const g=supOf(u.sup)?.grupo; if(g==="PODA III"||g==="PODA IV") return "dirop"; if(u.perfil==="diretoria"||u.sup==="DIRETORIA") return "dir"; return "dirsen"; }
+const AC_ABERTOS=new Set(); let AC_BUSCA="";
+function acFiltrar(host){ const q=AC_BUSCA.trim().toLowerCase(); host.querySelectorAll(".acsec").forEach(sec=>{ let n=0; sec.querySelectorAll("[data-uid]").forEach(c=>{ const ok=!q||c.querySelector(".achead")?.textContent.toLowerCase().includes(q)||(c.dataset.busca||"").includes(q); c.hidden=!ok; if(ok) n++; }); sec.hidden=!!q&&!n; }); }
 function abrirAcessos(){
   if(!isGerente()) return;
   const host=$("#sheetHost");
   const lista=Object.entries(acesso||{}).sort((a,b)=>(ORD[a[1].perfil]-ORD[b[1].perfil])||(a[1].sup||"").localeCompare(b[1].sup||"")||a[1].nome.localeCompare(b[1].nome));
   host.innerHTML=`<div class="sheet" id="sh"><div class="panel" role="dialog" aria-label="Acessos">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:22px">Acessos</b><button type="button" class="btn sec" id="acClose" style="min-height:40px;padding:0 14px">Fechar</button></div>
-    <p class="note" style="margin:0">Cada pessoa entra com a <b>matrícula</b> (ex.: m859209) e uma senha de pelo menos 6 caracteres (letras e números). Só o <b>gerente</b> tem visão geral de todas as podas. Quem está lotado na <b>DIRSEN</b> (ou diretoria) vê só o PODA I e o PODA II; quem está lotado na <b>DIROP</b> vê só o PODA III e o PODA IV (a diretoria só consulta); supervisor e fiscal só a própria turma.${canAdmin?"":" <b>Você não é dono nem editor deste app: pode ver, mas não alterar.</b>"}</p>
-    ${AC_AREAS.map(ar=>{ const it=lista.filter(([id,u])=>areaAcesso(u)===ar.k); if(!it.length&&ar.k==="dir") return ""; return `<div class="acsec"><div class="acsech"><b>${ar.t}</b><span>${ar.d} · ${it.length} ${it.length===1?"pessoa":"pessoas"}</span></div><div class="list">${it.length?"":`<p class="note" style="margin:0">Ninguém cadastrado ainda.</p>`}${it.map(([id,u])=>`<div class="prog" data-uid="${esc(id)}">
-      <div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b style="font-size:16px">${esc(u.nome)}</b><span class="pill ${!u.ativo?"NÃO":(u.hash&&matDe(u))?"SIM":"ATRASADO"}">${!u.ativo?"Desativado":!matDe(u)?"Sem matrícula":u.hash?"Liberado":"Sem senha"}</span></div>
+    <input type="search" id="acBusca" placeholder="🔎 Procurar por nome, matrícula, turma ou perfil" value="${esc(AC_BUSCA)}" autocapitalize="none" style="min-height:46px">
+    <details class="acinfo"><summary>Como funcionam os acessos</summary><p class="note" style="margin:6px 0 0">Cada pessoa entra com a <b>matrícula</b> (ex.: m859209) e uma senha de pelo menos 6 caracteres (letras e números). Só o <b>gerente</b> tem visão geral de todas as podas. Quem está lotado na <b>DIRSEN</b> (ou diretoria) vê só o PODA I e o PODA II; quem está lotado na <b>DIROP</b> vê só o PODA III e o PODA IV (a diretoria só consulta); supervisor e fiscal só a própria turma.</p></details><p class="note" style="margin:0">${canAdmin?"":" <b>Você não é dono nem editor deste app: pode ver, mas não alterar.</b>"}</p>
+    ${AC_AREAS.map(ar=>{ const it=lista.filter(([id,u])=>areaAcesso(u)===ar.k); if(!it.length&&ar.k==="dir") return ""; return `<div class="acsec"><div class="acsech"><b>${ar.t}</b><span>${ar.d} · ${it.length} ${it.length===1?"pessoa":"pessoas"}</span></div><div class="list">${it.length?"":`<p class="note" style="margin:0">Ninguém cadastrado ainda.</p>`}${it.map(([id,u])=>`<div class="prog accard" data-uid="${esc(id)}" data-busca="${esc([u.nome,matDe(u),PERF[u.perfil]||u.perfil,u.sup,u.equipe].filter(Boolean).join(" ").toLowerCase())}">
+      <div class="achead" style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b style="font-size:16px">${esc(u.nome)}</b><span class="pill ${!u.ativo?"NÃO":(u.hash&&matDe(u))?"SIM":"ATRASADO"}">${!u.ativo?"Desativado":!matDe(u)?"Sem matrícula":u.hash?"Liberado":"Sem senha"}</span></div>
       <div class="note">Matrícula <b>${esc(matDe(u)||"—")}</b> · ${PERF[u.perfil]||u.perfil}${u.sup?" · "+esc(u.sup):""}${u.zap?` · 📱 ${esc(zapFmt(u.zap))}`:u.perfil==="supervisor"?` · <span style="color:var(--warn)">sem WhatsApp</span>`:""}${u.perfil==="fiscal"?` · <b>fiscal de turma – ${esc((u.equipe||"equipe não informada").toLowerCase())}</b>`:""}${u.perfil==="gerencia"?` · <b style="color:var(--ok)">💬 cobra todas as podas</b>`:u.perfil==="gerencia_op"?` · <b style="color:var(--ok)">💬 cobra Poda III e IV</b>`:cobraFlag(u)?` · <b style="color:var(--ok)">💬 cobra Poda I e II</b>`:""}</div>
-      ${canAdmin?`<div class="row2"><input type="password" placeholder="${u.hash?"Nova senha":"Definir senha"}" data-pin="${esc(id)}" aria-label="Senha de ${esc(u.nome)}">
+      ${canAdmin?`<details class="acdet" data-acdet="${esc(id)}" ${AC_ABERTOS.has(id)?"open":""}><summary>⚙ Gerenciar: senha, assinatura e editar</summary><div class="acdetb">
+      <div class="row2"><input type="password" placeholder="${u.hash?"Nova senha":"Definir senha"}" data-pin="${esc(id)}" aria-label="Senha de ${esc(u.nome)}">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><button type="button" class="btn pri" style="min-height:48px;font-size:14px" data-savepin="${esc(id)}">Salvar senha</button>
         ${id===sessao?.id?"":`<button type="button" class="btn ${u.ativo?"danger":"sec"}" style="min-height:48px;font-size:14px" data-toggle="${esc(id)}">${u.ativo?"Desativar":"Reativar"}</button>`}</div></div>
       <div class="assbox"><div class="note" style="margin:0">✍ Senha de assinatura: ${assins[id]?.hash?`<b style="color:var(--ok)">cadastrada</b>${assins[id].em?" em "+fmtHora(assins[id].em):""}${assins[id].porGerente?" (pela gerência)":" (pela própria pessoa)"}`:`<b style="color:var(--bad)">não cadastrada</b>`}</div>
@@ -1695,7 +1704,7 @@ function abrirAcessos(){
         <label class="f" data-edsupw>${lotRot(u.perfil)}<select data-edsup>${lotOpts(u.perfil,u.sup)}</select></label></div>
         <label class="f" data-edeqw ${u.perfil==="fiscal"?"":"hidden"}>Fiscal de turma de qual equipe (recebe a O.S do dia)<select data-edeq>${["1ª EQUIPE","2ª EQUIPE","3ª EQUIPE"].map(q=>`<option value="${q}" ${u.equipe===q?"selected":""}>Fiscal de turma – ${q.toLowerCase()}</option>`).join("")}</select></label>
         <button type="button" class="btn pri" data-saveedit="${esc(id)}">Salvar alterações</button>
-      </div>`:""}
+      </div></div></details>`:""}
     </div>`).join("")}</div></div>`; }).join("")}
     ${canAdmin?`<section class="card" style="margin:0"><div class="step">Adicionar pessoa</div>
       <div class="row2"><label class="f">Matrícula<input id="nuMat" autocapitalize="none" placeholder="Ex.: m859209"></label>
@@ -1713,6 +1722,8 @@ function abrirAcessos(){
   const close=()=>host.innerHTML="";
   $("#sh").onclick=e=>{if(e.target.id==="sh")close()};
   $("#acClose").onclick=close;
+  host.querySelectorAll("[data-acdet]").forEach(d=>d.addEventListener("toggle",()=>{ d.open?AC_ABERTOS.add(d.dataset.acdet):AC_ABERTOS.delete(d.dataset.acdet); }));
+  const bq=$("#acBusca"); if(bq){ bq.oninput=()=>{ AC_BUSCA=bq.value; acFiltrar(host); }; acFiltrar(host); }
   host.querySelectorAll("[data-edperf]").forEach(s=>s.onchange=()=>{const w=s.closest(".inline").querySelector("[data-edsupw]");lotSync(s,w.querySelector("[data-edsup]"),w); const q=s.closest(".inline").querySelector("[data-edeqw]"); if(q) q.hidden=s.value!=="fiscal";});
   const perf=$("#nuPerf"); if(perf) perf.onchange=()=>{lotSync(perf,$("#nuSup"),$("#nuSupW")); $("#nuEqW").hidden=perf.value!=="fiscal";};
   const salvar=async(id,dados,msg)=>{ try{ await dbUpdate(db.doc("cfg/acesso"),{usuarios:{[id]:dados}}); toast(msg); abrirAcessos(); }catch(e){ toast("Não foi possível salvar. Só dono ou editor do app altera acessos."); } };
@@ -1769,7 +1780,7 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.10.30s";
+const APP_VERSAO="2026.10.30t";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
