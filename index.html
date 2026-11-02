@@ -1764,7 +1764,7 @@ function abrirAcessos(){
     <details class="acinfo"><summary>Como funcionam os acessos</summary><p class="note" style="margin:6px 0 0">Cada pessoa entra com a <b>matrícula</b> (ex.: m859209) e uma senha de pelo menos 6 caracteres (letras e números). Só o <b>administrador</b> vê tudo, sem restrição. O <b>gerente DIRSEN</b> vê o PODA I e o PODA II; o <b>gerente DIROP</b> vê o PODA III e o PODA IV. Quem está lotado na <b>DIRSEN</b> (ou diretoria) vê só o PODA I e o PODA II; quem está lotado na <b>DIROP</b> vê só o PODA III e o PODA IV (a diretoria só consulta); supervisor e fiscal só a própria turma.</p></details><p class="note" style="margin:0">${canAdmin?"":" <b>Você não é dono nem editor deste app: pode ver, mas não alterar.</b>"}</p>
     ${AC_AREAS.filter(ar=>isAdm()||ar.k!=="dirop").map(ar=>{ const it=lista.filter(([id,u])=>areaAcesso(u)===ar.k); if(!it.length&&(ar.k==="dir"||ar.k==="adm")) return ""; return `<div class="acsec"><div class="acsech"><b>${ar.t}</b><span>${ar.d} · ${it.length} ${it.length===1?"pessoa":"pessoas"}</span></div><div class="list">${it.length?"":`<p class="note" style="margin:0">Ninguém cadastrado ainda.</p>`}${it.map(([id,u])=>`<div class="prog accard" data-uid="${esc(id)}" data-busca="${esc([u.nome,matDe(u),PERF[u.perfil]||u.perfil,u.sup,u.equipe].filter(Boolean).join(" ").toLowerCase())}">
       <div class="achead" style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b style="font-size:16px">${esc(u.nome)}</b><span class="pill ${!u.ativo?"NÃO":(u.hash&&matDe(u))?"SIM":"ATRASADO"}">${!u.ativo?"Desativado":!matDe(u)?"Sem matrícula":u.hash?"Liberado":"Sem senha"}</span></div>
-      <div class="note">Matrícula <b>${esc(matDe(u)||"—")}</b> · ${PERF[u.perfil]||u.perfil}${u.sup?" · "+esc(u.sup):""}${u.zap?` · 📱 ${esc(zapFmt(u.zap))}`:u.perfil==="supervisor"?` · <span style="color:var(--warn)">sem WhatsApp</span>`:""}${u.perfil==="fiscal"?` · <b>fiscal de turma – ${esc((u.equipe||"equipe não informada").toLowerCase())}</b>`:""}${u.perfil==="gerencia"?` · <b style="color:var(--ok)">💬 cobra todas as podas</b>`:u.perfil==="gerencia_op"?` · <b style="color:var(--ok)">💬 cobra Poda III e IV</b>`:cobraFlag(u)?` · <b style="color:var(--ok)">💬 cobra Poda I e II</b>`:""}</div>
+      <div class="note">${u.perfil==="admin"?"Usuário":"Matrícula"} <b>${esc(matDe(u)||"—")}</b> · ${PERF[u.perfil]||u.perfil}${u.sup?" · "+esc(u.sup):""}${u.zap?` · 📱 ${esc(zapFmt(u.zap))}`:u.perfil==="supervisor"?` · <span style="color:var(--warn)">sem WhatsApp</span>`:""}${u.perfil==="fiscal"?` · <b>fiscal de turma – ${esc((u.equipe||"equipe não informada").toLowerCase())}</b>`:""}${u.perfil==="gerencia"?` · <b style="color:var(--ok)">💬 cobra todas as podas</b>`:u.perfil==="gerencia_op"?` · <b style="color:var(--ok)">💬 cobra Poda III e IV</b>`:cobraFlag(u)?` · <b style="color:var(--ok)">💬 cobra Poda I e II</b>`:""}</div>
       ${canAdmin?`<details class="acdet" data-acdet="${esc(id)}" ${AC_ABERTOS.has(id)?"open":""}><summary>⚙ Gerenciar: senha, assinatura e editar</summary><div class="acdetb">
       <div class="row2"><input type="password" placeholder="${u.hash?"Nova senha":"Definir senha"}" data-pin="${esc(id)}" aria-label="Senha de ${esc(u.nome)}">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><button type="button" class="btn pri" style="min-height:48px;font-size:14px" data-savepin="${esc(id)}">Salvar senha</button>
@@ -1787,10 +1787,11 @@ function abrirAcessos(){
       </div></div></details>`:""}
     </div>`).join("")}</div></div>`; }).join("")}
     ${canAdmin?`<section class="card" style="margin:0"><div class="step">Adicionar pessoa</div>
-      <div class="row2"><label class="f">Matrícula<input id="nuMat" autocapitalize="none" placeholder="Ex.: m859209"></label>
-      <label class="f">Nome<input id="nuNome" placeholder="Ex.: JOÃO DA SILVA"></label></div>
-      <label class="f">WhatsApp (com DDD)<input id="nuZap" inputmode="tel" placeholder="(00) 00000-0000" maxlength="15"></label>
-      <label class="ck"><input type="checkbox" id="nuCobra"><span>💬 Pode cobrar no WhatsApp as turmas da Poda I e II</span></label>
+      <p class="note" id="nuAdmNota" hidden style="margin:0;color:var(--brand)">Administrador: só o <b>usuário de acesso</b> e a <b>senha</b>. Não precisa de matrícula, nome, WhatsApp nem turma. No 1º acesso o app pede para trocar a senha.</p>
+      <div class="row2"><label class="f"><span id="nuMatLbl">Matrícula</span><input id="nuMat" autocapitalize="none" placeholder="Ex.: m859209"></label>
+      <label class="f" id="nuNomeW">Nome<input id="nuNome" placeholder="Ex.: JOÃO DA SILVA"></label></div>
+      <label class="f" id="nuZapW">WhatsApp (com DDD)<input id="nuZap" inputmode="tel" placeholder="(00) 00000-0000" maxlength="15"></label>
+      <label class="ck" id="nuCobraW"><input type="checkbox" id="nuCobra"><span>💬 Pode cobrar no WhatsApp as turmas da Poda I e II</span></label>
       <div class="row2"><label class="f">Perfil<select id="nuPerf">${["supervisor","supervisor1","fiscal","coordenador","ger_equipe","gerencia","gerencia_op","diretoria","admin"].filter(k=>k!=="admin"||podeCriarAdm()).map(k=>`<option value="${k}">${PERF_DESC[k]}</option>`).join("")}</select></label>
       <label class="f">Senha<input id="nuPin" type="password" placeholder="Mínimo 6 caracteres"></label></div>
       <label class="f" id="nuSupW">Turma<select id="nuSup">${lotOpts("supervisor","")}</select></label>
@@ -1805,7 +1806,9 @@ function abrirAcessos(){
   host.querySelectorAll("[data-acdet]").forEach(d=>d.addEventListener("toggle",()=>{ d.open?AC_ABERTOS.add(d.dataset.acdet):AC_ABERTOS.delete(d.dataset.acdet); }));
   const bq=$("#acBusca"); if(bq){ bq.oninput=()=>{ AC_BUSCA=bq.value; acFiltrar(host); }; acFiltrar(host); }
   host.querySelectorAll("[data-edperf]").forEach(s=>s.onchange=()=>{const w=s.closest(".inline").querySelector("[data-edsupw]");lotSync(s,w.querySelector("[data-edsup]"),w); const q=s.closest(".inline").querySelector("[data-edeqw]"); if(q) q.hidden=s.value!=="fiscal";});
-  const perf=$("#nuPerf"); if(perf) perf.onchange=()=>{lotSync(perf,$("#nuSup"),$("#nuSupW")); $("#nuEqW").hidden=perf.value!=="fiscal";};
+  const perf=$("#nuPerf"); if(perf) perf.onchange=()=>{lotSync(perf,$("#nuSup"),$("#nuSupW")); $("#nuEqW").hidden=perf.value!=="fiscal";
+    const adm=perf.value==="admin"; ["#nuNomeW","#nuZapW","#nuCobraW","#nuSupW"].forEach(q=>{ const x=$(q); if(x) x.hidden=adm; }); $("#nuAdmNota").hidden=!adm;
+    $("#nuMatLbl").textContent=adm?"Usuário de acesso":"Matrícula"; $("#nuMat").placeholder=adm?"Ex.: admgpe":"Ex.: m859209"; };
   const salvar=async(id,dados,msg)=>{ try{ await dbUpdate(db.doc("cfg/acesso"),{usuarios:{[id]:dados}}); toast(msg); abrirAcessos(); }catch(e){ toast("Não foi possível salvar. Só dono ou editor do app altera acessos."); } };
   host.querySelector(".panel").addEventListener("click",async e=>{
     const cpl=e.target.closest("[data-cplink]"); if(cpl){ const u=LINKS_APP[+cpl.dataset.cplink].u; (navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast("Link copiado.")).catch(()=>{ prompt("Copie o link:",u); }); return; }
@@ -1851,11 +1854,12 @@ function abrirAcessos(){
     if(e.target.id==="nuAdd"){
       const matricula=matKey($("#nuMat").value), nome=$("#nuNome").value.trim().toUpperCase(), p=$("#nuPerf").value, pin=$("#nuPin").value, sup=$("#nuSup").value;
       if(p==="admin"&&!podeCriarAdm()){toast("Só o Victor (gerente) cadastra administrador.");return}
-      if(!matricula){toast("Informe a matrícula.");return}
-      const dupM=acharMat(matricula); if(dupM){toast("A matrícula "+matricula+" já está cadastrada para "+dupM[1].nome+".");return}
-      if(!nome){toast("Informe o nome.");return} if(!pinOk(pin)){toast(MSG_SENHA);return}
-      const zr=$("#nuZap").value, zap=zapNorm(zr); if(zr.trim()&&!zap){toast("WhatsApp inválido: use DDD + número, ex.: (62) 99999-1234.");return}
-      const salt=novoSal(); await salvar(uidNovo(),{nome,matricula,perfil:p,sup,equipe:p==="fiscal"?$("#nuEq").value:"",zap,cobra:!!$("#nuCobra")?.checked,salt,hash:await hashPin(salt,pin),ativo:true,criadoEm:new Date().toISOString(),senhaEm:new Date().toISOString()},nome+" adicionado.");
+      const adm=p==="admin";
+      if(!matricula){toast(adm?"Informe o usuário de acesso.":"Informe a matrícula.");return}
+      const dupM=acharMat(matricula); if(dupM){toast((adm?"O usuário ":"A matrícula ")+matricula+" já está cadastrad"+(adm?"o":"a")+" para "+dupM[1].nome+".");return}
+      if(!adm&&!nome){toast("Informe o nome.");return} if(!pinOk(pin)){toast(MSG_SENHA);return}
+      const zr=adm?"":$("#nuZap").value, zap=zapNorm(zr); if(zr.trim()&&!zap){toast("WhatsApp inválido: use DDD + número, ex.: (62) 99999-1234.");return}
+      const salt=novoSal(); await salvar(uidNovo(),{nome:adm?(nome||"ADMINISTRADOR "+matricula.toUpperCase()):nome,matricula,perfil:p,sup:adm?"":sup,equipe:p==="fiscal"?$("#nuEq").value:"",zap,cobra:!adm&&!!$("#nuCobra")?.checked,salt,hash:await hashPin(salt,pin),ativo:true,criadoEm:new Date().toISOString(),senhaEm:new Date().toISOString()},nome+" adicionado.");
     }
   });
 }
@@ -1871,7 +1875,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.02y";
+const APP_VERSAO="2026.11.02z";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
