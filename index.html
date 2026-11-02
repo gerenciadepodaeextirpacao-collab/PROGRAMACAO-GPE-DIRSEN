@@ -1855,7 +1855,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.02m";
+const APP_VERSAO="2026.11.02n";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -2114,13 +2114,13 @@ function relDocHtml(r){ const R=r.relat||{}, q=relQtd(r), v=x=>x?esc(String(x)):
   return `<div class="rel"><style>
   .rel{width:794px;background:#fff;color:#000;font-family:"Times New Roman",Times,serif;padding:6px 46px 4px;box-sizing:border-box}
   .rel table,.rel th,.rel td,.rel tr{font:inherit;letter-spacing:normal;text-transform:none;color:#000;background:none;white-space:normal;text-align:left;font-variant-numeric:normal}
-  .rel tr:last-child td{border-bottom:1px solid #000} .rel th{font-weight:700;text-align:center}
+  .rel tr:last-child td{border-bottom:1px solid #000} .rel .h{font-weight:700;text-align:center}
   .rel *{box-sizing:border-box} .rel .hd{display:flex;align-items:center;gap:14px;margin-bottom:6px} .rel .hd img{width:132px;height:76px;object-fit:contain}
   .rel .hd .t{flex:1;text-align:center;line-height:1.35} .rel .hd .t b{display:block;font-size:15px} .rel .hd .t .g{color:#4a9a3a;font-size:16px}
-  .rel table{width:100%;border-collapse:collapse;font-size:13px} .rel td,.rel th{border:1px solid #000;padding:2px 6px;vertical-align:top}
+  .rel table{width:100%;border-collapse:collapse;font-size:13px} .rel td{border:1px solid #000;padding:2px 6px;vertical-align:top}
   .rel .tit{text-align:center;font-size:18px;font-weight:700;text-decoration:underline;border-bottom:0;padding-top:6px}
   .rel .pr td{border-top:0;font-weight:700;font-size:14px;padding:8px 16px 10px}
-  .rel .k{font-weight:700;width:31%;font-size:14px} .rel .c{text-align:center} .rel .q{display:table-cell;grid-template-columns:none;gap:0;width:13%;text-align:center;font-weight:700;padding:2px 6px;border:1px solid #000}
+  .rel .k{font-weight:700;width:31%;font-size:14px} .rel .c{text-align:center} .rel .rq{width:13%;text-align:center;font-weight:700;padding:2px 6px;border:1px solid #000}
   .rel .it{font-size:12.5px} .rel .ft{height:142px;width:33.3%;padding:4px;text-align:center;vertical-align:middle} .rel .ft img{max-width:100%;max-height:134px;object-fit:contain}
   .rel .esig{display:flex;gap:10px;align-items:center;border:1px solid #1f5e2e;border-radius:6px;padding:6px 10px;margin:8px 0 0;font-family:Arial,sans-serif;font-size:10.5px;line-height:1.35;color:#1f3b25}
   .rel .esig .i{flex:none;width:44px;height:44px} .rel .esig .i img,.rel .esig .i svg{width:44px;height:44px} .rel .esig p{margin:0}
@@ -2133,11 +2133,11 @@ function relDocHtml(r){ const R=r.relat||{}, q=relQtd(r), v=x=>x?esc(String(x)):
    <tr><td class="k">FISCAL DE TURMA:</td><td colspan="2" class="c">${esc(r.fiscal||"")}</td></tr>
    <tr><td class="k">SOLICITANTE SERVIÇO:</td><td colspan="2"><b>Nome:</b> ${v(R.solicitante)}</td></tr>
    <tr><td class="k">LOCAL DO SERVIÇO:</td><td colspan="2">${esc([r.bairro,r.logradouro].filter(Boolean).join(" — "))}</td></tr>
-   <tr><td class="k" rowspan="12">DISCRIMINAÇÃO DO SERVIÇO EXECUTADO:</td><th class="c">ITENS DO CONTRATO</th><th class="q">Quant.</th></tr>
-   ${REL_ITENS.map((t,i)=>`<tr><td class="it"><b>${String(i+1).padStart(2,"0")} –</b> ${esc(t)}</td><td class="q">${+q[ITENS[i].c]?esc(String(q[ITENS[i].c]).replace(".",",")):""}</td></tr>`).join("")}
-   <tr><th class="c">OUTROS</th><th class="q">Quant.</th></tr>
-   <tr><td class="it"><b>Árvore caída</b></td><td class="q">${v(R.arvore)}</td></tr>
-   <tr><td class="it"><b>Galho caído</b></td><td class="q">${v(R.galho)}</td></tr>
+   <tr><td class="k" rowspan="12">DISCRIMINAÇÃO DO SERVIÇO EXECUTADO:</td><td class="h c">ITENS DO CONTRATO</td><td class="h rq">Quant.</td></tr>
+   ${REL_ITENS.map((t,i)=>`<tr><td class="it"><b>${String(i+1).padStart(2,"0")} –</b> ${esc(t)}</td><td class="rq">${+q[ITENS[i].c]?esc(String(q[ITENS[i].c]).replace(".",",")):""}</td></tr>`).join("")}
+   <tr><td class="h c">OUTROS</td><td class="h rq">Quant.</td></tr>
+   <tr><td class="it"><b>Árvore caída</b></td><td class="rq">${v(R.arvore)}</td></tr>
+   <tr><td class="it"><b>Galho caído</b></td><td class="rq">${v(R.galho)}</td></tr>
    <tr><td class="k">Serviços não executados: (descreva o motivo)</td><td colspan="2">${esc(naoExec)}</td></tr>
    <tr><td class="k">Observação:</td><td colspan="2">${esc(r.obs||"")}</td></tr>
    <tr><td class="k" rowspan="4">Assinatura do Supervisor Responsável Pelo Serviço:</td><td colspan="2"><b>Nome:</b> ${esc(R.ass?.nome||nomeSupDe(r.supervisao)||"")}</td></tr>
@@ -2145,7 +2145,7 @@ function relDocHtml(r){ const R=r.relat||{}, q=relQtd(r), v=x=>x?esc(String(x)):
    <tr><td colspan="2"><b>Data da Vistoria:</b> ${R.vistoria?fmtD(R.vistoria):""}</td></tr>
    <tr><td colspan="2"><b>Data da Execução do Serviço:</b> ${relExecTxt(r)}</td></tr></table>
   <p style="text-align:center;font-weight:700;font-size:13px;margin:18px 0 2px">REGISTRO FOTOGRÁFICO</p>
-  <table><tr><th>ANTES</th><th>DURANTE</th><th>DEPOIS</th></tr><tr>${fot}</tr></table>
+  <table><tr><td class="h">ANTES</td><td class="h">DURANTE</td><td class="h">DEPOIS</td></tr><tr>${fot}</tr></table>
   ${R.ass?.em?`<div class="esig"><div class="i">${SELO_PNG?`<img src="${SELO_PNG}" alt="">`:SELO}</div><p>${esc(relAssTxt(R.ass))}</p></div>`:`<p style="text-align:center;font-size:11px;color:#9b1f18;margin:26px 0 0">Relatório ainda sem assinatura eletrônica do supervisor.</p>`}
   <div class="ass" style="margin-top:${R.ass?.em?"10px":"40px"}">${R.ass?.em?esc(R.ass.nome)+"<br>":""}ASSINATURA DO RESPONSÁVEL</div></div>`; }
 async function relPdf(r,btn){ await Promise.all(REL_SLOTS.map(x=>midCarregar(r.relat?.midia?.[x.k])));
