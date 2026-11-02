@@ -1144,6 +1144,7 @@ input::placeholder,textarea::placeholder{text-transform:none}
   <section class="card" id="relBloq" hidden><div class="step">Relatório de serviço <b>(O.S / processo)</b></div><p class="note" style="margin:0">🔒 O relatório só é liberado para assinatura e download quando o serviço for <b>executado na totalidade</b>. A parte remarcada volta para a programação e, na baixa que concluir o serviço (Executado), o relatório sai com as quantidades de todas as etapas.</p></section>
   <section class="card" id="secRel" hidden>
     <div class="step">Relatório de serviço <b>(O.S / processo)</b></div>
+    <p class="note" id="relSubNota" hidden style="margin:0;color:var(--brand)"><b>Este relatório é do serviço feito no lugar</b> (o O.S / processo informado em "Serviço feito no lugar"). Anexe as 3 fotos e assine.</p>
     <p class="note" style="margin:0">O relatório no modelo da GPE é preenchido sozinho com os dados da baixa (equipe, local, itens executados, motivo, observação, supervisor e data). Complete o que falta abaixo; o PDF fica no detalhe do serviço.</p>
     <div class="row2"><label class="f">Parecer técnico nº<input id="rlParecer" autocomplete="off" placeholder="Ex.: 123/2026"></label>
       <label class="f">Data da vistoria<input type="date" id="rlVist"></label></div>
@@ -1342,6 +1343,7 @@ input::placeholder,textarea::placeholder{text-transform:none}
       <label class="f">De<input type="date" id="orcDe"></label>
       <label class="f">Até<input type="date" id="orcAte"></label>
       <label class="f">Serviço<select id="orcServ"><option value="">Todos</option><option value="P">Com poda</option><option value="E">Com extirpação</option><option value="L">Com outros serviços</option></select></label>
+      <label class="f">Solicitante<select id="orcSol"><option value="">Todos</option></select></label>
       <label class="f">Gerência<select id="orcGer"><option value="">Todas</option><option value="DIRSEN">DIRSEN</option><option value="DIROP">DIROP</option></select></label>
       <label class="f">Valor<select id="orcVal"><option value="">Qualquer valor</option><option value="0-10000">Até R$ 10 mil</option><option value="10000-50000">R$ 10 mil a 50 mil</option><option value="50000-100000">R$ 50 mil a 100 mil</option><option value="100000-">Acima de R$ 100 mil</option></select></label>
       <label class="f">Ordenar<select id="orcOrd"><option value="num-">Mais recente</option><option value="num+">Mais antigo</option><option value="val-">Maior valor</option><option value="val+">Menor valor</option></select></label>
@@ -1839,7 +1841,7 @@ function abrirAcessos(){
 $("#acessosBtn").onclick=abrirAcessos;
 $("#orcNovo").onclick=()=>abrirOrc(null); $("#orcBusca").oninput=()=>renderOrc();
 // filtros dos orçamentos (guardados no aparelho)
-const ORC_FX=["orcDe","orcAte","orcServ","orcGer","orcVal","orcOrd"];
+const ORC_FX=["orcDe","orcAte","orcServ","orcSol","orcGer","orcVal","orcOrd"];
 try{ const sv=JSON.parse(ls.get("gpe_orcf","{}")||"{}"); ORC_FX.forEach(k=>{ if(sv[k]!=null&&$("#"+k)) $("#"+k).value=sv[k]; }); }catch(e){}
 const orcFxSalvar=()=>{ const o={}; ORC_FX.forEach(k=>o[k]=$("#"+k).value); try{ ls.set("gpe_orcf",JSON.stringify(o)); }catch(e){} };
 ORC_FX.forEach(k=>$("#"+k).addEventListener("change",()=>{ orcFxSalvar(); renderOrc(); }));
@@ -1848,7 +1850,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.02h";
+const APP_VERSAO="2026.11.02j";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -2060,6 +2062,16 @@ const relTem=r=>r&&(r.tipo==="O.S"||r.tipo==="PROCESSO")&&!r.ocorrencia;
 // se parte foi remarcada (parcial / não executado), ele sai na baixa que concluir o serviço, somando todas as etapas
 const relCadeia=r=>{ const L=[r]; let x=r, n=0; while(x&&x.remarcadaDe&&n++<30){ x=todosGlobal().find(y=>y.id===x.remarcadaDe); if(x) L.unshift(x); } return L; };
 const relLiberado=r=>relTem(r)&&r.status==="SIM";
+// relatório do "serviço feito no lugar" (não executado): sai quando o outro serviço é O.S ou processo
+const relSubRec=r=>{ const s=r&&r.substituto; if(!s) return null; return {...r, id:r.id+"~s", data:s.data, dataExec:s.data, bairro:s.bairro, logradouro:s.logradouro, tipo:s.tipo, processo:s.processo||"", parecer:"", qtd:s.qtd||{}, status:"SIM", relat:s.relat||null, remarcadaDe:null, remarcadaPara:null, outraEquipe:null, motivo:"", proxData:"", substituto:null, _sub:true}; };
+const relSubTemRec=r=>!!(r&&r.status==="NÃO"&&relTem(relSubRec(r)));
+const relAcha=id=>{ id=String(id||""); if(id.endsWith("~s")) return relSubRec(todosGlobal().find(x=>x.id===id.slice(0,-2))); return todosGlobal().find(x=>x.id===id); };
+const relSubForm=()=>form.mode==="baixa"&&form.st==="NÃO"&&!$("#semSub").checked&&["O.S","PROCESSO"].includes($("#s_tipo").value);
+let relAlvo="";
+function relSync(){ const b=form.base; const alvo=!(form.mode==="baixa"&&b)?"":(form.st==="SIM"&&relTem(b))?"base":relSubForm()?"sub":"";
+  $("#secRel").hidden=!alvo; const n=$("#relSubNota"); if(n) n.hidden=alvo!=="sub";
+  if(alvo&&alvo!==relAlvo){ if(alvo==="base") relCarregar(b); else relCarregar({supervisao:b.supervisao, relat:b.substituto?.relat?{...b.substituto.relat,ass:null}:{}, parecer:""}); }
+  relAlvo=alvo; const rb=$("#relBloq"); if(rb&&alvo==="sub") rb.hidden=true; }
 const relQtd=r=>{ if(r.status==="NÃO") return {}; const T={}; relCadeia(r).forEach(x=>{ if(x.status==="SIM"||x.status==="PARCIAL") Object.entries(x.qtd||{}).forEach(([c,v])=>T[c]=Math.round(((T[c]||0)+(+v||0))*100)/100); }); return T; };
 const relExecTxt=r=>{ if(r.status==="NÃO") return ""; const ds=[...new Set(relCadeia(r).filter(x=>x.status==="SIM"||x.status==="PARCIAL").map(x=>x.dataExec||x.data))].sort(); return ds.length>1?ds.map(fmtD).join(", ")+" (concluído em "+ds.length+" etapas)":fmtD(r.dataExec||r.data); };
 const REL_SLOTS=[
@@ -2122,7 +2134,7 @@ function relDocHtml(r){ const R=r.relat||{}, q=relQtd(r), v=x=>x?esc(String(x)):
 async function relPdf(r,btn){ await Promise.all(REL_SLOTS.map(x=>midCarregar(r.relat?.midia?.[x.k])));
   await baixarFormPdf(btn,relDocHtml(r),`relatorio-servico-${(r.processo||r.tipo||"").replace(/[^A-Za-z0-9]+/g,"-")}-${r.dataExec||r.data}.pdf`.replace(/-+/g,"-"),"Relatório de serviço "+(r.processo||"")); }
 // depois da baixa de O.S / processo: o relatório já está preenchido – baixar em PDF ou Word
-function relOferecer(id){ const r=todosGlobal().find(x=>x.id===id); if(!r||!relLiberado(r)) return; const box=document.createElement("div"); box.className="sheet"; box.style.zIndex=40;
+function relOferecer(id){ const r=relAcha(id); if(!r||!relLiberado(r)) return; const box=document.createElement("div"); box.className="sheet"; box.style.zIndex=40;
   box.innerHTML=`<div class="panel" role="dialog" aria-label="Relatório de serviço"><b style="font-family:var(--display);font-size:22px">Relatório de serviço pronto</b>
     <p class="note" style="margin:0">${esc(r.tipo==="O.S"?"O.S":"Processo")} ${esc(r.processo||"")} · ${esc(r.bairro||"")}. O relatório no modelo da GPE foi preenchido com os dados da baixa. Escolha o formato:</p>
     <button type="button" class="btn pri" data-relpdf="${esc(r.id)}">📄 Baixar em PDF</button><button type="button" class="btn sec" data-reldocx="${esc(r.id)}">📝 Baixar em Word</button>
@@ -2160,8 +2172,8 @@ async function relDocx(r,btn){
     await downloads.save({filename:`relatorio-servico-${(r.processo||r.tipo||"").replace(/[^A-Za-z0-9]+/g,"-")}-${r.dataExec||r.data}.docx`.replace(/-+/g,"-"),data:blob}); }
   catch(e){ if(e?.message==="load") toast("Sem internet para montar o arquivo Word. Tente de novo com conexão."); else if(e?.code!=="cancelled"&&e?.code!=="declined") toast("Não foi possível gerar o Word."); }
   finally{ btn.disabled=false; btn.textContent=t0; } }
-document.addEventListener("click",e=>{ const b=e.target.closest("[data-relpdf]"); if(b){ const r=todosGlobal().find(x=>x.id===b.dataset.relpdf); if(r&&relLiberado(r)) relPdf(r,b); return; }
-  const d=e.target.closest("[data-reldocx]"); if(d){ const r=todosGlobal().find(x=>x.id===d.dataset.reldocx); if(r&&relLiberado(r)) relDocx(r,d); } });
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-relpdf]"); if(b){ const r=relAcha(b.dataset.relpdf); if(r&&relLiberado(r)) relPdf(r,b); return; }
+  const d=e.target.closest("[data-reldocx]"); if(d){ const r=relAcha(d.dataset.reldocx); if(r&&relLiberado(r)) relDocx(r,d); } });
 const form = { mode:"prog", sup:"", tipo:"", st:"", base:null };
 
 function chipRow(host, items, onPick){
@@ -2189,7 +2201,7 @@ $("#equipe").addEventListener("change",()=>eqVtSync("eq")); $("#viatura").addEve
 function equipeOpts(){ const s=supOf(form.sup); const o3=$("#equipe").querySelector('option[value="3ª EQUIPE"],option:nth-child(3)');
   if(o3){ o3.hidden=o3.disabled=!!(s&&s.grupo==="PODA I"); if(o3.disabled&&$("#equipe").value==="3ª EQUIPE") $("#equipe").value="1ª EQUIPE"; }
   if(form.mode==="prog"&&!form.base) eqVtSync("eq"); }
-$("#s_tipo").addEventListener("change",sProcUI);
+$("#s_tipo").addEventListener("change",sProcUI); $("#s_tipo").addEventListener("change",()=>{ try{ relSync(); }catch(e){} });
 chipRow($("#tipoChips"), TIPOS.map(t=>({v:t,h:esc(t)})), v=>{form.tipo=v;setPressed($("#tipoChips"),v);if(!temProc(v)){$("#processo").value="";$("#parecer").value="";}if(!TIPOS_180.has(v))$("#areaId").value="";procUI();servUI();checaDup()});
 // serviço a executar: pode marcar vários; grava junto, separado por " + " (ex.: "PODA DE MANUTENÇÃO + EXTIRPAÇÃO")
 const servSel=new Set();
@@ -2343,10 +2355,11 @@ function motivoUI(){ $("#motivoTxtW").hidden = $("#motivo").value!=="Outro";
   const oe=outraEq(), pd=$("#proxData").closest("label"); if(pd){ pd.hidden=oe; pd.parentElement.style.gridTemplateColumns=oe?"1fr":""; } $("#remDica").hidden=oe; $("#outraBox").hidden=!oe;
   if(oe){ const sel=$("#oeSup"), cur=sel.value; sel.innerHTML=`<option value="">Selecione…</option>${SUPS_ALL.filter(x=>x.id!==form.base?.supervisao).map(x=>`<option value="${esc(x.id)}">${esc(x.id)}</option>`).join("")}<option value="OUTRA">Outra (digitar)</option>`; sel.value=cur; }
   $("#oeOutroW").hidden=!(oe&&$("#oeSup").value==="OUTRA");
-  const rb=$("#relBloq"); if(rb&&oe) rb.hidden=true; }
+  const rb=$("#relBloq"); if(rb&&oe) rb.hidden=true;
+  if(form.mode==="baixa"&&form.st==="NÃO") $("#naoNote").innerHTML = oe ? "Outra equipe já executou: o serviço programado <b>não é remarcado</b>. Abaixo, registre o <b>outro serviço que a equipe fez no dia</b> – se for O.S ou processo, o relatório de serviço sai para ele." : "O serviço programado será <b>remarcado</b> para a nova data. Abaixo, registre o <b>outro serviço que a equipe fez no dia</b>."; }
 $("#oeSup").onchange=()=>motivoUI();
 $("#motivo").onchange=()=>{ motivoUI(); if($("#motivo").value==="Outro") $("#motivoTxt").focus(); };
-$("#semSub").onchange=()=>{$("#subFields").hidden=$("#semSub").checked};
+$("#semSub").onchange=()=>{$("#subFields").hidden=$("#semSub").checked; try{ relSync(); }catch(e){} };
 
 // parcial por porcentagem (árvore grande feita em mais de um plantão)
 const pctQ=(pv,pcts)=>{ const o={}; ITENS.forEach(i=>{ const p=typeof pcts==="number"?pcts:(+pcts[i.c]||0); const v=Math.round((+pv[i.c]||0)*p)/100; if(v) o[i.c]=v; }); return o; };
@@ -2415,7 +2428,7 @@ function modeUI(){
   $("#dataLbl").textContent = m==="avulso" ? "Data da execução" : m==="ocorr" ? "Data da ocorrência" : "Data programada";
   ["secTurma","secLocal"].forEach(id=>$("#"+id).hidden = m==="baixa");
   $("#secEndBx").hidden = !(m==="baixa" && form.base && endIncompleto(form.base));
-  $("#secRel").hidden = !(m==="baixa" && form.base && relTem(form.base) && form.st==="SIM");
+  try{ relSync(); }catch(e){}
   { const rb=$("#relBloq"); if(rb) rb.hidden = !(m==="baixa" && form.base && relTem(form.base) && (form.st==="PARCIAL"||form.st==="NÃO")); } try{ motivoUI(); }catch(e){}
   const semSup = m==="prog" && !form.sup;
   $("#supPick").hidden = !semSup; $("#form").hidden = semSup; $("#semProg").hidden = m!=="prog" || semSup;
@@ -2538,7 +2551,7 @@ $("#data").addEventListener("change",()=>{ if(form.mode==="ocorr") renderImp(); 
 // processo / O.S programado sem endereço completo: precisa de tipo e nome da via + (QD. e LT.) ou Nº para dar baixa
 function endIncompleto(r){ if(!r||!temProc(r.tipo)) return false; const t=abrevEnd(r.logradouro||""); const via=/^(R\.|AV\.|AL\.|PÇ\.|PC\.|ROD\.|TV\.|ESTR\.)\s*\S/.test(t), qdlt=/\bQD\.\s*\S/.test(t)&&/\bLT\.\s*\S/.test(t), num=/\bN[º°]\s*\d/.test(t); return !(via&&(qdlt||num)); }
 function abrirBaixa(r, pre){
-  limpar("baixa"); form.base=r; fillCommon(r); if(relTem(r)) relCarregar(r);
+  limpar("baixa"); form.base=r; fillCommon(r); relAlvo=""; if(relTem(r)){ relCarregar(r); relAlvo="base"; }
   { const fz=fiscalDe(r.supervisao,r.equipe), rot="Fiscal de turma – "+(r.equipe||"equipe").toLowerCase(); [$("#fiscal"),$("#fiscalN")].forEach(el=>{ const lb=el?.closest("label"); if(lb&&lb.firstChild.nodeType===3) lb.firstChild.textContent=rot; if(el&&fz&&!r.fiscal) el.value=fz.nome; }); }
   try{ ["via","nome","qd","lt","num","comp"].forEach(k=>{ const el=$("#bx_"+k); if(el) el.value=""; }); if(endIncompleto(r)){ endCarregar("bx_",r.logradouro||""); const mn=/\bN[º°]\s*(\d+\S*)/.exec($("#bx_comp").value||""); if(mn){ $("#bx_num").value=mn[1]; $("#bx_comp").value=$("#bx_comp").value.replace(mn[0],"").replace(/^[,\s]+|[,\s]+$/g,""); } endSync("bx_"); } }catch(e){}
   const pq=prevQ(r);
@@ -2777,6 +2790,14 @@ $("#form").addEventListener("submit", async ev=>{
         if(!Object.keys(sq).length) e.push("lance as quantidades do outro serviço feito no dia");
         if(errDataExec(sub.data)) e.push("a data do outro serviço não pode ser futura");
       } else if(!obs) e.push("explique nas observações por que nenhum serviço foi feito");
+      if(sub&&["O.S","PROCESSO"].includes(sub.tipo)){ const fz=($("#fiscalN").value||$("#fiscal").value).trim();
+        if(!sub.processo) e.push("informe o nº do processo / O.S do serviço feito no lugar (sai no relatório)");
+        if(!fz) e.push("informe o fiscal de turma (sai no relatório de serviço)");
+        if([...document.querySelectorAll("#rlFotos .midst")].some(x=>/enviando/.test(x.textContent))) e.push("espere terminar o envio das fotos do relatório");
+        else { const f=REL_SLOTS.filter(x=>!relMidia[x.k]).map(x=>x.k); if(f.length) e.push("anexe as fotos do relatório do serviço feito no lugar: "+f.join(", ")); }
+        sub.relat=relLer();
+        if(!e.length){ const qa=await assinante("rS",base.supervisao); if(qa.erro) e.push("assinatura do relatório: "+qa.erro);
+          else { const em=new Date().toISOString(); sub.relat.ass={...qa,em}; sub.relat.ass.cod=await codVerif({id:base.id+"~s",processo:sub.processo||"",uid:qa.uid,em,st:"SIM",q:sub.qtd||{}}); } } }
       Object.assign(body,{substituto:sub, semSubstituto:sem});
     }
     if(remQ){
@@ -2837,7 +2858,8 @@ $("#form").addEventListener("submit", async ev=>{
   if(res==="fila") toast("Sem sinal: guardado no aparelho. Será enviado quando a conexão voltar.");
   else if(m==="ocorr") toast(body.ocorrencia.impacto?.houve?"Atendimento registrado. "+body.ocorrencia.impacto.servicos.length+" serviço(s) da programação marcado(s) como afetado(s): dê a baixa deles na aba Serviços em abertas.":"Atendimento registrado.",6000);
   else toast(m==="prog" ? (base?"Programação corrigida.":extraMulti?`Programado em ${extraMulti.length+1} dias: de ${fmtD(body.data)} a ${fmtD(extraMulti[extraMulti.length-1].body.data)}.`:"Programado para "+fmtD(body.data)+".") : body.proxData ? (form.st==="PARCIAL"?"Baixa salva. O que faltou foi remarcado para ":"Baixa salva. Remarcado para ")+fmtD(body.proxData)+"." : "Baixa salva.");
-  if(m==="baixa"&&relTem(base)&&downloads&&res!=="perm"&&res!=="quota") setTimeout(()=>relOferecer(id),400);
+  if(m==="baixa"&&relTem(base)&&body?.status==="SIM"&&downloads&&res!=="perm"&&res!=="quota") setTimeout(()=>relOferecer(id),400);
+  else if(m==="baixa"&&body?.substituto?.relat?.ass&&downloads&&res!=="perm"&&res!=="quota") setTimeout(()=>relOferecer(id+"~s"),400);
   if(m==="prog"){ const av=avisoContrato(id,body); if(av) setTimeout(()=>toast(av,7000),3100); }
   if(m==="prog" && !base){ ls.set("gpe_progdata", body.data); limpar("prog",{sup:body.supervisao,equipe:body.equipe,viatura:body.viatura,data:body.data}); scrollTo(0,0); }
   else { limpar("prog"); show(m==="prog"?"lista":m==="ocorr"?"oc":"campo"); scrollTo(0,0); }
@@ -4361,7 +4383,7 @@ function detalhe(r, abrirAdiar=false, soVer=false){
     ${hist.length?`<div class="hist"><b style="color:var(--ink)">Histórico de remarcações</b>${hist.map(h=>`<span>${fmtD(h.de)} → ${fmtD(h.para)} · ${esc(h.motivo||"")}</span>`).join("")}</div>`:""}
     ${r.dupCiente?`<p class="note" style="margin:6px 0 0;color:var(--warn)">⚠ Programado mesmo com outra programação no mesmo endereço${r.dupCiente.por?" – ciente: <b>"+esc(r.dupCiente.por)+"</b>":""}${r.dupCiente.em?" em "+fmtHora(r.dupCiente.em):""}.</p>`:""}
     ${(r.log||[]).length?`<div class="hist"><b style="color:var(--ink)">Histórico de alterações</b><div class="logl">${r.log.slice().reverse().map(l=>`<span>${new Date(l.em).toLocaleDateString("pt-BR")} ${new Date(l.em).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})} · <b>${esc(l.por)}</b> · ${esc(l.acao)}</span>`).join("")}</div></div>`:""}
-    ${(!isProg(r)&&relTem(r)&&!relLiberado(r)&&!r.outraEquipe)?`<p class="note" style="margin:4px 0 0">🔒 Relatório de serviço: liberado só quando o serviço for executado na totalidade${r.remarcadaPara?(()=>{const nx=todosGlobal().find(x=>x.id===r.remarcadaPara);return nx?` – o restante está programado para ${fmtD(nx.data)}${nx.status==="SIM"?" (já concluído: o relatório está nessa baixa)":""}`:"";})():""}.</p>`:""}${(!isProg(r)&&relLiberado(r)&&downloads)?`<div class="row2" style="margin-top:4px"><button type="button" class="btn sec" data-relpdf="${esc(r.id)}">📄 Relatório (PDF)</button><button type="button" class="btn sec" data-reldocx="${esc(r.id)}">📝 Relatório (Word)</button></div>`:""}
+    ${(!isProg(r)&&relTem(r)&&!relLiberado(r)&&!r.outraEquipe)?`<p class="note" style="margin:4px 0 0">🔒 Relatório de serviço: liberado só quando o serviço for executado na totalidade${r.remarcadaPara?(()=>{const nx=todosGlobal().find(x=>x.id===r.remarcadaPara);return nx?` – o restante está programado para ${fmtD(nx.data)}${nx.status==="SIM"?" (já concluído: o relatório está nessa baixa)":""}`:"";})():""}.</p>`:""}${(!isProg(r)&&relLiberado(r)&&downloads)?`<div class="row2" style="margin-top:4px"><button type="button" class="btn sec" data-relpdf="${esc(r.id)}">📄 Relatório (PDF)</button><button type="button" class="btn sec" data-reldocx="${esc(r.id)}">📝 Relatório (Word)</button></div>`:""}${(relSubTemRec(r)&&downloads)?`<p class="note" style="margin:6px 0 0">Relatório do serviço feito no lugar: <b>${esc(r.substituto.tipo)} ${esc(r.substituto.processo||"")}</b> · ${esc(r.substituto.bairro||"")}</p><div class="row2" style="margin-top:4px"><button type="button" class="btn sec" data-relpdf="${esc(r.id)}~s">📄 Relatório (PDF)</button><button type="button" class="btn sec" data-reldocx="${esc(r.id)}~s">📝 Relatório (Word)</button></div>`:""}
     ${detOsHtml(r)}
     ${(!r.ocorrencia&&!r.avulso&&!r._fila&&!r.arquivado&&(isGerente()||(!soVer&&isProg(r)&&isGer())))?`<button type="button" class="btn sec" id="shProg">✏ ${isGerente()?"Editar programação (gerente)":"Corrigir programação (gerência)"}</button>`:""}
     ${(soVer||soLeitura()||r.arquivado)?`${soVer&&isProg(r)&&!soLeitura()&&!r.arquivado?`<button type="button" class="btn pri" id="shBaixa" style="min-height:52px;font-size:16px">${r.ocorrencia?"Registrar atendimento":"✔ Dar baixa"}</button>`:""}<button type="button" class="btn sec" id="shClose">Fechar</button>${(soVer&&isGerente()&&!r._fila&&db&&!r.arquivado)?`<button type="button" class="btn danger" id="shDel">${isProg(r)?"Excluir programação":"Excluir lançamento"} (gerente)</button>`:""}`:`<div class="actions" style="grid-template-columns:1fr 1fr">
@@ -6521,6 +6543,11 @@ function renderOrc(){
   // busca por palavras (sem acento, em qualquer ordem): "pod e extirpa" acha "Poda e Extirpação"
   const nrm=t=>String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
   const qs=nrm($("#orcBusca")?.value).split(/[\s,;]+/).filter(Boolean);
+  // lista de solicitantes (dos orçamentos já feitos), mantendo a escolha
+  { const sel=$("#orcSol"); if(sel){ const cur=sel.value||(()=>{ try{ return JSON.parse(ls.get("gpe_orcf","{}")||"{}").orcSol||""; }catch(e){ return ""; } })();
+      const sols=[...new Set(orcs.map(o=>String(o.solicitante||"").trim().toUpperCase()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR"));
+      if(cur&&!sols.includes(cur)) sols.unshift(cur);
+      sel.innerHTML=`<option value="">Todos</option>${sols.map(x=>`<option value="${esc(x)}">${esc(x)} (${orcs.filter(o=>String(o.solicitante||"").trim().toUpperCase()===x).length})</option>`).join("")}`; sel.value=cur; } }
   const v=id=>$("#"+id)?.value||"", de=v("orcDe"), ate=v("orcAte"), sv=v("orcServ"), gr=v("orcGer"), vl=v("orcVal"), ord=v("orcOrd")||"num-";
   const [vmin,vmax]=vl?vl.split("-").map(x=>x===""?null:+x):[null,null];
   const txt=o=>nrm([o.num,o.escopo,o.solicitante,o.local,o.bairro,o.logradouro,o.processo,o.nota,typeof o.end==="string"?o.end:"",o.ger,o.resp?.nome,fmtD(o.data),...(o.itens||[]).map(i=>i.d+" "+(i.c||""))].join(" "));
@@ -6529,9 +6556,10 @@ function renderOrc(){
     if(de&&(o.data||"")<de) return false; if(ate&&(o.data||"")>ate) return false;
     if(sv&&!(o.itens||[]).some(i=>(i.g||"L")===sv)) return false;
     if(gr&&(o.ger||"DIRSEN")!==gr) return false;
+    { const so=v("orcSol"); if(so&&String(o.solicitante||"").trim().toUpperCase()!==so) return false; }
     if(vmin!=null&&T<vmin) return false; if(vmax!=null&&T>vmax) return false;
     return true; }).sort((a,b)=>ord==="val-"?orcTotal(b)-orcTotal(a):ord==="val+"?orcTotal(a)-orcTotal(b):ord==="num+"?(a.num||"").localeCompare(b.num||""):(b.num||"").localeCompare(a.num||""));
-  const nFx=[de||ate,sv,gr,vl].filter(Boolean).length+(ord!=="num-"?1:0); const fxn=$("#orcFxN"); if(fxn) fxn.textContent=nFx?`· ${nFx} ativo${nFx>1?"s":""}`:"";
+  const nFx=[de||ate,sv,v("orcSol"),gr,vl].filter(Boolean).length+(ord!=="num-"?1:0); const fxn=$("#orcFxN"); if(fxn) fxn.textContent=nFx?`· ${nFx} ativo${nFx>1?"s":""}`:"";
   const q=qs.length||nFx; const rs=$("#orcResumo"); if(rs) rs.innerHTML=orcs.length?`<b>${L.length}</b> de ${orcs.length} orçamento${orcs.length>1?"s":""}${L.length?` · total <b>${brl(L.reduce((a,o)=>a+orcTotal(o),0))}</b>`:""}`:"";
   host.innerHTML=L.length?L.map(o=>`<div class="orccard"><button type="button" class="rec orcrec" data-orc="${esc(o.id)}"><div class="l1"><span class="when"><b>${esc(o.num||"")}</b> · ${fmtD(o.data)}</span><b class="orcv">${brl(orcTotal(o))}</b></div><div class="where">${esc(o.escopo||"")}</div><div class="nums">${o.exec?.dias?`${o.exec.dias} ${o.exec.dias>1?"dias":"dia"} · ${o.exec.serv||0} servidores · `:""}${esc(o.solicitante||"—")}${o.bairro?" · "+esc(o.bairro):o.local?" · "+esc(o.local):""} · ${(o.itens||[]).length} ${(o.itens||[]).length===1?"item":"itens"}</div></button><div class="orcbts"><button type="button" class="btn sec" data-orcpdf="${esc(o.id)}">📄 Baixar PDF</button><button type="button" class="btn sec" data-orc="${esc(o.id)}">✏️ Abrir / editar</button></div></div>`).join("")
     :`<div class="empty">${q?"Nenhum orçamento encontrado com essa busca ou filtros. Toque em Limpar filtros.":"Nenhum orçamento ainda. Toque em Novo orçamento."}</div>`;
