@@ -1855,7 +1855,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.02n";
+const APP_VERSAO="2026.11.02o";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -3419,7 +3419,10 @@ function abrirChk(c){
     const kmI=$("#kfKmI").value.trim(), kmF=$("#kfKmF").value.trim();
     if(!sup) e.push("escolha a turma"); if(!data) e.push("informe a data"); if(data>hoje()) e.push("a data não pode ser no futuro");
     const id=c?.id||chkId(data,sup,vt), ant=c||chks.find(x=>x.id===id);
-    if(!c&&ant) e.push(`já existe checklist do ${vt} da ${sup} em ${fmtD(data)}; abra-o na lista para corrigir`);
+    // já existe checklist deste equipamento no turno (ex.: o 1º envio salvou mas a internet caiu, ou outra pessoa já fez):
+    // se ainda não foi recebido, pode substituir pelo que foi preenchido agora (confirmando com um 2º toque); se já foi recebido, não
+    const substituir=!c&&ant&&!chkRecebido(ant);
+    if(!c&&ant&&chkRecebido(ant)) e.push(`o checklist do ${vt} da ${sup} em ${fmtD(data)} já foi feito por ${ant.entrega?.nome||ant.ultimoUsuario||"—"} e já foi recebido por quem assumiu o turno (${ant.recebe?.nome||""}); escolha outro equipamento ou abra o existente na lista`);
     if(!kmI||!kmF) e.push("KM inicial e KM final"); else if(+kmF.replace(/\D/g,"")<+kmI.replace(/\D/g,"")) e.push("KM final menor que o KM inicial");
     const semSit=CHK_SIT.filter(q=>!sit[q.k]).length, semIt=CHK_ITENS.filter((t,i)=>!itens[i]).length;
     if(semSit) e.push(`responda ${semSit} pergunta${semSit>1?"s":""} da situação do equipamento (seção 1)`);
@@ -3435,6 +3438,9 @@ function abrirChk(c){
     if(!recSup) e.push("supervisor que recebe o turno");
     document.querySelectorAll("#kfSit .ckit, #kfItens .ckit").forEach(el=>{const b=el.querySelector(".cksn button");const n=b.dataset.n;const v=n.startsWith("s:")?sit[n.slice(2)]:itens[n.slice(2)];el.classList.toggle("err",!v);});
     if(e.length) return erro("Falta: "+e.join("; ")+".");
+    if(substituir&&$("#kSalvar").dataset.subst!==id){ $("#kSalvar").dataset.subst=id; $("#kSalvar").textContent="Substituir e assinar entrega";
+      const hh=ant.entrega?.em?new Date(ant.entrega.em).toTimeString().slice(0,5):"";
+      return erro(`Já existe um checklist do ${vt} da ${sup} em ${fmtD(data)}, feito por ${ant.entrega?.nome||ant.ultimoUsuario||"—"}${hh?" às "+hh:""} (ainda não recebido – pode ser o seu envio anterior que salvou). Toque de novo no botão para SUBSTITUIR pelo que você preencheu agora.`); }
     err.hidden=true;
     if(!db) return erro("Sem conexão com o banco. Tente de novo quando a internet voltar.");
     const q=await assinante("kE",sup); if(q.erro) return erro("Assinatura: "+q.erro+".");
@@ -3444,7 +3450,7 @@ function abrirChk(c){
       entrega:{...q,sup:q.sup||sup,em:agora},
       recebe:{sup:recSup},
       ultimoUsuario:nomeAutor(),
-      log:[...(ant?.log||[]),{em:agora,por:nomeAutor()||"—",acao:ant?"Corrigiu e assinou a entrega":"Fez o checklist e assinou a entrega"}].slice(-20)};
+      log:[...(ant?.log||[]),{em:agora,por:nomeAutor()||"—",acao:substituir?"Refez o checklist (substituiu o anterior) e assinou a entrega":ant?"Corrigiu e assinou a entrega":"Fez o checklist e assinou a entrega"}].slice(-20)};
     body.entrega.cod=await codVerif({id,data,sup,vt,kmI,kmF,sit,itens,ocorr:body.ocorr,operador:body.operador,uid:q.uid,em:agora});
     const btn=$("#kSalvar"); btn.disabled=true; btn.textContent="Salvando…";
     try{ await db.collection(CHK_COL).doc(id).set(body); close(); toast("Checklist salvo. Falta a assinatura de quem recebe o turno."); $("#kData").value=data; renderChk(); }
