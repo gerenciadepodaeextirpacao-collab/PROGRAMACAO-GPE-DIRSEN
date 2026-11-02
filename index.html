@@ -978,6 +978,12 @@ input::placeholder,textarea::placeholder{text-transform:none}
 .orcfg .f{margin:0}
 .orcfb{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:10px 0 12px}
 .orcfb .btn{min-height:40px;padding:0 14px;margin-left:auto}
+.eqclist{display:grid;gap:8px}
+.eqcl{display:grid;grid-template-columns:26px 1fr 1fr 40px;gap:6px;align-items:center}
+.eqcl [data-eqo]{grid-column:2/4}
+.eqcn{font:700 14px var(--body);color:var(--muted);text-align:center}
+.eqcx{min-height:44px;border:1px solid var(--line);background:var(--surface);border-radius:10px;color:var(--bad);font-weight:700;cursor:pointer}
+@media(max-width:520px){.eqcl{grid-template-columns:22px 1fr 40px}.eqcl [data-eqf]{grid-column:2/3}.eqcl [data-eqo]{grid-column:2/3}.eqcl .eqcx{grid-row:1;grid-column:3}}
 </style>
 
 <div id="login" class="login" hidden>
@@ -1176,9 +1182,16 @@ input::placeholder,textarea::placeholder{text-transform:none}
       <p class="note" style="margin:0" id="naoNote"></p>
       <div class="row2">
         <label class="f">Remarcar para<input type="date" id="proxData"></label>
-        <label class="f">Motivo<select id="motivo"><option value="">Selecione…</option><option>Chuva</option><option>Viatura/equipamento quebrado</option><option>Rede elétrica (aguardando Equatorial)</option><option>Veículos estacionados / sem acesso</option><option>Morador impediu</option><option>Remanejado pela gerência (emergência)</option><option>Atendimento de galho / árvore caída</option><option>Endereço não localizado</option><option value="Outro">Outro (digitar)</option></select></label>
+        <label class="f">Motivo<select id="motivo"><option value="">Selecione…</option><option>Chuva</option><option>Viatura/equipamento quebrado</option><option>Rede elétrica (aguardando Equatorial)</option><option>Veículos estacionados / sem acesso</option><option>Morador impediu</option><option>Remanejado pela gerência (emergência)</option><option>Atendimento de galho / árvore caída</option><option>Endereço não localizado</option><option>Executado por outra equipe</option><option value="Outro">Outro (digitar)</option></select></label>
       </div>
       <p class="note" id="remDica" style="margin:-4px 0 0"></p>
+      <div id="outraBox" class="sub" hidden style="margin:0">
+        <p class="note" style="margin:0">O serviço já foi feito por outra equipe: <b>não é remarcado</b>. Informe quem executou.</p>
+        <div class="row2"><label class="f">Turma que executou<select id="oeSup"></select></label>
+          <label class="f">Equipe<select id="oeEq"><option value="">Não sei / não se aplica</option><option>1ª EQUIPE</option><option>2ª EQUIPE</option><option>3ª EQUIPE</option></select></label></div>
+        <label class="f" id="oeOutroW" hidden>Qual equipe / empresa<input id="oeOutro" maxlength="80" placeholder="Ex.: equipe da Equatorial, outra gerência"></label>
+        <label class="f">Data em que foi executado (se souber)<input type="date" id="oeData"></label>
+      </div>
       <label class="f" id="motivoTxtW" hidden>Descreva o motivo<input id="motivoTxt" maxlength="120" placeholder="Ex.: árvore com colmeia, aguardando Corpo de Bombeiros"></label>
       <label class="f" id="fiscalNWrap">Fiscal de turma<input id="fiscalN" autocomplete="name" placeholder="Nome do fiscal"></label>
     </div>
@@ -1835,7 +1848,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.02e";
+const APP_VERSAO="2026.11.02h";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -2068,7 +2081,7 @@ const REL_ITENS=["Poda de árvore (D<20cm ; H<5m).","Poda de árvore (DAP 20-40c
 const LOGO_PREF="data:image/jpeg;base64,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";
 const relAssTxt=a=>a&&a.em?`Documento assinado eletronicamente por ${a.nome}, ${a.cargo||"Supervisor"}, em ${dataBR(a.em)}, às ${new Date(a.em).toTimeString().slice(0,5)}, mediante senha pessoal de assinatura (matrícula ${a.mat||"—"}) no sistema Programação GPE – COMURG. Código verificador: ${a.cod||"—"}.`:"";
 function relDocHtml(r){ const R=r.relat||{}, q=relQtd(r), v=x=>x?esc(String(x)):"";
-  const naoExec=r.status==="NÃO"?`Serviço não executado. Motivo: ${r.motivo||"—"}${r.proxData?` · remarcado para ${fmtD(r.proxData)}`:""}`
+  const naoExec=r.status==="NÃO"?(r.outraEquipe?outraTxt(r)+".":`Serviço não executado. Motivo: ${r.motivo||"—"}${r.proxData?` · remarcado para ${fmtD(r.proxData)}`:""}`)
     :r.status==="PARCIAL"?`Executado parcialmente. Faltou: ${qtdTxtPlano(r.qtdRemarcada||{})||"—"}. Motivo: ${r.motivo||"—"}${r.proxData?` · restante remarcado para ${fmtD(r.proxData)}`:""}`:"";
   const fot=REL_SLOTS.map(x=>{ const u=midUrl(R.midia?.[x.k]); return `<td class="ft">${u?`<img src="${esc(u)}" alt="">`:""}</td>`; }).join("");
   return `<div class="rel"><style>
@@ -2132,7 +2145,7 @@ async function relDocx(r,btn){
     await Promise.all(REL_SLOTS.map(x=>midCarregar(R.midia?.[x.k])));
     const bin=Uint8Array.from(atob(REL_DOCX_B64),c=>c.charCodeAt(0)); const zip=await JSZip.loadAsync(bin);
     let x=await zip.file("word/document.xml").async("string"), rels=await zip.file("word/_rels/document.xml.rels").async("string");
-    const naoExec=r.status==="NÃO"?`Serviço não executado. Motivo: ${r.motivo||"—"}${r.proxData?` · remarcado para ${fmtD(r.proxData)}`:""}`:r.status==="PARCIAL"?`Executado parcialmente. Faltou: ${qtdTxtPlano(r.qtdRemarcada||{})||"—"}. Motivo: ${r.motivo||"—"}${r.proxData?` · restante remarcado para ${fmtD(r.proxData)}`:""}`:"";
+    const naoExec=r.status==="NÃO"?(r.outraEquipe?outraTxt(r)+".":`Serviço não executado. Motivo: ${r.motivo||"—"}${r.proxData?` · remarcado para ${fmtD(r.proxData)}`:""}`):r.status==="PARCIAL"?`Executado parcialmente. Faltou: ${qtdTxtPlano(r.qtdRemarcada||{})||"—"}. Motivo: ${r.motivo||"—"}${r.proxData?` · restante remarcado para ${fmtD(r.proxData)}`:""}`:"";
     const V={PROCLBL:r.tipo==="O.S"?"O.S":"PROCESSO",PROC:r.processo||"",PARECER:R.parecer||r.parecer||"",EQUIPE:relEquipe(r),SOLIC:R.solicitante||"",LOCAL:[r.bairro,r.logradouro].filter(Boolean).join(" — "),
       ARV:R.arvore||"",GALHO:R.galho||"",NAOEXEC:naoExec,OBS:r.obs||"",FISCAL:r.fiscal||"",SUPNOME:R.ass?.nome||nomeSupDe(r.supervisao)||"",ASSIN:R.ass?.em?relAssTxt(R.ass):"Relatório ainda sem assinatura eletrônica do supervisor.",MAT:R.matricula||"",VIST:R.vistoria?fmtD(R.vistoria):"",EXEC:relExecTxt(r)};
     ITENS.forEach((it,i)=>V["Q"+(i+1)]=+q[it.c]?String(q[it.c]).replace(".",","):"");
@@ -2323,7 +2336,15 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-pxdir]");
 $("#data").onchange=dataUI;
 function lerMotivo(){ const v=$("#motivo").value; return v==="Outro" ? $("#motivoTxt").value.trim() : v; }
 function setMotivo(m){ const opts=[...$("#motivo").options].map(o=>o.value); if(!m){$("#motivo").value="";$("#motivoTxt").value=""} else if(opts.includes(m)&&m!=="Outro"){$("#motivo").value=m;$("#motivoTxt").value=""} else {$("#motivo").value="Outro";$("#motivoTxt").value=m==="Outro"?"":m} motivoUI(); }
-function motivoUI(){ $("#motivoTxtW").hidden = $("#motivo").value!=="Outro"; }
+const MOT_OUTRA="Executado por outra equipe";
+const outraEq=()=>form.mode==="baixa"&&form.st==="NÃO"&&$("#motivo").value===MOT_OUTRA;
+const outraTxt=r=>{ const o=r.outraEquipe; if(!o) return ""; return `Executado por outra equipe: ${[o.sup==="OUTRA"?(o.outro||"outra equipe"):o.sup,o.equipe].filter(Boolean).join(" · ")}${o.data?" em "+fmtD(o.data):""}`; };
+function motivoUI(){ $("#motivoTxtW").hidden = $("#motivo").value!=="Outro";
+  const oe=outraEq(), pd=$("#proxData").closest("label"); if(pd){ pd.hidden=oe; pd.parentElement.style.gridTemplateColumns=oe?"1fr":""; } $("#remDica").hidden=oe; $("#outraBox").hidden=!oe;
+  if(oe){ const sel=$("#oeSup"), cur=sel.value; sel.innerHTML=`<option value="">Selecione…</option>${SUPS_ALL.filter(x=>x.id!==form.base?.supervisao).map(x=>`<option value="${esc(x.id)}">${esc(x.id)}</option>`).join("")}<option value="OUTRA">Outra (digitar)</option>`; sel.value=cur; }
+  $("#oeOutroW").hidden=!(oe&&$("#oeSup").value==="OUTRA");
+  const rb=$("#relBloq"); if(rb&&oe) rb.hidden=true; }
+$("#oeSup").onchange=()=>motivoUI();
 $("#motivo").onchange=()=>{ motivoUI(); if($("#motivo").value==="Outro") $("#motivoTxt").focus(); };
 $("#semSub").onchange=()=>{$("#subFields").hidden=$("#semSub").checked};
 
@@ -2395,7 +2416,7 @@ function modeUI(){
   ["secTurma","secLocal"].forEach(id=>$("#"+id).hidden = m==="baixa");
   $("#secEndBx").hidden = !(m==="baixa" && form.base && endIncompleto(form.base));
   $("#secRel").hidden = !(m==="baixa" && form.base && relTem(form.base) && form.st==="SIM");
-  { const rb=$("#relBloq"); if(rb) rb.hidden = !(m==="baixa" && form.base && relTem(form.base) && (form.st==="PARCIAL"||form.st==="NÃO")); }
+  { const rb=$("#relBloq"); if(rb) rb.hidden = !(m==="baixa" && form.base && relTem(form.base) && (form.st==="PARCIAL"||form.st==="NÃO")); } try{ motivoUI(); }catch(e){}
   const semSup = m==="prog" && !form.sup;
   $("#supPick").hidden = !semSup; $("#form").hidden = semSup; $("#semProg").hidden = m!=="prog" || semSup;
   $("#supBar").hidden = semSup || m==="baixa";
@@ -2537,6 +2558,7 @@ function abrirBaixa(r, pre){
     writeQ("q_",r.qtd||{},$("#qtdMain")); $("#dataExec").value=r.dataExec||r.data;
     if(r.pctItens||r.pctExec){ form.pctModo="pct"; form.pcts={...(r.pctItens||{})}; if(!r.pctItens){ const pv=prevQ(r); ITENS.filter(i=>+pv[i.c]).forEach(i=>form.pcts[i.c]=r.pctExec); } $("#pctVal").value=typeof r.pctExec==="number"?r.pctExec:""; }
     $("#proxData").value=r.proxData||""; setMotivo(r.motivo||"");
+    { const o=r.outraEquipe; if(o){ motivoUI(); $("#oeSup").value=o.sup||""; $("#oeOutro").value=o.outro||""; $("#oeEq").value=o.equipe||""; $("#oeData").value=o.data||""; motivoUI(); } }
     const s=r.substituto; $("#semSub").checked=!!r.semSubstituto;
     if(s){$("#s_data").value=s.data||r.data;bairroCarregar("s_bairro",s.bairro||"");endCarregar("se_", s.logradouro||"");$("#s_tipo").value=s.tipo||"";$("#s_processo").value=s.processo||"";sProcUI();writeQ("s_",s.qtd||{},$("#qtdSub"))}
     if(r.fiscal){$("#fiscal").value=r.fiscal;$("#fiscalN").value=r.fiscal}
@@ -2736,8 +2758,13 @@ $("#form").addEventListener("submit", async ev=>{
     // o que ficou por fazer: tudo (não executado) ou a diferença previsto − executado (parcial)
     let remQ=null;
     if(m==="baixa" && form.st==="NÃO") remQ=prevQ(base);
+    body.outraEquipe=null;
+    if(outraEq()){ remQ=null; const os=$("#oeSup").value, oo=$("#oeOutro").value.trim().toUpperCase(), od=$("#oeData").value;
+      if(!os) e.push("informe a turma que executou o serviço"); else if(os==="OUTRA"&&!oo) e.push("digite qual equipe executou o serviço");
+      if(od&&errDataExec(od)) e.push("a data em que a outra equipe executou não pode ser futura");
+      body.motivo=MOT_OUTRA; body.outraEquipe={sup:os, outro:os==="OUTRA"?oo:"", equipe:$("#oeEq").value, data:od}; }
     if(m==="baixa" && form.st==="PARCIAL"){ const pv=prevQ(base); remQ={}; ITENS.forEach(i=>{const d=Math.round(((+pv[i.c]||0)-(+q[i.c]||0))*100)/100; if(d>0) remQ[i.c]=d}); if(!Object.keys(remQ).length) remQ=null; }
-    body.proxData=""; body.motivo=""; body.substituto=null; body.semSubstituto=false;
+    body.proxData=""; if(!body.outraEquipe) body.motivo=""; body.substituto=null; body.semSubstituto=false;
     if(m==="baixa" && form.st==="NÃO"){
       const sem=$("#semSub").checked;
       let sub=null;
@@ -4227,9 +4254,11 @@ function listaDocHtml(rows,agr,det,ftxt,sub){
   const tp=rs.reduce((a,r)=>a+(r.avulso?0:receitaDe(prevQ(r))),0), te=rs.reduce((a,r)=>a+execRec(r),0);
   const nEx=rs.filter(r=>r.status==="SIM").length, nPa=rs.filter(r=>r.status==="PARCIAL").length, nNa=rs.filter(r=>r.status==="NÃO").length, nPr=rs.filter(isProg).length;
   const linha=r=>`<tr><td style="white-space:nowrap">${agr==="dia"?"":fmtDs(r.data)+"<br>"}${esc(r.equipe||"")}</td>${agr==="turma"?"":`<td>${esc(r.supervisao||"")}</td>`}<td><b>${esc(r.bairro||"")}</b><br>${esc(r.logradouro||"")}</td><td>${esc(tipoTxt(r)||"—")}${r.processo?`<br><small>${esc(r.processo)}</small>`:""}</td><td>${qtxt(isProg(r)||r.status==="NÃO"?prevQ(r):(r.qtd||{}))}</td><td><span class="st st-${stKey(r)}">${esc(stTxt[stKey(r)])}</span>${r.status==="NÃO"&&r.proxData?`<br><small>p/ ${fmtDs(r.proxData)}</small>`:""}</td><td style="text-align:right;white-space:nowrap">${brl(val(r))}</td></tr>`;
-  return `<div class="fdoc lx"><style>${FDOC_CSS}${LX_CSS}${det?LXD_CSS:""}</style><div class="r-body">${fhead("ORDEM DE SERVIÇO",(sub||(rows.every(isProg)?"PROGRAMAÇÃO DE SERVIÇO":"BAIXA DE SERVIÇO"))+(det?" · DETALHES DE CADA SERVIÇO":""))}
+  return `<div class="fdoc lx"><style>${FDOC_CSS}${LX_CSS}${det?LXD_CSS:""}${EQC_CSS}</style><div class="r-body">${fhead("ORDEM DE SERVIÇO",(sub||(rows.every(isProg)?"PROGRAMAÇÃO DE SERVIÇO":"BAIXA DE SERVIÇO"))+(det?" · DETALHES DE CADA SERVIÇO":""))}
     <p class="leg" style="margin:0"><b>Filtros:</b> ${esc(f||"nenhum")} · agrupado por ${AGR_NOME[agr]||"dia"}</p>
     <div class="res"><div><span>Serviços</span><b>${rs.length}</b></div><div><span>Executados / parciais</span><b>${nEx} / ${nPa}</b></div><div><span>Não exec. / a executar</span><b>${nNa} / ${nPr}</b></div><div><span>Previsto · executado</span><b style="font-size:13px">${brlS(tp)} · ${brlS(te)}</b></div></div>
+    ${(()=>{ const k0=rows[0]?(rows[0].supervisao||"")+"|"+(rows[0].equipe||""):""; if(!k0||!rows.every(r=>(r.supervisao||"")+"|"+(r.equipe||"")===k0)) return ""; const mb=(rows.find(r=>r.osDia?.membros?.length)||{}).osDia?.membros; if(!mb?.length) return "";
+      return `<div class="eqc"><div class="gh">COMPOSIÇÃO DA EQUIPE<span>${mb.length} pessoa${mb.length===1?"":"s"}</span></div><table><thead><tr><th style="width:28px">#</th><th>Nome</th><th>Função</th></tr></thead><tbody>${mb.map((m,i)=>`<tr><td>${i+1}</td><td><b>${esc(m.nome)}</b></td><td>${esc(m.funcao)}</td></tr>`).join("")}</tbody></table></div>`; })()}
     ${det?grupos.map(g=>`<div><div class="gh">${esc(g.k)}<span>${g.rs.length} serviço${g.rs.length===1?"":"s"} · ${brl(g.rs.reduce((a,r)=>a+val(r),0))}</span></div>${lxCard(g.rs[0])}</div>`+g.rs.slice(1).map(lxCard).join("")).join(""):""}
     ${det?"":grupos.map(g=>`<div class="grp"><div class="gh">${esc(g.k)}<span>${g.rs.length} serviço${g.rs.length===1?"":"s"} · ${brl(g.rs.reduce((a,r)=>a+val(r),0))}</span></div>${det?g.rs.map(lxCard).join(""):`<table><thead><tr><th>${agr==="dia"?"Equipe":"Data / equipe"}</th>${agr==="turma"?"":"<th>Turma</th>"}<th>Local</th><th>Tipo / serviço</th><th>Árvores</th><th>Situação</th><th style="text-align:right">Valor</th></tr></thead><tbody>${g.rs.map(linha).join("")}</tbody></table>`}</div>`).join("")}
     <p class="rod">Documento gerado pelo sistema Programação GPE em ${dataBR(new Date().toISOString())} às ${horaAgora()} · desenvolvido por Victor Ricardo Porto Alcântara.</p></div></div>`;
@@ -4243,6 +4272,7 @@ const LXD_CSS=`.lx .card{border:1px solid #c9d1c4;border-radius:10px;margin-top:
 .lx .qbh{display:flex;justify-content:space-between;color:#fff;padding:3px 8px;font-weight:700;font-size:10px;letter-spacing:.04em}.lx .qbg-P .qbh{background:#2a78d6}.lx .qbg-E .qbh{background:#eb6834}
 .lx .qbl{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:5px}.lx .qbi{border:1px solid #d6dcd2;border-radius:6px;padding:3px 6px;position:relative;background:#f7f8f5;display:grid}
 .lx .qbg .qbh b{font-size:10px}.lx .qbg .qbh{font-size:10px}.lx .qbi b{font-size:17px;line-height:1.05}.lx .qbg-P .qbi b{color:#2a78d6}.lx .qbg-E .qbi b{color:#eb6834}.lx .qbi span{font-size:9.5px;font-weight:700}.lx .qbi small{font-size:9px;color:#666}.lx .qbi i{position:absolute;top:2px;right:5px;font-size:8px;color:#888;font-style:normal}`;
+const EQC_CSS=`.lx .eqc{margin:8px 0}.lx .eqc table{width:100%;border-collapse:collapse;font-size:11px}.lx .eqc th,.lx .eqc td{border:1px solid #d6dcd2;padding:3px 7px;text-align:left}.lx .eqc th{background:#eef3ec;font-size:10px;text-transform:uppercase}`;
 function lxCard(r){ const pq=prevQ(r), s=r.substituto;
   const L=[["Turma",`${esc(r.supervisao||"")}${r.encarregado?" ("+esc(r.encarregado)+")":""} · ${esc(r.equipe||"")} · ${esc(r.viatura||"")}`],
     ["Local",`<b>${esc(r.bairro||"")}</b> — ${esc(r.logradouro||"")}`],
@@ -4251,7 +4281,7 @@ function lxCard(r){ const pq=prevQ(r), s=r.substituto;
   if(!r.avulso) L.push(["Previsto",`${qtdTxt(pq)}<div>Valor previsto: <b>${brl(receitaDe(pq))}</b></div>`]);
   if(r.status==="SIM"||r.status==="PARCIAL") L.push(["Executado",`${qtdTxt(r.qtd)}<div>Valor executado: <b>${brl(receitaDe(r.qtd))}</b>${r.dataExec&&r.dataExec!==r.data?" em "+fmtD(r.dataExec):""}</div>`]);
   if(r.status==="PARCIAL"&&r.proxData) L.push(["Não executado · remarcado",`${qtdTxt(r.qtdRemarcada)}<div>remarcado p/ ${fmtD(r.proxData)}${r.motivo?" · "+esc(r.motivo):""}</div>`]);
-  if(r.status==="NÃO"){ L.push(["Remarcado",`para ${fmtD(r.proxData)}${r.motivo?" · "+esc(r.motivo):""}`]); L.push(["No lugar",s?`${fmtD(s.data)} · ${esc(s.bairro)} — ${esc(s.logradouro)}${s.tipo?" ("+esc(s.tipo)+")":""}${qtdTxt(s.qtd)}<div>Valor: <b>${brl(s.receita)}</b></div>`:"nenhum serviço executado no lugar"]); }
+  if(r.status==="NÃO"){ L.push(r.outraEquipe?["Não executado",esc(outraTxt(r))]:["Remarcado",`para ${fmtD(r.proxData)}${r.motivo?" · "+esc(r.motivo):""}`]); L.push(["No lugar",s?`${fmtD(s.data)} · ${esc(s.bairro)} — ${esc(s.logradouro)}${s.tipo?" ("+esc(s.tipo)+")":""}${qtdTxt(s.qtd)}<div>Valor: <b>${brl(s.receita)}</b></div>`:"nenhum serviço executado no lugar"]); }
   if((r.historico||[]).length) L.push(["Remarcações",r.historico.map(h=>`${h.de?fmtDs(h.de):"—"} → ${h.para?fmtDs(h.para):"—"}${h.motivo?" ("+esc(h.motivo)+")":""}`).join(" · ")]);
   if(r.geo) L.push(["GPS",fmtCoord(r.geo)]);
   if(r.fiscal) L.push(["Fiscal",esc(r.fiscal)]); if(r.obs) L.push(["Obs.",esc(r.obs)]); if(r.ultimoUsuario) L.push(["Lançado por",esc(r.ultimoUsuario)]);
@@ -4321,7 +4351,7 @@ function detalhe(r, abrirAdiar=false, soVer=false){
       ${r.avulso?`<dt>Origem</dt><dd>Serviço sem programação</dd>`:`<dt>Previsto</dt><dd>${qtdTxt(pq)}<br>Valor previsto: <b>${brl(receitaDe(pq))}</b></dd>`}
       ${(r.status==="SIM"||r.status==="PARCIAL")?`<dt>Executado</dt><dd>${qtdTxt(r.qtd)}<br>Valor executado: <b>${brl(receitaDe(r.qtd))}</b>${r.dataExec&&r.dataExec!==r.data?" em "+fmtD(r.dataExec):""}</dd>`:""}
       ${r.status==="PARCIAL"&&r.proxData?`<dt>Não executado · remarcado</dt><dd>${qtdTxt(r.qtdRemarcada)}<br>remarcado p/ ${fmtD(r.proxData)} · ${esc(r.motivo||"")}</dd>`:""}
-      ${r.status==="NÃO"?`<dt>Remarcado</dt><dd>para ${fmtD(r.proxData)} · ${esc(r.motivo||"")}</dd>
+      ${r.status==="NÃO"?`${r.outraEquipe?`<dt>Não executado</dt><dd>${esc(outraTxt(r))}</dd>`:`<dt>Remarcado</dt><dd>para ${fmtD(r.proxData)} · ${esc(r.motivo||"")}</dd>`}
         <dt>No lugar</dt><dd>${s?`${fmtD(s.data)} · ${esc(s.bairro)} — ${esc(s.logradouro)} (${esc(s.tipo)})<br>${qtdTxt(s.qtd)}<br>Valor: <b>${brl(s.receita)}</b>`:"Nenhum serviço executado no lugar"}</dd>`:""}
       ${r.fiscal?`<dt>Fiscal</dt><dd>${esc(r.fiscal)}</dd>`:""}
       ${r.obs?`<dt>Obs.</dt><dd>${esc(r.obs)}</dd>`:""}
@@ -4331,7 +4361,7 @@ function detalhe(r, abrirAdiar=false, soVer=false){
     ${hist.length?`<div class="hist"><b style="color:var(--ink)">Histórico de remarcações</b>${hist.map(h=>`<span>${fmtD(h.de)} → ${fmtD(h.para)} · ${esc(h.motivo||"")}</span>`).join("")}</div>`:""}
     ${r.dupCiente?`<p class="note" style="margin:6px 0 0;color:var(--warn)">⚠ Programado mesmo com outra programação no mesmo endereço${r.dupCiente.por?" – ciente: <b>"+esc(r.dupCiente.por)+"</b>":""}${r.dupCiente.em?" em "+fmtHora(r.dupCiente.em):""}.</p>`:""}
     ${(r.log||[]).length?`<div class="hist"><b style="color:var(--ink)">Histórico de alterações</b><div class="logl">${r.log.slice().reverse().map(l=>`<span>${new Date(l.em).toLocaleDateString("pt-BR")} ${new Date(l.em).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})} · <b>${esc(l.por)}</b> · ${esc(l.acao)}</span>`).join("")}</div></div>`:""}
-    ${(!isProg(r)&&relTem(r)&&!relLiberado(r))?`<p class="note" style="margin:4px 0 0">🔒 Relatório de serviço: liberado só quando o serviço for executado na totalidade${r.remarcadaPara?(()=>{const nx=todosGlobal().find(x=>x.id===r.remarcadaPara);return nx?` – o restante está programado para ${fmtD(nx.data)}${nx.status==="SIM"?" (já concluído: o relatório está nessa baixa)":""}`:"";})():""}.</p>`:""}${(!isProg(r)&&relLiberado(r)&&downloads)?`<div class="row2" style="margin-top:4px"><button type="button" class="btn sec" data-relpdf="${esc(r.id)}">📄 Relatório (PDF)</button><button type="button" class="btn sec" data-reldocx="${esc(r.id)}">📝 Relatório (Word)</button></div>`:""}
+    ${(!isProg(r)&&relTem(r)&&!relLiberado(r)&&!r.outraEquipe)?`<p class="note" style="margin:4px 0 0">🔒 Relatório de serviço: liberado só quando o serviço for executado na totalidade${r.remarcadaPara?(()=>{const nx=todosGlobal().find(x=>x.id===r.remarcadaPara);return nx?` – o restante está programado para ${fmtD(nx.data)}${nx.status==="SIM"?" (já concluído: o relatório está nessa baixa)":""}`:"";})():""}.</p>`:""}${(!isProg(r)&&relLiberado(r)&&downloads)?`<div class="row2" style="margin-top:4px"><button type="button" class="btn sec" data-relpdf="${esc(r.id)}">📄 Relatório (PDF)</button><button type="button" class="btn sec" data-reldocx="${esc(r.id)}">📝 Relatório (Word)</button></div>`:""}
     ${detOsHtml(r)}
     ${(!r.ocorrencia&&!r.avulso&&!r._fila&&!r.arquivado&&(isGerente()||(!soVer&&isProg(r)&&isGer())))?`<button type="button" class="btn sec" id="shProg">✏ ${isGerente()?"Editar programação (gerente)":"Corrigir programação (gerência)"}</button>`:""}
     ${(soVer||soLeitura()||r.arquivado)?`${soVer&&isProg(r)&&!soLeitura()&&!r.arquivado?`<button type="button" class="btn pri" id="shBaixa" style="min-height:52px;font-size:16px">${r.ocorrencia?"Registrar atendimento":"✔ Dar baixa"}</button>`:""}<button type="button" class="btn sec" id="shClose">Fechar</button>${(soVer&&isGerente()&&!r._fila&&db&&!r.arquivado)?`<button type="button" class="btn danger" id="shDel">${isProg(r)?"Excluir programação":"Excluir lançamento"} (gerente)</button>`:""}`:`<div class="actions" style="grid-template-columns:1fr 1fr">
@@ -5386,7 +5416,7 @@ function msgGrupo(r){
   if(r.status==="PARCIAL"){const pv=prevQ(r),f={};ITENS.forEach(i=>{const d=(+pv[i.c]||0)-(+r.qtd?.[i.c]||0);if(d>0)f[i.c]=d});const fq=r.qtdRemarcada||f; if(Object.keys(fq).length) L.push(`Faltou: ${qs(fq)}${r.proxData?" · remarcado p/ "+fmtD(r.proxData):""}`)}
   if(r.status==="NÃO"){L.push(`Programado: ${qs(prevQ(r))}`);L.push(`Remarcado para: ${fmtD(r.proxData)}`);
     L.push(r.substituto?`Feito no lugar: ${r.substituto.bairro} — ${r.substituto.logradouro}${r.substituto.tipo?" ("+r.substituto.tipo+")":""} · ${qs(r.substituto.qtd)}`:"Feito no lugar: nenhum serviço")}
-  if(r.motivo) L.push(`Motivo: ${r.motivo}`);
+  if(r.outraEquipe) L.push(outraTxt(r)); else if(r.motivo) L.push(r.outraEquipe?outraTxt(r):`Motivo: ${r.motivo}`);
   if(r.obs) L.push(`Obs.: ${r.obs}`);
   L.push(`Fiscal: ${r.fiscal||"—"}${r.ultimoUsuario?" · lançado por "+r.ultimoUsuario:""}`);
   return L.join("\n");
@@ -5454,7 +5484,7 @@ async function msgImagem(r){
     campo("Feito no lugar",r.substituto?`${r.substituto.bairro} — ${r.substituto.logradouro}${r.substituto.tipo?" ("+r.substituto.tipo+")":""}`:"nenhum serviço");
     if(r.substituto) blocos("Executado no lugar",r.substituto.qtd); }
   if(r.motivo||r.obs) sep();
-  if(r.motivo) campo("Motivo",r.motivo,{peso:600});
+  if(r.outraEquipe) campo("Motivo",outraTxt(r),{peso:600}); else if(r.motivo) campo("Motivo",r.outraEquipe?outraTxt(r):r.motivo,{peso:600});
   if(r.obs) campo("Observação",r.obs);
   sep(); campo("Fiscal",`${r.fiscal||"—"}${r.ultimoUsuario?" · lançado por "+r.ultimoUsuario:""}`,{tam:28});
   // desenha o cartão: primeiro mede, depois pinta
@@ -6428,7 +6458,7 @@ function acompHtml(F){
   if(acSel){ const rs=base.filter(r=>r.supervisao===acSel.s&&r.data===acSel.d);
     h+=`<div class="adet"><div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline"><b style="font:700 15px var(--display);letter-spacing:.04em;text-transform:uppercase">${esc(acSel.s)} · ${diaDe(acSel.d)} ${fmtD(acSel.d)}</b><button type="button" class="btn sec" data-acx style="min-height:34px;padding:0 10px;font-size:12px">Fechar</button></div>
       ${rs.map(r=>{const k=stKey(r);return `<button type="button" class="it" data-acid="${esc(r.id)}"><span class="lc">${esc(r.bairro)} — ${esc(r.logradouro)}</span><span class="pill ${k}">${ST_NOME[k]}</span>
-        <span class="mt">${esc(r.equipe||"")} · previsto ${brl(receitaDe(prevQ(r)))}${k==="SIM"||k==="PARCIAL"?" · executado "+brl(execRec(r)):""}${k==="NÃO"?" · remarcado p/ "+fmtD(r.proxData)+(r.motivo?" · "+esc(r.motivo):""):""}${r.impactoQueda?" · afetado por queda":""}</span></button>`}).join("")}</div>`; }
+        <span class="mt">${esc(r.equipe||"")} · previsto ${brl(receitaDe(prevQ(r)))}${k==="SIM"||k==="PARCIAL"?" · executado "+brl(execRec(r)):""}${k==="NÃO"?(r.outraEquipe?" · "+esc(outraTxt(r)):" · remarcado p/ "+fmtD(r.proxData)+(r.motivo?" · "+esc(r.motivo):"")):""}${r.impactoQueda?" · afetado por queda":""}</span></button>`}).join("")}</div>`; }
   h+=`</div>`;
   return h;
 }
@@ -6782,7 +6812,7 @@ function osDiaGrupos(){ if(!sessao) return []; const d=hoje(), G=[];
   return L.map(g=>({...g,os:g.rs.find(r=>r.osDia)?.osDia||null,fis:fiscalDe(g.sup,g.eq)})); }
 const osNum=(sup,eq,d)=>{ const s=supOf(sup)||{}; const L=(sup.match(/\(([A-Z])\)/)||[])[1]||""; return `${d.slice(2).replace(/-/g,"")}-P${ROMANO[s.grupo]||""}${(s.turno||"")[0]||""}${L}-${(eq||"").slice(0,1)||"0"}`; };
 function osDiaTxt(g){ const o=g.os||{}, d=hoje(), pv=g.rs.reduce((a,r)=>a+receitaDe(prevQ(r)),0);
-  return [`*ORDEM DE SERVIÇO Nº ${o.num||osNum(g.sup,g.eq,d)} – INICIADA*`,`COMURG · Gerência de Poda e Extirpação`,``,`📅 ${fmtD(d)} (${diaDe(d)})`,`👷 ${g.sup} · ${g.eq}${g.rs[0]?.viatura?" · "+g.rs[0].viatura:""}`,`Supervisor: ${nomeSupDe(g.sup)||"—"}`,`Fiscal: ${o.fiscal?.nome||g.fis?.nome||"—"}`,``,
+  return [`*ORDEM DE SERVIÇO Nº ${o.num||osNum(g.sup,g.eq,d)} – INICIADA*`,`COMURG · Gerência de Poda e Extirpação`,``,`📅 ${fmtD(d)} (${diaDe(d)})`,`👷 ${g.sup} · ${g.eq}${g.rs[0]?.viatura?" · "+g.rs[0].viatura:""}`,`Supervisor: ${nomeSupDe(g.sup)||"—"}`,`Fiscal: ${o.fiscal?.nome||g.fis?.nome||"—"}`,...(o.membros?.length?[``,`*Equipe (${o.membros.length}):*`,...o.membros.map(m=>`• ${m.nome} – ${m.funcao}`)]:[]),``,
     `*Serviços do dia (${g.rs.length}):*`,...g.rs.map((r,i)=>`${i+1}. ${r.bairro||""} — ${r.logradouro||""}${tipoTxt(r)?` · ${tipoTxt(r)}`:""}${r.processo?` · nº ${r.processo}`:""}\n   ${qtdTxtPlano(prevQ(r))||"—"}`),``,
     `Previsto: ${brl(pv)}`,o.em?`Iniciada às ${new Date(o.em).toTimeString().slice(0,5)} por ${o.por||"—"}.`:""].filter(x=>x!==null).join("\n"); }
 function osDiaHtml(){ const L=osDiaGrupos().filter(g=>sessao.perfil==="fiscal"||!g.os); if(!L.length) return ""; // depois de iniciada e enviada ao fiscal, a O.S some do Início (o fiscal continua vendo a dele)
@@ -6805,8 +6835,9 @@ function abrirOsDia(){ const host=$("#sheetHost"), G=osDiaGrupos(), d=hoje();
     const lista=`<ol class="osdl">${g.rs.map(r=>`<li><b>${esc(r.bairro||"")} — ${esc(r.logradouro||"")}</b><small>${esc(tipoTxt(r)||"")}${r.processo?" · nº "+esc(r.processo):""} · ${esc(qtdTxtPlano(prevQ(r))||"—")}</small></li>`).join("")}</ol>`;
     return `<div class="osdc ${g.os?"ok":""}"><div class="osdt"><b>${g.os?"✅":"🟠"} ${esc(g.sup)} · ${esc(g.eq||"equipe")}</b><span>${n} serviço${n===1?"":"s"} · ${brl(pv)}${g.rs[0]?.viatura?" · "+esc(g.rs[0].viatura):""}</span>
       <span>${fis?`Fiscal: <b>${esc(fis.nome)}</b>`:`<em style="color:var(--bad);font-style:normal">Sem fiscal cadastrado para esta equipe (Acessos)</em>`}</span>
-      ${g.os?`<span style="color:var(--ok)">O.S nº <b>${esc(g.os.num)}</b> iniciada às ${new Date(g.os.em).toTimeString().slice(0,5)} por ${esc(g.os.por||"—")}</span>`:""}</div>${lista}
-      <div class="osb">${g.os?`<button type="button" class="btn sec" data-osenv="${k}">💬 ${sessao.perfil==="fiscal"?"Ver mensagem":"Reenviar ao fiscal"}</button>`:osPodeIniciar(g.sup)?`<button type="button" class="btn pri" data-osini="${k}">▶ Iniciar O.S e enviar ao fiscal</button>`:`<small>Aguardando o supervisor iniciar.</small>`}
+      ${g.os?`<span style="color:var(--ok)">O.S nº <b>${esc(g.os.num)}</b> iniciada às ${new Date(g.os.em).toTimeString().slice(0,5)} por ${esc(g.os.por||"—")}</span>`:""}
+      ${g.os?.membros?.length?`<span>👷 Equipe: ${g.os.membros.map(m=>`<b>${esc(m.nome)}</b> (${esc(m.funcao.toLowerCase())})`).join(" · ")}</span>`:""}</div>${lista}
+      <div class="osb">${g.os?`<button type="button" class="btn sec" data-osenv="${k}">💬 ${sessao.perfil==="fiscal"?"Ver mensagem":"Reenviar ao fiscal"}</button>${osPodeIniciar(g.sup)?`<button type="button" class="btn sec" data-oseq="${k}">👷 ${g.os.membros?.length?"Editar equipe":"Informar equipe"}</button>`:""}`:osPodeIniciar(g.sup)?`<button type="button" class="btn pri" data-osini="${k}">▶ Iniciar O.S e enviar ao fiscal</button>`:`<small>Aguardando o supervisor iniciar.</small>`}
       <button type="button" class="btn sec" data-ospdf="${k}">📄 PDF</button><button type="button" class="btn sec" data-osimg="${k}">🖼 Imagem</button></div></div>`; };
   host.innerHTML=`<div class="sheet" id="sh"><div class="panel" role="dialog" aria-label="Iniciar O.S do dia">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:22px">O.S do dia · ${diaDe(d)} ${fmtDs(d)}</b><button type="button" class="btn sec" data-osdx style="min-height:44px;padding:0 14px">Fechar</button></div>
@@ -6839,15 +6870,55 @@ function osEnviar(g){ const txt=osDiaTxt(g), f=g.os?.fiscal||g.fis, z=f?.zap||(f
       try{ if(navigator.canShare&&navigator.canShare({files:[fl]})){ await navigator.share({files:[fl],text:"Ordem de serviço nº "+(g.os?.num||"")}); return; } }catch(x){ if(x?.name==="AbortError") return; }
       if(downloads){ try{ await downloads.save({filename:sel.nome+".png",data:blob}); toast("Imagem baixada: anexe no WhatsApp do fiscal."); }catch(x){} } else toast("Compartilhar não disponível aqui."); return; }
     if(e.target.closest("[data-oscp]")){ try{ await navigator.clipboard.writeText(txt); toast("Texto copiado."); }catch(x){ toast("Não foi possível copiar."); } } }); }
+// composição da equipe na O.S: nome e função de cada um (fica salva para o próximo dia)
+const EQ_FUNC=["ENCARREGADO","MOTORISTA","OPERADOR DE CESTO AÉREO","OPERADOR DE MOTOSSERRA","PODADOR","AUXILIAR DE PODA","SINALEIRO / APOIO"];
+function eqcUltima(g){ try{ const v=JSON.parse(ls.get("gpe_eqc_"+g.k,"null")||"null"); if(v?.length) return v; }catch(e){}
+  const L=todosGlobal().filter(r=>r.supervisao===g.sup&&(r.equipe||"")===g.eq&&r.osDia?.membros?.length).sort((a,b)=>(b.osDia.em||"").localeCompare(a.osDia.em||""));
+  return L[0]?L[0].osDia.membros:null; }
+function eqcAbrir(g,onOk,editar){ const box=document.createElement("div"); box.className="sheet"; box.style.zIndex=40;
+  let L=(g.os?.membros?.length?g.os.membros:eqcUltima(g))||[{nome:"",funcao:"ENCARREGADO"},{nome:"",funcao:"MOTORISTA"},{nome:"",funcao:"OPERADOR DE CESTO AÉREO"},{nome:"",funcao:"PODADOR"}];
+  L=L.map(m=>({...m}));
+  const linha=(m,i)=>{ const outra=m.funcao&&!EQ_FUNC.includes(m.funcao); return `<div class="eqcl" data-i="${i}"><span class="eqcn">${i+1}</span>
+    <input data-eqn placeholder="Nome" value="${esc(m.nome||"")}" autocomplete="off" aria-label="Nome da pessoa ${i+1}">
+    <select data-eqf aria-label="Função da pessoa ${i+1}"><option value="">Função…</option>${EQ_FUNC.map(f=>`<option${f===m.funcao?" selected":""}>${f}</option>`).join("")}<option value="OUTRA"${outra?" selected":""}>OUTRA (digitar)</option></select>
+    <input data-eqo placeholder="Qual função" value="${outra?esc(m.funcao):""}" ${outra?"":"hidden"} aria-label="Outra função">
+    <button type="button" class="eqcx" data-eqdel aria-label="Tirar a pessoa ${i+1}">✕</button></div>`; };
+  const ler=()=>[...box.querySelectorAll(".eqcl")].map(el=>{ const f=el.querySelector("[data-eqf]").value; return {nome:el.querySelector("[data-eqn]").value.trim().toUpperCase(), funcao:f==="OUTRA"?el.querySelector("[data-eqo]").value.trim().toUpperCase():f}; });
+  const desenhar=()=>{ box.querySelector("[data-eqlist]").innerHTML=L.map(linha).join(""); };
+  box.innerHTML=`<div class="panel" role="dialog" aria-label="Equipe da O.S"><b style="font-family:var(--display);font-size:22px">Equipe da O.S · ${esc(g.sup)} · ${esc(g.eq||"equipe")}</b>
+    <p class="note" style="margin:0">Informe quem está trabalhando hoje: <b>nome e função</b> de cada um. A equipe sai na O.S enviada ao fiscal e fica salva para o próximo dia (é só conferir).</p>
+    <div data-eqlist class="eqclist"></div>
+    <button type="button" class="btn sec" data-eqadd>＋ Adicionar pessoa</button>
+    <p class="err" data-eqerr hidden></p>
+    <button type="button" class="btn pri" data-eqok>${editar?"Salvar a equipe":"▶ Confirmar a equipe e iniciar a O.S"}</button>
+    <button type="button" class="btn sec" data-eqx>Cancelar</button></div>`;
+  document.body.appendChild(box); desenhar();
+  box.addEventListener("change",e=>{ const f=e.target.closest("[data-eqf]"); if(f){ const o=f.parentElement.querySelector("[data-eqo]"); o.hidden=f.value!=="OUTRA"; if(!o.hidden) o.focus(); } });
+  box.addEventListener("click",async e=>{ if(e.target===box||e.target.closest("[data-eqx]")) return box.remove();
+    if(e.target.closest("[data-eqadd]")){ L=ler(); L.push({nome:"",funcao:""}); desenhar(); box.querySelector(".eqcl:last-child [data-eqn]").focus(); return; }
+    const d=e.target.closest("[data-eqdel]"); if(d){ L=ler(); L.splice(+d.closest(".eqcl").dataset.i,1); desenhar(); return; }
+    const ok=e.target.closest("[data-eqok]"); if(ok){ const M=ler().filter(m=>m.nome||m.funcao), er=box.querySelector("[data-eqerr]"); let msg="";
+      if(!M.length) msg="informe pelo menos uma pessoa da equipe";
+      else if(M.some(m=>!m.nome)) msg="falta o nome de alguém (ou tire a linha com ✕)";
+      else if(M.some(m=>!m.funcao)) msg="falta a função de "+M.find(m=>!m.funcao).nome;
+      if(msg){ er.textContent="Falta: "+msg+"."; er.hidden=false; return; }
+      try{ ls.set("gpe_eqc_"+g.k,JSON.stringify(M)); }catch(x){}
+      ok.disabled=true; const r=await onOk(M); if(r===false){ ok.disabled=false; return; } box.remove(); } }); }
+async function eqcSalvar(g,M){ const os={...g.os,membros:M}; let ok=true;
+  for(const r of g.rs){ const upd={...r}; delete upd.id; delete upd._fila; upd.osDia=os; upd._acao=`Atualizou a equipe da O.S nº ${os.num}`; const res=await saveDoc(r.id,upd); if(res!=="ok"&&res!=="fila") ok=false; else r.osDia=os; }
+  if(!ok){ toast("Não foi possível salvar a equipe agora. Tente de novo."); return false; }
+  toast("Equipe da O.S atualizada."); try{renderAll()}catch(e){} try{ if($("#sheetHost .panel[aria-label='Iniciar O.S do dia']")) abrirOsDia(); }catch(e){} return true; }
 async function osIniciar(g,btn){
-  if(btn.dataset.armed!=="1"){ btn.dataset.armed="1"; btn.textContent="Confirmar: iniciar a O.S agora"; return; }
+  eqcAbrir(g,M=>osIniciarCom(g,btn,M)); }
+async function osIniciarCom(g,btn,M){
   btn.disabled=true; btn.textContent="Iniciando…";
-  const em=new Date().toISOString(), fis=g.fis, os={num:osNum(g.sup,g.eq,hoje()),em,por:sessao.nome||"",porId:sessao.id,fiscal:fis?{id:fis.id,nome:fis.nome}:null};
+  const em=new Date().toISOString(), fis=g.fis, os={num:osNum(g.sup,g.eq,hoje()),em,por:sessao.nome||"",porId:sessao.id,fiscal:fis?{id:fis.id,nome:fis.nome}:null,membros:M};
   let ok=true; for(const r of g.rs){ const upd={...r}; delete upd.id; delete upd._fila; upd.osDia=os; upd._acao=`Iniciou a O.S nº ${os.num}${fis?" e enviou ao fiscal "+fis.nome:""}`; const res=await saveDoc(r.id,upd); if(res!=="ok"&&res!=="fila") ok=false; else r.osDia=os; }
-  if(!ok){ toast("Não foi possível iniciar a O.S agora. Tente de novo."); btn.disabled=false; btn.textContent="▶ Iniciar O.S e enviar ao fiscal"; btn.dataset.armed=""; return; }
+  if(!ok){ toast("Não foi possível iniciar a O.S agora. Tente de novo."); btn.disabled=false; btn.textContent="▶ Iniciar O.S e enviar ao fiscal"; btn.dataset.armed=""; return false; }
   toast("O.S nº "+os.num+" iniciada."); try{ if(btn.closest("#sheetHost")) $("#sheetHost").innerHTML=""; }catch(e){} try{renderAll()}catch(e){} osEnviar({...g,os}); }
-document.addEventListener("click",e=>{ const b=e.target.closest("[data-osini],[data-osenv],[data-ospdf],[data-osimg]"); if(!b) return;
-  const k=b.dataset.osini||b.dataset.osenv||b.dataset.ospdf||b.dataset.osimg, g=osDiaGrupos().find(x=>x.k===k); if(!g){ toast("O.S não encontrada."); return; }
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-osini],[data-osenv],[data-ospdf],[data-osimg],[data-oseq]"); if(!b) return;
+  const k=b.dataset.osini||b.dataset.osenv||b.dataset.ospdf||b.dataset.osimg||b.dataset.oseq, g=osDiaGrupos().find(x=>x.k===k); if(!g){ toast("O.S não encontrada."); return; }
+  if(b.dataset.oseq) return eqcAbrir(g,M=>eqcSalvar(g,M),true);
   if(b.dataset.osini) return osIniciar(g,b); if(b.dataset.osenv) return osEnviar(g);
   if(b.dataset.ospdf) return listaPdf(b,osSel(g)); return listaImg(b,osSel(g)); });
 const INICIO_AVISOS=false; // avisos de pendência ficam só na aba Pendências (e no sino), não na tela inicial
