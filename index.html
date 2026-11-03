@@ -506,6 +506,7 @@ nav.tabs button[aria-current="page"]{background:linear-gradient(180deg,#ff8c42 0
 .ckpend{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 2px}
 .ckpend span{font:600 12px var(--body);padding:5px 9px;border-radius:99px;background:var(--warn-bg);color:var(--warn)}
 .ckpend span.ok{background:var(--ok-bg);color:var(--ok)}
+.ckpend span.esp{background:var(--warn-bg)!important;color:var(--warn)!important;border:1px solid transparent!important;animation:none!important;font-weight:600}
 .ckpend span:not(.ok){background:#fde2df;color:#a3150b;border:1.5px solid #d93025;font-weight:700;animation:ckPisca 1s ease-in-out infinite}
 @keyframes ckPisca{0%,100%{background:#fde2df;color:#a3150b;box-shadow:0 0 0 0 rgba(217,48,37,0)}50%{background:#d93025;color:#fff;box-shadow:0 0 0 4px rgba(217,48,37,.35)}}
 @media (prefers-reduced-motion:reduce){.ckpend span:not(.ok){animation:none}}
@@ -1875,7 +1876,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.02z";
+const APP_VERSAO="2026.11.03b";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -3201,7 +3202,10 @@ function renderChk(){
   if(meus.length) h+=`<div class="alert"><h3>Turno para você receber</h3><p class="note" style="margin:0">Abra, confira o checklist da turma que entregou e assine o recebimento dando ciência das condições do equipamento.</p>${meus.map(c=>`<button type="button" data-chk="${esc(c.id)}"><b>!</b><span>${esc(c.viatura||"")} · ${esc(c.supervisao)} · ${esc(c.equipe)}<small>Entregue por ${esc(c.entrega?.nome||"—")} em ${fmtD(c.data)}${c.hora?" às "+esc(c.hora):""}. Confira e assine o recebimento.</small></span></button>`).join("")}</div>`;
   if(man){ host.innerHTML=manListaHtml(sup,dia); return; }
   h+=`<div class="grp-h"><h3>Checklists · ${fmtD(dia)} · ${diaDe(dia)}</h3><span>${lst.length} checklist${lst.length===1?"":"s"}${naoApto?` · <b style="color:var(--bad)">${naoApto} não apto</b>`:""}${ress?` · ${ress} com ressalva`:""} · ${semRec} sem recebimento</span></div>`;
-  if(cota.length) h+=`<p class="note" style="margin:6px 0 0">Checklists por turma no dia (um por equipamento que estava na programação do dia; na PODA II, mais a van):</p><div class="ckpend">${cota.map(x=>`<span class="${x.feitos.length>=x.meta?"ok":""}" title="${esc(x.feitos.join(", "))}">${esc(supNome(x.t))} · <b>${x.feitos.length} de ${x.meta}</b>${x.feitos.length>=x.meta?" ✔":x.faltam.length?" · falta: "+x.faltam.map(esc).join(", "):""}</span>`).join("")}</div>${pend.length?"":`<p class="note" style="margin:4px 0 0">Todas as turmas que trabalharam no dia completaram os checklists.</p>`}`;
+  // prazo do checklist: DIURNO cobrado a partir das 19h do dia; NOTURNO a partir das 7h do dia seguinte. Antes disso não pisca em vermelho
+  const chkLim=t=>{ if(supOf(t)?.turno==="NOTURNO"){ const l=new Date(dia+"T07:00"); l.setDate(l.getDate()+1); return l; } return new Date(dia+"T19:00"); };
+  const temP2=cota.some(x=>supOf(x.t)?.grupo==="PODA II");
+  if(cota.length) h+=`<p class="note" style="margin:6px 0 0">Checklists por turma no dia (um por equipamento que estava na programação do dia${temP2?"; nas turmas da PODA II, mais a van":""}). Fica em vermelho só depois do prazo: diurno às 19h, noturno às 7h do dia seguinte.</p><div class="ckpend">${cota.map(x=>{ const ok=x.feitos.length>=x.meta, venc=new Date()>=chkLim(x.t); return `<span class="${ok?"ok":venc?"":"esp"}" title="${esc(x.feitos.join(", "))}">${!ok&&!venc?"⏳ ":""}${esc(supNome(x.t))} · <b>${x.feitos.length} de ${x.meta}</b>${x.feitos.length>=x.meta?" ✔":x.faltam.length?" · falta: "+x.faltam.map(esc).join(", "):""}${!ok&&!venc?` · prazo ${chkLim(x.t).getHours()}h${supOf(x.t)?.turno==="NOTURNO"?" de amanhã":""}`:""}</span>`; }).join("")}</div>${pend.length?"":`<p class="note" style="margin:4px 0 0">Todas as turmas que trabalharam no dia completaram os checklists.</p>`}`;
   h+= lst.length ? `${downloads&&lst.length>1?`<button type="button" class="btn" data-chkpdftodos="1" style="min-height:44px;font-size:15px;width:100%;margin:6px 0">⬇ Baixar os ${lst.length} checklists em PDF (um por um)</button>`:""}<div class="list">${lst.map(c=>downloads?`<div class="ckpdfw">${chkCard(c)}<button type="button" class="btn ckpdfb" data-chkpdf="${esc(c.id)}">⬇ Baixar PDF · ${esc(c.viatura||"checklist")}</button></div>`:chkCard(c)).join("")}</div>` : `<div class="empty" style="margin-top:8px">Nenhum checklist neste dia.</div>`;
   host.innerHTML=h;
 }
@@ -5288,7 +5292,17 @@ function listaPlanilha(rows){
   ws.fx(r,R0,`SUM(${C(R0)}${hr+2}:${C(R0)}${Math.max(last,hr+1)+1})`,tot({num:"brl"})); ws.fx(r,R0+1,`SUM(${C(R0+1)}${hr+2}:${C(R0+1)}${Math.max(last,hr+1)+1})`,tot({num:"brl"}));
   ws.fill(r,R0+2,NC-1,tot({}));
   ws.freeze={r:hr+1,c:4}; ws.filter=`A${hr+1}:${C(NC-1)}${Math.max(last,hr+1)+1}`; ws.titles=[hr,hr+1];
-  return XL.book([ws],st);
+  // aba Resumo de tudo (primeira aba)
+  const rs=XL.Sheet("Resumo"); rs.tab=G; rs.widths=[30,34,14,14,14,14,14,14,14,16,16]; const NR=11;
+  rs.set(0,0,"PROGRAMAÇÃO GPE — Resumo geral",tit).fill(0,1,NR-1,tit).merge(0,0,0,NR-1).h(0,26);
+  rs.set(1,0,`COMURG · Gerência de Poda e Extirpação – ${escDirop()?"DIROP":"DIRSEN"} · ${filtros} · ${rows.length} serviço(s) · gerado em ${dataBR(new Date().toISOString())} ${horaAgora()}`,sub).fill(1,1,NR-1,sub).merge(1,0,1,NR-1);
+  const pr=rows.filter(x=>!x.ocorrencia&&!x.avulso), kL=st({font:{b:1,sz:8,color:MU},border:{t:{s:"medium",c:G}}}), kV=o=>st({font:{b:1,sz:14,color:"16231A"},num:o});
+  const K=[["PROGRAMADOS",pr.length,"int"],["EXECUTADOS",pr.filter(x=>x.status==="SIM").length,"int"],["PARCIAIS",pr.filter(x=>x.status==="PARCIAL").length,"int"],["NÃO EXECUTADOS",pr.filter(x=>x.status==="NÃO").length,"int"],["SEM BAIXA",pr.filter(x=>isLate(x)).length,"int"],
+    ["RECEITA PREVISTA",Math.round(pr.reduce((a,x)=>a+receitaDe(prevQ(x)),0)*100)/100,"brl"],["RECEITA EXECUTADA",Math.round(rows.reduce((a,x)=>a+execRec(x),0)*100)/100,"brl"],["GALHO / ÁRVORE CAÍDA",rows.filter(x=>x.ocorrencia).length,"int"]];
+  K.forEach(([t,v,n],i)=>{ const rr=3+Math.floor(i/4)*3, cc=[0,1,2,4][i%4], ce=[0,1,3,5][i%4]; rs.set(rr,cc,t,kL).fill(rr,cc+1,ce,kL); rs.set(rr+1,cc,v,kV(n)).fill(rr+1,cc+1,ce,kV(n)); if(ce>cc){ rs.merge(rr,cc,rr,ce).merge(rr+1,cc,rr+1,ce); } rs.h(rr+1,22); });
+  xlResumoTudo(rs,10,rows,st,NR);
+  rs.landscape=false;
+  return XL.book([rs,ws],st);
 }
 async function listaXls(btn){
   const {rows}=listaRows(); if(!rows.length){ toast("Nenhum serviço com esses filtros."); return; }
@@ -5300,6 +5314,78 @@ async function listaXls(btn){
   finally{ btn.disabled=false; btn.textContent=t; }
 }
 
+
+// ===== Resumo de tudo (usado na aba Resumo das planilhas do Relatório e da Lista) =====
+// escreve, a partir da linha r, os quadros: situação, turma, equipe/equipamento, tipo de local, serviço, itens do contrato,
+// motivos de não execução, O.S/processos e relatórios, galho/árvore caída. Devolve a próxima linha livre.
+function xlResumoTudo(ws,r,rows,st,NC,op={}){ let nS=0;
+  const G="005F27",LN="C9D1C4",MU="56655A",C=XL.col;
+  const sec=st({font:{b:1,sz:12,color:G},border:{b:{s:"medium",c:G}}}), secF=st({border:{b:{s:"medium",c:G}}});
+  const th=st({font:{b:1,sz:9,color:"FFFFFF"},fill:G,border:{l:{c:"3C6B4B"},r:{c:"3C6B4B"},t:{c:G},b:{c:G}},align:{h:"center",wrap:1}});
+  const cel=(z,o={})=>st({font:{sz:9,b:o.b?1:0,color:o.color||"16231A"},fill:z?"F6F8F4":"FFFFFF",border:{l:{c:"E2E6DF"},r:{c:"E2E6DF"},b:{c:"E2E6DF"}},align:{h:o.h,wrap:o.wrap?1:0},num:o.num});
+  const tot=(o={})=>st({font:{b:1,sz:9,color:"16231A"},fill:"DDE5D8",border:{t:{s:"medium",c:G},b:{s:"medium",c:G},l:{c:LN},r:{c:LN}},align:{h:o.h},num:o.num});
+  const nota=st({font:{i:1,sz:8,color:MU}});
+  const SEC=(t)=>{ t=(++nS)+" · "+t; ws.set(r,0,t,sec).fill(r,1,NC-1,secF).h(r,22); r++; };
+  // tabela: cab = [[titulo,tipo]] (tipo: t texto | i inteiro | b R$ | p %), linhas = arrays; soma = índices das colunas com total
+  const TAB=(cab,linhas,soma,pctDe)=>{ cab.forEach(([t],c)=>ws.set(r,c,t,th)); ws.h(r,26); r++; const r0=r;
+    if(!linhas.length){ ws.set(r,0,"Nenhum registro no período.",nota); r+=2; return; }
+    linhas.forEach((L,i)=>{ const z=i%2; L.forEach((v,c)=>{ const tp=cab[c][1]; if(tp==="p"&&typeof v==="string"&&v.startsWith("=")) ws.fx(r,c,v.slice(1).replace(/#/g,r+1),cel(z,{h:"center",num:"pct",b:1,color:"E0661B"})); else ws.set(r,c,v,cel(z,{h:tp==="t"?undefined:"center",num:tp==="i"?"int":tp==="b"?"brl":tp==="p"?"pct":undefined,b:c===0,wrap:tp==="t"})); }); ws.h(r,17); r++; });
+    if(soma){ ws.set(r,0,"TOTAL",tot()); for(let c=1;c<cab.length;c++){ const tp=cab[c][1]; if(soma.includes(c)) ws.fx(r,c,`SUM(${C(c)}${r0+1}:${C(c)}${r})`,tot({h:tp==="b"?undefined:"center",num:tp==="b"?"brl":"int"})); else if(tp==="p"&&pctDe) ws.fx(r,c,pctDe.replace(/#/g,r+1),tot({h:"center",num:"pct"})); else ws.set(r,c,"",tot()); } ws.h(r,19); r++; }
+    r++; };
+  const prog=rows.filter(x=>!x.ocorrencia&&!x.avulso), venc=x=>!isProg(x)||isLate(x);
+  const rp=x=>Math.round(receitaDe(x.avulso?{}:prevQ(x))*100)/100, re=x=>Math.round(execRec(x)*100)/100;
+  const grp=(L,kf)=>{ const M=new Map(); L.forEach(x=>{ const ks=[].concat(kf(x)); ks.forEach(k=>{ if(k==null) return; if(!M.has(k)) M.set(k,[]); M.get(k).push(x); }); }); return [...M.entries()]; };
+  const cnt=(L,k)=>L.filter(x=>stKey(x)===k).length;
+
+  SEC("SITUAÇÃO DOS SERVIÇOS PROGRAMADOS");
+  const SITS=[["SIM","Executado"],["PARCIAL","Parcial"],["NÃO","Não executado (remarcado / outra equipe)"],["ATRASADO","Sem baixa (data vencida)"],["PROGRAMADO","A executar"]];
+  TAB([["Situação","t"],["Serviços","i"],["% do total","p"],["Receita prevista","b"],["Receita executada","b"]],
+    SITS.map(([k,t])=>{ const L=prog.filter(x=>stKey(x)===k); return [t,L.length,prog.length?L.length/prog.length:0,L.reduce((a,x)=>a+rp(x),0),L.reduce((a,x)=>a+re(x),0)]; }),[1,3,4]);
+
+  if(!op.semTurma){ SEC("POR TURMA");
+  const turmas=grp(prog,x=>x.supervisao||"—").sort((a,b)=>SUPS.findIndex(s=>s.id===a[0])-SUPS.findIndex(s=>s.id===b[0]));
+  TAB([["Turma","t"],["Supervisor","t"],["Programados","i"],["Executados","i"],["Parciais","i"],["Não exec.","i"],["Sem baixa","i"],["A executar","i"],["Cumprimento","p"],["Receita prevista","b"],["Receita executada","b"]],
+    turmas.map(([k,L])=>[k,supOf(k)?.enc||nomeSupDe(k)||"",L.length,cnt(L,"SIM"),cnt(L,"PARCIAL"),cnt(L,"NÃO"),cnt(L,"ATRASADO"),cnt(L,"PROGRAMADO"),"=IFERROR((D#+E#)/(D#+E#+F#+G#),0)",L.reduce((a,x)=>a+rp(x),0),L.reduce((a,x)=>a+re(x),0)]),[2,3,4,5,6,7,9,10],"IFERROR((D#+E#)/(D#+E#+F#+G#),0)"); }
+
+  SEC("POR EQUIPE E EQUIPAMENTO");
+  TAB([["Turma","t"],["Equipe","t"],["Equipamento","t"],["Serviços","i"],["Executados","i"],["Receita prevista","b"],["Receita executada","b"]],
+    grp(prog,x=>(x.supervisao||"—")+"|"+(x.equipe||"—")+"|"+(x.viatura||"—")).sort((a,b)=>a[0].localeCompare(b[0])).map(([k,L])=>{ const [t,e,v]=k.split("|"); return [t,e,v,L.length,cnt(L,"SIM")+cnt(L,"PARCIAL"),L.reduce((a,x)=>a+rp(x),0),L.reduce((a,x)=>a+re(x),0)]; }),[3,4,5,6]);
+
+  SEC("POR TIPO DE LOCAL");
+  TAB([["Tipo de local","t"],["Serviços","i"],["Executados","i"],["Não exec.","i"],["Receita prevista","b"],["Receita executada","b"]],
+    grp(prog,x=>x.tipo||"(sem tipo)").sort((a,b)=>b[1].length-a[1].length).map(([k,L])=>[k,L.length,cnt(L,"SIM")+cnt(L,"PARCIAL"),cnt(L,"NÃO"),L.reduce((a,x)=>a+rp(x),0),L.reduce((a,x)=>a+re(x),0)]),[1,2,3,4,5]);
+
+  SEC("POR SERVIÇO A EXECUTAR");
+  TAB([["Serviço","t"],["Serviços","i"],["Executados","i"],["Receita prevista","b"],["Receita executada","b"]],
+    grp(prog,x=>String(x.servico||"(não informado)").split(" + ").map(t=>t.trim()).filter(Boolean)).sort((a,b)=>b[1].length-a[1].length).map(([k,L])=>[k,L.length,cnt(L,"SIM")+cnt(L,"PARCIAL"),L.reduce((a,x)=>a+rp(x),0),L.reduce((a,x)=>a+re(x),0)]));
+  ws.set(r-1,0,"Um serviço com mais de um tipo marcado conta em cada tipo.",nota); r++;
+
+  SEC("ITENS DO CONTRATO (QUANTIDADES)");
+  const aEx=x=>{ if(x.ocorrencia||x.avulso) return {}; if(isProg(x)||x.status==="NÃO") return x.outraEquipe?{}:prevQ(x); if(x.status==="PARCIAL"){ if(x.qtdRemarcada) return x.qtdRemarcada; const pv=prevQ(x),o={}; ITENS.forEach(i=>{const d=(+pv[i.c]||0)-(+x.qtd?.[i.c]||0); if(d>0)o[i.c]=d}); return o; } return {}; };
+  TAB([["Item","t"],["Descrição","t"],["Previsto","i"],["Executado","i"],["A executar","i"],["Preço unit.","b"],["Valor executado","b"]],
+    ITENS.map(it=>{ const pv=prog.reduce((a,x)=>a+(+prevQ(x)[it.c]||0),0), ex=rows.reduce((a,x)=>a+(+execQ(x)[it.c]||0)+(+subQ(x)[it.c]||0),0), ae=rows.reduce((a,x)=>a+(+aEx(x)[it.c]||0),0);
+      return [it.c,(it.g==="P"?"Poda – ":"Extirpação – ")+it.d.split(" · ").slice(1).join(" – "),pv,ex,ae,it.p,Math.round(ex*it.p*100)/100]; }),[2,3,4,6]);
+
+  SEC("MOTIVOS DE NÃO EXECUÇÃO / REMARCAÇÃO");
+  const nexec=prog.filter(x=>x.status==="NÃO"||(x.status==="PARCIAL"&&x.motivo));
+  TAB([["Motivo","t"],["Ocorrências","i"],["Não executados","i"],["Parciais","i"],["Valor não executado","b"]],
+    grp(nexec,x=>x.motivo||"(sem motivo)").sort((a,b)=>b[1].length-a[1].length).map(([k,L])=>[k,L.length,L.filter(x=>x.status==="NÃO").length,L.filter(x=>x.status==="PARCIAL").length,L.reduce((a,x)=>a+Math.round(receitaDe(aEx(x)&&Object.keys(aEx(x)).length?aEx(x):x.status==="NÃO"?prevQ(x):{})*100)/100,0)]),[1,2,3,4]);
+
+  SEC("O.S E PROCESSOS – RELATÓRIO DE SERVIÇO");
+  const osp=prog.filter(x=>x.tipo==="O.S"||x.tipo==="PROCESSO");
+  const tpLbl=x=>x.tipo==="O.S"?"O.S":"PROCESSO"+(x.procSist?" "+x.procSist:"");
+  TAB([["Tipo","t"],["Programados","i"],["Executados","i"],["Relatório assinado","i"],["Executado sem relatório","i"],["Fotos do fiscal (3 de 3)","i"],["A executar / sem baixa","i"]],
+    grp(osp,tpLbl).sort((a,b)=>a[0].localeCompare(b[0])).map(([k,L])=>[k,L.length,cnt(L,"SIM"),L.filter(x=>x.status==="SIM"&&x.relat?.ass).length,L.filter(x=>x.status==="SIM"&&!x.relat?.ass).length,L.filter(x=>REL_SLOTS.every(q=>x.fotosFiscal?.[q.k])).length,cnt(L,"PROGRAMADO")+cnt(L,"ATRASADO")]),[1,2,3,4,5,6]);
+
+  SEC("GALHO E ÁRVORE CAÍDA (REGISTRO EMERGENCIAL)");
+  const oc=rows.filter(x=>x.ocorrencia);
+  TAB([["Tipo","t"],["Chamados","i"],["Quantidade","i"],["Na rede elétrica","i"],["Via bloqueada","i"],["Receita executada","b"]],
+    grp(oc,x=>OC[x.ocorrencia.tipo]||x.ocorrencia.tipo||"—").map(([k,L])=>[k,L.length,L.reduce((a,x)=>a+(+x.ocorrencia.qtd||1),0),L.filter(x=>x.ocorrencia.rede).length,L.filter(x=>x.ocorrencia.via).length,L.reduce((a,x)=>a+re(x),0)]),[1,2,3,4,5]);
+  const av=rows.filter(x=>x.avulso&&!x.ocorrencia);
+  if(av.length){ SEC("SERVIÇOS SEM PROGRAMAÇÃO");
+    TAB([["Turma","t"],["Serviços","i"],["Receita executada","b"]],grp(av,x=>x.supervisao||"—").map(([k,L])=>[k,L.length,L.reduce((a,x)=>a+re(x),0)]),[1,2]); }
+  return r;
+}
 function planilhaGPE(){
   const f=rptFiltro(), rows=rptRows(f).slice().sort((a,b)=>(a.data||"").localeCompare(b.data||"")||(a.supervisao||"").localeCompare(b.supervisao||"")||(a.equipe||"").localeCompare(b.equipe||""));
   const st=XL.Styles(), R=XL.ref, C=XL.col, now=new Date();
@@ -5395,6 +5481,7 @@ function planilhaGPE(){
     ws.set(r,0,"Executado conta pela data em que o serviço foi feito; a executar é a programação ainda em aberto no mês. Situação: Dentro (< 90%), Atenção (≥ 90%), Acima do contrato (> 100%).",S.meta).fill(r,1,NC-1,S.meta).merge(r,0,r,NC-1).h(r,28);
     r+=2;
   }
+  r=xlResumoTudo(ws,r,rows,st,NC,{semTurma:true}); // o quadro por turma já está acima
   ws.set(r,0,"Supervisor(a): ____________________________",st({font:{sz:9,color:MU}})).merge(r,0,r,4);
   ws.set(r,6,"Gerência de Poda e Extirpação – DIRSEN: ____________________________",st({font:{sz:9,color:MU}})).merge(r,6,r,11);ws.h(r,30);
   ws.landscape=false;sheets.push(ws);
