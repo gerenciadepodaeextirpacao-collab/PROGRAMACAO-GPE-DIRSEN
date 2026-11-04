@@ -1927,7 +1927,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.04d";
+const APP_VERSAO="2026.11.04e";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -3131,7 +3131,7 @@ const ESTILO = `
 .vp .vp-opt.vp-s-ja_executado[aria-pressed="true"]{background:var(--lf);border-color:var(--lf)}
 .vp .vp-opt.vp-s-nao_executado[aria-pressed="true"]{background:var(--bk);border-color:var(--bk)}
 .vp .vp-need{font-size:13px;color:var(--rd);font-weight:600}
-.vp .vp-foto{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.vp .vp-doc{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}.vp .vp-doc .vp-btn{padding:6px 10px;font-size:13px}.vp .vp-docf input[type=url]{width:100%}.vp .vp-foto{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .vp .vp-foto img{width:96px;height:96px;object-fit:cover;border-radius:8px;border:1px solid var(--ln)}
 .vp .vp-filebtn{position:relative;overflow:hidden}.vp .vp-filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .vp .vp-sp{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap;border:1px solid var(--ln)}
@@ -3172,7 +3172,7 @@ function montar(root) {
     proc: [], reg: {}, vist: [], sups: [],
     tela: "rotas", grp: LS("vp-grp") || "all", yr: LS("vp-yr") || "all", cur: LS("vp-reg") || "CENTRO OESTE",
     per: +(LS("vp-per") || 10), start: LS("vp-start") || "", q: "", hide: false, draft: {}, f: {}, lim: 40,
-    supF: LS("vp-supf") || "", erro: "", carregando: true, busy: {},
+    supF: LS("vp-supf") || "", erro: "", carregando: true, busy: {}, doc: {},
   };
 
   // ---------------- dados (banco do app: coleção "vistoria", um documento por processo) ----------------
@@ -3196,6 +3196,39 @@ function montar(root) {
     render();
     try { for (const id of ids) await db.collection(VIST_COL).doc(id).set(S.reg[id]); return true; }
     catch (e) { ids.forEach((id) => { if (antes[id]) S.reg[id] = antes[id]; else delete S.reg[id]; }); render(); toast("Não foi possível salvar: " + (e && e.message || e)); return false; }
+  }
+  // ---- processo para consulta em campo (PDF anexado ou link) ----
+  const parecerTxt = (x) => String(x || "").replace(/^\s*parecer(\s+t[ée]cnico)?\s*(n[ºo°.]*\s*)?/i, "").trim();
+  const pdfUrl = (m) => !m ? "" : m.url ? m.url : m.id ? (window.GPE_NETLIFY ? SUPA_MIDIA + m.id : "/_blob/" + m.id) : "";
+  const docLinks = (r) => [r.proc_pdf ? ["pdf", pdfUrl(r.proc_pdf)] : null, r.proc_link ? ["link", r.proc_link] : null].filter(Boolean);
+  function docHtml(p) {
+    const r = R(p), L = docLinks(r), d = S.doc[p.id];
+    let h = `<div class="vp-doc">${L.map(([k, u]) => `<a class="vp-btn ${k === "pdf" ? "vp-pri" : ""}" href="${esc(u)}" target="_blank" rel="noopener">${k === "pdf" ? "📄 Abrir o processo (PDF)" : "🔗 Abrir o processo (link)"}</a>`).join("")}
+      ${!L.length ? `<span class="vp-msg">Processo ainda não disponível para consulta.</span>` : ""}
+      ${pode.lancar() && !d ? `<button class="vp-btn" data-docab="${p.id}">${L.length ? "Trocar / remover" : "Anexar processo (PDF ou link)"}</button>` : ""}</div>`;
+    if (d) h += `<div class="vp-vb vp-docf"><span class="vp-lab">Processo para consulta em campo</span>
+      <label class="vp-btn vp-filebtn ${d.file ? "" : "vp-pri"}">${d.file ? "📄 " + esc(d.file.name) : "Escolher o PDF do processo"}<input type="file" accept="application/pdf,.pdf" data-docpdf="${p.id}"></label>
+      <input type="url" id="vp-dl-${p.id}" data-doclink="${p.id}" value="${esc(d.link)}" placeholder="ou cole o link do processo (SEI, GED, Drive…)">
+      <div class="vp-row"><button class="vp-btn vp-pri" data-docsalvar="${p.id}" ${S.busy["d" + p.id] ? "disabled" : ""}>${S.busy["d" + p.id] ? "Enviando…" : "Salvar"}</button>${L.length ? `<button class="vp-btn" data-docrem="${p.id}">Remover</button>` : ""}<button class="vp-btn" data-doccancel="${p.id}">Cancelar</button></div>
+      <span class="vp-msg">PDF de até 15 MB. Fica disponível para todos que consultam a vistoria e para a turma que receber o serviço.</span></div>`;
+    return h;
+  }
+  async function docSalvar(id) {
+    const d = S.doc[id]; if (!d || S.busy["d" + id]) return;
+    const link = (d.link || "").trim();
+    if (link && !/^https?:\/\//i.test(link)) { toast("O link precisa começar com http:// ou https://"); return; }
+    if (!d.file && !link) { toast("Escolha o PDF ou cole o link do processo"); return; }
+    const campos = {};
+    if (link) campos.proc_link = link;
+    if (d.file) {
+      if (!assets) { toast("Neste acesso o envio de PDF não está liberado. Use o link."); return; }
+      if (d.file.size > 15 * 1024 * 1024) { toast("PDF grande demais (máximo 15 MB)."); return; }
+      S.busy["d" + id] = 1; render();
+      try { const up = await assets.upload(d.file, { type: "application/pdf" }); campos.proc_pdf = { id: up.id, url: up.url || "", nome: d.file.name, em: new Date().toISOString(), por: usuario() }; }
+      catch (x) { delete S.busy["d" + id]; render(); toast(x && x.code === "unsupported_type" ? "O banco ainda não aceita PDF: rode o GPE-VISTORIA.sql no Supabase." : midErro(x)); return; }
+      delete S.busy["d" + id];
+    }
+    if (await gravar([id], campos)) { delete S.doc[id]; render(); toast("Processo disponível para consulta"); }
   }
   const fotoPend = {};
   const fotoUrl = (m) => { if (!m) return ""; if (typeof m === "string") return m; const u = midUrl(m), k = m.id || m.db;
@@ -3319,7 +3352,7 @@ function montar(root) {
         ${cr && cr !== "__mix" && dv === undefined ? `<span class="vp-ok">Designado: <b>${esc(cr)}</b></span>` : ""}</div></div>`}
       <div class="vp-prog"><i style="width:${pct(feitos, ch.length)}%"></i></div><ol>`;
       h += show.map((p) => `<li class="vp-stop${R(p).vistoriado ? " vp-done" : ""}"><span class="vp-seq">${String(p.i).padStart(3, "0")}</span>
-        <div><div class="vp-e">${esc(p.endereco)}</div><div class="vp-m">${p.ano ? `<span class="vp-tag">${p.ano}</span>` : ""}${p.ged ? `<span class="vp-tag">GED ${esc(p.ged)}</span>` : ""}<span>Proc. <code>${esc(p.processo)}</code></span>${p.parecer && p.parecer !== "SEM NUMERO" ? `<span>Parecer ${esc(p.parecer)}</span>` : ""}<span>${esc(p.setor)}</span><a class="vp-gm" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(full(p.endereco))}" target="_blank" rel="noopener">ver no mapa</a></div></div>
+        <div><div class="vp-e">${esc(p.endereco)}</div><div class="vp-m">${p.ano ? `<span class="vp-tag">${p.ano}</span>` : ""}${p.ged ? `<span class="vp-tag">GED ${esc(p.ged)}</span>` : ""}<span>Proc. <code>${esc(p.processo)}</code></span>${p.parecer && p.parecer !== "SEM NUMERO" ? `<span>Parecer ${esc(parecerTxt(p.parecer))}</span>` : ""}<span>${esc(p.setor)}</span><a class="vp-gm" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(full(p.endereco))}" target="_blank" rel="noopener">ver no mapa</a></div>${docHtml(p)}</div>
         <div class="vp-q">${p.qtd_poda ? `<span class="vp-pill vp-po">${p.qtd_poda} poda</span>` : ""}${p.qtd_extirpacao ? `<span class="vp-pill vp-ex">${p.qtd_extirpacao} extirp.</span>` : ""}</div>
         ${blocoVistoria(p)}</li>`).join("") + `</ol></section>`;
     }
@@ -3345,7 +3378,7 @@ function montar(root) {
         const links = gm(Q);
         h += `<div class="vp-head" style="background:var(--bg)"><span class="vp-lab">${q}</span><small>${Q.length} serviço(s)</small><div class="vp-row" style="margin-left:auto">${links.map((u, k) => `<a class="vp-btn vp-pri" href="${u}" target="_blank" rel="noopener">Rota no Maps${links.length > 1 ? " · trecho " + (k + 1) : ""}</a>`).join("")}</div></div>
         <div class="vp-tw" style="border:0;border-radius:0"><table><thead><tr><th>Endereço</th><th>Processo</th><th>Regional</th><th class="vp-n">Poda</th><th class="vp-n">Extirp.</th><th>Vistoria</th><th>Vistoriador</th><th>Obs.</th><th>Enviado</th></tr></thead><tbody>
-        ${Q.map((p) => { const r = R(p); return `<tr><td>${esc(p.endereco)}</td><td><code>${esc(p.ged ? "GED " + p.ged : p.processo)}</code></td><td>${cap(p.regional)}</td><td class="vp-n">${p.qtd_poda || "–"}</td><td class="vp-n">${p.qtd_extirpacao || "–"}</td><td class="vp-nw">${fDia(r.data_vistoria)}</td><td>${esc(r.responsavel || "–")}</td><td>${esc(r.observacao || "")}</td><td class="vp-nw">${fHora(r.enviado_supervisor_em)}</td></tr>`; }).join("")}
+        ${Q.map((p) => { const r = R(p); return `<tr><td>${esc(p.endereco)}</td><td><code>${esc(p.ged ? "GED " + p.ged : p.processo)}</code>${docLinks(r).map(([k, u]) => ` <a class="vp-gm" href="${esc(u)}" target="_blank" rel="noopener">${k === "pdf" ? "📄 PDF" : "🔗 link"}</a>`).join("")}</td><td>${cap(p.regional)}</td><td class="vp-n">${p.qtd_poda || "–"}</td><td class="vp-n">${p.qtd_extirpacao || "–"}</td><td class="vp-nw">${fDia(r.data_vistoria)}</td><td>${esc(r.responsavel || "–")}</td><td>${esc(r.observacao || "")}</td><td class="vp-nw">${fHora(r.enviado_supervisor_em)}</td></tr>`; }).join("")}
         </tbody></table></div>`;
       });
       h += `</section>`;
@@ -3444,6 +3477,10 @@ function montar(root) {
     if (ds.ini) { abrirForm(ds.id, ds.ini); render(); return; }
     if (ds.alterar) { abrirForm(ds.alterar); render(); return; }
     if (ds.fcancel) { fecharForm(ds.fcancel); render(); return; }
+    if (ds.docab) { S.doc[ds.docab] = { file: null, link: R({ id: ds.docab }).proc_link || "" }; render(); return; }
+    if (ds.doccancel) { delete S.doc[ds.doccancel]; render(); return; }
+    if (ds.docsalvar) { docSalvar(ds.docsalvar); return; }
+    if (ds.docrem) { if (await gravar([ds.docrem], { proc_pdf: null, proc_link: null })) { delete S.doc[ds.docrem]; render(); toast("Processo removido"); } return; }
     if (ds.fsit) { S.f[ds.id].sit = ds.fsit; render(); return; }
     if (ds.feq) { const f = S.f[ds.id]; f.equip = f.equip === ds.feq ? "" : ds.feq; render(); return; }
     if (ds.fsalvar) { salvarForm(ds.fsalvar, false); return; }
@@ -3472,7 +3509,7 @@ function montar(root) {
     if (ds.copysup) {
       const nm = ds.copysup; const L = S.proc.filter((p) => R(p).situacao === "nao_executado" && R(p).enviado_supervisor_em && R(p).supervisor_execucao === nm);
       const linhas = [`SERVIÇOS NÃO EXECUTADOS – SUPERVISOR ${nm.toUpperCase()}${supTurma(nm) ? " (" + supTurma(nm) + ")" : ""}`, `Enviados pela Vistoria de Processo · ${new Date().toLocaleDateString("pt-BR")}`];
-      EQUIPS.forEach((q) => { const Q = L.filter((p) => R(p).equipamento === q); if (!Q.length) return; linhas.push("", q.toUpperCase() + ` (${Q.length})`); Q.forEach((p, i) => linhas.push(`${i + 1}. ${p.endereco} – ${p.ged ? "GED " + p.ged : "Proc. " + p.processo} – ${p.qtd_poda} poda / ${p.qtd_extirpacao} extirp.${R(p).observacao ? " – Obs.: " + R(p).observacao : ""}`)); });
+      EQUIPS.forEach((q) => { const Q = L.filter((p) => R(p).equipamento === q); if (!Q.length) return; linhas.push("", q.toUpperCase() + ` (${Q.length})`); Q.forEach((p, i) => linhas.push(`${i + 1}. ${p.endereco} – ${p.ged ? "GED " + p.ged : "Proc. " + p.processo} – ${p.qtd_poda} poda / ${p.qtd_extirpacao} extirp.${R(p).observacao ? " – Obs.: " + R(p).observacao : ""}${docLinks(R(p)).map(([k, u]) => (k === "pdf" ? "\n   Processo (PDF): " : "\n   Processo: ") + u).join("")}`)); });
       copiar(linhas.join("\n"));
     }
   });
@@ -3485,6 +3522,7 @@ function montar(root) {
     if (ds.rk && t.tagName === "SELECT") { S.draft[ds.rk] = t.value; render(); if (t.value === "__outro") { const x = root.querySelector("#vp-rt-" + cssId(ds.rk)); if (x) x.focus(); } return; }
     if (ds.fdt) { S.f[ds.fdt].data = t.value; render(); return; }
     if (ds.fsup) { S.f[ds.fsup].sup = t.value; render(); return; }
+    if (ds.docpdf) { const fl = t.files && t.files[0]; if (!fl) return; if (!/pdf$/i.test(fl.type) && !/\.pdf$/i.test(fl.name)) { toast("Escolha um arquivo PDF"); return; } S.doc[ds.docpdf].file = fl; render(); return; }
     if (ds.ffoto) {
       const file = t.files && t.files[0]; if (!file) return;
       if (!/^image\//.test(file.type)) { toast("Escolha uma imagem"); return; }
@@ -3497,6 +3535,7 @@ function montar(root) {
     if (t.id === "vp-q") { S.q = t.value; render(); return; }
     if (t.dataset.rkt) S.draft[t.dataset.rkt] = t.value || "__outro";
     if (t.dataset.fobs) S.f[t.dataset.fobs].obs = t.value;
+    if (t.dataset.doclink && S.doc[t.dataset.doclink]) S.doc[t.dataset.doclink].link = t.value;
   });
 
   aoVivo(); carregar();
