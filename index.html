@@ -1015,7 +1015,7 @@ body.sofiscal nav.tabs{display:none!important}
 .fosseg b{display:inline-block;min-width:22px;padding:0 6px;border-radius:99px;background:rgba(0,0,0,.08);margin-left:4px}
 .osfim{border-color:var(--ok)!important;background:var(--ok-bg)!important}.osfim h3{color:var(--ok)}
 .osfimc{display:grid;gap:6px;padding:8px 0;border-top:1px solid rgba(0,0,0,.08)}.osfimc small{color:var(--muted)}
-.extrasegue{background:var(--accent);color:#fff;border-radius:10px;padding:10px 12px;font-size:.92em;line-height:1.35}.extracard{border:2px dashed var(--accent)!important}
+.qregra{background:#fff3e8;border:1.5px solid var(--accent);border-radius:10px;padding:8px 12px;margin:0 0 8px;color:var(--ink,#1a2b1f)}.extrasegue{background:var(--accent);color:#fff;border-radius:10px;padding:10px 12px;font-size:.92em;line-height:1.35}.extracard{border:2px dashed var(--accent)!important}
 .extrab{display:inline-block;font:700 11px var(--body);padding:2px 7px;border-radius:99px;background:#fff1e6;color:#b34a00;border:1px solid #f3b27a;vertical-align:middle;margin-left:4px}
 </style>
 
@@ -1257,6 +1257,7 @@ body.sofiscal nav.tabs{display:none!important}
   </section>
   <section class="card" id="qtdCard">
     <div class="step" id="qtdTitle">Quantidades previstas <b>itens do contrato</b></div>
+    <p class="note qregra" id="qRegraNota" hidden></p>
     <div id="qtdMain"></div>
     <div class="total"><span id="totLbl">Receita prevista</span><b id="totMain">R$ 0,00</b></div>
     <div class="metabox" id="metaBox" hidden></div>
@@ -1922,7 +1923,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.04";
+const APP_VERSAO="2026.11.04b";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -2336,10 +2337,26 @@ chipRow($("#tipoChips"), TIPOS.map(t=>({v:t,h:esc(TIPO_LBL[t]||t)})), v=>{form.t
 const servSel=new Set();
 $("#servChips").innerHTML=SERVICOS.map(x=>`<button type="button" class="chip" data-sv="${esc(x)}" aria-pressed="false">${x==="OUTRO"?"Outro (especificar)":esc(x.charAt(0)+x.slice(1).toLowerCase())}</button>`).join("");
 const servPint=()=>$("#servChips").querySelectorAll("[data-sv]").forEach(b=>b.setAttribute("aria-pressed",String(servSel.has(b.dataset.sv))));
-$("#servChips").onclick=e=>{ const b=e.target.closest("[data-sv]"); if(!b) return; const v=b.dataset.sv; servSel.has(v)?servSel.delete(v):servSel.add(v); servPint(); servUI(); if(v==="OUTRO"&&servSel.has(v)) $("#servOutro").focus(); };
+$("#servChips").onclick=e=>{ const b=e.target.closest("[data-sv]"); if(!b) return; const v=b.dataset.sv; servSel.has(v)?servSel.delete(v):servSel.add(v); servPint(); servUI(); try{qRegraUI()}catch(e){} if(v==="OUTRO"&&servSel.has(v)) $("#servOutro").focus(); };
 chipRow($("#stChips"), [{v:"SIM",h:"Executado"},{v:"PARCIAL",h:"Parcial"},{v:"NÃO",h:"Não executado"},{v:"PROGRAMADO",h:"Aguardando atendimento"}], v=>{form.st=v;setPressed($("#stChips"),v);modeUI()});
 const OC={GALHO:"Galho caído",ARVORE:"Árvore caída"};
-chipRow($("#ocChips"), Object.entries(OC).map(([v,h])=>({v,h})), v=>{form.oc=v;setPressed($("#ocChips"),v);$("#ocQLbl").textContent=v==="ARVORE"?"Quantidade de árvores":"Quantidade de galhos"});
+chipRow($("#ocChips"), Object.entries(OC).map(([v,h])=>({v,h})), v=>{form.oc=v;setPressed($("#ocChips"),v);$("#ocQLbl").textContent=v==="ARVORE"?"Quantidade de árvores":"Quantidade de galhos";try{qRegraUI()}catch(e){}});
+
+/* ---------- queda: árvore caída fatura como EXTIRPAÇÃO (DAP/altura); galho caído fatura como PODA ---------- */
+const P2E={"30.2.1":"31.1.1","30.3.1":"31.2.1","30.4.1":"31.3.1"}, E2P={"31.1.1":"30.2.1","31.2.1":"30.3.1","31.3.1":"30.4.1","31.4.1":"30.4.1"};
+// "E" = só extirpação · "P" = só poda · "" = livre
+function quedaRegra(oc,serv){ if(oc==="ARVORE") return "E"; if(oc==="GALHO") return "P";
+  const S=String(serv||"").split(/\s+\+\s+/).map(x=>x.trim()); const arv=S.includes("ÁRVORE CAÍDA"), gal=S.includes("GALHO CAÍDO"), poda=S.some(x=>/^PODA/.test(x)), ext=S.includes("EXTIRPAÇÃO");
+  if(arv&&!gal&&!poda) return "E"; if(gal&&!arv&&!ext) return "P"; return ""; }
+const quedaRegraR=r=>quedaRegra(r?.ocorrencia?.tipo,r?.servico);
+// lançamento já salvo com o grupo errado (ex.: árvore caída em poda)
+function quedaErrado(r){ const g=quedaRegraR(r); if(!g) return ""; const q=r.qtd||{}; const bad=ITENS.filter(i=>i.g!==g&&+q[i.c]); if(!bad.length) return "";
+  return g==="E"?"Árvore caída lançada como PODA: deve ser EXTIRPAÇÃO pelo DAP e altura – toque em Corrigir baixa":"Galho caído lançado como EXTIRPAÇÃO: deve ser PODA pelo DAP e altura – toque em Corrigir baixa"; }
+function qRegraUI(){ const host=$("#qtdMain"); if(!host) return; const g=form.mode==="ocorr"?quedaRegra(form.oc,""):(form.mode==="prog"?"":quedaRegra("",servLer()));
+  const nota=$("#qRegraNota"); const q=readQ("q_"); const conv=[];
+  if(g){ const M=g==="E"?P2E:E2P; ITENS.filter(i=>i.g!==g&&+q[i.c]&&M[i.c]).forEach(i=>{ const d=M[i.c]; q[d]=(+q[d]||0)+(+q[i.c]); conv.push(`${q[i.c]} de ${i.c} → ${d}`); q[i.c]=0; }); if(conv.length) writeQ("q_",q,host); }
+  host.querySelectorAll(".qgroup").forEach((el,ix)=>{ const G=ix===0?"P":"E", sobra=ITENS.some(i=>i.g===G&&+q[i.c]); el.hidden=!!g&&G!==g&&!sobra; });
+  if(nota){ nota.hidden=!g; nota.innerHTML=g==="E"?`🌳 <b>Árvore caída</b> é faturada como <b>EXTIRPAÇÃO</b>, pelo DAP e pela altura da árvore retirada.${conv.length?` <b>Convertido:</b> ${conv.join(" · ")}.`:""}`:g==="P"?`🌿 <b>Galho caído</b> é faturado como <b>PODA</b>, pelo DAP e pela altura da árvore.${conv.length?` <b>Convertido:</b> ${conv.join(" · ")}.`:""}`:""; } }
 const tagOc=r=>r.ocorrencia?`<span class="tagoc">${OC[r.ocorrencia.tipo]||"Ocorrência"}</span>`:"";
 
 // lista de IDs: uma linha por ID (1º ID, 2º ID, 3º ID…); entre-pista pode ter vários, praça e área pública um só
@@ -2563,7 +2580,7 @@ function modeUI(){
   $("#naoNote").innerHTML = parc ? "O que <b>faltou executar</b> (previsto menos executado) será <b>remarcado</b> para a nova data." : "O serviço programado será <b>remarcado</b> para a nova data. Abaixo, registre o <b>outro serviço que a equipe fez no dia</b>.";
   $("#qtdCard").hidden = (m==="baixa" && nao) || (m==="ocorr" && !(form.st==="SIM"||form.st==="PARCIAL"));
   $("#subCard").hidden = !(m==="baixa" && nao);
-  if(m==="baixa") showPrev(prevQ(form.base||{}));
+  if(m==="baixa") showPrev(prevQ(form.base||{})); try{qRegraUI()}catch(e){}
   $("#qtdTitle").firstChild.textContent = m==="prog" ? "Quantidades previstas " : m==="ocorr" ? "Itens do contrato executados (se houver) " : form.st==="PARCIAL" ? "Quantidades realmente executadas " : "Quantidades executadas ";
   $("#totLbl").textContent = m==="prog" ? "Receita prevista" : "Receita executada";
   $("#dataLbl").textContent = m==="avulso" ? "Data da execução" : m==="ocorr" ? "Data da ocorrência" : "Data programada";
@@ -2885,6 +2902,7 @@ $("#form").addEventListener("submit", async ev=>{
     const q = usaPct ? pctQ(prevQ(base),pcts) : execOk ? readQ("q_") : {};
     if(execOk && m!=="ocorr" && !Object.keys(q).length) e.push("lance as quantidades executadas");
     if(m==="ocorr" && !form.oc) e.push("marque se é galho caído ou árvore caída");
+    { const g=m==="ocorr"?quedaRegra(form.oc,""):m==="prog"?"":quedaRegra("",servLer()), q=readQ("q_"); if(g&&ITENS.some(i=>i.g!==g&&+q[i.c])) e.push(g==="E"?"árvore caída é faturada como EXTIRPAÇÃO: tire o item de poda (DAP até 20 cm não tem item de extirpação no contrato)":"galho caído é faturado como PODA: tire o item de extirpação"); }
     if(m==="ocorr" && form.sup && impCands().length){ if(form.impHouve===undefined) e.push("informe se a emergência afetou a programação do dia");
       else if(form.impHouve && !impCands().some(r=>form.impSel?.[r.id])) e.push("marque qual serviço programado foi afetado (ou responda “Não afetou”)"); }
     if(m==="ocorr" && execOk && !Object.keys(q).length && !e.length && !form.okSemItens){ form.okSemItens=true;
@@ -4272,6 +4290,7 @@ function renderOc(){
     <div class="where" style="font-weight:600;overflow-wrap:anywhere">${tagOc(r)}${o.qtd||1} un. · ${esc(r.bairro)} — ${esc(r.logradouro)}</div>
     <div class="meta" style="font-size:13px;color:var(--muted)">${esc(r.supervisao)}${o.origem?" · "+esc(o.origem):""}${o.protocolo?" · prot. "+esc(o.protocolo):""}${o.rede?" · <b>rede elétrica</b>":""}${o.via?" · <b>via bloqueada</b>":""}${o.danos?" · danos":""}</div>
     ${impTxt(o)}
+    ${quedaErrado(r)?`<div style="color:var(--bad);font-weight:700;font-size:13px;margin-top:4px">⚠ ${esc(quedaErrado(r))}</div>`:""}
     ${isProg(r)?`<div class="acts" style="grid-template-columns:1fr auto;align-items:stretch">${minha(r)?`<button type="button" class="btn pri" data-ocat="${esc(r.id)}">Registrar atendimento</button>`:`<span class="note" style="align-self:center">Registro de outra turma</span>`}${mapLink(r,"Mapa")}</div>`
       :`<div class="nums" style="font-size:13px">Atendido em ${fmtD(r.dataExec||r.data)} · <b>${brl(execRec(r))}</b> ${minha(r)?`<button type="button" class="btn sec" data-ocat="${esc(r.id)}" style="min-height:36px;font-size:13px;padding:0 12px;margin-left:6px">Corrigir</button>`:""}<button type="button" class="btn sec" data-ocver="${esc(r.id)}" style="min-height:36px;font-size:13px;padding:0 12px;margin-left:6px">Ver</button></div>`}
   </div>`};
@@ -4574,7 +4593,7 @@ function detalhe(r, abrirAdiar=false, soVer=false){
       <dt>Tipo</dt><dd>${esc(r.tipo||"—")}${r.processo?" · "+esc(procNum(r)):""}${r.parecer?" · parecer técnico nº "+esc(r.parecer):""}</dd>${r.areaId?`<dt>Área URBANTRIM</dt><dd><b style="color:var(--brand)">${esc(areaTxt(r))}</b></dd>`:""}${r.servico?`<dt>Serviço</dt><dd>${esc(r.servico)}</dd>`:""}
       ${r.extra?`<dt>Serviço extra</dt><dd><span class="extrab">⚡ EXTRA</span> enviado por <b>${esc(r.extra.origem||"—")}</b>${r.extra.just?" · "+esc(r.extra.just):""}<br><small>lançado por ${esc(r.extra.por||"—")} em ${fmtHora(r.extra.em)}</small></dd>`:""}
       ${r.avulso?`<dt>Origem</dt><dd>Serviço sem programação</dd>`:`<dt>Previsto</dt><dd>${qtdTxt(pq)}<br>Valor previsto: <b>${brl(receitaDe(pq))}</b></dd>`}
-      ${(r.status==="SIM"||r.status==="PARCIAL")?`<dt>Executado</dt><dd>${qtdTxt(r.qtd)}<br>Valor executado: <b>${brl(receitaDe(r.qtd))}</b>${r.dataExec&&r.dataExec!==r.data?" em "+fmtD(r.dataExec):""}</dd>`:""}
+      ${(r.status==="SIM"||r.status==="PARCIAL")?`${quedaErrado(r)?`<dt>Atenção</dt><dd><b style="color:var(--bad)">⚠ ${esc(quedaErrado(r))}</b></dd>`:""}<dt>Executado</dt><dd>${qtdTxt(r.qtd)}<br>Valor executado: <b>${brl(receitaDe(r.qtd))}</b>${r.dataExec&&r.dataExec!==r.data?" em "+fmtD(r.dataExec):""}</dd>`:""}
       ${r.status==="PARCIAL"&&r.proxData?`<dt>Não executado · remarcado</dt><dd>${qtdTxt(r.qtdRemarcada)}<br>remarcado p/ ${fmtD(r.proxData)} · ${esc(r.motivo||"")}</dd>`:""}
       ${r.status==="NÃO"?`${r.outraEquipe?`<dt>Não executado</dt><dd>${esc(outraTxt(r))}</dd>`:`<dt>Remarcado</dt><dd>para ${fmtD(r.proxData)} · ${esc(r.motivo||"")}</dd>`}
         <dt>No lugar</dt><dd>${s?`${fmtD(s.data)} · ${esc(s.bairro)} — ${esc(s.logradouro)} (${esc(s.tipo)})<br>${qtdTxt(s.qtd)}<br>Valor: <b>${brl(s.receita)}</b>`:"Nenhum serviço executado no lugar"}</dd>`:""}
