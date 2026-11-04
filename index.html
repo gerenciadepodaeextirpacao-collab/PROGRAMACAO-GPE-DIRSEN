@@ -1927,7 +1927,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.04o";
+const APP_VERSAO="2026.11.04p";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -3199,8 +3199,10 @@ function montar(root) {
     const agora = new Date().toISOString();
     ids.forEach((id) => (S.reg[id] = Object.assign({ processo_id: id }, S.reg[id] || {}, campos, { atualizado_em: agora, atualizado_por: usuario() })));
     render();
-    try { for (const id of ids) await db.collection(VIST_COL).doc(id).set(S.reg[id]); return true; }
-    catch (e) { ids.forEach((id) => { if (antes[id]) S.reg[id] = antes[id]; else delete S.reg[id]; }); render(); toast("Não foi possível salvar: " + (e && e.message || e)); return false; }
+    try { for (const id of ids) await db.collection(VIST_COL).doc(id).set(S.reg[id]); if (S.erroGrav) { S.erroGrav = ""; render(); } return true; }
+    catch (e) { ids.forEach((id) => { if (antes[id]) S.reg[id] = antes[id]; else delete S.reg[id]; }); render(); const m = String(e && e.message || e || "");
+      if (/colecao_valida|check constraint|violates/i.test(m)) { S.erroGrav = "O banco ainda não aceita a vistoria: rode o GPE-VISTORIA.sql no Supabase (SQL Editor › colar › Run) e tente de novo."; render(); }
+      toast("Não foi possível salvar: " + m); return false; }
   }
   const fotoPend = {};
   const fotoUrl = (m) => { if (!m) return ""; if (typeof m === "string") return m; const u = midUrl(m), k = m.id || m.db;
@@ -3280,7 +3282,7 @@ function montar(root) {
     let sel = null; try { sel = fid && ae.tagName !== "SELECT" ? [ae.selectionStart, ae.selectionEnd] : null; } catch (e) {}
     const corpo = S.carregando ? `<p class="vp-msg">Carregando processos…</p>` : S.erro ? `<p class="vp-msg">${esc(S.erro)}</p>`
       : S.tela === "resumo" ? resumo() : S.tela === "pdfs" && pode.coord() ? pdfs() : rotas();
-    root.innerHTML = cab() + corpo + `<div class="vp-toast" id="vp-toast" role="status"></div>`;
+    root.innerHTML = cab() + (S.erroGrav ? `<p class="vp-need" style="background:#fdecea;padding:10px 12px;border-radius:8px">⚠ ${esc(S.erroGrav)}</p>` : "") + corpo + `<div class="vp-toast" id="vp-toast" role="status"></div>`;
     if (fid) { const el = root.querySelector("#" + cssId(fid)); if (el) { el.focus(); if (sel) try { el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
   }
   function cab() {
@@ -3312,7 +3314,6 @@ function montar(root) {
     if (!f) {
       if (!pode.lancar()) return `<div class="vp-vb"><span class="vp-msg">Ainda não vistoriado.</span></div>`;
       if (!eu && !pode.coord()) return "";
-      if (!eu && pode.coord() && !dono(p)) return "";
       return `<div class="vp-vb"><div class="vp-row"><span class="vp-lab">No local, o serviço</span><button class="vp-opt vp-s-ja_executado" data-ini="ja_executado" data-id="${p.id}">Já foi executado</button><button class="vp-opt vp-s-nao_executado" data-ini="nao_executado" data-id="${p.id}">Ainda não foi executado</button></div></div>`;
     }
     let h = `<div class="vp-vb"><div class="vp-row"><span class="vp-lab">No local, o serviço</span><button class="vp-opt vp-s-ja_executado" data-fsit="ja_executado" data-id="${p.id}" aria-pressed="${f.sit === "ja_executado"}">Já foi executado</button><button class="vp-opt vp-s-nao_executado" data-fsit="nao_executado" data-id="${p.id}" aria-pressed="${f.sit === "nao_executado"}">Ainda não foi executado</button></div>
@@ -3365,7 +3366,7 @@ function montar(root) {
       const dv = S.draft && S.draft[ci] !== undefined ? S.draft[ci] : atual === "__mix" ? "" : atual;
       let resp = "";
       if (!pend.length) resp = `<span class="vp-sp vp-s-ja_executado">Rota concluída</span>`;
-      else if (coord) resp = `<span class="vp-lab">Vistoriador</span><select id="vp-rv-${ci}" data-rvsel="${ci}"><option value="">${atual === "__mix" ? "Vários – escolha para unificar" : "— Escolher o vistoriador —"}</option>${S.vist.map((v) => `<option value="${esc(v.uid)}"${v.uid === dv ? " selected" : ""}>${esc(v.nome)}</option>`).join("")}</select><button class="vp-btn vp-warn" data-indvist="${ci}">Indicar</button>${atual && atual !== "__mix" ? `<span class="vp-ok">Indicado: <b>${esc(nomeDe(atual))}</b> <button class="vp-btn" data-tirarvist="${ci}" style="padding:3px 8px;font-size:12px">tirar</button></span>` : atual === "__mix" ? `<span class="vp-ok">Vários vistoriadores: ${esc(nomes.filter(Boolean).map(nomeDe).join(", "))}</span>` : `<span class="vp-need" style="flex-basis:100%">Rota sem vistoriador</span>`}`;
+      else if (coord) resp = `<span class="vp-lab">Vistoriador</span><select id="vp-rv-${ci}" data-rvsel="${ci}"><option value="">${atual === "__mix" ? "Vários – escolha para unificar" : "— Escolher o vistoriador —"}</option>${S.vist.map((v) => `<option value="${esc(v.uid)}"${v.uid === dv ? " selected" : ""}>${esc(v.nome)}</option>`).join("")}</select><button class="vp-btn vp-warn" data-indvist="${ci}">${atual && atual !== "__mix" ? "Trocar" : "Indicar"}</button>${atual && atual !== "__mix" ? `<span class="vp-ok">Indicado: <b>${esc(nomeDe(atual))}</b> <button class="vp-btn" data-tirarvist="${ci}" style="padding:3px 8px;font-size:12px">tirar</button></span>` : atual === "__mix" ? `<span class="vp-ok">Vários vistoriadores: ${esc(nomes.filter(Boolean).map(nomeDe).join(", "))}</span>` : `<span class="vp-need" style="flex-basis:100%">Rota sem vistoriador: escolha o nome acima (você também pode lançar a vistoria direto, sem indicar ninguém)</span>`}`;
       else resp = `<span class="vp-sp vp-env">✔ Sua rota · ${pend.length} a vistoriar</span>`;
       h += `<section class="vp-card${!coord || (atual && atual === meuId()) ? " vp-mine" : ""}"><div class="vp-head"><div><b>Rota ${ro.n}</b> <small>${ch.length} paradas · ${po} poda · ${ex} extirpação · ${feitos} vistoriados</small></div>
       <div class="vp-sets">${[...new Set(ch.map((p) => p.setor))].map(esc).join(" · ")}</div>
@@ -3574,7 +3575,7 @@ function montar(root) {
     if (t.id === "vp-per") { S.per = +t.value || 10; LS("vp-per", S.per); render(); return; }
     if (t.id === "vp-start") { S.start = t.value; LS("vp-start", S.start); render(); return; }
     if (t.id === "vp-hide") { S.hide = t.checked; render(); return; }
-    if (ds.rvsel !== undefined) { S.draft = S.draft || {}; S.draft[ds.rvsel] = t.value; return; }
+    if (ds.rvsel !== undefined) { S.draft = S.draft || {}; S.draft[ds.rvsel] = t.value; if (t.value) indicarRota(+ds.rvsel, t.value); return; }
     if (t.id === "vp-rreg") { S.rreg = t.value; render(); return; }
     if (t.id === "vp-preg") { S.preg = t.value; S.lim = 40; render(); return; }
     if (ds.pdflote) { const fs = [...(t.files || [])].filter((f) => /pdf$/i.test(f.type) || /\.pdf$/i.test(f.name)); if (!fs.length) { toast("Escolha arquivos PDF"); return; }
