@@ -1809,7 +1809,7 @@ function abrirAcessos(){
     <details class="acinfo"><summary>Como funcionam os acessos</summary><p class="note" style="margin:6px 0 0">Cada pessoa entra com a <b>matrícula</b> (ex.: m859209) e uma senha de pelo menos 6 caracteres (letras e números). Só o <b>administrador</b> vê tudo, sem restrição. O <b>gerente DIRSEN</b> vê o PODA I e o PODA II; o <b>gerente DIROP</b> vê o PODA III e o PODA IV. Quem está lotado na <b>DIRSEN</b> (ou diretoria) vê só o PODA I e o PODA II; quem está lotado na <b>DIROP</b> vê só o PODA III e o PODA IV (a diretoria só consulta); supervisor e fiscal só a própria turma.</p></details><p class="note" style="margin:0">${canAdmin?"":" <b>Você não é dono nem editor deste app: pode ver, mas não alterar.</b>"}</p>
     ${AC_AREAS.filter(ar=>isAdm()||ar.k!=="dirop").map(ar=>{ const it=lista.filter(([id,u])=>areaAcesso(u)===ar.k); if(!it.length&&(ar.k==="dir"||ar.k==="adm")) return ""; return `<div class="acsec"><div class="acsech"><b>${ar.t}</b><span>${ar.d} · ${it.length} ${it.length===1?"pessoa":"pessoas"}</span></div><div class="list">${it.length?"":`<p class="note" style="margin:0">Ninguém cadastrado ainda.</p>`}${it.map(([id,u])=>`<div class="prog accard" data-uid="${esc(id)}" data-busca="${esc([u.nome,matDe(u),PERF[u.perfil]||u.perfil,u.sup,u.equipe].filter(Boolean).join(" ").toLowerCase())}">
       <div class="achead" style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b style="font-size:16px">${esc(u.nome)}</b><span class="pill ${!u.ativo?"NÃO":(u.hash&&matDe(u))?"SIM":"ATRASADO"}">${!u.ativo?"Desativado":!matDe(u)?"Sem matrícula":u.hash?"Liberado":"Sem senha"}</span></div>
-      <div class="note">${u.perfil==="admin"?"Usuário":"Matrícula"} <b>${esc(matDe(u)||"—")}</b> · ${PERF[u.perfil]||u.perfil}${u.sup?" · "+esc(u.sup):""}${u.zap?` · 📱 ${esc(zapFmt(u.zap))}`:u.perfil==="supervisor"?` · <span style="color:var(--warn)">sem WhatsApp</span>`:""}${u.perfil==="fiscal"?` · <b>fiscal de turma – ${esc((u.equipe||"equipe não informada").toLowerCase())}</b>`:""}${u.perfil==="gerencia"?` · <b style="color:var(--ok)">💬 cobra todas as podas</b>`:u.perfil==="gerencia_op"?` · <b style="color:var(--ok)">💬 cobra Poda III e IV</b>`:cobraFlag(u)?` · <b style="color:var(--ok)">💬 cobra Poda I e II</b>`:""}</div>
+      <div class="note">${u.perfil==="admin"?"Usuário":"Matrícula"} <b>${esc(matDe(u)||"—")}</b> · ${PERF[u.perfil]||u.perfil}${u.sup?" · "+esc(u.sup):""}${u.zap?` · 📱 ${esc(zapFmt(u.zap))}`:u.perfil==="supervisor"?` · <span style="color:var(--warn)">sem WhatsApp</span>`:""}${u.perfil==="fiscal"?` · <b>fiscal de turma – ${u.equipe?esc(u.equipe.toLowerCase()):"sem equipe fixa (todas as equipes)"}</b>`:""}${u.perfil==="gerencia"?` · <b style="color:var(--ok)">💬 cobra todas as podas</b>`:u.perfil==="gerencia_op"?` · <b style="color:var(--ok)">💬 cobra Poda III e IV</b>`:cobraFlag(u)?` · <b style="color:var(--ok)">💬 cobra Poda I e II</b>`:""}</div>
       ${canAdmin?`<details class="acdet" data-acdet="${esc(id)}" ${AC_ABERTOS.has(id)?"open":""}><summary>⚙ Gerenciar: senha, assinatura e editar</summary><div class="acdetb">
       <div class="row2"><input type="password" placeholder="${u.hash?"Nova senha":"Definir senha"}" data-pin="${esc(id)}" aria-label="Senha de ${esc(u.nome)}">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><button type="button" class="btn pri" style="min-height:48px;font-size:14px" data-savepin="${esc(id)}">Salvar senha</button>
@@ -1827,7 +1827,7 @@ function abrirAcessos(){
         <label class="ck"><input type="checkbox" data-edcobra ${cobraFlag(u)?"checked":""}><span>💬 Pode cobrar no WhatsApp as turmas da Poda I e II</span></label>
         <div class="row2"><label class="f">Perfil<select data-edperf>${Object.entries(PERF).filter(([k])=>k!=="admin"||podeCriarAdm()||u.perfil==="admin").map(([k,t])=>`<option value="${k}" ${k===u.perfil?"selected":""}>${PERF_DESC[k]}</option>`).join("")}</select></label>
         <label class="f" data-edsupw>${lotRot(u.perfil)}<select data-edsup>${lotOpts(u.perfil,u.sup)}</select></label></div>
-        <label class="f" data-edeqw ${u.perfil==="fiscal"?"":"hidden"}>Fiscal de turma de qual equipe (recebe a O.S do dia)<select data-edeq>${["1ª EQUIPE","2ª EQUIPE","3ª EQUIPE"].map(q=>`<option value="${q}" ${u.equipe===q?"selected":""}>Fiscal de turma – ${q.toLowerCase()}</option>`).join("")}</select></label>
+        <label class="f" data-edeqw ${u.perfil==="fiscal"?"":"hidden"}>Equipe do fiscal (recebe a O.S do dia)<select data-edeq><option value="" ${!u.equipe?"selected":""}>Sem equipe (todas as equipes)</option>${["1ª EQUIPE","2ª EQUIPE","3ª EQUIPE"].map(q=>`<option value="${q}" ${u.equipe===q?"selected":""}>Fiscal de turma – ${q.toLowerCase()}</option>`).join("")}</select></label>
         <button type="button" class="btn pri" data-saveedit="${esc(id)}">Salvar alterações</button>
         ${abasPessoaHtml(id,u)}
       </div></div></details>`:""}
@@ -1842,7 +1842,7 @@ function abrirAcessos(){
       <div class="row2"><label class="f">Perfil<select id="nuPerf">${["supervisor","supervisor1","fiscal","coordenador","ger_equipe","gerencia","gerencia_op","diretoria","admin"].filter(k=>k!=="admin"||podeCriarAdm()).map(k=>`<option value="${k}">${PERF_DESC[k]}</option>`).join("")}</select></label>
       <label class="f">Senha<input id="nuPin" type="password" placeholder="Mínimo 6 caracteres"></label></div>
       <label class="f" id="nuSupW">Turma<select id="nuSup">${lotOpts("supervisor","")}</select></label>
-      <label class="f" id="nuEqW" hidden>Fiscal de turma de qual equipe (recebe a O.S do dia)<select id="nuEq"><option value="1ª EQUIPE">Fiscal de turma – 1ª equipe</option><option value="2ª EQUIPE">Fiscal de turma – 2ª equipe</option><option value="3ª EQUIPE">Fiscal de turma – 3ª equipe</option></select></label>
+      <label class="f" id="nuEqW" hidden>Equipe do fiscal (recebe a O.S do dia)<select id="nuEq"><option value="">Sem equipe (todas as equipes)</option><option value="1ª EQUIPE">Fiscal de turma – 1ª equipe</option><option value="2ª EQUIPE">Fiscal de turma – 2ª equipe</option><option value="3ª EQUIPE">Fiscal de turma – 3ª equipe</option></select></label>
       <button type="button" class="btn pri" id="nuAdd">Adicionar</button></section>`:""}
     <details class="card" style="margin:0"><summary style="cursor:pointer;font-weight:700">🔗 Links do app <span class="note">(só o gerente vê)</span></summary>
       <div style="display:grid;gap:10px;margin-top:8px">${LINKS_APP.map((l,i)=>`<div class="lkrow"><div><b>${esc(l.t)}</b><small>${esc(l.s)}</small><a href="${esc(l.u)}" target="_blank" rel="noopener">${esc(l.u)}</a></div><button type="button" class="btn sec" data-cplink="${i}">Copiar</button></div>`).join("")}</div></details>
@@ -1927,7 +1927,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.05b";
+const APP_VERSAO="2026.11.05d";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -3088,7 +3088,10 @@ const V={regs:{},rotas:{},pronto:false,erro:"",ouvintes:new Set(),_sub:null};
 V.iniciar=()=>{ if(V._sub||!db) return; V._sub=true; try{ V._sub=db.collection(VIST_COL).limit(5000).onSnapshot(snap=>{ const o={}, ro={}; snap.docs.forEach(d=>{ if(d.id.startsWith("rota_")) ro[d.id]=d.data(); else o[d.id]=d.data(); }); V.regs=o; V.rotas=ro; V.pronto=true; V.erro=""; V.ouvintes.forEach(f=>{try{f()}catch(e){}}); }, err=>{ V.pronto=true; V.erro="Não foi possível carregar as vistorias ("+(err?.message||err)+"). Se o app está no Netlify, rode o GPE-VISTORIA.sql no Supabase."; V.ouvintes.forEach(f=>{try{f()}catch(e){}}); }); }catch(e){ V.erro=String(e?.message||e); } };
 V.ouvir=f=>{ V.ouvintes.add(f); V.iniciar(); };
 const ativos=()=>{ const ids=new Set(VIST_RAW.map(a=>a[0])); return Object.entries(V.regs).filter(([k])=>ids.has(k)).map(([,r])=>r); };
-V.nTurma=()=>0; V.nCoord=()=>0; V.nBaixa=()=>0; V.enviadosTurma=V.nTurma;
+V.nCoord=()=>0; V.nBaixa=()=>0;
+// serviços não executados enviados pela coordenação para a turma executar (ainda não informados como executados)
+V.nTurma=sup=>Object.values(V.regs).filter(r=>r&&r.situacao==="nao_executado"&&r.envio&&r.envio.sup===sup&&!r.execucao).length;
+V.enviadosTurma=V.nTurma;
 // processos indicados para o vistoriador e ainda não vistoriados
 V.nMeus=uid=>{ const ids=new Set(VIST_RAW.map(a=>a[0])); return Object.entries(V.regs).filter(([k,r])=>(ids.has(k)||(r&&r.manual&&!r.manual.removido))&&r&&r.rota&&r.rota.uid===uid&&!r.vistoriado).length; };
 
@@ -3185,14 +3188,14 @@ function montar(root) {
   const meuId = () => (typeof sessao !== "undefined" && sessao && sessao.id) || "";
   const S = { proc: [], reg: {}, rotas: {}, sups: [], tela: "rotas", grp: LS("vp-grp") || "all", yr: LS("vp-yr") || "all", cur: LS("vp-reg") || "CENTRO OESTE",
     start: LS("vp-start") || "", per: +(LS("vp-per") || 10), q: "", hide: true, minhas: false, f: {}, doc: {}, x: {}, lim: 40, supF: "", erro: "", carregando: true, busy: {} };
-  const pode = { lancar: () => !soLeitura(), coord: () => vistCoord(), resumo: () => vistAlto() };
+  const pode = { lancar: () => !soLeitura(), coord: () => vistCoord(), resumo: () => vistAlto(), sup: () => !!sessao && travado() && !!sessao.sup };
   const minhaAlguma = () => Object.values(S.reg || {}).some((r) => r && r.rota && r.rota.uid === meuId() && !r.vistoriado);
 
   // ---------------- dados ----------------
   function listas() {
     S.sups = SUPS.filter((x) => noEscopo(x.id)).map((x) => ({ nome: x.id, turma: nomeSupDe(x.id) || "" }));
     S.vist = Object.entries(acesso || {}).filter(([, u]) => u && u.ativo !== false && u.nome && u.perfil !== "fiscal" && u.perfil !== "admin").map(([id, u]) => ({ uid: id, nome: u.nome })).sort((a, b) => a.nome.localeCompare(b.nome, "pt"));
-    const quem = meuId(); if (S._ini !== quem) { S._ini = quem; S.tela = pode.resumo() && !pode.coord() && !minhaAlguma() ? "resumo" : "rotas"; }
+    const quem = meuId(); if (S._ini !== quem) { S._ini = quem; S.tela = pode.sup() && VIST.nTurma(sessao.sup) && !minhaAlguma() ? "exec" : pode.resumo() && !pode.coord() && !minhaAlguma() ? "resumo" : "rotas"; }
   }
   const REGN = ["CENTRO OESTE", "SUL", "LESTE", "NORTE", "OESTE"];
   let _base = null;
@@ -3292,7 +3295,7 @@ function montar(root) {
     const ae = document.activeElement; const fid = ae && root.contains(ae) && ae.id ? ae.id : null;
     let sel = null; try { sel = fid && ae.tagName !== "SELECT" ? [ae.selectionStart, ae.selectionEnd] : null; } catch (e) {}
     const corpo = S.carregando ? `<p class="vp-msg">Carregando processos…</p>` : S.erro ? `<p class="vp-msg">${esc(S.erro)}</p>`
-      : S.tela === "resumo" && pode.resumo() ? resumo() : S.tela === "pdfs" && pode.coord() ? pdfs() : rotas();
+      : S.tela === "exec" && pode.sup() ? execTurma() : S.tela === "resumo" && pode.resumo() ? resumo() : S.tela === "pdfs" && pode.coord() ? pdfs() : rotas();
     root.innerHTML = cab() + (S.erroGrav ? `<p class="vp-need" style="background:#fdecea;padding:10px 12px;border-radius:8px">⚠ ${esc(S.erroGrav)}</p>` : "") + corpo + `<div class="vp-toast" id="vp-toast" role="status"></div>`;
     if (fid) { const el = root.querySelector("#" + cssId(fid)); if (el) { el.focus(); if (sel) try { el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
   }
@@ -3302,6 +3305,7 @@ function montar(root) {
     const anos = {}; base.forEach((p) => (anos[p.ano || 0] = (anos[p.ano || 0] || 0) + 1));
     const ys = Object.keys(anos).map(Number).sort((a, b) => (a || 9999) - (b || 9999));
     const T = [["rotas", pode.resumo() ? "Rotas" : "Minhas rotas"]];
+    if (pode.sup()) T.push(["exec", `Para executar (${VIST.nTurma(sessao.sup)})`]);
     if (pode.resumo()) T.push(["resumo", `Resumo das vistorias (${d})`]);
     if (pode.coord()) T.push(["pdfs", `📄 PDFs dos processos (${all.filter((p) => docLinks(R(p)).length).length}/${all.length})`]);
     if (!T.some(([k]) => k === S.tela)) S.tela = "rotas";
@@ -3526,7 +3530,7 @@ function montar(root) {
   }
   function listaResumo() {
     const term = (S.rq || "").trim().toLowerCase();
-    return S.proc.filter((p) => R(p).vistoriado && (S.rsit === "all" || !S.rsit || (S.rsit === "urb" ? (R(p).urbantrim || {}).st === "pend" && vistEst(R(p)) === "nao_executado" : S.rsit === "semb" ? !R(p).baixa : S.rsit === "bx" ? !!R(p).baixa : vistEst(R(p)) === S.rsit)) && (!S.rreg || p.regional === S.rreg)
+    return S.proc.filter((p) => R(p).vistoriado && (S.rsit === "all" || !S.rsit || (S.rsit === "urb" ? (R(p).urbantrim || {}).st === "pend" && vistEst(R(p)) === "nao_executado" : S.rsit === "semenv" ? R(p).situacao === "nao_executado" && !R(p).envio : S.rsit === "env" ? !!R(p).envio && !R(p).execucao : S.rsit === "exe" ? !!R(p).execucao : S.rsit === "semb" ? !R(p).baixa : S.rsit === "bx" ? !!R(p).baixa : vistEst(R(p)) === S.rsit)) && (!S.rreg || p.regional === S.rreg)
       && (!term || [p.processo, p.endereco, p.setor, p.ged, R(p).responsavel, R(p).equipamento, R(p).observacao].join(" ").toLowerCase().includes(term)))
       .sort((a, b) => ((R(b).data_vistoria || "") + (R(b).atualizado_em || "")).localeCompare((R(a).data_vistoria || "") + (R(a).atualizado_em || "")));
   }
@@ -3537,12 +3541,12 @@ function montar(root) {
     <div class="vp-kpi"><b style="color:var(--lf)">${c.ja_executado}</b><span>Já executados</span><em>com foto que comprova</em></div>
     <div class="vp-kpi"><b style="color:var(--bk)">${c.nao_executado}</b><span>Não executados</span><em>${A.byEq.map((x) => x.n + " " + x.q).join(" · ")}${A.urbPend ? ` · <strong style="color:var(--rd)">${A.urbPend} sem Urbantrim</strong>` : ""}</em></div></div>
     <h3>Vistorias realizadas</h3>
-    <div class="vp-row">${[["all", "Todas", d], ["ja_executado", "Já executado", c.ja_executado], ["nao_executado", "Não executado", c.nao_executado], ["urb", "Falta registrar no Urbantrim", A.urbPend], ["semb", "Aguardando baixa no sistema", A.D.filter((p) => !R(p).baixa).length], ["bx", "Baixados no sistema", A.D.filter((p) => R(p).baixa).length]].map(([k, t, q]) => `<button class="vp-chip" data-rsit="${k}" aria-pressed="${(S.rsit || "all") === k}">${t}<small>${q}</small></button>`).join("")}</div>
+    <div class="vp-row">${[["all", "Todas", d], ["ja_executado", "Já executado", c.ja_executado], ["nao_executado", "Não executado", c.nao_executado], ["urb", "Falta registrar no Urbantrim", A.urbPend], ["semenv", "Não executado sem envio", A.D.filter((p) => R(p).situacao === "nao_executado" && !R(p).envio).length], ["env", "Enviados para execução", A.D.filter((p) => R(p).envio && !R(p).execucao).length], ["exe", "Executados pela turma", A.D.filter((p) => R(p).execucao).length], ["semb", "Aguardando baixa no sistema", A.D.filter((p) => !R(p).baixa).length], ["bx", "Baixados no sistema", A.D.filter((p) => R(p).baixa).length]].map(([k, t, q]) => `<button class="vp-chip" data-rsit="${k}" aria-pressed="${(S.rsit || "all") === k}">${t}<small>${q}</small></button>`).join("")}</div>
     <div class="vp-ctl"><label class="vp-f">Regional<select id="vp-rreg"><option value="">Todas</option>${REGS.map((r) => `<option value="${r}"${S.rreg === r ? " selected" : ""}>${cap(r)}</option>`).join("")}</select></label>
     <label class="vp-f vp-grow">Buscar<input type="search" id="vp-rq" value="${esc(S.rq || "")}" placeholder="Processo, rua, vistoriador"></label></div>
     ${L.length ? `<section class="vp-card"><ol>${L.slice(0, S.lim).map((p) => { const r = R(p), u = r.urbantrim || {};
       const aberto = S.rab && S.rab[p.id];
-      const linha = `<button class="vp-rrow" data-rab="${p.id}" aria-expanded="${!!aberto}"><span class="vp-rdt">${fDia(r.data_vistoria)}</span>${estPill(r)}<span class="vp-rproc">${esc(p.processo)}${r.baixa ? ` <span class="vp-sp vp-env" style="font-family:inherit">✔ baixado ${esc(r.baixa.sistema)} ${fDia(r.baixa.data)}</span>` : ""}</span><span class="vp-rend">${esc(p.endereco)}</span><span class="vp-msg">${cap(p.regional)} · ${esc(r.responsavel || "–")}</span><span class="vp-rseta">${aberto ? "▲" : "▼"}</span></button>`;
+      const linha = `<button class="vp-rrow" data-rab="${p.id}" aria-expanded="${!!aberto}"><span class="vp-rdt">${fDia(r.data_vistoria)}</span>${estPill(r)}<span class="vp-rproc">${esc(p.processo)}${r.baixa ? ` <span class="vp-sp vp-env" style="font-family:inherit">✔ baixado ${esc(r.baixa.sistema)} ${fDia(r.baixa.data)}</span>` : ""}${r.situacao === "nao_executado" ? (r.execucao ? ` <span class="vp-sp vp-s-ja_executado" style="font-family:inherit">✔ executado ${fDia(r.execucao.data)}</span>` : r.envio ? ` <span class="vp-sp vp-s-nao_executado" style="font-family:inherit">📤 ${esc(r.envio.sup)}</span>` : "") : ""}</span><span class="vp-rend">${esc(p.endereco)}</span><span class="vp-msg">${cap(p.regional)} · ${esc(r.responsavel || "–")}</span><span class="vp-rseta">${aberto ? "▲" : "▼"}</span></button>`;
       if (!aberto) return `<li class="vp-rli">${linha}</li>`;
       return `<li class="vp-rli vp-ropen">${linha}<div class="vp-rdet">
         <div class="vp-row"><span class="vp-msg">Vistoria em <b>${fDia(r.data_vistoria)}</b> · ${esc(r.responsavel || "–")}</span></div>
@@ -3556,6 +3560,7 @@ function montar(root) {
         ${docLinks(r).length ? `<div class="vp-doc">${docLinks(r).map(([k, u2]) => `<a class="vp-btn" href="${esc(u2)}" target="_blank" rel="noopener">${k === "pdf" ? "📄 PDF do processo" : "🔗 Link do processo"}</a>`).join("")}</div>` : ""}
         <div class="vp-msg" style="margin-top:4px">Registrado em ${fHora(r.atualizado_em)}${r.atualizado_por ? " por " + esc(r.atualizado_por) : ""}${r.rota && r.rota.vistoriador ? " · rota indicada para " + esc(r.rota.vistoriador) : ""}</div>
         <div class="vp-row" style="margin-top:6px">${r.foto_path ? `<button class="vp-btn vp-pri" data-baixafoto="${p.id}">⬇ Baixar a foto</button>` : ""}<button class="vp-btn" data-rab="${p.id}">Fechar</button></div>
+        ${r.situacao === "nao_executado" ? envioHtml(p) : ""}
         ${baixaHtml(p)}
       </div></li>`; }).join("")}</ol></section>${L.length > S.lim ? `<button class="vp-btn" data-mais="1">Mostrar mais (${L.length - S.lim})</button>` : ""}` : `<p class="vp-msg">Nenhuma vistoria com esse filtro.</p>`}
     <h3>Por dia</h3>${A.byDia.length ? `<div class="vp-tw"><table><thead><tr><th>Data</th><th class="vp-n">Vistorias</th><th class="vp-n">Já executado</th><th class="vp-n">Não executado</th></tr></thead><tbody>${A.byDia.map((x) => `<tr><td class="vp-nw">${fDia(x.k) || "Sem data"}</td><td class="vp-n"><b>${x.n}</b></td><td class="vp-n">${x.c.ja_executado || "–"}</td><td class="vp-n">${x.c.nao_executado || "–"}</td></tr>`).join("")}</tbody></table></div>` : `<p class="vp-msg">Sem vistorias.</p>`}
@@ -3576,14 +3581,47 @@ function montar(root) {
   // planilha (CSV, abre no Excel) com TODAS as informações de cada vistoria da lista filtrada
   async function baixarPlanilha() {
     const L = listaResumo(); if (!L.length) { toast("Nenhuma vistoria com esse filtro"); return; }
-    const cab = ["Data da vistoria", "Situação", "Processo", "GED", "Parecer", "Ano", "Endereço", "Setor", "Regional", "Poda", "Extirpação", "Destocamento", "Vistoriador", "Foto (link)", "Equipamento", "Urbantrim", "ID Urbantrim", "Observação", "PDF do processo", "Vistoriador indicado", "Registrado em", "Registrado por", "Baixa no sistema", "Data da baixa", "Baixa feita por", "Nº documento da baixa"];
+    const cab = ["Data da vistoria", "Situação", "Processo", "GED", "Parecer", "Ano", "Endereço", "Setor", "Regional", "Poda", "Extirpação", "Destocamento", "Vistoriador", "Foto (link)", "Equipamento", "Urbantrim", "ID Urbantrim", "Observação", "PDF do processo", "Vistoriador indicado", "Registrado em", "Registrado por", "Baixa no sistema", "Data da baixa", "Baixa feita por", "Nº documento da baixa", "Enviado para a supervisão", "Enviado em", "Enviado por", "Executado pela turma em", "Execução informada por"];
     const q = (v) => { const t = String(v == null ? "" : v); return /[;"\n\r]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
-    const linhas = L.map((p) => { const r = R(p), u = r.urbantrim || {}; return [fDia(r.data_vistoria), EST[vistEst(r)][0], p.processo, p.ged, parecerTxt(p.parecer), p.ano || "", p.endereco, p.setor, cap(p.regional), p.qtd_poda, p.qtd_extirpacao, p.qtd_destocamento, r.responsavel || "", r.foto_path ? fotoAbrir(r.foto_path) : "", r.equipamento || "", r.situacao === "nao_executado" ? (URB[u.st] || "") : "", r.situacao === "nao_executado" ? (u.id || "") : "", r.observacao || "", docUrl(r) || "", (r.rota && r.rota.vistoriador) || "", fHora(r.atualizado_em), r.atualizado_por || "", r.baixa ? (r.baixa.sistema === "INTRANET" ? "Intranet" : r.baixa.sistema) : "não baixado", r.baixa ? fDia(r.baixa.data) : "", r.baixa ? r.baixa.por || "" : "", r.baixa ? r.baixa.doc || "" : ""].map(q).join(";"); });
+    const linhas = L.map((p) => { const r = R(p), u = r.urbantrim || {}; return [fDia(r.data_vistoria), EST[vistEst(r)][0], p.processo, p.ged, parecerTxt(p.parecer), p.ano || "", p.endereco, p.setor, cap(p.regional), p.qtd_poda, p.qtd_extirpacao, p.qtd_destocamento, r.responsavel || "", r.foto_path ? fotoAbrir(r.foto_path) : "", r.equipamento || "", r.situacao === "nao_executado" ? (URB[u.st] || "") : "", r.situacao === "nao_executado" ? (u.id || "") : "", r.observacao || "", docUrl(r) || "", (r.rota && r.rota.vistoriador) || "", fHora(r.atualizado_em), r.atualizado_por || "", r.baixa ? (r.baixa.sistema === "INTRANET" ? "Intranet" : r.baixa.sistema) : "não baixado", r.baixa ? fDia(r.baixa.data) : "", r.baixa ? r.baixa.por || "" : "", r.baixa ? r.baixa.doc || "" : "", r.envio ? supNome(r.envio.sup) : "", r.envio ? fHora(r.envio.em) : "", r.envio ? r.envio.por || "" : "", r.execucao ? fDia(r.execucao.data) : "", r.execucao ? r.execucao.por || "" : ""].map(q).join(";"); });
     const csv = "\ufeff" + [cab.join(";")].concat(linhas).join("\r\n");
-    const nome = `vistorias-${{ all: "todas", ja_executado: "ja-executados", nao_executado: "nao-executados", urb: "falta-urbantrim", semb: "aguardando-baixa", bx: "baixados" }[S.rsit || "all"]}-${hoje()}.csv`;
+    const nome = `vistorias-${{ all: "todas", ja_executado: "ja-executados", nao_executado: "nao-executados", urb: "falta-urbantrim", semb: "aguardando-baixa", bx: "baixados", semenv: "nao-executados-sem-envio", env: "enviados-para-execucao", exe: "executados-pela-turma" }[S.rsit || "all"]}-${hoje()}.csv`;
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     try { if (typeof downloads !== "undefined" && downloads && downloads.save) { await downloads.save({ filename: nome, data: blob }); } else { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nome; document.body.appendChild(a); a.click(); a.remove(); }
       toast(`Planilha com ${L.length} vistorias baixada`); } catch (e) { toast("Não foi possível baixar: " + (e && e.message || e)); }
+  }
+  // ----- não executado: coordenação envia para uma supervisão executar; o supervisor informa quando executou -----
+  const supNome = (sup) => sup + (nomeSupDe(sup) ? " · " + nomeSupDe(sup) : "");
+  function envioHtml(p) {
+    const r = R(p), e = r.envio, x = (S.ev || {})[p.id] || {};
+    if (r.execucao) return `<div class="vp-vb" style="border-color:var(--lf)"><div class="vp-row"><span class="vp-sp vp-s-ja_executado">✔ Executado pela turma</span><span><b>${esc(e ? supNome(e.sup) : "")}</b> em <b>${fDia(r.execucao.data)}</b>${r.execucao.por ? " · informado por " + esc(r.execucao.por) : ""}</span></div>${r.execucao.obs ? `<div class="vp-msg">Obs.: ${esc(r.execucao.obs)}</div>` : ""}${pode.coord() ? `<div class="vp-row"><button class="vp-btn" data-exdesfaz="${p.id}">Desfazer execução</button></div>` : ""}</div>`;
+    if (e && !x.edit) return `<div class="vp-vb" style="border-color:var(--bk)"><div class="vp-row"><span class="vp-sp vp-s-nao_executado">📤 Enviado para execução</span><span><b>${esc(supNome(e.sup))}</b> em ${fHora(e.em)} por ${esc(e.por || "–")}</span></div><span class="vp-msg">Aguardando a turma executar e informar.</span>${pode.coord() ? `<div class="vp-row"><button class="vp-btn" data-evedit="${p.id}">Trocar a supervisão</button><button class="vp-btn" data-evcancel="${p.id}">Cancelar envio</button></div>` : ""}</div>`;
+    if (!pode.coord()) return `<div class="vp-msg">Ainda não enviado para execução.</div>`;
+    const sups = SUPS.filter((q) => noEscopo(q.id));
+    return `<div class="vp-vb"><span class="vp-lab">Enviar para uma supervisão executar</span>
+      <select id="vp-ev-${p.id}" data-evsup="${p.id}"><option value="">— Escolher a supervisão / turma —</option>${sups.map((q) => `<option value="${esc(q.id)}"${(x.sup || (e && e.sup)) === q.id ? " selected" : ""}>${esc(supNome(q.id))}</option>`).join("")}</select>
+      <span class="vp-msg">Equipamento indicado na vistoria: <b>${esc(r.equipamento || "–")}</b>. A ordem aparece para o supervisor no Início e na aba Vistoria › Para executar.</span>
+      <div class="vp-row"><button class="vp-btn vp-warn" data-evenviar="${p.id}">📤 Enviar para execução</button>${x.edit ? `<button class="vp-btn" data-evx="${p.id}">Cancelar</button>` : ""}</div></div>`;
+  }
+  function execTurma() {
+    const sup = sessao.sup;
+    const L = S.proc.filter((p) => { const r = R(p); return r.situacao === "nao_executado" && r.envio && r.envio.sup === sup && !r.execucao; })
+      .sort((a, b) => EQUIPS.indexOf(R(a).equipamento) - EQUIPS.indexOf(R(b).equipamento) || REGS.indexOf(a.regional) - REGS.indexOf(b.regional) || a.ordem - b.ordem);
+    const F = S.proc.filter((p) => { const r = R(p); return r.envio && r.envio.sup === sup && r.execucao; });
+    let h = `<p class="vp-msg">Serviços que a vistoria encontrou <b>não executados</b> e que a coordenação mandou a sua turma executar. Depois de executar, toque em <b>Informar que foi executado</b>.</p>`;
+    if (!L.length) h += `<div class="vp-card" style="padding:14px"><b>Nenhum serviço da vistoria para executar.</b></div>`;
+    else {
+      const links = gm(L);
+      h += `<section class="vp-card"><div class="vp-head"><div><b>${esc(supNome(sup))}</b> <small>${L.length} a executar · ${L.reduce((a, p) => a + p.qtd_poda, 0)} poda · ${L.reduce((a, p) => a + p.qtd_extirpacao, 0)} extirpação</small></div>
+        <div class="vp-row">${links.map((u, k) => `<a class="vp-btn vp-pri" href="${u}" target="_blank" rel="noopener">🧭 Abrir a rota no GPS${links.length > 1 ? " · trecho " + (k + 1) : ""}</a>`).join("")}</div></div><ol>`;
+      h += L.map((p) => { const r = R(p), x = (S.ex || {})[p.id];
+        return `<li class="vp-stop"><span class="vp-seq">${esc(r.equipamento || "")}</span><div>${linhaProc(p)}${docHtml(p, false)}
+          <div class="vp-msg" style="margin-top:4px">Equipamento: <b>${esc(r.equipamento || "–")}</b> · enviado por ${esc(r.envio.por || "–")} em ${fHora(r.envio.em)}${r.observacao ? " · Obs. da vistoria: " + esc(r.observacao) : ""}</div></div><div class="vp-q">${qtdPills(p)}</div>
+          <div class="vp-vb">${x ? `<label class="vp-row" style="font-size:13px;color:var(--mu);font-weight:600">Executado em <input type="date" id="vp-exd-${p.id}" data-exdata="${p.id}" value="${esc(x.data || hoje())}" max="${hoje()}"></label><input type="text" id="vp-exo-${p.id}" data-exobs="${p.id}" value="${esc(x.obs || "")}" placeholder="Observação (opcional)"><div class="vp-row"><button class="vp-btn vp-pri" data-exok="${p.id}">✅ Confirmar: serviço executado</button><button class="vp-btn" data-excancel="${p.id}">Cancelar</button></div>`
+            : `<div class="vp-row"><button class="vp-btn vp-pri" data-exabrir="${p.id}">✅ Informar que foi executado</button></div>`}</div></li>`; }).join("") + `</ol></section>`;
+    }
+    if (F.length) h += `<h3>Já informados como executados (${F.length})</h3><section class="vp-card"><ol>${F.slice(0, 30).map((p) => `<li class="vp-stop vp-done"><span class="vp-seq"></span><div><div class="vp-e">${esc(p.endereco)}</div><div class="vp-msg">Proc. ${esc(p.processo)} · executado em ${fDia(R(p).execucao.data)}</div></div></li>`).join("")}</ol></section>`;
+    return h;
   }
   // baixa do processo no sistema (SEI / Intranet / GED): quem dá a baixa informa o sistema e a data
   function baixaHtml(p) {
@@ -3613,7 +3651,7 @@ function montar(root) {
     } catch (e) { toast("Não foi possível baixar: abra a foto e salve pelo navegador"); window.open(fotoAbrir(m), "_blank", "noopener"); }
   }
   function listaTexto() {
-    const L = listaResumo(); const tit = { all: "VISTORIAS", ja_executado: "VISTORIAS – JÁ EXECUTADOS", nao_executado: "VISTORIAS – NÃO EXECUTADOS", urb: "VISTORIAS – FALTA REGISTRAR NO URBANTRIM", semb: "VISTORIAS – AGUARDANDO BAIXA NO SISTEMA", bx: "VISTORIAS – BAIXADOS NO SISTEMA" }[S.rsit || "all"];
+    const L = listaResumo(); const tit = { all: "VISTORIAS", ja_executado: "VISTORIAS – JÁ EXECUTADOS", nao_executado: "VISTORIAS – NÃO EXECUTADOS", urb: "VISTORIAS – FALTA REGISTRAR NO URBANTRIM", semb: "VISTORIAS – AGUARDANDO BAIXA NO SISTEMA", bx: "VISTORIAS – BAIXADOS NO SISTEMA", semenv: "VISTORIAS – NÃO EXECUTADOS SEM ENVIO", env: "VISTORIAS – ENVIADOS PARA EXECUÇÃO", exe: "VISTORIAS – EXECUTADOS PELA TURMA" }[S.rsit || "all"];
     return [`${tit}${S.rreg ? " – " + S.rreg : ""} – ${new Date().toLocaleDateString("pt-BR")}`, ""].concat(L.map((p, i) => { const r = R(p); return `${i + 1}. ${fDia(r.data_vistoria)} – ${EST[vistEst(r)][0]} – ${p.endereco} (${p.setor}) – Proc. ${p.processo}${p.ged ? " / GED " + p.ged : ""}${p.parecer && p.parecer !== "SEM NUMERO" ? " – Parecer " + parecerTxt(p.parecer) : ""} – ${p.qtd_poda} poda / ${p.qtd_extirpacao} extirp.${r.observacao ? " – Obs.: " + r.observacao : ""}${r.equipamento ? " – " + r.equipamento : ""}${urbTxt(r) ? " – " + urbTxt(r) : ""}${r.responsavel ? " – " + r.responsavel : ""}${r.baixa ? " – BAIXADO no " + r.baixa.sistema + " em " + fDia(r.baixa.data) + " por " + r.baixa.por : ""}${r.foto_path ? "\n   Foto: " + fotoAbrir(r.foto_path) : ""}${docUrl(r) ? "\n   Processo: " + docUrl(r) : ""}`; })).join("\n");
   }
 
@@ -3670,6 +3708,15 @@ function montar(root) {
     if (ds.planilha) { baixarPlanilha(); return; }
     if (ds.rab) { S.rab = S.rab || {}; S.rab[ds.rab] = !S.rab[ds.rab]; render(); return; }
     if (ds.baixafoto) { baixarFoto(ds.baixafoto); return; }
+    if (ds.evenviar) { const id = ds.evenviar, sel = root.querySelector("#vp-ev-" + cssId(id)), sup = sel ? sel.value : ""; if (!sup) { toast("Escolha a supervisão"); return; }
+      if (await gravar([id], { envio: { sup, em: new Date().toISOString(), por: usuario(), uid: meuId() }, execucao: null })) { if (S.ev) delete S.ev[id]; toast("Enviado para " + supNome(sup)); } return; }
+    if (ds.evedit) { S.ev = S.ev || {}; S.ev[ds.evedit] = { edit: 1 }; render(); return; }
+    if (ds.evx) { delete S.ev[ds.evx]; render(); return; }
+    if (ds.evcancel) { if (t.dataset.arm !== "1") { t.dataset.arm = "1"; t.textContent = "Toque de novo para cancelar"; setTimeout(() => { if (t.isConnected) { t.dataset.arm = ""; render(); } }, 4000); return; } if (await gravar([ds.evcancel], { envio: null })) toast("Envio cancelado"); return; }
+    if (ds.exdesfaz) { if (t.dataset.arm !== "1") { t.dataset.arm = "1"; t.textContent = "Toque de novo para desfazer"; setTimeout(() => { if (t.isConnected) { t.dataset.arm = ""; render(); } }, 4000); return; } if (await gravar([ds.exdesfaz], { execucao: null })) toast("Execução desfeita"); return; }
+    if (ds.exabrir) { S.ex = S.ex || {}; S.ex[ds.exabrir] = { data: hoje(), obs: "" }; render(); return; }
+    if (ds.excancel) { delete S.ex[ds.excancel]; render(); return; }
+    if (ds.exok) { const id = ds.exok, x = (S.ex || {})[id] || {}; if (await gravar([id], { execucao: { data: x.data || hoje(), obs: (x.obs || "").trim(), por: usuario(), uid: meuId(), em: new Date().toISOString() } })) { delete S.ex[id]; toast("Coordenação avisada: serviço executado"); } return; }
     if (ds.bxsis) { S.bx = S.bx || {}; S.bx[ds.id] = Object.assign(S.bx[ds.id] || {}, { sis: ds.bxsis }); render(); return; }
     if (ds.bxedit) { S.bx = S.bx || {}; S.bx[ds.bxedit] = Object.assign(S.bx[ds.bxedit] || {}, { edit: 1 }); render(); return; }
     if (ds.bxcancel) { delete S.bx[ds.bxcancel]; render(); return; }
@@ -3716,6 +3763,8 @@ function montar(root) {
     if (t.id === "vp-hide") { S.hide = !t.checked; render(); return; }
     if (ds.rvsel !== undefined) { S.draft = S.draft || {}; S.draft[ds.rvsel] = t.value; if (t.value) indicarRota(+ds.rvsel, t.value); return; }
     if (t.id === "vp-rreg") { S.rreg = t.value; render(); return; }
+    if (ds.evsup) { S.ev = S.ev || {}; S.ev[ds.evsup] = Object.assign(S.ev[ds.evsup] || {}, { sup: t.value }); return; }
+    if (ds.exdata) { S.ex[ds.exdata].data = t.value; return; }
     if (ds.bxdata) { S.bx = S.bx || {}; S.bx[ds.bxdata] = Object.assign(S.bx[ds.bxdata] || {}, { data: t.value }); return; }
     if (t.id === "vp-preg") { S.preg = t.value; S.lim = 40; render(); return; }
     if (ds.pdflote) { let fs = [...(t.files || [])].filter((f) => /\.pdf$/i.test(f.name)); if (!fs.length) { toast("Escolha arquivos PDF"); return; }
@@ -3746,6 +3795,7 @@ function montar(root) {
     if (t.id === "vp-q") { S.q = t.value; render(); return; }
     if (t.id === "vp-rq") { S.rq = t.value; render(); return; }
     if (ds.nv && S.novo && ds.nv !== "regional") S.novo[ds.nv] = t.value;
+    if (ds.exobs && S.ex && S.ex[ds.exobs]) S.ex[ds.exobs].obs = t.value;
     if (ds.bxdoc) { S.bx = S.bx || {}; S.bx[ds.bxdoc] = Object.assign(S.bx[ds.bxdoc] || {}, { doc: t.value }); }
     if (t.id === "vp-pq") { S.pq = t.value; S.lim = 40; render(); return; }
     if (ds.fobs) S.f[ds.fobs].obs = t.value;
@@ -8039,7 +8089,7 @@ function renderInicioFiscal(h){
         return `<li><span class="fosst ${k==="SIM"?"ok":""}">${esc(ST_NOME[k]||k)}</span><b>${esc(r.bairro||"")} — ${esc(r.logradouro||"")}</b><small>${esc(tipoTxt(r)||r.tipo||"")}${r.processo?" · nº "+esc(procNum(r)):""}<br>${esc(qtdTxtPlano(prevQ(r))||"")}</small>
           ${tem?(!o.start&&!r.relat?.ass?`<small>📷 Fotos: depois do <b>START</b> da O.S (1 antes · 2 durante · 3 depois)</small>`:fotosFisPode(r)?(()=>{ const nx=REL_SLOTS.find(x=>!(r.fotosFiscal?.[x.k]||r.relat?.midia?.[x.k])); return nx?`<button type="button" class="btn pri" data-fotfis="${esc(r.id)}" style="min-height:52px">📷 Foto ${REL_SLOTS.indexOf(nx)+1} de 3 · ${nx.curto} <small style="display:block;font:600 12px var(--body);opacity:.9">${nx.dica}</small></button>`:`<button type="button" class="btn sec" data-fotfis="${esc(r.id)}" style="min-height:48px">✅ 3 fotos registradas – ver</button>`; })():`<small>${r.relat?.ass?"✅ Relatório assinado pelo supervisor":n?`📷 Fotos ${n} de 3`:"Fotos: o supervisor anexa na baixa"}</small>`):(relTem(r)?`<small>Processo GED: sem fotos (o supervisor faz o relatório na baixa)</small>`:`<small>Sem fotos (não é O.S Intranet nem processo SEI)</small>`)}</li>`; }).join("")}</ol></section>`; };
   h.innerHTML=`<p class="note" style="margin:0 0 2px">${sau},</p><h2 style="margin:0 0 4px">${esc((sessao.nome||"").split(" ").slice(0,2).join(" "))}</h2>
-    <p class="note" style="margin:0 0 12px">Fiscal de turma · ${esc(sessao.sup||"")}${me.equipe?" · "+esc(me.equipe):""}</p>
+    <p class="note" style="margin:0 0 12px">Fiscal de turma · ${esc(sessao.sup||"")} · ${me.equipe?esc(me.equipe):"todas as equipes"}</p>
     <div class="fosseg" role="tablist"><button type="button" data-fosab="and" aria-pressed="${fosAba!=="ctl"}">📋 Em andamento <b>${G.filter(g=>!g.os.fim).length}</b></button><button type="button" data-fosab="ctl" aria-pressed="${fosAba==="ctl"}">📁 Controle de O.S <b>${GC.length}</b></button></div>
     ${fosAba==="ctl"?`<p class="note" style="margin:0 0 10px">O.S que você já <b>finalizou</b> (últimos 90 dias), para consulta sempre que precisar.</p>${GC.length?GC.map(card).join(""):`<div class="empty">Nenhuma O.S finalizada ainda.</div>`}`:`
     <div class="step" style="margin-bottom:6px">Ordens de serviço recebidas <b>em andamento</b></div>
@@ -8066,7 +8116,7 @@ function renderInicio(){
     const nm={chk:"checklist",bx:"sem baixa",prog:"programação"}; return inPrev(Object.entries(C).sort((a,b)=>b[1].n-a[1].n).map(([sup,c])=>[supNome(sup),c.n,Object.entries(c.cat).map(([k,v])=>v+" "+nm[k]).join(" · ")]),8); }catch(e){ return ""; } })();
   if(av&&(window.__nPend||0)) av+=`<button type="button" class="inav warn" data-iv="pend">${ICO.pend}<span><b>Ver todas as pendências (${window.__nPend})</b><small>Aba Pendências${prevTodas?" · por turma:":""}</small>${prevTodas}</span><em>Abrir</em></button>`;
   if(!av) av=`<div class="inav okk">${ICO.ok}<span><b>Tudo em dia</b><small>Nenhum serviço atrasado nem pendência no checklist</small></span></div>`;
-  try{ if(pode("vist")){ VIST.ouvir(vistInicioOuvinte); const nv=VIST.nMeus(sessao.id); if(nv) av+=`<button type="button" class="inav warn" data-iv="vist">${ICO.vist}<span><b>${nv} ${nv===1?"processo indicado":"processos indicados"} para você vistoriar</b><small>Vistoria de processo · rota indicada pelo coordenador</small></span><em>Ver</em></button>`; } }catch(e){}
+  try{ if(pode("vist")){ VIST.ouvir(vistInicioOuvinte); const ne=travado()&&sessao.sup?VIST.nTurma(sessao.sup):0; if(ne) av+=`<button type="button" class="inav warn" data-iv="vist">${ICO.vist}<span><b>${ne} ${ne===1?"serviço da vistoria":"serviços da vistoria"} para a sua turma executar</b><small>Enviado pela coordenação · informe quando executar</small></span><em>Ver</em></button>`; const nv=VIST.nMeus(sessao.id); if(nv) av+=`<button type="button" class="inav warn" data-iv="vist">${ICO.vist}<span><b>${nv} ${nv===1?"processo indicado":"processos indicados"} para você vistoriar</b><small>Vistoria de processo · rota indicada pelo coordenador</small></span><em>Ver</em></button>`; } }catch(e){}
   if(!avLigado()&&!soLeitura()) av+=`<button type="button" class="inav warn" data-iv="pend">${ICO.pend}<span><b>Ligue o aviso sonoro</b><small>O celular toca e avisa quando aparecer pendência para você</small></span><em>Ligar</em></button>`;
   const tiles=[
     {a:"osdia",t:"Iniciar O.S do dia",sub:(()=>{ const G=osDiaGrupos(), n=G.filter(g=>!g.os).length; return G.length?(n?`(${n} a iniciar)`:"(todas iniciadas)"):"(sem serviço hoje)"; })(),i:svgI('<path d="M7 3h10v18H7z"/><path d="M10 8l5 4-5 4z" fill="currentColor"/>'),c:"t-or",ok:!soLeitura()&&(SUPS.some(x=>osPodeIniciar(x.id))||sessao.perfil==="fiscal")},
@@ -8076,7 +8126,7 @@ function renderInicio(){
     {v:"chk",a:"chkNovo",t:"Checklist do equipamento",i:ICO.chk,ok:pode("chk")&&lanca},
     {v:"chk",a:"man",t:"Comunicar defeito",i:ICO.man,c:"t-bad",ok:pode("chk")&&lanca},
     {v:"oc",t:"Registro emergencial",i:ICO.oc,c:"t-warn",ok:pode("oc")},
-    {v:"vist",t:"Vistoria de processo",sub:(()=>{ try{ const n=VIST.nMeus(sessao.id); return n?`(${n} para você vistoriar)`:""; }catch(e){ return ""; } })(),i:ICO.vist,c:"t-gr",ok:pode("vist")},
+    {v:"vist",t:"Vistoria de processo",sub:(()=>{ try{ const P=[]; const n=VIST.nMeus(sessao.id); if(n) P.push(n+" para você vistoriar"); const e=travado()&&sessao.sup?VIST.nTurma(sessao.sup):0; if(e) P.push(e+" para executar"); return P.length?"("+P.join(" · ")+")":""; }catch(e){ return ""; } })(),i:ICO.vist,c:"t-gr",ok:pode("vist")},
     {v:"resumo",t:"Ver o painel",i:ICO.resumo,c:"t-pu",ok:pode("resumo")},
     {v:"lista",t:"Lista e exportar",sub:"(PROGRAMAÇÃO)",i:ICO.lista,ok:pode("lista")},
     {v:"orc",t:"Orçamento",i:ICO.orc,c:"t-gr",ok:pode("orc")},
