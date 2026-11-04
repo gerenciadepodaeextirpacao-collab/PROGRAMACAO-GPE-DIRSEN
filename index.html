@@ -1318,7 +1318,8 @@ body.sofiscal nav.tabs{display:none!important}
   <p class="lead">Emergência é atendida na hora: registre aqui cada galho ou árvore caída já atendido e informe se o atendimento afetou a programação da turma no dia.</p>
   <div class="filters">
     <select id="oSup" aria-label="Turma"></select>
-    <select id="oPer" aria-label="Período"><option value="7">Últimos 7 dias</option><option value="30" selected>Últimos 30 dias</option><option value="90">Últimos 90 dias</option></select>
+    <select id="oPer" aria-label="Período"><option value="hoje">Hoje</option><option value="7">Últimos 7 dias</option><option value="30" selected>Últimos 30 dias</option><option value="90">Últimos 90 dias</option><option value="dia">📅 Escolher o dia</option></select>
+    <input type="date" id="oDia" aria-label="Dia" hidden style="grid-column:1/-1">
   </div>
   <div class="actions" style="grid-template-columns:1fr;margin:10px 0 0"><button type="button" class="btn ocbtn" id="ocBtn">Registrar galho / árvore caída</button></div>
   <div id="ocList"></div>
@@ -1921,7 +1922,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.03p";
+const APP_VERSAO="2026.11.04";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -3049,7 +3050,7 @@ $("#avulsoBtn").onclick=()=>abrirAvulso(null);
 $("#ocBtn").onclick=()=>abrirOcorr(null);
 $("#oSup").innerHTML=optTurmas();
 $("#oSup").value=meuSup()||"";
-$("#oSup").onchange=()=>renderOc(); $("#oPer").onchange=()=>renderOc();
+$("#oSup").onchange=()=>renderOc(); $("#oPer").onchange=()=>{ const d=$("#oDia"); d.hidden=$("#oPer").value!=="dia"; if(!d.hidden){ if(!d.value) d.value=hoje(); d.max=hoje(); } renderOc(); }; $("#oDia").onchange=()=>renderOc();
 function impTxt(o){ const im=o?.impacto;
   if(!im) return "";
   if(!im.houve) return `<div style="font-size:13px;color:var(--ok);margin-top:4px">✓ Sem impacto na programação${im.semProg?" (turma sem programação no dia)":""}</div>`;
@@ -4258,12 +4259,12 @@ $("#kgPer").onchange=renderChkGraf; $("#kgSup").onchange=renderChkGraf; $("#kgVt
 
 function renderOc(){
   const host=$("#ocList"); if(!host) return;
-  const sup=$("#oSup").value, dias=+$("#oPer").value||30;
-  const lim=(()=>{const d=new Date();d.setDate(d.getDate()-dias);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")})();
+  const sup=$("#oSup").value, per=$("#oPer").value, dia=per==="hoje"?hoje():per==="dia"?($("#oDia").value||hoje()):"", dias=+per||30;
+  const lim=dia||(()=>{const d=new Date();d.setDate(d.getDate()-dias);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")})();
   const all=todos().filter(r=>r.ocorrencia&&casaTurma(sup,r));
   const minha=r=>!travado()||r.supervisao===sessao?.sup;
   const ag=all.filter(r=>isProg(r)).sort((a,b)=>(a.data||"").localeCompare(b.data||"")||(a.ocorrencia.hora||"").localeCompare(b.ocorrencia.hora||""));
-  const at=all.filter(r=>!isProg(r)&&(r.dataExec||r.data||"")>=lim).sort((a,b)=>(b.dataExec||b.data||"").localeCompare(a.dataExec||a.data||""));
+  const at=all.filter(r=>!isProg(r)&&(dia?(r.dataExec||r.data||"")===dia:(r.dataExec||r.data||"")>=lim)).sort((a,b)=>(b.dataExec||b.data||"").localeCompare(a.dataExec||a.data||""));
   const nG=at.filter(r=>r.ocorrencia.tipo==="GALHO").reduce((a,r)=>a+(r.ocorrencia.qtd||1),0), nA=at.filter(r=>r.ocorrencia.tipo==="ARVORE").reduce((a,r)=>a+(r.ocorrencia.qtd||1),0);
   const head=(t,n)=>`<div class="grp-h"><h3>${t}</h3><span>${n}</span></div>`;
   const card=r=>{const o=r.ocorrencia;return `<div class="prog${isProg(r)?" late":""}">
@@ -4279,7 +4280,7 @@ function renderOc(){
   const comImp=at.filter(r=>r.ocorrencia.impacto?.houve).length;
   h+=head("Atendimentos registrados", `${at.length} · ${nG} galho(s) · ${nA} árvore(s)`);
   if(at.length) h+=`<p class="note" style="margin:4px 0 0">${comImp?`<b>${comImp}</b> atendimento${comImp>1?"s":""} afetou a programação do dia.`:"Nenhum atendimento afetou a programação do dia."}</p>`;
-  h+= at.length?`<div class="list">${at.map(card).join("")}</div>`:`<div class="empty" style="margin-top:8px">Nenhum atendimento no período.</div>`;
+  h+= at.length?`<div class="list">${at.map(card).join("")}</div>`:`<div class="empty" style="margin-top:8px">${dia?"Nenhum atendimento em "+fmtD(dia)+" ("+diaDe(dia)+").":"Nenhum atendimento no período."}</div>`;
   host.innerHTML=h;
 }
 $("#ocList").onclick=e=>{const g=id=>todosGlobal().find(r=>r.id===id);
@@ -7153,9 +7154,9 @@ function osFimHtml(){ const L=osFimGrupos(); if(!L.length) return "";
 document.addEventListener("click",e=>{ const b=e.target.closest(".osfim [data-baixa]"); if(!b) return; e.stopPropagation(); const r=todosGlobal().find(x=>x.id===b.dataset.baixa); if(r) abrirBaixa(r); },true);
 function osDiaHtml(){ const L=osDiaGrupos().filter(g=>sessao.perfil==="fiscal"||!g.os); if(!L.length) return ""; // depois de iniciada e enviada ao fiscal, a O.S some do Início (o fiscal continua vendo a dele)
   return `<div class="osdia"><div class="osdh">ORDEM DE SERVIÇO DO DIA · ${fmtDs(hoje())}</div>${L.map(g=>{ const k=esc(g.k), n=g.rs.length;
-    const fis=g.fis?`fiscal: <b>${esc(g.fis.nome)}</b>${g.fis.zap?"":" (sem WhatsApp no cadastro)"}`:`<span style="color:var(--bad)">sem fiscal cadastrado para esta equipe (Acessos)</span>`;
+    const fis=g.fis?`fiscal: <b>${esc(g.fis.nome)}</b>`:`<span style="color:var(--bad)">sem fiscal cadastrado para esta equipe (Acessos)</span>`;
     if(g.os) return `<div class="osl ok"><div><b>✅ ${esc(g.sup)} · ${esc(g.eq)}</b><small>O.S nº ${esc(g.os.num)} enviada às ${new Date(g.os.em).toTimeString().slice(0,5)} por ${esc(g.os.por||"—")} · ${n} serviço${n===1?"":"s"} · para ${esc(g.os.fiscal?.nome||"o fiscal")}</small>${osEtapaHtml(g.os)}</div>
-      <div class="osb"><button type="button" class="btn sec" data-osenv="${k}">💬 ${sessao.perfil==="fiscal"?"Ver mensagem":"Reenviar ao fiscal"}</button><button type="button" class="btn sec" data-ospdf="${k}">📄 PDF</button><button type="button" class="btn sec" data-osimg="${k}">🖼 Imagem</button></div></div>`;
+      <div class="osb"><button type="button" class="btn sec" data-osenv="${k}">👁 Ver a O.S</button><button type="button" class="btn sec" data-ospdf="${k}">📄 PDF</button></div></div>`;
     return `<div class="osl"><div><b>🟠 ${esc(g.sup)} · ${esc(g.eq)}</b><small>${n} serviço${n===1?"":"s"} programado${n===1?"":"s"} para hoje · ${fis}</small></div>
       <div class="osb">${osPodeIniciar(g.sup)?`<button type="button" class="btn pri" data-osini="${k}">▶ Iniciar O.S e enviar ao fiscal</button>`:`<small style="color:var(--muted)">Aguardando o supervisor iniciar a O.S.</small>`}</div></div>`; }).join("")}</div>`; }
 // O.S no detalhe do serviço: iniciar (só no dia da execução) ou reenviar ao fiscal
@@ -7167,11 +7168,11 @@ async function fisOsAtualiza(g,patch,acao){ const os={...g.os,...patch}; let ok=
   for(const r of g.rs){ const fresh=todosGlobal().find(x=>x.id===r.id)||r, upd={...fresh}; delete upd.id; delete upd._fila; upd.osDia=os; upd._acao=acao; const res=await saveDoc(r.id,upd); if(res!=="ok"&&res!=="fila") ok=false; else r.osDia=os; }
   if(!ok){ toast("Não foi possível salvar agora. Tente de novo."); return false; } g.os=os; try{renderAll()}catch(e){} return true; }
 function detOsHtml(r){ if(!r||r.ocorrencia||r.avulso||r.arquivado||!r.supervisao) return ""; const k=esc(r.supervisao+"|"+(r.equipe||""));
-  if(r.osDia) return `<div class="detos ok"><b>✅ O.S nº ${esc(r.osDia.num)} enviada</b><small>${new Date(r.osDia.em).toTimeString().slice(0,5)} de ${fmtDs(iso(new Date(r.osDia.em)))} por ${esc(r.osDia.por||"—")} · para ${esc(r.osDia.fiscal?.nome||"o fiscal")}</small>${osEtapaHtml(r.osDia)}${r.data===hoje()?`<button type="button" class="btn sec" data-osenv="${k}">💬 Reenviar ao fiscal</button>`:""}</div>`;
+  if(r.osDia) return `<div class="detos ok"><b>✅ O.S nº ${esc(r.osDia.num)} enviada</b><small>${new Date(r.osDia.em).toTimeString().slice(0,5)} de ${fmtDs(iso(new Date(r.osDia.em)))} por ${esc(r.osDia.por||"—")} · para ${esc(r.osDia.fiscal?.nome||"o fiscal")}</small>${osEtapaHtml(r.osDia)}${r.data===hoje()?`<button type="button" class="btn sec" data-osenv="${k}">👁 Ver a O.S</button>`:""}</div>`;
   if(!isProg(r)||!osPodeIniciar(r.supervisao)) return "";
   if(r.data!==hoje()) return `<div class="detos"><button type="button" class="btn sec" disabled>▶ Iniciar O.S e enviar ao fiscal</button><small>Disponível só no dia da execução: ${diaDe(r.data)} ${fmtD(r.data)}.</small></div>`;
   const f=fiscalDe(r.supervisao,r.equipe);
-  return `<div class="detos"><button type="button" class="btn pri" data-osini="${k}">▶ Iniciar O.S da ${esc(r.equipe||"equipe")} e enviar ao fiscal</button><small>${f?`Fiscal: ${esc(f.nome)}${f.zap?"":" (sem WhatsApp no cadastro)"}`:"Sem fiscal cadastrado para esta equipe em Acessos."} A O.S vale para todos os serviços da equipe hoje.</small></div>`; }
+  return `<div class="detos"><button type="button" class="btn pri" data-osini="${k}">▶ Iniciar O.S da ${esc(r.equipe||"equipe")} e enviar ao fiscal</button><small>${f?`Fiscal: ${esc(f.nome)}`:"Sem fiscal cadastrado para esta equipe em Acessos."} A O.S vale para todos os serviços da equipe hoje.</small></div>`; }
 // tela "Iniciar O.S do dia": os serviços de hoje de cada equipe, prontos para iniciar e enviar ao fiscal
 function abrirOsDia(){ const host=$("#sheetHost"), G=osDiaGrupos(), d=hoje();
   const card=g=>{ const k=esc(g.k), n=g.rs.length, pv=g.rs.reduce((a,r)=>a+receitaDe(prevQ(r)),0), fis=g.os?.fiscal||g.fis;
@@ -7180,39 +7181,29 @@ function abrirOsDia(){ const host=$("#sheetHost"), G=osDiaGrupos(), d=hoje();
       <span>${fis?`Fiscal: <b>${esc(fis.nome)}</b>`:`<em style="color:var(--bad);font-style:normal">Sem fiscal cadastrado para esta equipe (Acessos)</em>`}</span>
       ${g.os?`<span style="color:var(--ok)">O.S nº <b>${esc(g.os.num)}</b> enviada às ${new Date(g.os.em).toTimeString().slice(0,5)} por ${esc(g.os.por||"—")}</span>${osEtapaHtml(g.os)}`:""}
       ${g.os?.membros?.length?`<span>👷 Equipe: ${g.os.membros.map(m=>`<b>${esc(m.nome)}</b> (${esc(m.funcao.toLowerCase())})`).join(" · ")}</span>`:""}</div>${lista}
-      <div class="osb">${g.os?`<button type="button" class="btn sec" data-osenv="${k}">💬 ${sessao.perfil==="fiscal"?"Ver mensagem":"Reenviar ao fiscal"}</button>${g.os.membros?.length?"":`<small style="color:var(--muted);align-self:center">👷 Aguardando o fiscal formar a equipe</small>`}`:osPodeIniciar(g.sup)?`<button type="button" class="btn pri" data-osini="${k}">▶ Iniciar O.S e enviar ao fiscal</button>`:`<small>Aguardando o supervisor iniciar.</small>`}
-      <button type="button" class="btn sec" data-ospdf="${k}">📄 PDF</button><button type="button" class="btn sec" data-osimg="${k}">🖼 Imagem</button></div></div>`; };
+      <div class="osb">${g.os?`<button type="button" class="btn sec" data-osenv="${k}">👁 Ver a O.S</button>${g.os.membros?.length?"":`<small style="color:var(--muted);align-self:center">👷 Aguardando o fiscal formar a equipe</small>`}`:osPodeIniciar(g.sup)?`<button type="button" class="btn pri" data-osini="${k}">▶ Iniciar O.S e enviar ao fiscal</button>`:`<small>Aguardando o supervisor iniciar.</small>`}
+      <button type="button" class="btn sec" data-ospdf="${k}">📄 PDF</button></div></div>`; };
   host.innerHTML=`<div class="sheet" id="sh"><div class="panel" role="dialog" aria-label="Iniciar O.S do dia">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:22px">O.S do dia · ${diaDe(d)} ${fmtDs(d)}</b><button type="button" class="btn sec" data-osdx style="min-height:44px;padding:0 14px">Fechar</button></div>
-    <p class="note" style="margin:0">Os serviços programados para hoje já estão aqui, separados por equipe. Confira, toque em <b>Iniciar O.S e enviar ao fiscal</b> e mande pelo WhatsApp. A O.S só pode ser iniciada no dia da execução.</p>
+    <p class="note" style="margin:0">Os serviços programados para hoje já estão aqui, separados por equipe. Confira e toque em <b>Iniciar O.S e enviar ao fiscal</b>: a O.S chega <b>direto no app do fiscal</b> (não é mais enviada pelo WhatsApp). A O.S só pode ser iniciada no dia da execução.</p>
     ${G.length?G.map(card).join(""):`<section class="alert ok"><h3>Nenhum serviço programado para hoje</h3><p class="note" style="margin:0">Quando houver programação para o dia, os serviços aparecem aqui para iniciar a O.S.</p></section>`}
   </div></div>`;
   host.querySelector("#sh").addEventListener("click",e=>{ if(e.target.id==="sh"||e.target.closest("[data-osdx]")) host.innerHTML=""; }); }
 function osSel(g){ return {det:true,rows:g.rs,sub:"O.S Nº "+(g.os?.num||osNum(g.sup,g.eq,hoje()))+" – EXECUÇÃO DO DIA",ftxt:`${fmtD(hoje())} · ${diaDe(hoje())} · ${g.sup} · ${g.eq}${g.os?.fiscal?.nome?" · fiscal: "+g.os.fiscal.nome:""}`,
   nome:("os-"+(g.os?.num||osNum(g.sup,g.eq,hoje()))+"-"+g.sup+"-"+g.eq).normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Za-z0-9]+/g,"-").replace(/-+$/,"").toLowerCase()}; }
-function osEnviar(g){ const txt=osDiaTxt(g), f=g.os?.fiscal||g.fis, z=f?.zap||(f?.id?acesso?.[f.id]?.zap:"")||"";
+function osEnviar(g){ const txt=osDiaTxt(g), f=g.os?.fiscal||g.fis, fisV=sessao.perfil==="fiscal";
   const box=document.createElement("div"); box.className="sheet"; box.style.zIndex=40;
-  box.innerHTML=`<div class="panel" role="dialog" aria-label="Enviar O.S ao fiscal"><b style="font-family:var(--display);font-size:22px">O.S nº ${esc(g.os?.num||"")} ${sessao.perfil==="fiscal"?"":"– enviar ao fiscal"}</b>
-    <p class="note" style="margin:0">${f?`Fiscal da equipe: <b>${esc(f.nome)}</b>${z?" · 📱 "+esc(zapFmt(z)):" · sem WhatsApp no cadastro (escolha o contato no WhatsApp)"}`:"Nenhum fiscal cadastrado para esta equipe em Acessos: escolha o contato no WhatsApp."} A O.S vai em imagem, com o detalhe de cada serviço.</p>
+  box.innerHTML=`<div class="panel" role="dialog" aria-label="O.S do dia"><b style="font-family:var(--display);font-size:22px">O.S nº ${esc(g.os?.num||"")}</b>
+    <p class="note" style="margin:0">${fisV?"Ordem de serviço enviada pelo supervisor pelo app.":f?`✅ Enviada pelo app ao fiscal <b>${esc(f.nome)}</b>. Ela já aparece no app dele – <b>não é preciso mandar pelo WhatsApp</b>.`:`<span style="color:var(--bad)">Nenhum fiscal cadastrado para esta equipe em Acessos</span>: cadastre o fiscal para a O.S chegar no app dele.`}</p>
     <details class="zaptx"><summary>Ver o texto da O.S</summary><pre style="white-space:pre-wrap;font:13px/1.45 var(--body,inherit);background:var(--sunk);border-radius:10px;padding:10px;margin:6px 0 0;max-height:38vh;overflow:auto">${esc(txt)}</pre></details>
-    <div class="zapprev" data-osprev><div class="midph">Montando a imagem da O.S…</div></div>
-    ${sessao.perfil==="fiscal"?"":`<a class="btn pri" data-osimgzap href="${z?`https://wa.me/${z}`:"https://api.whatsapp.com/send"}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;text-decoration:none;text-align:center">🖼 Copiar a imagem da O.S e abrir a conversa${f?" do "+esc(f.nome.split(" ")[0]):""}</a>
-    <p class="note" style="margin:0">Na conversa, segure no campo de mensagem e escolha <b>Colar</b>: a imagem da O.S aparece pronta para enviar.</p>
-    <button type="button" class="btn sec" data-osimgshare>📤 Compartilhar a imagem da O.S${f?" (escolha o "+esc(f.nome.split(" ")[0])+" no WhatsApp)":""}</button>
-    <a class="btn sec" href="${zapLink(z,txt)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;text-decoration:none">💬 Mandar em texto</a>`}
-    <div class="row2"><button type="button" class="btn sec" data-ospdf="${esc(g.k)}">📄 PDF da O.S</button><button type="button" class="btn sec" data-osimg="${esc(g.k)}">🖼 Imagem da O.S</button></div>
-    <button type="button" class="btn sec" data-oscp>Copiar texto</button><button type="button" class="btn sec" data-osx>Fechar</button></div>`;
+    <div class="zapprev" data-osprev><div class="midph">Montando a O.S…</div></div>
+    <button type="button" class="btn sec" data-ospdf="${esc(g.k)}">📄 PDF da O.S</button>
+    <button type="button" class="btn pri" data-osx>Fechar</button></div>`;
   document.body.appendChild(box);
-  const sel=osSel(g); let blob=null;
-  const pend=listaImgBlob(sel.rows,"dia",true,sel.ftxt,sel.sub).then(b=>{ blob=b; const pv=box.querySelector("[data-osprev]"); if(pv){ const u=URL.createObjectURL(b); pv.innerHTML=`<img src="${u}" alt="Imagem da O.S">`; pv.querySelector("img").onclick=()=>verFoto(u,"Ordem de serviço"); } })
-    .catch(e=>{ const pv=box.querySelector("[data-osprev]"); if(pv) pv.innerHTML=`<div class="midph">${e?.message==="load"?"Sem internet para montar a imagem.":"Não foi possível montar a imagem."} Use “Mandar em texto”.</div>`; });
-  box.addEventListener("click",async e=>{ if(e.target===box||e.target.closest("[data-osx]")) return box.remove();
-    const az=e.target.closest("[data-osimgzap]"); if(az){ if(!blob){ e.preventDefault(); toast("Aguarde a imagem da O.S ficar pronta."); return; }
-      try{ navigator.clipboard.write([new ClipboardItem({"image/png":blob})]).then(()=>toast("Imagem da O.S copiada. Na conversa, segure no campo de mensagem e escolha Colar.",7000),()=>toast("Não deu para copiar neste aparelho: use “Compartilhar a imagem da O.S”.",7000)); }catch(x){ toast("Não deu para copiar neste aparelho: use “Compartilhar a imagem da O.S”.",7000); } return; }
-    if(e.target.closest("[data-osimgshare]")){ await pend; if(!blob) return; const fl=new File([blob],sel.nome+".png",{type:"image/png"});
-      try{ if(navigator.canShare&&navigator.canShare({files:[fl]})){ await navigator.share({files:[fl],text:"Ordem de serviço nº "+(g.os?.num||"")}); return; } }catch(x){ if(x?.name==="AbortError") return; }
-      if(downloads){ try{ await downloads.save({filename:sel.nome+".png",data:blob}); toast("Imagem baixada: anexe no WhatsApp do fiscal."); }catch(x){} } else toast("Compartilhar não disponível aqui."); return; }
-    if(e.target.closest("[data-oscp]")){ try{ await navigator.clipboard.writeText(txt); toast("Texto copiado."); }catch(x){ toast("Não foi possível copiar."); } } }); }
+  const sel=osSel(g);
+  listaImgBlob(sel.rows,"dia",true,sel.ftxt,sel.sub).then(b=>{ const pv=box.querySelector("[data-osprev]"); if(pv){ const u=URL.createObjectURL(b); pv.innerHTML=`<img src="${u}" alt="Ordem de serviço">`; pv.querySelector("img").onclick=()=>verFoto(u,"Ordem de serviço"); } })
+    .catch(()=>{ const pv=box.querySelector("[data-osprev]"); if(pv) pv.innerHTML=`<div class="midph">Não foi possível montar a imagem. Veja o texto acima.</div>`; });
+  box.addEventListener("click",e=>{ if(e.target===box||e.target.closest("[data-osx]")) box.remove(); }); }
 // composição da equipe na O.S: nome e função de cada um (fica salva para o próximo dia)
 const EQ_FISCAL="FISCAL DE TURMA", EQ_OPC="OPERADOR DE MOTOPODA";
 const EQ_FUNC=[EQ_FISCAL,"OPERADOR DE MOTOSSERRA",EQ_OPC,"OPERADOR DE SOPRADOR / OPERACIONAL","OPERACIONAL (ARRASTADOR DE GALHOS)","MOTORISTA","OPERADOR DE CESTO AÉREO","ENCARREGADO","PODADOR","AUXILIAR DE PODA","SINALEIRO / APOIO"];
@@ -7265,7 +7256,7 @@ async function osIniciarCom(g,btn,M){
   const em=new Date().toISOString(), fis=g.fis, os={num:osNum(g.sup,g.eq,hoje()),em,por:sessao.nome||"",porId:sessao.id,fiscal:fis?{id:fis.id,nome:fis.nome}:null,membros:M};
   let ok=true; for(const r of g.rs){ const upd={...r}; delete upd.id; delete upd._fila; upd.osDia=os; upd._acao=`Iniciou a O.S nº ${os.num}${fis?" e enviou ao fiscal "+fis.nome:""}`; const res=await saveDoc(r.id,upd); if(res!=="ok"&&res!=="fila") ok=false; else r.osDia=os; }
   if(!ok){ toast("Não foi possível iniciar a O.S agora. Tente de novo."); btn.disabled=false; btn.textContent="▶ Iniciar O.S e enviar ao fiscal"; btn.dataset.armed=""; return false; }
-  toast("O.S nº "+os.num+" iniciada."); try{ if(btn.closest("#sheetHost")) $("#sheetHost").innerHTML=""; }catch(e){} try{renderAll()}catch(e){} osEnviar({...g,os}); }
+  toast(fis?"O.S nº "+os.num+" iniciada e enviada pelo app ao fiscal "+fis.nome+".":"O.S nº "+os.num+" iniciada. Cadastre o fiscal desta equipe em Acessos.",6000); try{ if(btn.closest("#sheetHost")) $("#sheetHost").innerHTML=""; }catch(e){} try{renderAll()}catch(e){} }
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-osini],[data-osenv],[data-ospdf],[data-osimg],[data-oseq]"); if(!b) return;
   const k=b.dataset.osini||b.dataset.osenv||b.dataset.ospdf||b.dataset.osimg||b.dataset.oseq, g=osDiaGrupos().find(x=>x.k===k); if(!g){ toast("O.S não encontrada."); return; }
   if(b.dataset.oseq) return; // formar a equipe é com o fiscal
