@@ -1927,7 +1927,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.04x";
+const APP_VERSAO="2026.11.04z";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -3076,7 +3076,10 @@ const VIST_REL="2026-11-03", VIST_RAW=[["p11aw3wr1c",0,1,"Central",0,"Alameda do
 const VIST_COL="vistoria";
 const VIST_PROC=()=>{ const RG=["CENTRO OESTE","SUL","LESTE","NORTE","OESTE"]; return VIST_RAW.map(a=>({id:a[0],regional:RG[a[1]],ordem:a[2],setor:a[3],setor_aproximado:!!a[4],endereco:a[5],processo:a[6],ged:a[7],ano:a[8]||null,parecer:a[9],qtd_poda:a[10],qtd_extirpacao:a[11],qtd_destocamento:a[12],relatorio_data:VIST_REL})); };
 // quem indica o supervisor (coordenação) e quem dá baixa no SEI / Intranet
-const vistCoord=()=>!!sessao&&(isGerente()||sessao.perfil==="coordenador");
+// Resumo das vistorias, baixa no sistema, indicar vistoriador e PDFs: só de coordenador para cima
+// (coordenador, gerência, gerentes, administrador; a diretoria só consulta)
+const vistAlto=()=>!!sessao&&(ORD[sessao.perfil]??99)<=ORD.coordenador;
+const vistCoord=()=>vistAlto()&&!soLeitura();
 const vistBaixaSis=(uid=sessao?.id)=>{ const u=acesso?.[uid]; if(!u||u.ativo===false) return false; if(ehGerPerf(u.perfil)||u.perfil==="admin") return true; return !!(u.abas&&u.abas.baixa_sis); };
 // estado de cada processo no fluxo da vistoria
 const vistEst=r=>!r||!r.vistoriado?"pendente":r.situacao==="ja_executado"?"ja_executado":r.situacao==="nao_executado"?"nao_executado":"pendente";
@@ -3182,14 +3185,14 @@ function montar(root) {
   const meuId = () => (typeof sessao !== "undefined" && sessao && sessao.id) || "";
   const S = { proc: [], reg: {}, rotas: {}, sups: [], tela: "rotas", grp: LS("vp-grp") || "all", yr: LS("vp-yr") || "all", cur: LS("vp-reg") || "CENTRO OESTE",
     start: LS("vp-start") || "", per: +(LS("vp-per") || 10), q: "", hide: true, minhas: false, f: {}, doc: {}, x: {}, lim: 40, supF: "", erro: "", carregando: true, busy: {} };
-  const pode = { lancar: () => !soLeitura(), coord: () => vistCoord() };
+  const pode = { lancar: () => !soLeitura(), coord: () => vistCoord(), resumo: () => vistAlto() };
   const minhaAlguma = () => Object.values(S.reg || {}).some((r) => r && r.rota && r.rota.uid === meuId() && !r.vistoriado);
 
   // ---------------- dados ----------------
   function listas() {
     S.sups = SUPS.filter((x) => noEscopo(x.id)).map((x) => ({ nome: x.id, turma: nomeSupDe(x.id) || "" }));
     S.vist = Object.entries(acesso || {}).filter(([, u]) => u && u.ativo !== false && u.nome && u.perfil !== "fiscal" && u.perfil !== "admin").map(([id, u]) => ({ uid: id, nome: u.nome })).sort((a, b) => a.nome.localeCompare(b.nome, "pt"));
-    const quem = meuId(); if (S._ini !== quem) { S._ini = quem; S.tela = pode.coord() || minhaAlguma() ? "rotas" : "resumo"; }
+    const quem = meuId(); if (S._ini !== quem) { S._ini = quem; S.tela = pode.resumo() && !pode.coord() && !minhaAlguma() ? "resumo" : "rotas"; }
   }
   function carregar() { VIST.iniciar(); S.proc = VIST_PROC(); listas(); S.erro = ""; S.carregando = !VIST.pronto; if (!VIST.pronto) setTimeout(() => { VIST.iniciar(); if (S.carregando && VIST.pronto) { S.carregando = false; S.reg = VIST.regs; render(); } }, 1500); render(); }
   function aoVivo() { VIST.ouvir(() => { S.reg = VIST.regs; S.rotas = VIST.rotas; S.carregando = false; if (VIST.erro) S.erro = VIST.erro; if (!root.hidden && root.offsetParent !== null) render(); }); S.reg = VIST.regs; S.rotas = VIST.rotas; }
@@ -3283,7 +3286,7 @@ function montar(root) {
     const ae = document.activeElement; const fid = ae && root.contains(ae) && ae.id ? ae.id : null;
     let sel = null; try { sel = fid && ae.tagName !== "SELECT" ? [ae.selectionStart, ae.selectionEnd] : null; } catch (e) {}
     const corpo = S.carregando ? `<p class="vp-msg">Carregando processos…</p>` : S.erro ? `<p class="vp-msg">${esc(S.erro)}</p>`
-      : S.tela === "resumo" ? resumo() : S.tela === "pdfs" && pode.coord() ? pdfs() : rotas();
+      : S.tela === "resumo" && pode.resumo() ? resumo() : S.tela === "pdfs" && pode.coord() ? pdfs() : rotas();
     root.innerHTML = cab() + (S.erroGrav ? `<p class="vp-need" style="background:#fdecea;padding:10px 12px;border-radius:8px">⚠ ${esc(S.erroGrav)}</p>` : "") + corpo + `<div class="vp-toast" id="vp-toast" role="status"></div>`;
     if (fid) { const el = root.querySelector("#" + cssId(fid)); if (el) { el.focus(); if (sel) try { el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
   }
@@ -3292,7 +3295,8 @@ function montar(root) {
     const base = all.filter((p) => S.grp === "all" || (S.grp === "ged" ? !!p.ged : !p.ged));
     const anos = {}; base.forEach((p) => (anos[p.ano || 0] = (anos[p.ano || 0] || 0) + 1));
     const ys = Object.keys(anos).map(Number).sort((a, b) => (a || 9999) - (b || 9999));
-    const T = [["rotas", "Rotas"], ["resumo", `Resumo das vistorias (${d})`]];
+    const T = [["rotas", pode.resumo() ? "Rotas" : "Minhas rotas"]];
+    if (pode.resumo()) T.push(["resumo", `Resumo das vistorias (${d})`]);
     if (pode.coord()) T.push(["pdfs", `📄 PDFs dos processos (${all.filter((p) => docLinks(R(p)).length).length}/${all.length})`]);
     if (!T.some(([k]) => k === S.tela)) S.tela = "rotas";
     return `<div><p class="vp-sub">${all.length} processos · ${d} vistoriados · relatório de ${fDia(VIST_REL)}</p></div>
