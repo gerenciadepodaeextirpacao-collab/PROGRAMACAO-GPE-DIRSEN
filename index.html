@@ -1923,7 +1923,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.04b";
+const APP_VERSAO="2026.11.04c";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -2150,13 +2150,19 @@ const FIS_PERMS=[
   {k:"lista",t:"Lista",d:"Consultar a lista de serviços e baixar a planilha."}];
 const fisPerm=(uid=sessao?.id)=>{ const o={}; FIS_PERMS.forEach(x=>o[x.k]=!!(x.fixo||x.pad)); const sv={...(assins?.perm_fiscal?.p||{}),...(acesso?.[uid]?.abas||{})}; Object.keys(sv).forEach(k=>{ if(k in o&&!FIS_PERMS.find(x=>x.k===k).fixo) o[k]=!!sv[k]; }); return o; };
 // liberação de acessos por pessoa (Acessos → ⚙ Gerenciar → Acessos desta pessoa), feita pelo administrador / Victor
-const abasPessoaLista=u=>u.perfil==="fiscal"?FIS_PERMS.filter(x=>!x.fixo):PERF_ABAIXO.includes(u.perfil)?PERM_ABAS:[];
-const abaPessoaOn=(id,u,k)=>u.perfil==="fiscal"?!!fisPerm(id)[k]:abaOn(u.perfil,k,id);
+const abasPessoaLista=u=>u.perfil==="fiscal"?[...FIS_PERMS.filter(x=>!x.fixo),...ASS_PERMS]:PERF_ABAIXO.includes(u.perfil)?[...PERM_ABAS,...ASS_PERMS]:[];
+const abaPessoaOn=(id,u,k)=>k.startsWith("ass_")?podeAssinar(id,k.slice(4)):u.perfil==="fiscal"?!!fisPerm(id)[k]:abaOn(u.perfil,k,id);
 function abasPessoaHtml(id,u){ const L=abasPessoaLista(u); if(!L.length||!podeFisPerm()) return "";
   return `<details class="ppf" style="border:1px solid var(--line);border-radius:12px;padding:6px 12px;margin:6px 0" ${u.abas?"open":""}><summary><b>🔐 Acessos desta pessoa</b> <small>${L.filter(x=>abaPessoaOn(id,u,x.k)).length} de ${L.length} liberados${u.abas?"":" · padrão do perfil"}</small></summary>
     <p class="note" style="margin:6px 0 2px">Ative ou desative o que <b>${esc(u.nome)}</b> pode usar no app. O Início fica sempre ativo.${u.perfil==="fiscal"?" As O.S recebidas e as fotos do serviço também.":""}</p>
-    ${L.map(x=>`<label class="fpsw"><span><b>${esc(x.t)}</b><small>${esc(x.d)}</small></span><input type="checkbox" role="switch" data-pabas="${esc(id)}" data-pk="${x.k}" ${abaPessoaOn(id,u,x.k)?"checked":""}><i aria-hidden="true"></i></label>`).join("")}
+    ${L.map(x=>`${x.k==="ass_rel"?`<p class="note" style="margin:10px 0 2px"><b>Assinaturas</b> · só assina quem estiver liberado aqui (gerente e administrador sempre assinam).</p>`:""}<label class="fpsw"><span><b>${esc(x.t)}</b><small>${esc(x.d)}</small></span><input type="checkbox" role="switch" data-pabas="${esc(id)}" data-pk="${x.k}" ${abaPessoaOn(id,u,x.k)?"checked":""}><i aria-hidden="true"></i></label>`).join("")}
     <div class="row2" style="margin-top:6px"><button type="button" class="btn pri" data-abasalv="${esc(id)}">Salvar acessos</button>${u.abas?`<button type="button" class="btn sec" data-abapad="${esc(id)}">Voltar ao padrão do perfil</button>`:""}</div></details>`; }
+// permissão de ASSINAR (por pessoa): relatório de serviço e checklist. Gerente/administrador sempre assinam;
+// sem marcação na pessoa, o padrão é: supervisor assina, os demais perfis não.
+const ASS_PERMS=[{k:"ass_rel",t:"✍ Assinar relatório de serviço",d:"Assina o relatório na baixa, com a própria senha de assinatura.",ass:1},{k:"ass_chk",t:"✍ Assinar checklist",d:"Assina a entrega e o recebimento do checklist e o comunicado de defeito.",ass:1}];
+const assPadrao=u=>u?.perfil==="supervisor";
+const podeAssinar=(uid,tipo)=>{ const u=acesso?.[uid]; if(!u||u.ativo===false) return false; if(ehGerPerf(u.perfil)||u.perfil==="admin") return true; const k="ass_"+tipo, pa=u.abas; if(pa&&(k in pa)) return !!pa[k]; return assPadrao(u); };
+const travadoU=u=>!!u&&!GERAL.has(u.perfil)&&!lotGeral(u);
 const fisPode=k=>!ehFiscal()||!!fisPerm()[k];
 const fisAbas=()=>{ const P=fisPerm(), A=new Set(["inicio"]); if(P.campo||P.baixa) A.add("campo"); if(P.pend) A.add("pend"); if(P.chk) A.add("chk"); if(P.oc) A.add("oc"); if(P.lista) A.add("lista"); return A; };
 const podeFisPerm=()=>isAdm()||podeCriarAdm();
@@ -3131,7 +3137,8 @@ const podeEntregar=sup=>!!sessao && sessao.perfil!=="diretoria" && (!travado()||
 const nomeSupDe=sup=>{ if(!sup) return ""; const u=Object.values(acesso||{}).find(x=>x.perfil==="supervisor"&&x.ativo&&x.sup===sup); return u?.nome||supOf(sup)?.enc||""; };
 // modo teste do gerente: preenche qualquer parte e assina por qualquer supervisão (assinatura marcada como TESTE)
 const modoTeste=()=>isGerente()&&!!ls.get("gpe_teste",false);
-const supAssinaProprio=sup=>(ehSup()&&sessao.sup===sup)||modoTeste();
+const tipoAss=px=>px==="rS"?"rel":"chk";
+const supAssinaProprio=(sup,tipo="chk")=>modoTeste()||(!!sessao&&podeAssinar(sessao.id,tipo)&&(travado()?sessao.sup===sup:(!sup||noEscopo(sup))));
 const assTeste=sup=>({uid:sessao.id,nome:sessao.nome,sup:sup||"",cargo:"Gerente – ASSINATURA DE TESTE"+(sup?" pela "+sup:""),mat:matDe(acesso?.[sessao.id]||{}),como:"MODO TESTE do gerente – sem validade",teste:true});
 // matrícula + senha de assinatura; se a pessoa ainda não tem senha de assinatura, cria ali mesmo (confirmando a senha de entrar dela)
 const sigMatHtml=(idMat,idPin,rot)=>`<div class="row2"><label class="f">${rot}<input id="${idMat}" class="sigmat" data-pin="${idPin}" autocomplete="off" placeholder="ex.: m859209"></label><label class="f" id="${idPin}W">Senha de assinatura<input id="${idPin}" type="password" autocomplete="off"></label></div>
@@ -3157,19 +3164,19 @@ const sigBlocoHtml=(px,sup)=>modoTeste()
   ? `<p class="note" style="margin:6px 0 0"><span class="tagteste">🧪 TESTE</span> <b>Assinatura de teste do gerente</b>${sup?` pela <b>${esc(sup)}</b>`:""} · use a sua senha de assinatura. Fica marcada como TESTE.</p>${sigFormHtml(px,sessao.id)}`
   : gerAssina()
   ? sigGerHtml(px,sup,[px+"Mat",px+"Pin"],"Matrícula do supervisor")
-  : supAssinaProprio(sup)
-  ? `<p class="note" style="margin:6px 0 0"><b>Supervisor que entrega</b> · assina como <b>${esc(sessao.nome)}</b>, ${esc(cargoDe(acesso?.[sessao.id]||sessao))}</p>${sigFormHtml(px,sessao.id)}`
-  : `<p class="note" style="margin:6px 0 0"><b>Assinatura do supervisor da turma</b> (${esc(nomeSupDe(sup)||"supervisor")}) · ele assina aqui com a matrícula e a senha de assinatura dele. Se for a primeira assinatura, ele cria a senha aqui mesmo.</p>${sigMatHtml(px+"Mat",px+"Pin","Matrícula do supervisor")}`;
+  : supAssinaProprio(sup,tipoAss(px))
+  ? `<p class="note" style="margin:6px 0 0"><b>${ehSup()?"Supervisor que entrega":"Assinatura"}</b> · assina como <b>${esc(sessao.nome)}</b>, ${esc(cargoDe(acesso?.[sessao.id]||sessao))}</p>${sigFormHtml(px,sessao.id)}`
+  : `${sessao&&!podeAssinar(sessao.id,tipoAss(px))?`<p class="note" style="margin:6px 0 0;color:var(--bad)"><b>Você não está liberado para assinar ${tipoAss(px)==="rel"?"o relatório de serviço":"o checklist"}.</b> Quem tiver a liberação assina abaixo com a matrícula e a senha de assinatura.</p>`:""}<p class="note" style="margin:6px 0 0"><b>Assinatura do supervisor da turma</b> (${esc(nomeSupDe(sup)||"supervisor")}) · ele assina aqui com a matrícula e a senha de assinatura dele. Se for a primeira assinatura, ele cria a senha aqui mesmo.</p>${sigMatHtml(px+"Mat",px+"Pin","Matrícula do supervisor")}`;
 async function assinante(px,sup){
   if(modoTeste()){ const r=await conferirAss(px,sessao.id); if(r) return {erro:r}; return assTeste(sup); }
   if(gerAssina()&&!matKey($("#"+px+"Mat")?.value||"")){ const r=await conferirAss(px,sessao.id); if(r) return {erro:r}; return assGerente(sup); }
-  if(supAssinaProprio(sup)){ const r=await conferirAss(px,sessao.id); if(r) return {erro:r}; return {uid:sessao.id,nome:sessao.nome,sup:sessao.sup,cargo:cargoDe(acesso?.[sessao.id]||sessao),mat:matDe(acesso?.[sessao.id]||{}),como:"pelo próprio acesso"}; }
+  if(supAssinaProprio(sup,tipoAss(px))){ const r=await conferirAss(px,sessao.id); if(r) return {erro:r}; return {uid:sessao.id,nome:sessao.nome,sup:sessao.sup,cargo:cargoDe(acesso?.[sessao.id]||sessao),mat:matDe(acesso?.[sessao.id]||{}),como:"pelo próprio acesso"}; }
   const m=$("#"+px+"Mat")?.value;
   if(!matKey(m)) return {erro:"matrícula e senha de assinatura do supervisor"};
   const a=acharMat(m), u=a?.[1];
   if(!u||!u.ativo) return {erro:"matrícula do supervisor não encontrada ou desativada"};
-  if(u.perfil!=="supervisor") return {erro:"essa matrícula não é de supervisor; só o supervisor assina"};
-  if(sup&&u.sup!==sup) return {erro:`essa matrícula é da ${u.sup||"outra turma"}; quem assina é o supervisor da ${sup}`};
+  if(!podeAssinar(a[0],tipoAss(px))) return {erro:`${u.nome} não está liberado para assinar ${tipoAss(px)==="rel"?"o relatório de serviço":"o checklist"} (Acessos → Gerenciar → Acessos desta pessoa)`};
+  if(sup&&travadoU(u)&&u.sup!==sup) return {erro:`essa matrícula é da ${u.sup||"outra turma"}; quem assina é o supervisor da ${sup}`};
   const rs=await senhaPorMat(px+"Pin",a); if(rs) return {erro:rs==="senha de assinatura"?"senha de assinatura do supervisor":rs==="senha de assinatura não confere"?"senha de assinatura do supervisor não confere":rs};
   return {uid:a[0],nome:u.nome,sup:u.sup,cargo:cargoDe(u),mat:matDe(u),como:"assinado no aparelho de "+(sessao?.nome||"outro usuário")};
 }
@@ -3442,8 +3449,8 @@ function abrirChk(c){
         <label class="ck"><input type="checkbox" id="kfCiencia"><span class="note" style="color:var(--ink)"><b>Ciência:</b> declaro que recebi o equipamento e tomei ciência das condições registradas neste checklist${chkAlertas(c).length?" (inclusive das anomalias apontadas)":""}${c.ocorr?" e das ocorrências / observações":""}.</span></label>
         ${modoTeste()?`<p class="note" style="margin:0"><span class="tagteste">🧪 TESTE</span> Assina como gerente, <b>em teste</b>, pela <b>${esc(c.recebe?.sup||"—")}</b> com a sua senha de assinatura.</p>${sigFormHtml("kR",sessao.id)}`
           :gerAssina()?sigGerHtml("kR",c.recebe?.sup||"",["kfRecMat","kfRecPin"],"Matrícula de quem recebe")
-          :travado()&&sessao.sup===c.recebe?.sup?`<p class="note" style="margin:0">Assina como <b>${esc(sessao.nome)}</b>, ${esc(cargoDe(acesso?.[sessao.id]||sessao))}.</p>${sigFormHtml("kR",sessao.id)}`
-          :`<p class="note" style="margin:0">O supervisor que está recebendo o equipamento assina aqui com a matrícula e a <b>senha de assinatura</b> dele${c.recebe?.sup?` (indicado na entrega: ${esc(c.recebe.sup)}; se outro supervisor receber, vale a matrícula de quem assinar)`:""}.</p>${sigMatHtml("kfRecMat","kfRecPin","Matrícula de quem recebe")}`}
+          :supAssinaProprio(c.recebe?.sup||"","chk")?`<p class="note" style="margin:0">Assina como <b>${esc(sessao.nome)}</b>, ${esc(cargoDe(acesso?.[sessao.id]||sessao))}.</p>${sigFormHtml("kR",sessao.id)}`
+          :`${sessao&&!podeAssinar(sessao.id,"chk")?`<p class="note" style="margin:0;color:var(--bad)"><b>Você não está liberado para assinar o checklist.</b></p>`:""}<p class="note" style="margin:0">O supervisor que está recebendo o equipamento assina aqui com a matrícula e a <b>senha de assinatura</b> dele${c.recebe?.sup?` (indicado na entrega: ${esc(c.recebe.sup)}; se outro supervisor receber, vale a matrícula de quem assinar)`:""}.</p>${sigMatHtml("kfRecMat","kfRecPin","Matrícula de quem recebe")}`}
         <div class="actions" style="grid-template-columns:1fr;margin:4px 0 0"><button type="button" class="btn pri" id="kReceber">Assinar recebimento</button>
           <button type="button" class="btn danger" id="kRecusarAbre" style="min-height:44px;font-size:14px">Não concordo / encontrei avaria – recusar recebimento</button></div>
         <div class="recusabox" id="kRecusaBox" hidden>
@@ -3477,7 +3484,7 @@ function abrirChk(c){
   const quemRecebe=async()=>{
     if(modoTeste()){ const r=await conferirAss("kR",sessao.id); if(r) return {erro:"Falta / erro: "+r+"."}; return assTeste(c.recebe?.sup||""); }
     if(gerAssina()&&!matKey($("#kfRecMat")?.value||"")){ const r=await conferirAss("kR",sessao.id); if(r) return {erro:"Falta / erro: "+r+"."}; return assGerente(c.recebe?.sup||""); }
-    if(travado()&&sessao.sup===c.recebe?.sup){
+    if(supAssinaProprio(c.recebe?.sup||"","chk")){
       const r=await conferirAss("kR",sessao.id); if(r) return {erro:"Falta / erro: "+r+"."};
       return {uid:sessao.id,nome:sessao.nome,sup:sessao.sup,cargo:cargoDe(acesso?.[sessao.id]||sessao),mat:matDe(acesso?.[sessao.id]||{}),como:"pelo próprio acesso"};
     }
@@ -3485,7 +3492,7 @@ function abrirChk(c){
     if(!matKey(m)) return {erro:"Falta: matrícula e senha de assinatura de quem recebe."};
     const a=acharMat(m), u=a?.[1];
     if(!u||!u.ativo) return {erro:"Matrícula de quem recebe não encontrada ou desativada."};
-    if(u.perfil!=="supervisor") return {erro:"Só o supervisor da turma que recebe pode assinar o recebimento."};
+    if(!podeAssinar(a[0],"chk")) return {erro:u.nome+" não está liberado para assinar o checklist."};
     const rs=await senhaPorMat("kfRecPin",a); if(rs) return {erro:rs==="senha de assinatura"?"Falta: senha de assinatura de quem recebe.":rs==="senha de assinatura não confere"?"Senha de assinatura de quem recebe não confere.":"Não foi possível: "+rs+"."};
     return {uid:a[0],nome:u.nome,sup:u.sup||c.recebe?.sup||"",cargo:cargoDe(u),mat:matDe(u),como:"assinado no aparelho de "+(sessao?.nome||"outro usuário")};
   };
