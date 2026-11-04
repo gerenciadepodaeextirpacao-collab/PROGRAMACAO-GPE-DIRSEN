@@ -1927,7 +1927,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.04p";
+const APP_VERSAO="2026.11.04q";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -3201,7 +3201,7 @@ function montar(root) {
     render();
     try { for (const id of ids) await db.collection(VIST_COL).doc(id).set(S.reg[id]); if (S.erroGrav) { S.erroGrav = ""; render(); } return true; }
     catch (e) { ids.forEach((id) => { if (antes[id]) S.reg[id] = antes[id]; else delete S.reg[id]; }); render(); const m = String(e && e.message || e || "");
-      if (/colecao_valida|check constraint|violates/i.test(m)) { S.erroGrav = "O banco ainda não aceita a vistoria: rode o GPE-VISTORIA.sql no Supabase (SQL Editor › colar › Run) e tente de novo."; render(); }
+      S.erroGrav = (/colecao_valida|row-level|violates|permission|policy/i.test(m) ? "O banco recusou a gravação da vistoria. Rode o GPE-VISTORIA-2.sql no Supabase (SQL Editor › colar › Run) e atualize o app." : "Não foi possível salvar a vistoria.") + " Erro do banco: " + m; render();
       toast("Não foi possível salvar: " + m); return false; }
   }
   const fotoPend = {};
