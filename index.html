@@ -1927,7 +1927,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.04e";
+const APP_VERSAO="2026.11.04f";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -3131,7 +3131,7 @@ const ESTILO = `
 .vp .vp-opt.vp-s-ja_executado[aria-pressed="true"]{background:var(--lf);border-color:var(--lf)}
 .vp .vp-opt.vp-s-nao_executado[aria-pressed="true"]{background:var(--bk);border-color:var(--bk)}
 .vp .vp-need{font-size:13px;color:var(--rd);font-weight:600}
-.vp .vp-doc{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}.vp .vp-doc .vp-btn{padding:6px 10px;font-size:13px}.vp .vp-docf input[type=url]{width:100%}.vp .vp-foto{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.vp .vp-plink{color:var(--lf);font-weight:700;text-decoration:underline;text-underline-offset:2px}.vp .vp-plink code{color:inherit}.vp .vp-doc{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}.vp .vp-doc .vp-btn{padding:6px 10px;font-size:13px}.vp .vp-docf input[type=url]{width:100%}.vp .vp-foto{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .vp .vp-foto img{width:96px;height:96px;object-fit:cover;border-radius:8px;border:1px solid var(--ln)}
 .vp .vp-filebtn{position:relative;overflow:hidden}.vp .vp-filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .vp .vp-sp{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap;border:1px solid var(--ln)}
@@ -3200,7 +3200,11 @@ function montar(root) {
   // ---- processo para consulta em campo (PDF anexado ou link) ----
   const parecerTxt = (x) => String(x || "").replace(/^\s*parecer(\s+t[ée]cnico)?\s*(n[ºo°.]*\s*)?/i, "").trim();
   const pdfUrl = (m) => !m ? "" : m.url ? m.url : m.id ? (window.GPE_NETLIFY ? SUPA_MIDIA + m.id : "/_blob/" + m.id) : "";
-  const docLinks = (r) => [r.proc_pdf ? ["pdf", pdfUrl(r.proc_pdf)] : null, r.proc_link ? ["link", r.proc_link] : null].filter(Boolean);
+  // link principal do processo: PDF anexado; se não tiver, o link colado (Google Drive abre direto o PDF)
+  const driveFix = (u) => { const m = String(u || "").match(/drive\.google\.com\/(?:file\/d\/|open\?id=)([\w-]+)/); return m ? "https://drive.google.com/file/d/" + m[1] + "/preview" : u; };
+  const docUrl = (r) => (r.proc_pdf ? pdfUrl(r.proc_pdf) : r.proc_link ? driveFix(r.proc_link) : "");
+  const procLink = (p, txt) => { const u = docUrl(R(p)); return u ? `<a class="vp-plink" href="${esc(u)}" target="_blank" rel="noopener" title="Abrir o processo">${txt} 📄</a>` : txt; };
+  const docLinks = (r) => [r.proc_pdf ? ["pdf", pdfUrl(r.proc_pdf)] : null, r.proc_link ? ["link", driveFix(r.proc_link)] : null].filter(Boolean);
   function docHtml(p) {
     const r = R(p), L = docLinks(r), d = S.doc[p.id];
     let h = `<div class="vp-doc">${L.map(([k, u]) => `<a class="vp-btn ${k === "pdf" ? "vp-pri" : ""}" href="${esc(u)}" target="_blank" rel="noopener">${k === "pdf" ? "📄 Abrir o processo (PDF)" : "🔗 Abrir o processo (link)"}</a>`).join("")}
@@ -3352,7 +3356,7 @@ function montar(root) {
         ${cr && cr !== "__mix" && dv === undefined ? `<span class="vp-ok">Designado: <b>${esc(cr)}</b></span>` : ""}</div></div>`}
       <div class="vp-prog"><i style="width:${pct(feitos, ch.length)}%"></i></div><ol>`;
       h += show.map((p) => `<li class="vp-stop${R(p).vistoriado ? " vp-done" : ""}"><span class="vp-seq">${String(p.i).padStart(3, "0")}</span>
-        <div><div class="vp-e">${esc(p.endereco)}</div><div class="vp-m">${p.ano ? `<span class="vp-tag">${p.ano}</span>` : ""}${p.ged ? `<span class="vp-tag">GED ${esc(p.ged)}</span>` : ""}<span>Proc. <code>${esc(p.processo)}</code></span>${p.parecer && p.parecer !== "SEM NUMERO" ? `<span>Parecer ${esc(parecerTxt(p.parecer))}</span>` : ""}<span>${esc(p.setor)}</span><a class="vp-gm" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(full(p.endereco))}" target="_blank" rel="noopener">ver no mapa</a></div>${docHtml(p)}</div>
+        <div><div class="vp-e">${esc(p.endereco)}</div><div class="vp-m">${p.ano ? `<span class="vp-tag">${p.ano}</span>` : ""}${p.ged ? `<span class="vp-tag">GED ${esc(p.ged)}</span>` : ""}<span>Proc. ${procLink(p, `<code>${esc(p.processo)}</code>`)}</span>${p.parecer && p.parecer !== "SEM NUMERO" ? `<span>Parecer ${esc(parecerTxt(p.parecer))}</span>` : ""}<span>${esc(p.setor)}</span><a class="vp-gm" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(full(p.endereco))}" target="_blank" rel="noopener">ver no mapa</a></div>${docHtml(p)}</div>
         <div class="vp-q">${p.qtd_poda ? `<span class="vp-pill vp-po">${p.qtd_poda} poda</span>` : ""}${p.qtd_extirpacao ? `<span class="vp-pill vp-ex">${p.qtd_extirpacao} extirp.</span>` : ""}</div>
         ${blocoVistoria(p)}</li>`).join("") + `</ol></section>`;
     }
@@ -3378,7 +3382,7 @@ function montar(root) {
         const links = gm(Q);
         h += `<div class="vp-head" style="background:var(--bg)"><span class="vp-lab">${q}</span><small>${Q.length} serviço(s)</small><div class="vp-row" style="margin-left:auto">${links.map((u, k) => `<a class="vp-btn vp-pri" href="${u}" target="_blank" rel="noopener">Rota no Maps${links.length > 1 ? " · trecho " + (k + 1) : ""}</a>`).join("")}</div></div>
         <div class="vp-tw" style="border:0;border-radius:0"><table><thead><tr><th>Endereço</th><th>Processo</th><th>Regional</th><th class="vp-n">Poda</th><th class="vp-n">Extirp.</th><th>Vistoria</th><th>Vistoriador</th><th>Obs.</th><th>Enviado</th></tr></thead><tbody>
-        ${Q.map((p) => { const r = R(p); return `<tr><td>${esc(p.endereco)}</td><td><code>${esc(p.ged ? "GED " + p.ged : p.processo)}</code>${docLinks(r).map(([k, u]) => ` <a class="vp-gm" href="${esc(u)}" target="_blank" rel="noopener">${k === "pdf" ? "📄 PDF" : "🔗 link"}</a>`).join("")}</td><td>${cap(p.regional)}</td><td class="vp-n">${p.qtd_poda || "–"}</td><td class="vp-n">${p.qtd_extirpacao || "–"}</td><td class="vp-nw">${fDia(r.data_vistoria)}</td><td>${esc(r.responsavel || "–")}</td><td>${esc(r.observacao || "")}</td><td class="vp-nw">${fHora(r.enviado_supervisor_em)}</td></tr>`; }).join("")}
+        ${Q.map((p) => { const r = R(p); return `<tr><td>${esc(p.endereco)}</td><td>${procLink(p, `<code>${esc(p.ged ? "GED " + p.ged : p.processo)}</code>`)}</td><td>${cap(p.regional)}</td><td class="vp-n">${p.qtd_poda || "–"}</td><td class="vp-n">${p.qtd_extirpacao || "–"}</td><td class="vp-nw">${fDia(r.data_vistoria)}</td><td>${esc(r.responsavel || "–")}</td><td>${esc(r.observacao || "")}</td><td class="vp-nw">${fHora(r.enviado_supervisor_em)}</td></tr>`; }).join("")}
         </tbody></table></div>`;
       });
       h += `</section>`;
@@ -3415,7 +3419,7 @@ function montar(root) {
     <div class="vp-kpi"><b style="color:var(--bk)">${A.c.nao_executado}</b><span>Não executados</span><em>precisam de execução</em></div>
     <div class="vp-kpi"><b>${A.c.env}</b><span>Enviados aos supervisores</span><em>${A.aguard} aguardando envio</em></div></div>
     <h3>Vistorias realizadas</h3>
-    ${A.lista.length ? `<div class="vp-tw"><table><thead><tr><th>Data</th><th>Situação</th><th>Endereço</th><th>Processo</th><th>Regional</th><th>Vistoriador</th><th>Foto</th><th>Equip.</th><th>Supervisor</th><th>Obs.</th></tr></thead><tbody>${A.lista.slice(0, S.lim).map((p) => { const r = R(p); return `<tr><td class="vp-nw">${fDia(r.data_vistoria) || "–"}</td><td><span class="vp-sp vp-s-${r.situacao || ""}">${SITS[r.situacao] || "—"}</span></td><td>${esc(p.endereco)}</td><td><code>${esc(p.ged ? "GED " + p.ged : p.processo)}</code></td><td>${cap(p.regional)}</td><td>${esc(r.responsavel || "–")}</td><td>${r.foto_path ? `<a class="vp-gm" href="${fotoUrl(r.foto_path)}" target="_blank" rel="noopener">ver foto</a>` : "–"}</td><td>${esc(r.equipamento || "–")}</td><td>${r.supervisor_execucao ? esc(r.supervisor_execucao) + (r.enviado_supervisor_em ? "" : " (não enviado)") : "–"}</td><td>${esc(r.observacao || "")}</td></tr>`; }).join("")}</tbody></table></div>${A.lista.length > S.lim ? `<button class="vp-btn" data-mais="1">Mostrar mais (${A.lista.length - S.lim})</button>` : ""}` : `<p class="vp-msg">Nenhuma vistoria registrada ainda.</p>`}
+    ${A.lista.length ? `<div class="vp-tw"><table><thead><tr><th>Data</th><th>Situação</th><th>Endereço</th><th>Processo</th><th>Regional</th><th>Vistoriador</th><th>Foto</th><th>Equip.</th><th>Supervisor</th><th>Obs.</th></tr></thead><tbody>${A.lista.slice(0, S.lim).map((p) => { const r = R(p); return `<tr><td class="vp-nw">${fDia(r.data_vistoria) || "–"}</td><td><span class="vp-sp vp-s-${r.situacao || ""}">${SITS[r.situacao] || "—"}</span></td><td>${esc(p.endereco)}</td><td>${procLink(p, `<code>${esc(p.ged ? "GED " + p.ged : p.processo)}</code>`)}</td><td>${cap(p.regional)}</td><td>${esc(r.responsavel || "–")}</td><td>${r.foto_path ? `<a class="vp-gm" href="${fotoUrl(r.foto_path)}" target="_blank" rel="noopener">ver foto</a>` : "–"}</td><td>${esc(r.equipamento || "–")}</td><td>${r.supervisor_execucao ? esc(r.supervisor_execucao) + (r.enviado_supervisor_em ? "" : " (não enviado)") : "–"}</td><td>${esc(r.observacao || "")}</td></tr>`; }).join("")}</tbody></table></div>${A.lista.length > S.lim ? `<button class="vp-btn" data-mais="1">Mostrar mais (${A.lista.length - S.lim})</button>` : ""}` : `<p class="vp-msg">Nenhuma vistoria registrada ainda.</p>`}
     <h3>Por dia</h3>${A.byDia.length ? `<div class="vp-tw"><table><thead><tr><th>Data</th><th class="vp-n">Vistorias</th>${sth}</tr></thead><tbody>${A.byDia.map((x) => `<tr><td class="vp-nw">${fDia(x.k) || "Sem data"}</td><td class="vp-n"><b>${x.n}</b></td>${std(x.c)}</tr>`).join("")}</tbody></table></div>` : `<p class="vp-msg">Sem vistorias.</p>`}
     <h3>Por regional</h3><div class="vp-tw"><table><thead><tr><th>Regional</th><th class="vp-n">Processos</th><th class="vp-n">Vistoriados</th><th class="vp-n">%</th>${sth}</tr></thead><tbody>${A.byReg.map((x) => `<tr><td>${cap(x.r)}</td><td class="vp-n">${x.n}</td><td class="vp-n">${x.d}</td><td class="vp-n">${pct(x.d, x.n)}%</td>${std(x.c)}</tr>`).join("")}</tbody></table></div>
     <h3>Por vistoriador</h3>${A.byVist.length ? `<div class="vp-tw"><table><thead><tr><th>Vistoriador</th><th class="vp-n">Designados</th><th class="vp-n">Vistoriados</th>${sth}<th>Última</th></tr></thead><tbody>${A.byVist.map((x) => `<tr><td>${esc(x.nm)}</td><td class="vp-n">${x.n}</td><td class="vp-n">${x.d}</td>${std(x.c)}<td class="vp-nw">${fDia(x.ult) || "–"}</td></tr>`).join("")}</tbody></table></div>` : `<p class="vp-msg">Nenhum vistoriador designado.</p>`}
