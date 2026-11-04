@@ -3555,7 +3555,7 @@ function montar(root) {
       && (!term || [p.processo, p.endereco, p.setor, p.ged, R(p).responsavel, R(p).equipamento, R(p).observacao].join(" ").toLowerCase().includes(term)))
       .sort((a, b) => ((R(b).data_vistoria || "") + (R(b).atualizado_em || "")).localeCompare((R(a).data_vistoria || "") + (R(a).atualizado_em || "")));
   }
-  function graficos(A) {
+  function graficos(A, partes) {
     const t = (s) => esc(String(s));
     const leg = `<div class="vp-leg"><span><i style="background:var(--gj)"></i>Já executado</span><span><i style="background:var(--gn)"></i>Não executado</span></div>`;
     // por dia (últimos 30 dias com vistoria, do mais antigo ao mais recente)
@@ -3584,12 +3584,37 @@ function montar(root) {
     const lin = (k, v) => `<span class="vp-hn">${k}</span><span class="vp-ht" title="${k}: ${v}"><b style="width:${(v / mdir) * 100}%;background:var(--gj)"></b></span><span class="vp-hv">${v}</span>`;
     const lider = DIRS.map((k) => [k, porDir[k].bx]).sort((a, b) => b[1] - a[1]);
     const g5 = `${lider[0][1] ? `<p class="vp-msg" style="margin:0 0 8px"><b>${lider[0][1] === lider[1][1] ? "Empate em baixas" : lider[0][0] + " deu mais baixas"}</b> · DIRSEN ${porDir.DIRSEN.bx} · DIROP ${porDir.DIROP.bx}</p>` : ""}${[...DIRS, ""].filter((k) => k || porDir[k].vist || porDir[k].exe).map((k) => `<div style="margin:0 0 10px"><b style="font-size:13px">${k ? "Gerência – " + k : "Sem diretoria identificada"}</b><div class="vp-hb" style="margin-top:4px">${lin("Vistorias", porDir[k].vist)}${lin("Executados pelos fiscais", porDir[k].exe)}${lin("Baixados no sistema", porDir[k].bx)}</div></div>`).join("")}`;
-    return `<h3>Gráficos</h3><div class="vp-gr">
-      <div class="vp-gc"><h4>Vistorias por dia</h4><p class="vp-gs">Últimos ${dias.length} dias com vistoria</p>${g1}</div>
-      <div class="vp-gc"><h4>Vistorias por vistoriador / fiscal</h4><p class="vp-gs">Total de vistorias de cada um</p>${g2}</div>
-      <div class="vp-gc"><h4>Andamento por regional</h4><p class="vp-gs">Processos vistoriados do total da regional</p>${g3}</div>
-      <div class="vp-gc"><h4>Fluxo dos processos</h4><p class="vp-gs">Da vistoria até a baixa no sistema</p>${g4}</div>
-      <div class="vp-gc"><h4>Por diretoria</h4><p class="vp-gs">Pelo apontamento dos fiscais: DIRSEN (PODA I e II) · DIROP (PODA III e IV)</p>${g5}</div></div>`;
+    const cards = [
+      `<div class="vp-gc"><h4>Vistorias por dia</h4><p class="vp-gs">Últimos ${dias.length} dias com vistoria</p>${g1}</div>`,
+      `<div class="vp-gc"><h4>Vistorias por vistoriador / fiscal</h4><p class="vp-gs">Total de vistorias de cada um</p>${g2}</div>`,
+      `<div class="vp-gc"><h4>Andamento por regional</h4><p class="vp-gs">Processos vistoriados do total da regional</p>${g3}</div>`,
+      `<div class="vp-gc"><h4>Fluxo dos processos</h4><p class="vp-gs">Da vistoria até a baixa no sistema</p>${g4}</div>`,
+      `<div class="vp-gc"><h4>Por diretoria</h4><p class="vp-gs">Pelo apontamento dos fiscais: DIRSEN (PODA I e II) · DIROP (PODA III e IV)</p>${g5}</div>`];
+    if (partes) return cards;
+    return `<div class="vp-row" style="justify-content:space-between;align-items:center"><h3 style="margin:0">Gráficos</h3><div class="vp-row"><button class="vp-btn vp-pri" data-grafpdf="1">📄 Baixar gráficos em PDF</button><button class="vp-btn" data-grafimg="1">🖼 Baixar gráficos em imagem</button></div></div><div class="vp-gr">${cards.join("")}</div>`;
+  }
+  // relatório gráfico das vistorias (PDF A4 ou imagem PNG), sempre no tema claro
+  function grafDocHtml() {
+    const A = agg(), n = A.P.length, d = A.D.length, c = A.c;
+    const vars = "--bg:#f3f5f1;--sf:#fff;--ink:#18221b;--mu:#5b6a5f;--ln:#d9e0d8;--lf:#1f6b3a;--lfs:#e2efe5;--bk:#8a5a2b;--bks:#f4e9dc;color-scheme:light;font-size:13px;gap:10px";
+    const kp = `<div class="vp-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px"><div class="vp-kpi"><b>${d}<small style="font-size:14px;color:var(--mu)"> / ${n}</small></b><span>Vistoriados</span><em>${pct(d, n)}% · ${A.hj} hoje</em></div><div class="vp-kpi"><b>${c.ja_executado}</b><span>Já executados</span><em>com foto</em></div><div class="vp-kpi"><b>${c.nao_executado}</b><span>Não executados</span><em>${A.byEq.map((x) => x.n + " " + x.q).join(" · ")}</em></div><div class="vp-kpi"><b>${A.D.filter((p) => R(p).baixa).length}</b><span>Baixados</span><em>no sistema</em></div></div>`;
+    return `<div class="fdoc"><style>${FDOC_CSS}.vp.vp-print .vp-gr,.vp.vp-print .vp-gc{--gj:#2a78d6;--gn:#eb6834}.vp.vp-print .vp-gc{break-inside:avoid;--gj:#2a78d6;--gn:#eb6834}.vp.vp-print .vp-cw{overflow:visible}.vp.vp-print .vp-kpi b{font-size:24px}</style><div class="r-body vp vp-print" style="${vars}">${fhead("RELATÓRIO GRÁFICO DAS VISTORIAS DE PROCESSO", "SITUAÇÃO EM " + new Date().toLocaleDateString("pt-BR"))}${kp}${graficos(A, true).join("")}<p class="rod">Documento gerado pelo sistema Programação GPE em ${dataBR(new Date().toISOString())} às ${horaAgora()} · desenvolvido por Victor Ricardo Porto Alcântara.</p></div></div>`;
+  }
+  async function baixarGrafVist(tipo, btn) {
+    if (!downloads) { toast("Download não disponível aqui."); return; }
+    const dia = hoje(), nome = `graficos-vistorias-${dia}.${tipo}`;
+    if (tipo === "pdf") { await baixarFormPdf(btn, grafDocHtml(), nome, "Gráficos das vistorias · " + fDia(dia)); return; }
+    const t0 = btn.textContent; btn.disabled = true; btn.textContent = "Gerando imagem…";
+    const host = document.createElement("div"); host.style.cssText = "position:absolute;left:-12000px;top:0;width:794px;background:#fff";
+    const sx = scrollX, sy = scrollY;
+    try { await loadH2P(); try { await document.fonts.ready; } catch (e) {}
+      host.innerHTML = grafDocHtml(); document.body.appendChild(host); scrollTo(0, 0);
+      const el = host.firstElementChild, H = el.scrollHeight, k = Math.max(1, Math.min(2, Math.sqrt(14e6 / (794 * H))));
+      const cv = await html2pdf().set({ html2canvas: { scale: k, backgroundColor: "#ffffff", logging: false, scrollX: 0, scrollY: 0, x: 0, y: 0, useCORS: true, windowWidth: 1280 } }).from(el).toCanvas().get("canvas");
+      const blob = await new Promise((ok) => cv.toBlob(ok, "image/png"));
+      await downloads.save({ filename: nome, data: blob }); toast("Imagem baixada: " + nome);
+    } catch (e) { if (e?.code !== "cancelled" && e?.code !== "declined") toast(e?.message === "load" ? "Sem internet para montar a imagem. Tente de novo com conexão." : "Não foi possível gerar a imagem."); }
+    finally { host.remove(); scrollTo(sx, sy); btn.disabled = false; btn.textContent = t0; }
   }
   function resumo() {
     const A = agg(), n = A.P.length, d = A.D.length, c = A.c, L = listaResumo();
@@ -3836,6 +3861,7 @@ function montar(root) {
     if (ds.reg) { S.cur = ds.reg; LS("vp-reg", S.cur); S.q = ""; render(); return; }
     if (ds.mais) { S.lim += 40; render(); return; }
     if (ds.copyres) { copiar(resumoTexto()); return; }
+    if (ds.grafpdf || ds.grafimg) { baixarGrafVist(ds.grafpdf ? "pdf" : "png", e.target.closest("button")); return; }
     if (ds.copylista) { copiar(listaTexto()); return; }
     if (ds.planilha) { baixarPlanilha(); return; }
     if (ds.rab) { S.rab = S.rab || {}; S.rab[ds.rab] = !S.rab[ds.rab]; render(); return; }
