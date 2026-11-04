@@ -1927,7 +1927,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.04z";
+const APP_VERSAO="2026.11.05b";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -3090,7 +3090,7 @@ V.ouvir=f=>{ V.ouvintes.add(f); V.iniciar(); };
 const ativos=()=>{ const ids=new Set(VIST_RAW.map(a=>a[0])); return Object.entries(V.regs).filter(([k])=>ids.has(k)).map(([,r])=>r); };
 V.nTurma=()=>0; V.nCoord=()=>0; V.nBaixa=()=>0; V.enviadosTurma=V.nTurma;
 // processos indicados para o vistoriador e ainda não vistoriados
-V.nMeus=uid=>{ const ids=new Set(VIST_RAW.map(a=>a[0])); return Object.entries(V.regs).filter(([k,r])=>ids.has(k)&&r&&r.rota&&r.rota.uid===uid&&!r.vistoriado).length; };
+V.nMeus=uid=>{ const ids=new Set(VIST_RAW.map(a=>a[0])); return Object.entries(V.regs).filter(([k,r])=>(ids.has(k)||(r&&r.manual&&!r.manual.removido))&&r&&r.rota&&r.rota.uid===uid&&!r.vistoriado).length; };
 
 const ESTILO = `
 .vp{--bg:#f3f5f1;--sf:#fff;--ink:#18221b;--mu:#5b6a5f;--ln:#d9e0d8;--lf:#1f6b3a;--lfs:#e2efe5;--bk:#8a5a2b;--bks:#f4e9dc;--rd:#b42318;
@@ -3194,8 +3194,14 @@ function montar(root) {
     S.vist = Object.entries(acesso || {}).filter(([, u]) => u && u.ativo !== false && u.nome && u.perfil !== "fiscal" && u.perfil !== "admin").map(([id, u]) => ({ uid: id, nome: u.nome })).sort((a, b) => a.nome.localeCompare(b.nome, "pt"));
     const quem = meuId(); if (S._ini !== quem) { S._ini = quem; S.tela = pode.resumo() && !pode.coord() && !minhaAlguma() ? "resumo" : "rotas"; }
   }
-  function carregar() { VIST.iniciar(); S.proc = VIST_PROC(); listas(); S.erro = ""; S.carregando = !VIST.pronto; if (!VIST.pronto) setTimeout(() => { VIST.iniciar(); if (S.carregando && VIST.pronto) { S.carregando = false; S.reg = VIST.regs; render(); } }, 1500); render(); }
-  function aoVivo() { VIST.ouvir(() => { S.reg = VIST.regs; S.rotas = VIST.rotas; S.carregando = false; if (VIST.erro) S.erro = VIST.erro; if (!root.hidden && root.offsetParent !== null) render(); }); S.reg = VIST.regs; S.rotas = VIST.rotas; }
+  const REGN = ["CENTRO OESTE", "SUL", "LESTE", "NORTE", "OESTE"];
+  let _base = null;
+  // processos do relatório + processos cadastrados manualmente
+  const todosProc = () => { _base = _base || VIST_PROC(); const man = Object.entries(VIST.regs || {}).filter(([k, r]) => k.startsWith("m_") && r && r.manual && !r.manual.removido).map(([k, r], i) => { const m = r.manual;
+      return { id: k, regional: REGN.includes(m.regional) ? m.regional : "CENTRO OESTE", ordem: 100000 + i, setor: m.setor || "", setor_aproximado: true, endereco: m.endereco || "", processo: m.processo || "", ged: m.ged || "", ano: +m.ano || null, parecer: m.parecer || "", qtd_poda: +m.po || 0, qtd_extirpacao: +m.ex || 0, qtd_destocamento: +m.de || 0, relatorio_data: "", manual: true }; });
+    return _base.concat(man); };
+  function carregar() { VIST.iniciar(); S.proc = todosProc(); listas(); S.erro = ""; S.carregando = !VIST.pronto; if (!VIST.pronto) setTimeout(() => { VIST.iniciar(); if (S.carregando && VIST.pronto) { S.carregando = false; S.reg = VIST.regs; render(); } }, 1500); render(); }
+  function aoVivo() { VIST.ouvir(() => { S.reg = VIST.regs; S.rotas = VIST.rotas; const n0 = S.proc.length; S.proc = todosProc(); if (S.proc.length !== n0) _idx = null; S.carregando = false; if (VIST.erro) S.erro = VIST.erro; if (!root.hidden && root.offsetParent !== null) render(); }); S.reg = VIST.regs; S.rotas = VIST.rotas; }
   async function gravar(ids, campos) {
     if (!db) { toast("Sem conexão com o banco."); return false; }
     const antes = {}; ids.forEach((id) => (antes[id] = S.reg[id]));
@@ -3277,7 +3283,7 @@ function montar(root) {
     }
     return links;
   }
-  const linhaProc = (p) => `<div class="vp-e">${esc(p.endereco)}</div><div class="vp-m">${p.ano ? `<span class="vp-tag">${p.ano}</span>` : ""}${p.ged ? `<span class="vp-tag">GED ${esc(p.ged)}</span>` : ""}<span>Proc. ${procLink(p, `<code>${esc(p.processo)}</code>`)}</span>${p.parecer && p.parecer !== "SEM NUMERO" ? `<span>Parecer ${esc(parecerTxt(p.parecer))}</span>` : ""}<span>${esc(p.setor)} · ${cap(p.regional)}</span><a class="vp-gm" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(full(p.endereco))}" target="_blank" rel="noopener">📍 localização</a></div>`;
+  const linhaProc = (p) => `<div class="vp-e">${esc(p.endereco)}</div><div class="vp-m">${p.manual ? `<span class="vp-tag" style="background:#e8eefc;color:#2b4fa8">cadastrado à mão</span>` : ""}${p.ano ? `<span class="vp-tag">${p.ano}</span>` : ""}${p.ged ? `<span class="vp-tag">GED ${esc(p.ged)}</span>` : ""}<span>Proc. ${procLink(p, `<code>${esc(p.processo)}</code>`)}</span>${p.parecer && p.parecer !== "SEM NUMERO" ? `<span>Parecer ${esc(parecerTxt(p.parecer))}</span>` : ""}<span>${esc(p.setor)} · ${cap(p.regional)}</span><a class="vp-gm" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(full(p.endereco))}" target="_blank" rel="noopener">📍 localização</a></div>`;
   const qtdPills = (p) => `${p.qtd_poda ? `<span class="vp-pill vp-po">${p.qtd_poda} poda</span>` : ""}${p.qtd_extirpacao ? `<span class="vp-pill vp-ex">${p.qtd_extirpacao} extirp.</span>` : ""}`;
   const estPill = (r) => { const e = vistEst(r); return e === "pendente" ? "" : `<span class="vp-sp ${EST[e][1]}">${EST[e][0]}</span>`; };
 
@@ -3393,12 +3399,16 @@ function montar(root) {
   const toks = (txt) => { const out = new Set(); (String(txt || "").match(/\d[\d.\/-]*\d/g) || []).forEach((m) => {
       const dg = m.replace(/\D/g, ""); if (dg.length >= 6) { out.add(dg); const z = dg.replace(/^0+/, ""); if (z.length >= 6) out.add(z); }
       m.split(/[.\/-]/).forEach((pt) => { if (pt.length >= 6) { out.add(pt); const z = pt.replace(/^0+/, ""); if (z.length >= 5) out.add("c" + z); } else if (pt.length >= 5 && /^0/.test(pt)) out.add("c" + pt.replace(/^0+/, "")); });
-    }); return out; };
+    });
+    const t = String(txt || "");
+    for (const m of t.matchAll(/(\d{2})\.(\d{2})\.\s*(\d{5,})\s*-\s*(\d)/g)) out.add("S" + m[1] + m[2] + (+m[3]) + "-" + m[4]);
+    for (const m of t.matchAll(/GED\W{0,3}(\d{4,8})\s*[-\/ ]\s*(\d{2,4})/gi)) out.add("G" + (+m[1]) + "/" + m[2].slice(-2));
+    return out; };
   let _idx = null;
   const indice = () => { if (_idx) return _idx; _idx = new Map(); S.proc.forEach((p) => { new Set([...toks(p.processo), ...toks(p.ged)]).forEach((k) => { if (!_idx.has(k)) _idx.set(k, new Set()); _idx.get(k).add(p.id); }); }); return _idx; };
   function acharProc(nome) {
     const I = indice(), cont = {};
-    toks(String(nome || "").replace(/\.pdf$/i, "")).forEach((k) => { (I.get(k) || []).forEach((id) => (cont[id] = (cont[id] || 0) + (k[0] === "c" ? 1 : 2))); });
+    toks(String(nome || "").replace(/\.pdf$/i, "")).forEach((k) => { (I.get(k) || []).forEach((id) => (cont[id] = (cont[id] || 0) + (k[0] === "c" ? 1 : k[0] === "S" || k[0] === "G" ? 3 : 2))); });
     const L = Object.entries(cont).sort((a, b) => b[1] - a[1]);
     if (!L.length) return { st: "nao" };
     if (L.length > 1 && L[0][1] === L[1][1]) return { st: "varios", ids: L.filter((x) => x[1] === L[0][1]).map((x) => x[0]) };
@@ -3411,40 +3421,91 @@ function montar(root) {
     let h = `<div class="vp-kpis"><div class="vp-kpi"><b>${com}<small style="font-size:16px;color:var(--mu)"> / ${n}</small></b><span>Processos com PDF</span><em>${n - com} ainda sem PDF</em></div></div>
     <div class="vp-card" style="padding:14px;display:flex;flex-direction:column;gap:8px"><b style="font-size:18px">Enviar vários PDFs de uma vez</b>
     <p class="vp-msg">Escolha os PDFs (pode selecionar vários). O app liga cada arquivo ao processo pelo <b>número no nome do arquivo</b> (SEI, GED, O.S, PED ou nº do processo). Ex.: <code>24.17.000002489-7.pdf</code>, <code>GED 0004957-2024.pdf</code>, <code>OS 1787257.pdf</code>.</p>
-    <label class="vp-btn vp-filebtn vp-pri">📂 Escolher os PDFs<input type="file" accept="application/pdf,.pdf" multiple data-pdflote="1"></label></div>`;
+    <label class="vp-btn vp-filebtn vp-pri">📂 Escolher os PDFs<input type="file" accept="application/pdf,.pdf" multiple data-pdflote="1"></label></div>
+    ${S.novo ? novoHtml() : `<button class="vp-btn" data-nvabrir="1" style="align-self:flex-start">➕ Cadastrar processo manualmente (com PDF ou link)</button>`}`;
     if (fila.length) {
-      const ok = fila.filter((x) => x.id && !x.feito), env = fila.filter((x) => x.feito).length;
-      h += `<h3>Arquivos escolhidos (${fila.length})</h3><div class="vp-row"><button class="vp-btn vp-pri" data-pdfenviar="1" ${!ok.length || S.pdfBusy ? "disabled" : ""}>${S.pdfBusy ? `Enviando… ${env}/${fila.filter((x) => x.id).length}` : `⬆ Enviar ${ok.length} PDF${ok.length === 1 ? "" : "s"}`}</button><button class="vp-btn" data-pdflimpar="1" ${S.pdfBusy ? "disabled" : ""}>Limpar lista</button></div>
-      <section class="vp-card"><ol>${fila.map((x, i) => { const pr = x.id && procDe(x.id);
-        return `<li class="vp-stop vp-pdfit"><span class="vp-seq">${i + 1}</span><div><div class="vp-e" style="font-weight:600">📄 ${esc(x.file.name)} <span class="vp-msg">· ${(x.file.size / 1048576).toFixed(1)} MB</span></div>
-        <div style="margin-top:4px">${pr ? `<span class="vp-lab">Processo</span> ` : ""}${pr ? `<b>${esc(pr.processo)}</b><br><span class="vp-msg">${esc(pr.endereco)} · ${cap(pr.regional)}</span>${docLinks(R(pr)).length && !x.feito ? `<br><span class="vp-need">já tem PDF: vai substituir</span>` : ""}`
-          : `<span class="vp-need">${x.st === "varios" ? "Mais de um processo com esse número" : "Processo não encontrado pelo nome"}</span><br><input type="text" id="vp-pm-${i}" data-pdfmanual="${i}" value="${esc(x.manual || "")}" placeholder="Digite o nº do processo" style="margin-top:4px;width:100%">${x.st === "varios" ? `<br>${x.ids.map((id) => `<button class="vp-btn" data-pdfesc="${i}" data-pid="${id}" style="margin-top:4px">${esc(procDe(id).processo)} · ${esc(procDe(id).endereco)}</button>`).join("")}` : ""}`}</div>
-        <div class="vp-row" style="margin-top:6px">${x.feito ? `<span class="vp-sp vp-s-ja_executado">✔ enviado</span>` : x.erro ? `<span class="vp-need">${esc(x.erro)}</span>` : `<button class="vp-btn" data-pdftira="${i}" ${S.pdfBusy ? "disabled" : ""}>Tirar da lista</button>`}</div></div></li>`; }).join("")}</ol></section>`;
+      const lim = window.GPE_NETLIFY ? 50 : 15;
+      const okL = fila.filter((x) => x.st === "ok"), aEnviar = okL.filter((x) => !x.feito && !x.erro && (S.pdfSobre || !x.ja) && x.file.size <= lim * 1048576);
+      const env = okL.filter((x) => x.feito).length, err = okL.filter((x) => x.erro).length, ja = okL.filter((x) => x.ja && !x.feito).length;
+      const grandes = okL.filter((x) => x.file.size > lim * 1048576).length, nao = fila.filter((x) => x.st === "nao" || x.st === "cad"), dup = fila.filter((x) => x.st === "dup").length;
+      h += `<h3>Arquivos escolhidos</h3>
+      <div class="vp-kpis"><div class="vp-kpi"><b style="color:var(--lf)">${okL.length}</b><span>Processos com PDF encontrado</span><em>${env} enviados${err ? " · " + err + " com erro" : ""}${ja ? " · " + ja + " já tinham PDF" : ""}</em></div>
+      <div class="vp-kpi"><b style="color:var(--bk)">${nao.length}</b><span>Sem processo no relatório</span><em>número não está nos ${S.proc.length} processos</em></div>
+      <div class="vp-kpi"><b>${dup + (S.pdfCopias || 0)}</b><span>Ignorados</span><em>${S.pdfCopias || 0} cópias "(1)" · ${dup} 2º arquivo do mesmo processo${grandes ? " · " + grandes + " maiores que " + lim + " MB" : ""}</em></div></div>
+      ${ja ? `<label class="vp-row" style="font-size:14px"><input type="checkbox" id="vp-psobre" ${S.pdfSobre ? "checked" : ""}> Substituir também os ${ja} processos que já têm PDF</label>` : ""}
+      <div class="vp-row"><button class="vp-btn vp-pri" data-pdfenviar="1" ${!aEnviar.length || S.pdfBusy ? "disabled" : ""}>${S.pdfBusy ? `Enviando… ${env} de ${env + aEnviar.length} · não feche esta tela` : `⬆ Enviar ${aEnviar.length} PDF${aEnviar.length === 1 ? "" : "s"}`}</button>${S.pdfBusy ? `<button class="vp-btn" data-pdfparar="1">Parar</button>` : `<button class="vp-btn" data-pdflimpar="1">Limpar lista</button>`}</div>
+      ${S.pdfBusy ? `<div class="vp-prog" style="height:8px;border-radius:4px"><i style="width:${pct(env, env + aEnviar.length)}%"></i></div>` : ""}
+      ${nao.length ? `<details class="vp-card" style="padding:10px 14px" ${S.pdfNaoAberto ? "open" : ""}><summary><b>${nao.length} arquivos sem processo no relatório</b> <span class="vp-msg">(toque para ver e ligar na mão)</span></summary><ol>${nao.map((x) => { const i = fila.indexOf(x); return `<li class="vp-stop vp-pdfit"><span class="vp-seq"></span><div><div style="font-weight:600;overflow-wrap:anywhere">📄 ${esc(x.file.name)}</div>${x.st === "cad" ? `<span class="vp-sp vp-s-ja_executado">✔ processo cadastrado com este PDF</span>` : `<input type="text" id="vp-pm-${i}" data-pdfmanual="${i}" value="${esc(x.manual || "")}" placeholder="Digite o nº do processo para ligar" style="margin-top:4px;width:100%"><button class="vp-btn" data-nvfila="${i}" style="margin-top:4px">➕ Cadastrar processo novo com este PDF</button>`}</div></li>`; }).join("")}</ol></details>` : ""}
+      <details class="vp-card" style="padding:10px 14px" ${S.pdfVerTodos ? "open" : ""}><summary><b>Ver a lista dos ${okL.length} arquivos ligados</b></summary><ol>${okL.map((x) => { const pr = procDe(x.id); return `<li class="vp-stop vp-pdfit"><span class="vp-seq"></span><div><div style="overflow-wrap:anywhere">📄 ${esc(x.file.name)} <span class="vp-msg">· ${(x.file.size / 1048576).toFixed(1)} MB</span></div><div class="vp-msg">→ <b>${esc(pr.processo)}</b> · ${esc(pr.endereco)}</div>${x.feito ? `<span class="vp-sp vp-s-ja_executado">✔ enviado</span>` : x.erro ? `<span class="vp-need">${esc(x.erro)}</span>` : x.ja && !S.pdfSobre ? `<span class="vp-msg">já tem PDF (não será enviado)</span>` : ""}</div></li>`; }).join("")}</ol></details>`;
     }
     const term = (S.pq || "").trim().toLowerCase();
     const sem = S.proc.filter((p) => (S.pmostra === "com" ? docLinks(R(p)).length : !docLinks(R(p)).length) && (!S.preg || p.regional === S.preg) && (!term || [p.processo, p.endereco, p.setor, p.ged].join(" ").toLowerCase().includes(term)));
     h += `<h3>Um por um</h3><div class="vp-row">${[["sem", "Sem PDF", n - com], ["com", "Com PDF", com]].map(([k, t, q]) => `<button class="vp-chip" data-pmostra="${k}" aria-pressed="${(S.pmostra || "sem") === k}">${t}<small>${q}</small></button>`).join("")}</div>
     <div class="vp-ctl"><label class="vp-f">Regional<select id="vp-preg"><option value="">Todas</option>${REGS.map((r) => `<option value="${r}"${S.preg === r ? " selected" : ""}>${cap(r)}</option>`).join("")}</select></label>
     <label class="vp-f vp-grow">Buscar<input type="search" id="vp-pq" value="${esc(S.pq || "")}" placeholder="Nº do processo, rua, setor"></label></div>
-    <section class="vp-card"><ol>${sem.slice(0, S.lim).map((p) => `<li class="vp-stop"><span class="vp-seq">${cap(p.regional).slice(0, 3)}</span><div>${linhaProc(p)}${docHtml(p, true)}</div><div class="vp-q">${qtdPills(p)}</div></li>`).join("") || `<li class="vp-stop"><span></span><span class="vp-msg">Nenhum processo.</span></li>`}</ol></section>
+    <section class="vp-card"><ol>${sem.slice(0, S.lim).map((p) => `<li class="vp-stop"><span class="vp-seq">${cap(p.regional).slice(0, 3)}</span><div>${linhaProc(p)}${docHtml(p, true)}${p.manual && !R(p).vistoriado ? `<button class="vp-btn" data-nvexcluir="${p.id}" style="margin-top:4px">Excluir este processo cadastrado</button>` : ""}</div><div class="vp-q">${qtdPills(p)}</div></li>`).join("") || `<li class="vp-stop"><span></span><span class="vp-msg">Nenhum processo.</span></li>`}</ol></section>
     ${sem.length > S.lim ? `<button class="vp-btn" data-mais="1">Mostrar mais (${sem.length - S.lim})</button>` : ""}`;
     return h;
+  }
+  // ----- cadastrar processo manualmente (com PDF ou link) -----
+  function novoForm(pref) { const nome = pref && pref.file ? pref.file.name.replace(/\.pdf$/i, "") : "";
+    const num = (nome.match(/(\d{2}\.\d{2}\.\s*\d{5,}\s*-\s*\d)/) || nome.match(/(GED\W{0,3}\d{4,8}\s*[-\/ ]\s*\d{2,4})/i) || nome.match(/(O\.?\s*S\.?\W{0,4}\d{6,8})/i) || nome.match(/(\d{6,})/) || [])[1] || "";
+    const ged = ((nome.match(/GED\W{0,3}(\d{4,8}\s*[-\/ ]\s*\d{2,4})/i) || [])[1] || "").replace(/\s+/g, "");
+    const ano = ((nome.match(/(?:GED\W{0,3}\d{4,8}\s*[-\/ ]\s*|\b)(20\d{2})\b/) || [])[1]) || (num.match(/^(\d{2})\./) ? "20" + num.slice(0, 2) : "");
+    const setor = nome.replace(num, "").replace(/^[\s_.-]+|[\s_.-]+$/g, "").replace(/\(\d+\)/g, "").trim();
+    S.novo = { file: pref && pref.file || null, filaIdx: pref ? pref.idx : null, processo: num.trim(), ged, parecer: "", endereco: "", setor, regional: S.preg || "", ano, po: "", ex: "", de: "", link: "" }; }
+  function novoHtml() { const n = S.novo; if (!n) return "";
+    const inp = (k, ph, extra) => `<input type="text" id="vp-nv-${k}" data-nv="${k}" value="${esc(n[k] || "")}" placeholder="${ph}" ${extra || ""}>`;
+    return `<div class="vp-card" style="padding:14px;display:flex;flex-direction:column;gap:8px;border-color:var(--lf)"><b style="font-size:18px">➕ Cadastrar processo</b>
+      <p class="vp-msg">Para processo que não veio no relatório. Ele entra na regional escolhida, aparece nas rotas e no Resumo como os outros.</p>
+      <label class="vp-f">Nº do processo (SEI, GED, O.S ou PED) *${inp("processo", "Ex.: 25.30.000012368-0 ou GED 0000663-2024")}</label>
+      <div class="vp-ctl"><label class="vp-f vp-grow">GED${inp("ged", "0000663-2024")}</label><label class="vp-f vp-grow">Parecer técnico${inp("parecer", "Ex.: 1031/2025")}</label><label class="vp-f" style="width:90px">Ano${inp("ano", "2024", 'inputmode="numeric"')}</label></div>
+      <label class="vp-f">Endereço *${inp("endereco", "Rua, número, quadra, lote")}</label>
+      <div class="vp-ctl"><label class="vp-f vp-grow">Setor / bairro${inp("setor", "Ex.: Setor Marista")}</label>
+      <label class="vp-f">Regional *<select id="vp-nv-regional" data-nv="regional"><option value="">Escolher…</option>${REGN.map((r) => `<option value="${r}"${n.regional === r ? " selected" : ""}>${cap(r)}</option>`).join("")}</select></label></div>
+      <div class="vp-ctl"><label class="vp-f" style="width:90px">Poda${inp("po", "0", 'inputmode="numeric"')}</label><label class="vp-f" style="width:90px">Extirpação${inp("ex", "0", 'inputmode="numeric"')}</label><label class="vp-f" style="width:90px">Destoca${inp("de", "0", 'inputmode="numeric"')}</label></div>
+      <span class="vp-lab">PDF do processo</span>
+      <label class="vp-btn vp-filebtn ${n.file ? "" : "vp-pri"}">${n.file ? "📄 " + esc(n.file.name) + " (trocar)" : "Escolher o PDF"}<input type="file" accept="application/pdf,.pdf" data-nvpdf="1"></label>
+      ${inp("link", "ou cole o link do processo (SEI, GED, Drive…)", 'type="url"').replace('type="text" ', "")}
+      <div class="vp-row"><button class="vp-btn vp-pri" data-nvsalvar="1" ${S.busy.nv ? "disabled" : ""}>${S.busy.nv ? "Salvando…" : "Salvar processo"}</button><button class="vp-btn" data-nvcancel="1">Cancelar</button></div></div>`; }
+  async function novoSalvar() {
+    const n = S.novo; if (!n || S.busy.nv) return;
+    if (!n.processo.trim()) { toast("Informe o nº do processo"); return; }
+    if (!n.endereco.trim()) { toast("Informe o endereço"); return; }
+    if (!n.regional) { toast("Escolha a regional"); return; }
+    const link = (n.link || "").trim(); if (link && !/^https?:\/\//i.test(link)) { toast("O link precisa começar com http:// ou https://"); return; }
+    if (!db) { toast("Sem conexão com o banco."); return; }
+    S.busy.nv = 1; render();
+    try {
+      const id = "m_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      const doc = { processo_id: id, manual: { processo: n.processo.trim(), ged: n.ged.trim(), parecer: n.parecer.trim(), endereco: n.endereco.trim().toUpperCase(), setor: n.setor.trim(), regional: n.regional, ano: n.ano.trim(), po: +n.po || 0, ex: +n.ex || 0, de: +n.de || 0, por: usuario(), uid: meuId(), em: new Date().toISOString() } };
+      if (link) doc.proc_link = link;
+      if (n.file) { if (!assets) throw new Error("envio de PDF não liberado neste acesso; use o link"); const up = await assets.upload(n.file, { type: "application/pdf" }); doc.proc_pdf = { id: up.id, url: up.url || "", nome: n.file.name, em: new Date().toISOString(), por: usuario() }; }
+      if (await gravar([id], doc)) {
+        S.proc = todosProc(); _idx = null;
+        if (n.filaIdx != null && S.pdfFila && S.pdfFila[n.filaIdx]) Object.assign(S.pdfFila[n.filaIdx], { st: "cad", id, feito: !!n.file });
+        S.novo = null; toast("Processo cadastrado" + (doc.proc_pdf ? " com o PDF" : ""));
+      }
+    } catch (e) { toast("Não foi possível cadastrar: " + (e && e.message || midErro(e))); }
+    delete S.busy.nv; render();
   }
   async function pdfEnviarLote() {
     const fila = S.pdfFila || []; if (S.pdfBusy) return;
     if (!assets) { toast("Neste acesso o envio de PDF não está liberado."); return; }
-    S.pdfBusy = 1; render(); let n = 0;
+    const lim = (window.GPE_NETLIFY ? 50 : 15) * 1048576;
+    S.pdfBusy = 1; S.pdfParar = 0; render(); let n = 0;
+    const porArq = new Map(); // o mesmo arquivo ligado a 2 processos sobe uma vez só
     for (const x of fila) {
-      if (!x.id || x.feito) continue;
-      if (x.file.size > 15 * 1024 * 1024) { x.erro = "maior que 15 MB"; render(); continue; }
+      if (S.pdfParar) break;
+      if (x.st !== "ok" || x.feito || x.erro || (x.ja && !S.pdfSobre) || x.file.size > lim) continue;
       try {
-        const up = await assets.upload(x.file, { type: "application/pdf" });
+        let up = porArq.get(x.file); if (!up) { up = await assets.upload(x.file, { type: "application/pdf" }); porArq.set(x.file, up); }
         const ok = await gravar([x.id], { proc_pdf: { id: up.id, url: up.url || "", nome: x.file.name, em: new Date().toISOString(), por: usuario() } });
         if (ok) { x.feito = 1; n++; } else x.erro = "não salvou";
-      } catch (e) { x.erro = e && e.code === "unsupported_type" ? "o banco ainda não aceita PDF (rode o GPE-VISTORIA.sql)" : midErro(e); }
-      render();
+      } catch (e) { x.erro = e && e.code === "unsupported_type" ? "o banco ainda não aceita PDF (rode o GPE-VISTORIA-2.sql)" : midErro(e); }
+      if (n % 5 === 0) render();
     }
-    S.pdfBusy = 0; render(); toast(n + " PDF" + (n === 1 ? "" : "s") + " ligado" + (n === 1 ? "" : "s") + " aos processos");
+    S.pdfBusy = 0; render(); toast(n + " PDF" + (n === 1 ? "" : "s") + " ligado" + (n === 1 ? "" : "s") + " aos processos" + (S.pdfParar ? " (envio parado)" : ""));
   }
 
   // ----- resumo: tudo o que foi vistoriado (fonte para quem dá baixa no SEI / Intranet) -----
@@ -3618,6 +3679,12 @@ function montar(root) {
     if (ds.bxdesfaz) { if (t.dataset.arm !== "1") { t.dataset.arm = "1"; t.textContent = "Toque de novo para desfazer"; setTimeout(() => { if (t.isConnected) { t.dataset.arm = ""; render(); } }, 4000); return; } if (await gravar([ds.bxdesfaz], { baixa: null })) toast("Baixa desfeita"); return; }
     if (ds.pdfenviar) { pdfEnviarLote(); return; }
     if (ds.pdflimpar) { S.pdfFila = []; render(); return; }
+    if (ds.nvabrir) { novoForm(null); render(); return; }
+    if (ds.nvfila) { const i = +ds.nvfila; novoForm({ file: S.pdfFila[i].file, idx: i }); S.pdfNaoAberto = 1; render(); root.querySelector("#vp-nv-endereco")?.scrollIntoView({ block: "center" }); return; }
+    if (ds.nvexcluir) { if (t.dataset.arm !== "1") { t.dataset.arm = "1"; t.textContent = "Toque de novo para excluir"; setTimeout(() => { if (t.isConnected) { t.dataset.arm = ""; render(); } }, 4000); return; } const r0 = R({ id: ds.nvexcluir }); if (await gravar([ds.nvexcluir], { manual: Object.assign({}, r0.manual, { removido: true, removido_por: usuario() }) })) { S.proc = todosProc(); _idx = null; render(); toast("Processo excluído"); } return; }
+    if (ds.nvcancel) { S.novo = null; render(); return; }
+    if (ds.nvsalvar) { novoSalvar(); return; }
+    if (ds.pdfparar) { S.pdfParar = 1; toast("Parando depois do arquivo atual…"); return; }
     if (ds.pdftira) { S.pdfFila.splice(+ds.pdftira, 1); render(); return; }
     if (ds.pdfesc) { const x = S.pdfFila[+ds.pdfesc]; x.id = ds.pid; x.st = "ok"; render(); return; }
     if (ds.pmostra) { S.pmostra = ds.pmostra; S.lim = 40; render(); return; }
@@ -3651,9 +3718,20 @@ function montar(root) {
     if (t.id === "vp-rreg") { S.rreg = t.value; render(); return; }
     if (ds.bxdata) { S.bx = S.bx || {}; S.bx[ds.bxdata] = Object.assign(S.bx[ds.bxdata] || {}, { data: t.value }); return; }
     if (t.id === "vp-preg") { S.preg = t.value; S.lim = 40; render(); return; }
-    if (ds.pdflote) { const fs = [...(t.files || [])].filter((f) => /pdf$/i.test(f.type) || /\.pdf$/i.test(f.name)); if (!fs.length) { toast("Escolha arquivos PDF"); return; }
-      S.pdfFila = (S.pdfFila || []).filter((x) => !x.feito).concat(fs.map((f) => Object.assign({ file: f }, acharProc(f.name)))); render(); const nOk = fs.filter((f) => acharProc(f.name).st === "ok").length; toast(`${nOk} de ${fs.length} arquivos ligados ao processo pelo nome`); return; }
-    if (ds.pdfmanual !== undefined) { const x = S.pdfFila[+ds.pdfmanual]; x.manual = t.value; const r = acharProc(t.value); Object.assign(x, r.st === "ok" ? { id: r.id, st: "ok" } : { id: "", st: r.st, ids: r.ids }); if (r.st !== "ok") toast(r.st === "varios" ? "Mais de um processo: escolha abaixo" : "Processo não encontrado"); render(); return; }
+    if (ds.pdflote) { let fs = [...(t.files || [])].filter((f) => /\.pdf$/i.test(f.name)); if (!fs.length) { toast("Escolha arquivos PDF"); return; }
+      // cópias "nome (1).pdf" iguais a outro arquivo da seleção ficam de fora
+      const nomes = new Set(fs.map((f) => f.name.toLowerCase())); const copias = fs.filter((f) => { const b = f.name.replace(/\s*\(\d+\)(\.pdf)$/i, "$1"); return b !== f.name && nomes.has(b.toLowerCase()); });
+      fs = fs.filter((f) => !copias.includes(f));
+      const usados = new Set(); const fila = [];
+      fs.forEach((f) => { const r = acharProc(f.name); const ids = r.st === "ok" ? [r.id] : r.st === "varios" ? r.ids : [];
+        if (!ids.length) { fila.push({ file: f, st: "nao", id: "" }); return; }
+        ids.forEach((id) => { if (usados.has(id)) { fila.push({ file: f, st: "dup", id }); return; } usados.add(id); fila.push({ file: f, st: "ok", id, ja: !!docLinks(R({ id })).length }); }); });
+      S.pdfFila = fila; S.pdfCopias = copias.length; S.pdfVerTodos = false; render();
+      toast(`${fila.filter((x) => x.st === "ok").length} processos com PDF encontrado · ${fila.filter((x) => x.st === "nao").length} arquivos sem processo no relatório`); return; }
+    if (ds.nv && S.novo) { S.novo[ds.nv] = t.value; if (ds.nv === "regional") render(); return; }
+    if (ds.nvpdf) { const fl = t.files && t.files[0]; if (!fl) return; if (!/\.pdf$/i.test(fl.name)) { toast("Escolha um arquivo PDF"); return; } S.novo.file = fl; render(); return; }
+    if (t.id === "vp-psobre") { S.pdfSobre = t.checked; render(); return; }
+    if (ds.pdfmanual !== undefined) { const x = S.pdfFila[+ds.pdfmanual]; x.manual = t.value; const r = acharProc(t.value); if (r.st === "nao") { toast("Processo não encontrado com esse número"); return; } const id = r.st === "ok" ? r.id : r.ids[0]; Object.assign(x, { id, st: "ok", ja: !!docLinks(R({ id })).length }); toast("Ligado ao processo " + procDe(id).processo); render(); return; }
     if (ds.fdt) { S.f[ds.fdt].data = t.value; render(); return; }
     if (ds.docpdf) { const fl = t.files && t.files[0]; if (!fl) return; if (!/pdf$/i.test(fl.type) && !/\.pdf$/i.test(fl.name)) { toast("Escolha um arquivo PDF"); return; } S.doc[ds.docpdf].file = fl; render(); return; }
     if (ds.ffoto) {
@@ -3667,6 +3745,7 @@ function montar(root) {
     const t = e.target, ds = t.dataset;
     if (t.id === "vp-q") { S.q = t.value; render(); return; }
     if (t.id === "vp-rq") { S.rq = t.value; render(); return; }
+    if (ds.nv && S.novo && ds.nv !== "regional") S.novo[ds.nv] = t.value;
     if (ds.bxdoc) { S.bx = S.bx || {}; S.bx[ds.bxdoc] = Object.assign(S.bx[ds.bxdoc] || {}, { doc: t.value }); }
     if (t.id === "vp-pq") { S.pq = t.value; S.lim = 40; render(); return; }
     if (ds.fobs) S.f[ds.fobs].obs = t.value;
