@@ -3610,7 +3610,7 @@ function montar(root) {
     try { await loadH2P(); try { await document.fonts.ready; } catch (e) {}
       host.innerHTML = grafDocHtml(); document.body.appendChild(host); scrollTo(0, 0);
       const el = host.firstElementChild, H = el.scrollHeight, k = Math.max(1, Math.min(2, Math.sqrt(14e6 / (794 * H))));
-      const cv = await html2pdf().set({ html2canvas: { scale: k, backgroundColor: "#ffffff", logging: false, scrollX: 0, scrollY: 0, x: 0, y: 0, useCORS: true, windowWidth: 1280 } }).from(el).toCanvas().get("canvas");
+      const cv = await html2pdf().set({ pagebreak: { mode: [] }, html2canvas: { scale: k, backgroundColor: "#ffffff", logging: false, scrollX: 0, scrollY: 0, x: 0, y: 0, useCORS: true, windowWidth: 794, onclone: repaginarCopia } }).from(el).toCanvas().get("canvas");
       const blob = await new Promise((ok) => cv.toBlob(ok, "image/png"));
       await downloads.save({ filename: nome, data: blob }); toast("Imagem baixada: " + nome);
     } catch (e) { if (e?.code !== "cancelled" && e?.code !== "declined") toast(e?.message === "load" ? "Sem internet para montar a imagem. Tente de novo com conexão." : "Não foi possível gerar a imagem."); }
