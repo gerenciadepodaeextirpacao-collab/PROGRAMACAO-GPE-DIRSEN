@@ -1927,7 +1927,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.06i";
+const APP_VERSAO="2026.11.07";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -3278,18 +3278,104 @@ function montar(root) {
 
   // ---------------- rotas (fixas por regional) ----------------
   const inG = (p) => (S.grp === "all" || (S.grp === "ged" ? !!p.ged : !p.ged)) && (S.yr === "all" || String(p.ano || 0) === S.yr);
-  const doReg = (reg) => S.proc.filter((p) => p.regional === reg).sort((a, b) => a.ordem - b.ordem);
+  // ---------- rotas otimizadas: por regional → setores vizinhos em sequência → paradas mais próximas ----------
+  const semAc = (t) => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase();
+  const normSetor = (t) => { let x = " " + semAc(t).replace(/[.,;:()\/\-–]+/g, " ").replace(/\s+/g, " ").trim() + " ";
+    x = x.replace(/ (ST|SET|SETOR|S|BAIRRO|B) /g, " ").replace(/ (JD|JDM|JARD) /g, " JARDIM ").replace(/ (VL) /g, " VILA ").replace(/ (PQ|PRQ) /g, " PARQUE ").replace(/ (RES|RESID) /g, " RESIDENCIAL ").replace(/ (CJ|CONJ) /g, " CONJUNTO ").replace(/ (DA|DE|DO|DAS|DOS) /g, " ");
+    return x.replace(/\s+/g, " ").trim() || "?"; };
+  const geoDe = (p) => { const m = String(p.loc || "").match(/(-?\d{1,2}\.\d+)\s*[,; ]\s*(-?\d{1,3}\.\d+)/); if (m) return { lat: +m[1], lng: +m[2] }; const g = R(p).geo; return g && isFinite(g.lat) ? g : null; };
+  const dist = (a, b) => { const dx = (a.lng - b.lng) * Math.cos((a.lat * Math.PI) / 180), dy = a.lat - b.lat; return dx * dx + dy * dy; };
+  const vizinho = (pts, ini) => { const rest = pts.slice(), out = []; let cur = ini; while (rest.length) { let k = 0; if (cur) { let bd = Infinity; rest.forEach((q, i) => { const d = dist(cur, q.g); if (d < bd) { bd = d; k = i; } }); } out.push(rest.splice(k, 1)[0]); cur = out[out.length - 1].g; } return out; };
+  let _ordMemo = { p: null, r: null, o: {} };
+  function ordenarReg(reg) {
+    if (_ordMemo.p !== S.proc || _ordMemo.r !== S.reg) _ordMemo = { p: S.proc, r: S.reg, o: {} };
+    if (_ordMemo.o[reg]) return _ordMemo.o[reg];
+    const L = S.proc.filter((p) => p.regional === reg), rank = {};
+    // posição de cada setor na ordem do relatório (base de proximidade quando ainda não há localização)
+    L.forEach((p) => { if (p.manual) return; const k = normSetor(p.setor); rank[k] = Math.min(rank[k] == null ? Infinity : rank[k], p.ordem); });
+    const G = {}; L.forEach((p) => { const k = normSetor(p.setor); (G[k] = G[k] || []).push(p); });
+    const grupos = Object.entries(G).map(([k, ps]) => { const gs = ps.map(geoDe).filter(Boolean);
+      return { k, ps, rank: rank[k] != null ? rank[k] : 1e6 + Math.min(...ps.map((p) => p.ordem)), c: gs.length ? { lat: gs.reduce((a, g) => a + g.lat, 0) / gs.length, lng: gs.reduce((a, g) => a + g.lng, 0) / gs.length } : null }; });
+    grupos.sort((a, b) => a.rank - b.rank);
+    const comC = grupos.filter((g) => g.c), semC = grupos.filter((g) => !g.c);
+    let ordem = comC.length >= 2 ? vizinho(comC.map((g) => ({ ...g, g: g.c })), comC[0].c) : comC;
+    ordem = ordem.concat(semC);
+    const out = []; let ult = null;
+    ordem.forEach((gr) => { const com = gr.ps.map((p) => ({ p, g: geoDe(p) })).filter((x) => x.g), sem = gr.ps.filter((p) => !geoDe(p)).sort((a, b) => a.ordem - b.ordem);
+      const seq = com.length ? vizinho(com, ult || gr.c).map((x) => x.p) : []; if (seq.length) ult = geoDe(seq[seq.length - 1]);
+      seq.concat(sem).forEach((p) => out.push(Object.assign(p, { _set: gr.k }))); });
+    return (_ordMemo.o[reg] = out);
+  }
+  const doReg = (reg) => ordenarReg(reg);
+  // endereço para o Google Maps: rua (sem quadra/lote, sem zero à esquerda) + número + bairro/setor + Goiânia
+  const LIXO = /^\s*(QD|Q\.|QUADRA|LT|LOTE|N[º°o]\.?|NR|UNIDADE|UND|APTO|AP|CASA|BL|BLOCO|S\/N|SN|PROX|PRÓX|PRÓXIMO|PROXIMO|EM FRENTE|FRENTE|ESQ|ESQUINA)\b/i;
+  const tiraZero = (t) => t.replace(/\b(RUA|R\.?|AVENIDA|AV\.?|ALAMEDA|AL\.?|TRAVESSA|TV\.?|PRAÇA|PRACA)\s+0+(\d)/gi, "$1 $2");
+  const ruaLimpa = (t) => { let r = String(t || "").replace(/^\s*RUAS\s+(.+?)\s+E\s+.*$/i, "Rua $1");
+    r = r.replace(/^\s*(canteiro central d[aoe]|no final d[aoe]|in[ií]cio d[aoe]|final d[aoe]|pr[oó]ximo [aà]o?|em frente [aà]o?)\s+/i, "").replace(/^\s*(RU|RYA|RAUL|RUAA|RUIA)\s+(?=\d|[A-Z]{1,3}-?\d)/i, "Rua ").replace(/^\s*ALAEMDA\b/i, "Alameda").replace(/^\s*P[ÇC]\.?\s+/i, "Praça ")
+      .replace(/^\s*(\d)\s+AVENIDA\b/i, "$1ª Avenida").replace(/^\s*R-\s+(\d)/i, "Rua $1").replace(/^\s*([A-Z]{1,3}-\d+[A-Z]?)\b/i, "Rua $1");
+    r = r.split(/\s+(?:C\s*\/|COM\b|ESQ\.?\b|ESQUINA\b|QD\.?|Q\.\s|QUADRA\b|LT\.?\s|LOTE\b|EM FRENTE\b|PR[OÓ]X|UNIDADE\b|UNI\b|UND\b)/i)[0].split("/")[0];
+    r = r.replace(/\bAV\.\s*/i, "Avenida ").replace(/^AV\s+/i, "Avenida ").replace(/\bAL\.\s*/i, "Alameda ").replace(/^AL\s+/i, "Alameda ").replace(/^R\.\s*/i, "Rua ").replace(/^R\s+(?=[A-Z0-9])/i, "Rua ");
+    r = r.replace(/\b([A-Z]{1,3})\s*-\s*(\d)/gi, "$1-$2").replace(/\b(RUA|AVENIDA|ALAMEDA|TRAVESSA)\s+([A-Z]{1,3})\s+(\d{1,4})\b/gi, "$1 $2-$3");
+    return tiraZero(r.replace(/\s+/g, " ").trim()); };
+  const bairroLimpo = (t) => { let b = String(t || "").split("/").pop().replace(/^\s*(BAIRRO|BRO|B\.)\s+/i, "").trim();
+    b = setorBusca(b.replace(/^S\s+/i, "Setor ")); b = b.replace(/^Setor\s+(?=(Jardim|Vila|Parque|Residencial|Conjunto|Ch[aá]cara|Bairro|Loteamento)\b)/i, ""); return b; };
+  function endMapa(p) {
+    const partes = String(p.endereco || "").replace(/\s+/g, " ").split(",").map((x) => x.trim()).filter(Boolean);
+    const rua = ruaLimpa(partes.shift() || "");
+    let num = "", bairro = "";
+    partes.forEach((x) => { if (!num && /^(N[º°o]\.?\s*)?\d{1,5}[A-Z]?$/i.test(x)) num = x.replace(/^N[º°o]\.?\s*/i, ""); else if (!LIXO.test(x) && /[A-Za-zÀ-ú]{3}/.test(x) && !/GOI[AÂ]NIA|^\s*GO\s*$|^AVENIDA\b/i.test(x)) bairro = x; });
+    if (!bairro || (p.manual && p.setor)) bairro = p.setor || bairro;
+    else if (!p.manual && p.setor && !p.setor_aproximado && !normSetor(bairro).includes(normSetor(p.setor))) bairro = p.setor;
+    return [rua + (num ? ", " + num : ""), bairroLimpo(bairro), "Goiânia - GO"].filter(Boolean).join(", ");
+  }
+  const mapaQ = (p) => p.loc || endMapa(p);
+  // ---------- localizar os endereços no mapa (OpenStreetMap / Nominatim, 1 consulta por segundo) ----------
+  const setorBusca = (t) => String(t || "").replace(/\bST\.?\s/gi, "Setor ").replace(/\bS\s(?=[A-Z])/g, "Setor ").replace(/\bJD\.?\s/gi, "Jardim ").replace(/\bVL\.?\s/gi, "Vila ").replace(/\bPQ\.?\s/gi, "Parque ").replace(/\bRES\.?\s/gi, "Residencial ").replace(/\s+/g, " ").trim();
+  const ruaBusca = (e) => String(e || "").split(/,|\s(?:QD|Q\.|QUADRA|LT|LOTE|C\/|ESQ|ESQUINA|N[º°o]\.?\s|NR)\b|\s\/\s|\s-\s/i)[0].replace(/\bAV\.?\s/i, "Avenida ").replace(/\bR\.\s/i, "Rua ").replace(/\bAL\.?\s/i, "Alameda ").replace(/\s+/g, " ").trim();
+  const GEO_CACHE = "gpe_geo_cache";
+  const geoCache = (() => { try { return JSON.parse(localStorage.getItem(GEO_CACHE) || "{}"); } catch (e) { return {}; } })();
+  async function nominatim(q) {
+    if (geoCache[q] !== undefined) return geoCache[q];
+    const u = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=br&accept-language=pt-BR&viewbox=-49.45,-16.45,-49.05,-16.85&bounded=1&q=" + encodeURIComponent(q);
+    const r = await fetch(u, { headers: { Accept: "application/json" } }); if (!r.ok) throw new Error("mapa respondeu " + r.status);
+    const j = await r.json(); const v = j && j[0] ? { lat: +j[0].lat, lng: +j[0].lon } : null;
+    geoCache[q] = v; try { localStorage.setItem(GEO_CACHE, JSON.stringify(geoCache)); } catch (e) {}
+    await new Promise((ok) => setTimeout(ok, 1100)); return v;
+  }
+  const semGeo = () => REGS.flatMap((reg) => S.proc.filter((p) => p.regional === reg && inG(p) && !R(p).vistoriado && !geoDe(p) && !(R(p).geo && R(p).geo.falhou)));
+  async function localizar() {
+    if (S.geo && S.geo.on) return;
+    const L = semGeo(); if (!L.length) { toast("Todos os endereços já estão localizados"); return; }
+    S.geo = { on: true, feito: 0, total: L.length, rua: 0, setor: 0, falhou: 0 }; render();
+    try {
+      for (const p of L) { if (!S.geo.on) break;
+        const em = endMapa(p).split(", "), set = em.length > 2 ? em[em.length - 2] : setorBusca(p.setor), rua = em[0]; let g = null, nv = "";
+        if (rua && rua.length > 3) { g = await nominatim(`${rua}, ${set}, Goiânia, Goiás`); nv = "rua"; }
+        if (!g && set) { g = await nominatim(`${set}, Goiânia, Goiás`); nv = "setor"; }
+        if (!g && rua) { g = await nominatim(`${rua}, Goiânia, Goiás`); nv = "rua"; }
+        const geo = g ? { lat: g.lat, lng: g.lng, n: nv, em: new Date().toISOString() } : { falhou: true, em: new Date().toISOString() };
+        await gravar([p.id], { geo }); S.geo.feito++; if (!g) S.geo.falhou++; else S.geo[nv]++; render(); }
+    } catch (e) { toast("Não foi possível consultar o mapa: " + (e && e.message || e) + ". Confira a internet e tente de novo."); }
+    S.geo.on = false; render(); toast(`Localização: ${S.geo.rua} pela rua · ${S.geo.setor} pelo setor · ${S.geo.falhou} não achados. As rotas foram reorganizadas.`);
+  }
   const dono = (p) => R(p).rota || null;
   const minha = (p) => { const d = dono(p); return !!d && d.uid === meuId(); };
   const deOutro = (p) => { const d = dono(p); return !!d && d.uid !== meuId(); };
   const nPer = () => Math.max(3, Math.min(40, S.per || 10));
   // a rota é montada pelo app: processos da regional que passam no filtro (GED / ano), na ordem de proximidade, em blocos de N paradas
   const listaRotas = (reg) => pode.coord() ? doReg(reg).filter((p) => inG(p) && (!S.minhas || minha(p))) : doReg(reg).filter((p) => minha(p) || (R(p).vistoriado && R(p).resp_uid === meuId() && !S.hide));
-  const rotasDe = (reg) => { const L = listaRotas(reg), n = nPer(), out = []; for (let i = 0; i * n < L.length; i++) out.push({ n: i + 1, reg, ps: L.slice(i * n, i * n + n), base: i * n }); return out; };
+  // monta as rotas sem quebrar setor: fecha a rota quando o próximo setor não cabe e ela já está com boa parte das paradas
+  const rotasDe = (reg) => { const L = listaRotas(reg), n = nPer(), out = []; let cur = [], base = 0;
+    const fecha = () => { if (cur.length) { out.push({ n: out.length + 1, reg, ps: cur, base }); base += cur.length; cur = []; } };
+    let i = 0; while (i < L.length) { const k = L[i]._set; let j = i; while (j < L.length && L[j]._set === k) j++; const grp = L.slice(i, j); i = j;
+      if (cur.length + grp.length <= n) { cur = cur.concat(grp); continue; }
+      if (cur.length >= Math.ceil(n * 0.6)) fecha();
+      let g = grp; while (cur.length + g.length > n) { const cabe = n - cur.length; cur = cur.concat(g.slice(0, cabe)); g = g.slice(cabe); fecha(); } cur = cur.concat(g); }
+    fecha(); return out; };
   const pool = () => S.proc.filter(inG);
   const supTurma = (n) => (S.sups.find((s) => s.nome === n) || {}).turma || nomeSupDe(n) || "";
   function gm(stops) {
-    const o = S.start.trim(); const ad = stops.map((s) => s.loc ? s.loc : full(s.endereco)); const links = [];
+    const o = S.start.trim(); const ad = stops.map((s) => mapaQ(s)); const links = [];
     let i = 0, origin = o ? full(o) : null;
     while (i < ad.length) {
       const seg = ad.slice(i, i + (origin ? 10 : 11)); let org = origin, rest = seg;
@@ -3301,7 +3387,7 @@ function montar(root) {
     }
     return links;
   }
-  const linhaProc = (p) => `<div class="vp-e">${esc(p.endereco)}</div><div class="vp-m">${p.manual ? `<span class="vp-tag" style="background:#e8eefc;color:#2b4fa8">cadastrado à mão</span>` : ""}${p.ano ? `<span class="vp-tag">${p.ano}</span>` : ""}${p.ged ? `<span class="vp-tag">GED ${esc(p.ged)}</span>` : ""}<span>Proc. ${procLink(p, `<code>${esc(p.processo)}</code>`)}</span>${p.parecer && p.parecer !== "SEM NUMERO" ? `<span>Parecer ${esc(parecerTxt(p.parecer))}</span>` : ""}<span>${esc(p.setor)} · ${cap(p.regional)}</span>${p.editado ? `<span class="vp-tag" style="background:#fff4d6;color:#8a5a00" title="Editado por ${esc(p.editado.por || "")}">✏️ editado</span>` : ""}<a class="vp-gm" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.loc || full(p.endereco))}" target="_blank" rel="noopener">📍 localização</a></div>`;
+  const linhaProc = (p) => `<div class="vp-e">${esc(p.endereco)}</div><div class="vp-m">${p.manual ? `<span class="vp-tag" style="background:#e8eefc;color:#2b4fa8">cadastrado à mão</span>` : ""}${p.ano ? `<span class="vp-tag">${p.ano}</span>` : ""}${p.ged ? `<span class="vp-tag">GED ${esc(p.ged)}</span>` : ""}<span>Proc. ${procLink(p, `<code>${esc(p.processo)}</code>`)}</span>${p.parecer && p.parecer !== "SEM NUMERO" ? `<span>Parecer ${esc(parecerTxt(p.parecer))}</span>` : ""}<span>${esc(p.setor)} · ${cap(p.regional)}</span>${p.editado ? `<span class="vp-tag" style="background:#fff4d6;color:#8a5a00" title="Editado por ${esc(p.editado.por || "")}">✏️ editado</span>` : ""}<a class="vp-gm" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapaQ(p))}" target="_blank" rel="noopener">📍 localização</a></div>`;
   const qtdPills = (p) => `${p.qtd_poda ? `<span class="vp-pill vp-po">${p.qtd_poda} poda</span>` : ""}${p.qtd_extirpacao ? `<span class="vp-pill vp-ex">${p.qtd_extirpacao} extirp.</span>` : ""}`;
   const estPill = (r) => { const e = vistEst(r); return e === "pendente" ? "" : `<span class="vp-sp ${EST[e][1]}">${EST[e][0]}</span>`; };
 
@@ -3384,6 +3470,8 @@ function montar(root) {
     <label class="vp-f vp-grow">Ponto de partida<input type="text" id="vp-start" value="${esc(S.start)}" placeholder="Endereço da base / garagem"></label>
     <label class="vp-f vp-grow">Buscar<input type="search" id="vp-q" value="${esc(S.q)}" placeholder="Processo, rua, setor, vistoriador"></label></div>
     <div class="vp-row"><label class="vp-row" style="font-size:14px"><input type="checkbox" id="vp-hide" ${S.hide ? "" : "checked"}> Mostrar os já vistoriados (para conferir ou alterar)</label></div>
+    ${coord ? (() => { const g = S.geo, ng = semGeo().length; return g && g.on ? `<div class="vp-vb"><b>📍 Localizando os endereços no mapa… ${g.feito} de ${g.total}</b><div class="vp-prog"><i style="width:${pct(g.feito, g.total)}%"></i></div><span class="vp-msg">Cerca de 1 a 2 segundos por endereço. Pode continuar usando o app; as rotas se reorganizam no fim. Se parar, continua de onde parou.</span><div class="vp-row"><button class="vp-btn" data-geostop="1">Parar</button></div></div>`
+      : `<div class="vp-row" style="align-items:center"><span class="vp-msg" style="flex:1 1 260px">Rotas montadas por <b>regional</b> e por <b>setor</b>: os setores vizinhos ficam em sequência e cada rota fecha sem quebrar o setor.${ng ? ` <b>${ng}</b> endereço${ng === 1 ? "" : "s"} ainda sem localização no mapa: localize para a ordem ficar pela distância real.` : " Todos os endereços do filtro estão localizados no mapa."}</span>${ng ? `<button class="vp-btn vp-pri" data-geo="1">📍 Localizar ${ng} no mapa e otimizar</button>` : ""}</div>`; })() : ""}
     <p class="vp-msg">${coord ? "O app monta as rotas com os processos do filtro (GED, ano e regional), na ordem de proximidade. Indique o <b>vistoriador</b> de cada rota: só ele vê a rota e lança a vistoria." : `Rotas indicadas para você pelo coordenador · <b>${meusN}</b> ${meusN === 1 ? "processo" : "processos"} a vistoriar.`}</p>`;
     let alguma = false;
     rotasDe(S.cur).forEach((ro, ci) => {
@@ -3408,7 +3496,7 @@ function montar(root) {
       <div class="vp-row">${links.map((u, k) => `<a class="vp-btn vp-pri" href="${u}" target="_blank" rel="noopener">🧭 Abrir a rota no GPS${links.length > 1 ? " · trecho " + (k + 1) : ""}</a>`).join("")}<button class="vp-btn" data-copy="${ci}">Copiar lista</button></div></div>
       <div class="vp-prog"><i style="width:${pct(feitos, ch.length)}%"></i></div><ol>`;
       h += show.map((p) => `<li class="vp-stop${R(p).vistoriado ? " vp-done" : ""}"><span class="vp-seq">${String(ro.base + ch.indexOf(p) + 1).padStart(3, "0")}</span>
-        <div>${linhaProc(p)}${coord && dono(p) && !R(p).vistoriado ? `<div class="vp-msg" style="margin:2px 0">👤 Vistoriador: <b>${esc(dono(p).vistoriador || "")}</b> <button class="vp-btn" data-tiraum="${p.id}" style="padding:2px 8px;font-size:12px">tirar só desta parada</button></div>` : ""}${docHtml(p, true)}</div><div class="vp-q">${qtdPills(p)}</div>
+        <div>${linhaProc(p)}${coord && R(p).geo && R(p).geo.falhou && !p.loc ? `<div class="vp-msg" style="color:var(--rd)">📍 Endereço não achado no mapa: use ✏️ Editar › Localização para o GPS</div>` : ""}${coord && dono(p) && !R(p).vistoriado ? `<div class="vp-msg" style="margin:2px 0">👤 Vistoriador: <b>${esc(dono(p).vistoriador || "")}</b> <button class="vp-btn" data-tiraum="${p.id}" style="padding:2px 8px;font-size:12px">tirar só desta parada</button></div>` : ""}${docHtml(p, true)}</div><div class="vp-q">${qtdPills(p)}</div>
         ${blocoVistoria(p)}</li>`).join("") + `</ol></section>`;
     });
     if (!alguma) h += `<p class="vp-msg">Nenhum processo com esse filtro.</p>`;
@@ -3497,7 +3585,8 @@ function montar(root) {
     if (!n.endereco.trim()) { toast("Informe o endereço"); return; }
     const edicao = { processo: n.processo.trim(), ged: n.ged.trim(), parecer: n.parecer.trim(), ano: n.ano.trim(), endereco: n.endereco.trim(), setor: n.setor.trim(), regional: n.regional, po: +n.po || 0, ex: +n.ex || 0, de: +n.de || 0, loc: n.loc.trim(), por: usuario(), uid: meuId(), em: new Date().toISOString() };
     S.busy.ed = 1; render();
-    try { if (await gravar([id], { edicao })) { S.ed = null; S.proc = todosProc(); _idx = null; toast("Informações atualizadas"); } }
+    const p0 = S.proc.find((q) => q.id === id) || {}, mudou = edicao.endereco !== p0.endereco || edicao.setor !== p0.setor;
+    try { if (await gravar([id], mudou ? { edicao, geo: null } : { edicao })) { S.ed = null; S.proc = todosProc(); _idx = null; toast("Informações atualizadas"); } }
     finally { delete S.busy.ed; render(); }
   }
   function novoHtml() { const n = S.novo; if (!n) return "";
@@ -3859,6 +3948,8 @@ function montar(root) {
     if (ds.pmostra) { S.pmostra = ds.pmostra; S.lim = 40; render(); return; }
     if (ds.rsit) { S.rsit = ds.rsit; S.lim = 40; render(); return; }
     if (ds.indvist) { const sel = root.querySelector("#vp-rv-" + ds.indvist); const uid = sel ? sel.value : ""; if (!uid) { toast("Escolha o vistoriador"); return; } indicarRota(+ds.indvist, uid); return; }
+    if (ds.geo) { localizar(); return; }
+    if (ds.geostop) { if (S.geo) S.geo.on = false; render(); return; }
     if (ds.tiraum) { if (await gravar([ds.tiraum], { rota: null })) toast("Vistoriador retirado desta parada"); return; }
     if (ds.tirarvist) { if (t.dataset.arm !== "1") { t.dataset.arm = "1"; t.textContent = "toque de novo"; setTimeout(() => { if (t.isConnected) { t.dataset.arm = ""; render(); } }, 4000); return; } indicarRota(+ds.tirarvist, ""); return; }
     if (ds.ini) { abrirForm(ds.id, ds.ini); render(); return; }
