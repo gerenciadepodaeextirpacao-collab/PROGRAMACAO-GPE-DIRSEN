@@ -1927,7 +1927,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.06d";
+const APP_VERSAO="2026.11.06e";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -3208,7 +3208,12 @@ function montar(root) {
   // processos do relatório + processos cadastrados manualmente
   const todosProc = () => { _base = _base || VIST_PROC(); const man = Object.entries(VIST.regs || {}).filter(([k, r]) => k.startsWith("m_") && r && r.manual && !r.manual.removido).map(([k, r], i) => { const m = r.manual;
       return { id: k, regional: REGN.includes(m.regional) ? m.regional : "CENTRO OESTE", ordem: 100000 + i, setor: m.setor || "", setor_aproximado: true, endereco: m.endereco || "", processo: m.processo || "", ged: m.ged || "", ano: +m.ano || null, parecer: m.parecer || "", qtd_poda: +m.po || 0, qtd_extirpacao: +m.ex || 0, qtd_destocamento: +m.de || 0, relatorio_data: "", manual: true }; });
-    return _base.concat(man); };
+    // correções feitas pela coordenação (✏️ Editar) por cima do relatório
+    const ED = (p) => { const e = (VIST.regs || {})[p.id] && VIST.regs[p.id].edicao; if (!e) return p;
+      const q = { ...p, editado: e }; ["processo", "ged", "parecer", "endereco", "setor", "loc"].forEach((k) => { if (e[k] != null) q[k] = e[k]; });
+      if (e.ano != null) q.ano = +e.ano || null; if (REGN.includes(e.regional)) q.regional = e.regional;
+      [["po", "qtd_poda"], ["ex", "qtd_extirpacao"], ["de", "qtd_destocamento"]].forEach(([a, b]) => { if (e[a] != null) q[b] = +e[a] || 0; }); return q; };
+    return _base.concat(man).map(ED); };
   function carregar() { VIST.iniciar(); S.proc = todosProc(); listas(); S.erro = ""; S.carregando = !VIST.pronto; if (!VIST.pronto) setTimeout(() => { VIST.iniciar(); if (S.carregando && VIST.pronto) { S.carregando = false; S.reg = VIST.regs; render(); } }, 1500); render(); }
   function aoVivo() { VIST.ouvir(() => { S.reg = VIST.regs; S.rotas = VIST.rotas; const n0 = S.proc.length; S.proc = todosProc(); if (S.proc.length !== n0) _idx = null; S.carregando = false; if (VIST.erro) S.erro = VIST.erro; if (!root.hidden && root.offsetParent !== null) render(); }); S.reg = VIST.regs; S.rotas = VIST.rotas; }
   async function gravar(ids, campos) {
@@ -3242,7 +3247,9 @@ function montar(root) {
     const r = R(p), L = docLinks(r), d = S.doc[p.id];
     let h = `<div class="vp-doc">${L.map(([k, u]) => `<a class="vp-btn ${k === "pdf" ? "vp-pri" : ""}" href="${esc(u)}" target="_blank" rel="noopener">${k === "pdf" ? "📄 Abrir o processo (PDF)" : "🔗 Abrir o processo (link)"}</a>`).join("")}
       ${!L.length ? `<span class="vp-msg">Processo ainda não disponível para consulta.</span>` : ""}
-      ${edit && pode.lancar() && !d ? `<button class="vp-btn" data-docab="${p.id}">${L.length ? "Trocar / remover" : "Anexar processo (PDF ou link)"}</button>` : ""}</div>`;
+      ${edit && pode.lancar() && !d ? `<button class="vp-btn" data-docab="${p.id}">${L.length ? "Trocar / remover" : "Anexar processo (PDF ou link)"}</button>` : ""}
+      ${edit && pode.coord() && !(S.ed && S.ed.id === p.id) ? `<button class="vp-btn" data-edab="${p.id}">✏️ Editar</button>` : ""}</div>`;
+    if (S.ed && S.ed.id === p.id) h += edHtml(p);
     if (d) h += `<div class="vp-vb vp-docf"><span class="vp-lab">Processo para consulta em campo</span>
       <label class="vp-btn vp-filebtn ${d.file ? "" : "vp-pri"}">${d.file ? "📄 " + esc(d.file.name) : "Escolher o PDF do processo"}<input type="file" accept="application/pdf,.pdf" data-docpdf="${p.id}"></label>
       <input type="url" id="vp-dl-${p.id}" data-doclink="${p.id}" value="${esc(d.link)}" placeholder="ou cole o link do processo (SEI, GED, Drive…)">
@@ -3280,7 +3287,7 @@ function montar(root) {
   const pool = () => S.proc.filter(inG);
   const supTurma = (n) => (S.sups.find((s) => s.nome === n) || {}).turma || nomeSupDe(n) || "";
   function gm(stops) {
-    const o = S.start.trim(); const ad = stops.map((s) => full(s.endereco)); const links = [];
+    const o = S.start.trim(); const ad = stops.map((s) => s.loc ? s.loc : full(s.endereco)); const links = [];
     let i = 0, origin = o ? full(o) : null;
     while (i < ad.length) {
       const seg = ad.slice(i, i + (origin ? 10 : 11)); let org = origin, rest = seg;
@@ -3292,7 +3299,7 @@ function montar(root) {
     }
     return links;
   }
-  const linhaProc = (p) => `<div class="vp-e">${esc(p.endereco)}</div><div class="vp-m">${p.manual ? `<span class="vp-tag" style="background:#e8eefc;color:#2b4fa8">cadastrado à mão</span>` : ""}${p.ano ? `<span class="vp-tag">${p.ano}</span>` : ""}${p.ged ? `<span class="vp-tag">GED ${esc(p.ged)}</span>` : ""}<span>Proc. ${procLink(p, `<code>${esc(p.processo)}</code>`)}</span>${p.parecer && p.parecer !== "SEM NUMERO" ? `<span>Parecer ${esc(parecerTxt(p.parecer))}</span>` : ""}<span>${esc(p.setor)} · ${cap(p.regional)}</span><a class="vp-gm" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(full(p.endereco))}" target="_blank" rel="noopener">📍 localização</a></div>`;
+  const linhaProc = (p) => `<div class="vp-e">${esc(p.endereco)}</div><div class="vp-m">${p.manual ? `<span class="vp-tag" style="background:#e8eefc;color:#2b4fa8">cadastrado à mão</span>` : ""}${p.ano ? `<span class="vp-tag">${p.ano}</span>` : ""}${p.ged ? `<span class="vp-tag">GED ${esc(p.ged)}</span>` : ""}<span>Proc. ${procLink(p, `<code>${esc(p.processo)}</code>`)}</span>${p.parecer && p.parecer !== "SEM NUMERO" ? `<span>Parecer ${esc(parecerTxt(p.parecer))}</span>` : ""}<span>${esc(p.setor)} · ${cap(p.regional)}</span>${p.editado ? `<span class="vp-tag" style="background:#fff4d6;color:#8a5a00" title="Editado por ${esc(p.editado.por || "")}">✏️ editado</span>` : ""}<a class="vp-gm" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.loc || full(p.endereco))}" target="_blank" rel="noopener">📍 localização</a></div>`;
   const qtdPills = (p) => `${p.qtd_poda ? `<span class="vp-pill vp-po">${p.qtd_poda} poda</span>` : ""}${p.qtd_extirpacao ? `<span class="vp-pill vp-ex">${p.qtd_extirpacao} extirp.</span>` : ""}`;
   const estPill = (r) => { const e = vistEst(r); return e === "pendente" ? "" : `<span class="vp-sp ${EST[e][1]}">${EST[e][0]}</span>`; };
 
@@ -3462,6 +3469,30 @@ function montar(root) {
     const ano = ((nome.match(/(?:GED\W{0,3}\d{4,8}\s*[-\/ ]\s*|\b)(20\d{2})\b/) || [])[1]) || (num.match(/^(\d{2})\./) ? "20" + num.slice(0, 2) : "");
     const setor = nome.replace(num, "").replace(/^[\s_.-]+|[\s_.-]+$/g, "").replace(/\(\d+\)/g, "").trim();
     S.novo = { file: pref && pref.file || null, filaIdx: pref ? pref.idx : null, processo: num.trim(), ged, parecer: "", endereco: "", setor, regional: S.preg || "", ano, po: "", ex: "", de: "", link: "" }; }
+  // ✏️ editar as informações de um processo (coordenação para cima)
+  function edAbrir(p) { S.ed = { id: p.id, processo: p.processo || "", ged: p.ged || "", parecer: p.parecer && p.parecer !== "SEM NUMERO" ? p.parecer : "", ano: p.ano ? String(p.ano) : "", endereco: p.endereco || "", setor: p.setor || "", regional: p.regional || "", po: String(p.qtd_poda || 0), ex: String(p.qtd_extirpacao || 0), de: String(p.qtd_destocamento || 0), loc: p.loc || "" }; }
+  function edHtml(p) { const n = S.ed;
+    const inp = (k, ph, extra) => `<input type="text" id="vp-ed-${k}" data-ed="${k}" value="${esc(n[k] || "")}" placeholder="${ph}" ${extra || ""}>`;
+    return `<div class="vp-vb" style="border-color:var(--lf);display:flex;flex-direction:column;gap:8px"><b>✏️ Editar as informações do processo</b>
+      <label class="vp-f">Nº do processo *${inp("processo", "Ex.: 25.30.000012368-0 ou GED 0000663-2024")}</label>
+      <div class="vp-ctl"><label class="vp-f vp-grow">GED${inp("ged", "0000663-2024")}</label><label class="vp-f vp-grow">Parecer técnico${inp("parecer", "Ex.: 1031/2025")}</label><label class="vp-f" style="width:90px">Ano${inp("ano", "2024", 'inputmode="numeric"')}</label></div>
+      <label class="vp-f">Endereço *${inp("endereco", "Rua, número, quadra, lote")}</label>
+      <div class="vp-ctl"><label class="vp-f vp-grow">Setor / bairro${inp("setor", "Ex.: Setor Marista")}</label>
+      <label class="vp-f">Regional *<select id="vp-ed-regional" data-ed="regional">${REGN.map((r) => `<option value="${r}"${n.regional === r ? " selected" : ""}>${cap(r)}</option>`).join("")}</select></label></div>
+      <div class="vp-ctl"><label class="vp-f" style="width:90px">Poda${inp("po", "0", 'inputmode="numeric"')}</label><label class="vp-f" style="width:90px">Extirpação${inp("ex", "0", 'inputmode="numeric"')}</label><label class="vp-f" style="width:90px">Destoca${inp("de", "0", 'inputmode="numeric"')}</label></div>
+      <label class="vp-f">Localização para o GPS (opcional)${inp("loc", "Coordenadas (-16.68, -49.25) ou ponto de referência")}</label>
+      <span class="vp-msg">Use quando o endereço não acha o lugar certo no mapa. Vazio = usa o endereço.</span>
+      <div class="vp-row"><button class="vp-btn vp-pri" data-edsalvar="${p.id}" ${S.busy.ed ? "disabled" : ""}>${S.busy.ed ? "Salvando…" : "Salvar alterações"}</button><button class="vp-btn" data-edcancel="1">Cancelar</button>${p.editado && !p.manual ? `<button class="vp-btn" data-edorig="${p.id}">Voltar ao original do relatório</button>` : ""}</div>
+      ${p.editado ? `<span class="vp-msg">Editado por ${esc(p.editado.por || "–")} em ${fHora(p.editado.em)}</span>` : ""}</div>`; }
+  async function edSalvar(id) {
+    const n = S.ed; if (!n || S.busy.ed) return;
+    if (!n.processo.trim()) { toast("Informe o nº do processo"); return; }
+    if (!n.endereco.trim()) { toast("Informe o endereço"); return; }
+    const edicao = { processo: n.processo.trim(), ged: n.ged.trim(), parecer: n.parecer.trim(), ano: n.ano.trim(), endereco: n.endereco.trim(), setor: n.setor.trim(), regional: n.regional, po: +n.po || 0, ex: +n.ex || 0, de: +n.de || 0, loc: n.loc.trim(), por: usuario(), uid: meuId(), em: new Date().toISOString() };
+    S.busy.ed = 1; render();
+    try { if (await gravar([id], { edicao })) { S.ed = null; S.proc = todosProc(); _idx = null; toast("Informações atualizadas"); } }
+    finally { delete S.busy.ed; render(); }
+  }
   function novoHtml() { const n = S.novo; if (!n) return "";
     const inp = (k, ph, extra) => `<input type="text" id="vp-nv-${k}" data-nv="${k}" value="${esc(n[k] || "")}" placeholder="${ph}" ${extra || ""}>`;
     return `<div class="vp-card" style="padding:14px;display:flex;flex-direction:column;gap:8px;border-color:var(--lf)"><b style="font-size:18px">➕ Cadastrar processo</b>
@@ -3829,6 +3860,10 @@ function montar(root) {
     if (ds.feq) { const f = S.f[ds.id]; f.equip = f.equip === ds.feq ? "" : ds.feq; render(); return; }
     if (ds.furb) { S.f[ds.id].urb = ds.furb; render(); const x = root.querySelector("#vp-fu-" + cssId(ds.id)); if (x && !x.value) x.focus(); return; }
     if (ds.fsalvar) { salvarForm(ds.fsalvar); return; }
+    if (ds.edab) { const p = S.proc.find((q) => q.id === ds.edab); if (p) { edAbrir(p); render(); } return; }
+    if (ds.edcancel) { S.ed = null; render(); return; }
+    if (ds.edsalvar) { edSalvar(ds.edsalvar); return; }
+    if (ds.edorig) { if (await gravar([ds.edorig], { edicao: null })) { S.ed = null; S.proc = todosProc(); _idx = null; toast("Voltou às informações do relatório"); render(); } return; }
     if (ds.docab) { S.doc[ds.docab] = { file: null, link: R({ id: ds.docab }).proc_link || "" }; render(); return; }
     if (ds.doccancel) { delete S.doc[ds.doccancel]; render(); return; }
     if (ds.docsalvar) { docSalvar(ds.docsalvar); return; }
@@ -3864,6 +3899,7 @@ function montar(root) {
       S.pdfFila = fila; S.pdfCopias = copias.length; S.pdfVerTodos = false; render();
       toast(`${fila.filter((x) => x.st === "ok").length} processos com PDF encontrado · ${fila.filter((x) => x.st === "nao").length} arquivos sem processo no relatório`); return; }
     if (ds.nv && S.novo) { S.novo[ds.nv] = t.value; if (ds.nv === "regional") render(); return; }
+    if (ds.ed && S.ed) { S.ed[ds.ed] = t.value; return; }
     if (ds.nvpdf) { const fl = t.files && t.files[0]; if (!fl) return; if (!/\.pdf$/i.test(fl.name)) { toast("Escolha um arquivo PDF"); return; } S.novo.file = fl; render(); return; }
     if (t.id === "vp-psobre") { S.pdfSobre = t.checked; render(); return; }
     if (ds.pdfmanual !== undefined) { const x = S.pdfFila[+ds.pdfmanual]; x.manual = t.value; const r = acharProc(t.value); if (r.st === "nao") { toast("Processo não encontrado com esse número"); return; } const id = r.st === "ok" ? r.id : r.ids[0]; Object.assign(x, { id, st: "ok", ja: !!docLinks(R({ id })).length }); toast("Ligado ao processo " + procDe(id).processo); render(); return; }
@@ -3881,6 +3917,7 @@ function montar(root) {
     if (t.id === "vp-q") { S.q = t.value; render(); return; }
     if (t.id === "vp-rq") { S.rq = t.value; render(); return; }
     if (ds.nv && S.novo && ds.nv !== "regional") S.novo[ds.nv] = t.value;
+    if (ds.ed && S.ed && ds.ed !== "regional") S.ed[ds.ed] = t.value;
     if (ds.exobs && S.ex && S.ex[ds.exobs]) S.ex[ds.exobs].obs = t.value;
     if (ds.exq && S.ex && S.ex[ds.exq]) { const x = S.ex[ds.exq], tinha = QK().some((c) => +x.qtd[c] > 0); x.qtd[ds.c] = t.value; if (tinha !== QK().some((c) => +x.qtd[c] > 0)) render(); }
     if (ds.bxdoc) { S.bx = S.bx || {}; S.bx[ds.bxdoc] = Object.assign(S.bx[ds.bxdoc] || {}, { doc: t.value }); }
