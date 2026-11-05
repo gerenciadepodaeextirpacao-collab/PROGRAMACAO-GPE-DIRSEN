@@ -1929,7 +1929,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.07c";
+const APP_VERSAO="2026.11.07e";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -3161,7 +3161,13 @@ const ESTILO = `
 .vp .vp-done .vp-e{opacity:.6}
 .vp .vp-gm{color:var(--lf);font-weight:600;text-decoration:none}
 .vp .vp-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-.vp .vp-gr{--gj:#2a78d6;--gn:#eb6834;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:14px;margin:6px 0 14px}
+.vp .vp-gr{--gj:#2a78d6;--gn:#eb6834;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:6px 0 14px}
+@media (max-width:640px){.vp .vp-gr{grid-template-columns:minmax(0,1fr)}}
+.vp .vp-gtop{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin:8px 0 4px}
+@media (max-width:760px){.vp .vp-gtop{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.vp .vp-gtop>div{background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.vp .vp-gtop b{font-size:24px;line-height:1.1;font-variant-numeric:tabular-nums}.vp .vp-gtop b small{font-size:12px;color:var(--mu);font-weight:600}
+.vp .vp-gtop span{font-size:12px;color:var(--mu)}
 @media (prefers-color-scheme:dark){.vp .vp-gr{--gj:#3987e5;--gn:#d95926}}
 .vp .vp-gc{background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:12px 14px;min-width:0}
 .vp .vp-gc h4{margin:0 0 2px;font-size:15px}.vp .vp-gc .vp-gs{margin:0 0 10px;font-size:12px;color:var(--mu)}
@@ -3382,7 +3388,8 @@ function montar(root) {
   const deOutro = (p) => { const d = dono(p); return !!d && d.uid !== meuId(); };
   const nPer = () => Math.max(3, Math.min(40, S.per || 10));
   // a rota é montada pelo app: processos da regional que passam no filtro (GED / ano), na ordem de proximidade, em blocos de N paradas
-  const listaRotas = (reg) => pode.coord() ? doReg(reg).filter((p) => inG(p) && (!S.minhas || minha(p))) : doReg(reg).filter((p) => minha(p) || (R(p).vistoriado && R(p).resp_uid === meuId() && !S.hide));
+  const falta = (p) => !S.hide || !R(p).vistoriado || !!S.f[p.id];
+  const listaRotas = (reg) => pode.coord() ? doReg(reg).filter((p) => inG(p) && (!S.minhas || minha(p)) && falta(p)) : doReg(reg).filter((p) => (minha(p) && falta(p)) || (R(p).vistoriado && R(p).resp_uid === meuId() && !S.hide));
   // monta as rotas sem quebrar setor: fecha a rota quando o próximo setor não cabe e ela já está com boa parte das paradas
   const rotasDe = (reg) => { const L = listaRotas(reg), n = nPer(), out = []; let cur = [], base = 0;
     const fecha = () => { if (cur.length) { out.push({ n: out.length + 1, reg, ps: cur, base }); base += cur.length; cur = []; } };
@@ -3405,6 +3412,49 @@ function montar(root) {
       links.push(u); i += seg.length; origin = dest;
     }
     return links;
+  }
+  // ---------- GPS: melhor caminho a partir de onde a pessoa está, passando por todas as paradas da rota ----------
+  const posAtual = () => new Promise((ok) => { if (!navigator.geolocation) return ok(null);
+    navigator.geolocation.getCurrentPosition((r) => ok({ lat: r.coords.latitude, lng: r.coords.longitude }), () => ok(null), { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }); });
+  const custo = (seq, ini) => { let c = 0, cur = ini; seq.forEach((x) => { if (cur) c += Math.sqrt(dist(cur, x.g)); cur = x.g; }); return c; };
+  function melhorCaminho(pts, ini) {
+    let seq = vizinho(pts, ini);
+    // 2-opt: desfaz cruzamentos do caminho (início fixo em onde a pessoa está)
+    for (let volta = 0, melhorou = true; melhorou && volta < 60; volta++) { melhorou = false;
+      for (let i = 0; i < seq.length - 1; i++) for (let k = i + 1; k < seq.length; k++) {
+        const novo = seq.slice(0, i).concat(seq.slice(i, k + 1).reverse(), seq.slice(k + 1));
+        if (custo(novo, ini) + 1e-9 < custo(seq, ini)) { seq = novo; melhorou = true; } } }
+    return seq;
+  }
+  async function abrirGps(ci, janela) {
+    const ro = rotasDe(S.cur)[ci]; if (!ro) return;
+    const stops = visiveis(ro).filter((p) => !R(p).vistoriado); if (!stops.length) { toast("Nada a vistoriar nesta rota"); return; }
+    S.busy.gps = ci + 1; S.gpsMsg = "📍 Pegando a sua localização…"; render();
+    try {
+      const pos = await posAtual();
+      const semG = stops.filter((p) => !geoDe(p) && !(R(p).geo && R(p).geo.falhou));
+      for (let k = 0; k < semG.length; k++) { const p = semG[k]; S.gpsMsg = `🗺 Localizando os endereços ${k + 1} de ${semG.length}…`; render();
+        try { const em = endMapa(p).split(", "), set = em.length > 2 ? em[em.length - 2] : setorBusca(p.setor); let g = await nominatim(endMapa(p).replace(" - GO", ", Goiás")), nv = "rua";
+          if (!g && set) { g = await nominatim(`${set}, Goiânia, Goiás`); nv = "setor"; }
+          await gravar([p.id], { geo: g ? { lat: g.lat, lng: g.lng, n: nv, em: new Date().toISOString() } : { falhou: true, em: new Date().toISOString() } });
+        } catch (e) { break; } }
+      S.gpsMsg = "🧭 Calculando o melhor caminho…"; render();
+      const com = stops.map((p) => ({ p, g: geoDe(p) })).filter((x) => x.g), sem = stops.filter((p) => !geoDe(p));
+      let ini = pos; if (!ini && S.start.trim()) { try { ini = await nominatim(S.start.trim() + ", Goiânia, Goiás"); } catch (e) {} }
+      const seq = com.length ? melhorCaminho(com, ini || null).map((x) => x.p) : [];
+      sem.forEach((p) => { let at = -1; seq.forEach((q, i) => { if (q._set === p._set) at = i; }); if (at >= 0) seq.splice(at + 1, 0, p); else seq.push(p); });
+      const alvo = (p) => { const g = geoDe(p); return g ? g.lat.toFixed(6) + "," + g.lng.toFixed(6) : mapaQ(p); };
+      const links = []; for (let i = 0; i < seq.length; i += 10) { const seg = seq.slice(i, i + 10), dest = seg[seg.length - 1], wp = seg.slice(0, -1);
+        let u = "https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=" + encodeURIComponent(alvo(dest));
+        if (!pos && i === 0 && S.start.trim()) u += "&origin=" + encodeURIComponent(full(S.start.trim()));
+        if (wp.length) u += "&waypoints=" + encodeURIComponent(wp.map(alvo).join("|"));
+        links.push(u); }
+      S.gpsOrd = {}; seq.forEach((p, i) => (S.gpsOrd[p.id] = i));
+      S.gpsUlt = { ids: new Set(seq.map((p) => p.id)), links, n: seq.length, pos: !!pos, em: new Date().toISOString() };
+      if (janela && !janela.closed) janela.location.href = links[0]; else toast("Toque em “" + (links.length > 1 ? "Trecho 1" : "Abrir no Google Maps") + "” para iniciar");
+      if (!pos) toast("Não foi possível pegar a sua localização: libere a localização para o app. O Google Maps parte de onde você está.");
+    } catch (e) { if (janela && !janela.closed) janela.close(); toast("Não foi possível montar a rota: " + (e && e.message || e)); }
+    finally { delete S.busy.gps; S.gpsMsg = ""; render(); }
   }
   const linhaProc = (p) => `<div class="vp-e">${esc(p.endereco)}</div><div class="vp-m">${p.manual ? `<span class="vp-tag" style="background:#e8eefc;color:#2b4fa8">cadastrado à mão</span>` : ""}${p.ano ? `<span class="vp-tag">${p.ano}</span>` : ""}${p.ged ? `<span class="vp-tag">GED ${esc(p.ged)}</span>` : ""}<span>Proc. ${procLink(p, `<code>${esc(p.processo)}</code>`)}</span>${p.parecer && p.parecer !== "SEM NUMERO" ? `<span>Parecer ${esc(parecerTxt(p.parecer))}</span>` : ""}<span>${esc(p.setor)} · ${cap(p.regional)}</span>${p.editado ? `<span class="vp-tag" style="background:#fff4d6;color:#8a5a00" title="Editado por ${esc(p.editado.por || "")}">✏️ editado</span>` : ""}<a class="vp-gm" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapaQ(p))}" target="_blank" rel="noopener">📍 localização</a></div>`;
   const qtdPills = (p) => `${p.qtd_poda ? `<span class="vp-pill vp-po">${p.qtd_poda} poda</span>` : ""}${p.qtd_extirpacao ? `<span class="vp-pill vp-ex">${p.qtd_extirpacao} extirp.</span>` : ""}`;
@@ -3495,12 +3545,11 @@ function montar(root) {
     let alguma = false;
     rotasDe(S.cur).forEach((ro, ci) => {
       const ch = ro.ps;
-      const show = visiveis(ro);
+      const show = visiveis(ro); if (S.gpsOrd) show.sort((a, b) => (S.gpsOrd[a.id] ?? 1e9) - (S.gpsOrd[b.id] ?? 1e9));
       const pendT = ch.filter((p) => !R(p).vistoriado), feitos = ch.length - pendT.length;
       const filtrada = !!term && show.length < ch.length, pend = filtrada ? show.filter((p) => !R(p).vistoriado) : pendT;
       if (!show.length) { if (!term && ch.length && !pend.length) { alguma = true; h += `<section class="vp-card" style="padding:12px 14px"><b>Rota ${ro.n}</b> <span class="vp-sp vp-s-ja_executado">✔ Concluída · ${ch.length} vistoriados</span></section>`; } return; } alguma = true;
       const po = ch.reduce((a, p) => a + p.qtd_poda, 0), ex = ch.reduce((a, p) => a + p.qtd_extirpacao, 0);
-      const links = pend.length ? gm(pend) : [];
       const nomes = [...new Set(pend.map((p) => (dono(p) && dono(p).uid) || ""))];
       const atual = nomes.length === 1 ? nomes[0] : nomes.filter(Boolean).length ? "__mix" : "";
       const nomeDe = (uid) => (S.vist.find((v) => v.uid === uid) || {}).nome || (pend.map(dono).find((d) => d && d.uid === uid) || {}).vistoriador || "";
@@ -3509,10 +3558,11 @@ function montar(root) {
       if (!pend.length) resp = `<span class="vp-sp vp-s-ja_executado">Rota concluída</span>`;
       else if (coord) resp = `<span class="vp-lab">Vistoriador</span><select id="vp-rv-${ci}" data-rvsel="${ci}"><option value="">${atual === "__mix" ? "Vários – escolha para unificar" : "— Escolher o vistoriador —"}</option>${S.vist.map((v) => `<option value="${esc(v.uid)}"${v.uid === dv ? " selected" : ""}>${esc(v.rot || v.nome)}</option>`).join("")}</select><button class="vp-btn vp-warn" data-indvist="${ci}">${atual && atual !== "__mix" ? "Trocar" : "Indicar"}${filtrada ? ` (${pend.length})` : ""}</button>${atual && atual !== "__mix" ? `<span class="vp-ok">Indicado: <b>${esc(nomeDe(atual))}</b> <button class="vp-btn" data-tirarvist="${ci}" style="padding:3px 8px;font-size:12px">tirar</button></span>` : atual === "__mix" ? `<span class="vp-ok">Vários vistoriadores: ${esc(nomes.filter(Boolean).map(nomeDe).join(", "))}</span>` : `<span class="vp-need" style="flex-basis:100%">Rota sem vistoriador: escolha o nome acima (você também pode lançar a vistoria direto, sem indicar ninguém)</span>`}`;
       else resp = `<span class="vp-sp vp-env">✔ Sua rota · ${pend.length} a vistoriar</span>`;
-      h += `<section class="vp-card${!coord || (atual && atual === meuId()) ? " vp-mine" : ""}"><div class="vp-head"><div><b>Rota ${ro.n}</b> <small>${ch.length} paradas · ${po} poda · ${ex} extirpação · ${feitos} vistoriados</small>${filtrada ? `<div class="vp-need" style="margin-top:4px">🔎 Busca ativa: mostrando <b>${show.length} de ${ch.length}</b> paradas. ${coord ? `Indicar / tirar vale <b>só para ${pend.length === 1 ? "a parada mostrada" : "as " + pend.length + " paradas mostradas"}</b>.` : ""}</div>` : ""}</div>
+      h += `<section class="vp-card${!coord || (atual && atual === meuId()) ? " vp-mine" : ""}"><div class="vp-head"><div><b>Rota ${ro.n}</b> <small>${S.hide ? `${pendT.length} a vistoriar` : `${ch.length} paradas · ${feitos} vistoriados`} · ${po} poda · ${ex} extirpação</small>${filtrada ? `<div class="vp-need" style="margin-top:4px">🔎 Busca ativa: mostrando <b>${show.length} de ${ch.length}</b> paradas. ${coord ? `Indicar / tirar vale <b>só para ${pend.length === 1 ? "a parada mostrada" : "as " + pend.length + " paradas mostradas"}</b>.` : ""}</div>` : ""}</div>
       <div class="vp-sets">${[...new Set(ch.map((p) => p.setor))].map(esc).join(" · ")}</div>
       <div class="vp-resp">${resp}</div>
-      <div class="vp-row">${links.map((u, k) => `<a class="vp-btn vp-pri" href="${u}" target="_blank" rel="noopener">🧭 Abrir a rota no GPS${links.length > 1 ? " · trecho " + (k + 1) : ""}</a>`).join("")}<button class="vp-btn" data-copy="${ci}">Copiar lista</button></div></div>
+      <div class="vp-row">${pend.length ? `<button class="vp-btn vp-pri" data-gps="${ci}" ${S.busy.gps ? "disabled" : ""}>${S.busy.gps === ci + 1 ? esc(S.gpsMsg || "Calculando a melhor rota…") : "🧭 Abrir a rota no GPS · a partir de onde você está"}</button>` : ""}<button class="vp-btn" data-copy="${ci}">Copiar lista</button></div>
+      ${(() => { const G = S.gpsUlt; if (!G || !pend.length || !pend.every((p) => G.ids.has(p.id))) return ""; return `<div class="vp-vb"><span class="vp-msg">Melhor caminho calculado ${G.pos ? "a partir de onde você estava" : "pela ordem dos setores"} em ${fHora(G.em)} · ${G.n} paradas${G.links.length > 1 ? ` em ${G.links.length} trechos (o Google Maps aceita até 10 paradas por vez: termine um trecho e abra o próximo)` : ""}.</span><div class="vp-row">${G.links.map((u, k) => `<a class="vp-btn${k ? "" : " vp-pri"}" href="${u}" target="_blank" rel="noopener">🧭 ${G.links.length > 1 ? "Trecho " + (k + 1) + " · paradas " + (k * 10 + 1) + " a " + Math.min(G.n, k * 10 + 10) : "Abrir no Google Maps"}</a>`).join("")}</div></div>`; })()}</div>
       <div class="vp-prog"><i style="width:${pct(feitos, ch.length)}%"></i></div><ol>`;
       h += show.map((p) => `<li class="vp-stop${R(p).vistoriado ? " vp-done" : ""}"><span class="vp-seq">${String(ro.base + ch.indexOf(p) + 1).padStart(3, "0")}</span>
         <div>${linhaProc(p)}${coord && R(p).geo && R(p).geo.falhou && !p.loc ? `<div class="vp-msg" style="color:var(--rd)">📍 Endereço não achado no mapa: use ✏️ Editar › Localização para o GPS</div>` : ""}${coord && dono(p) && !R(p).vistoriado ? `<div class="vp-msg" style="margin:2px 0">👤 Vistoriador: <b>${esc(dono(p).vistoriador || "")}</b> <button class="vp-btn" data-tiraum="${p.id}" style="padding:2px 8px;font-size:12px">tirar só desta parada</button></div>` : ""}${docHtml(p, true)}</div><div class="vp-q">${qtdPills(p)}</div>
@@ -3713,21 +3763,24 @@ function montar(root) {
     const lin = (k, v) => `<span class="vp-hn">${k}</span><span class="vp-ht" title="${k}: ${v}"><b style="width:${(v / mdir) * 100}%;background:var(--gj)"></b></span><span class="vp-hv">${v}</span>`;
     const lider = DIRS.map((k) => [k, porDir[k].bx]).sort((a, b) => b[1] - a[1]);
     const g5 = `${lider[0][1] ? `<p class="vp-msg" style="margin:0 0 8px"><b>${lider[0][1] === lider[1][1] ? "Empate em baixas" : lider[0][0] + " deu mais baixas"}</b> · DIRSEN ${porDir.DIRSEN.bx} · DIROP ${porDir.DIROP.bx}</p>` : ""}${[...DIRS, ""].filter((k) => k || porDir[k].vist || porDir[k].exe).map((k) => `<div style="margin:0 0 10px"><b style="font-size:13px">${k ? "Gerência – " + k : "Sem diretoria identificada"}</b><div class="vp-hb" style="margin-top:4px">${lin("Vistorias", porDir[k].vist)}${lin("Executados pelos fiscais", porDir[k].exe)}${lin("Baixados no sistema", porDir[k].bx)}</div></div>`).join("")}`;
+    // valores no topo
+    const topo = [["Processos", n], ["Vistoriados", D.length + ` <small>(${pct(D.length, n)}%)</small>`], ["Já executados", A.c.ja_executado], ["Não executados", A.c.nao_executado], ["Executados pela turma", D.filter((p) => R(p).execucao).length], ["Baixados no sistema", D.filter((p) => R(p).baixa).length]];
+    const topoH = `<div class="vp-gtop">${topo.map(([k, v]) => `<div><b>${v}</b><span>${k}</span></div>`).join("")}</div>`;
     const cards = [
       `<div class="vp-gc"><h4>Vistorias por dia</h4><p class="vp-gs">Últimos ${dias.length} dias com vistoria</p>${g1}</div>`,
       `<div class="vp-gc"><h4>Vistorias por vistoriador / fiscal</h4><p class="vp-gs">Total de vistorias de cada um</p>${g2}</div>`,
       `<div class="vp-gc"><h4>Andamento por regional</h4><p class="vp-gs">Processos vistoriados do total da regional</p>${g3}</div>`,
       `<div class="vp-gc"><h4>Fluxo dos processos</h4><p class="vp-gs">Da vistoria até a baixa no sistema</p>${g4}</div>`,
       `<div class="vp-gc"><h4>Por diretoria</h4><p class="vp-gs">Pelo apontamento dos fiscais: DIRSEN (PODA I e II) · DIROP (PODA III e IV)</p>${g5}</div>`];
-    if (partes) return cards;
-    return `<div class="vp-row" style="justify-content:space-between;align-items:center"><h3 style="margin:0">Gráficos</h3><div class="vp-row"><button class="vp-btn vp-pri" data-grafpdf="1">📄 Baixar gráficos em PDF</button><button class="vp-btn" data-grafimg="1">🖼 Baixar gráficos em imagem</button></div></div><div class="vp-gr">${cards.join("")}</div>`;
+    if (partes) return [topoH, `<div class="vp-gr">${cards.join("")}</div>`];
+    return `<div class="vp-row" style="justify-content:space-between;align-items:center"><h3 style="margin:0">Gráficos</h3><div class="vp-row"><button class="vp-btn vp-pri" data-grafpdf="1">📄 Baixar gráficos em PDF</button><button class="vp-btn" data-grafimg="1">🖼 Baixar gráficos em imagem</button></div></div>${topoH}<div class="vp-gr">${cards.join("")}</div>`;
   }
   // relatório gráfico das vistorias (PDF A4 ou imagem PNG), sempre no tema claro
   function grafDocHtml() {
     const A = agg(), n = A.P.length, d = A.D.length, c = A.c;
     const vars = "--bg:#f3f5f1;--sf:#fff;--ink:#18221b;--mu:#5b6a5f;--ln:#d9e0d8;--lf:#1f6b3a;--lfs:#e2efe5;--bk:#8a5a2b;--bks:#f4e9dc;color-scheme:light;font-size:13px;gap:10px";
     const kp = `<div class="vp-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px"><div class="vp-kpi"><b>${d}<small style="font-size:14px;color:var(--mu)"> / ${n}</small></b><span>Vistoriados</span><em>${pct(d, n)}% · ${A.hj} hoje</em></div><div class="vp-kpi"><b>${c.ja_executado}</b><span>Já executados</span><em>com foto</em></div><div class="vp-kpi"><b>${c.nao_executado}</b><span>Não executados</span><em>${A.byEq.map((x) => x.n + " " + x.q).join(" · ")}</em></div><div class="vp-kpi"><b>${A.D.filter((p) => R(p).baixa).length}</b><span>Baixados</span><em>no sistema</em></div></div>`;
-    return `<div class="fdoc"><style>${FDOC_CSS}.vp.vp-print .vp-gr,.vp.vp-print .vp-gc{--gj:#2a78d6;--gn:#eb6834}.vp.vp-print .vp-gc{break-inside:avoid;--gj:#2a78d6;--gn:#eb6834}.vp.vp-print .vp-cw{overflow:visible}.vp.vp-print .vp-kpi b{font-size:24px}</style><div class="r-body vp vp-print" style="${vars}">${fhead("RELATÓRIO GRÁFICO DAS VISTORIAS DE PROCESSO", "SITUAÇÃO EM " + new Date().toLocaleDateString("pt-BR"))}${kp}${graficos(A, true).join("")}<p class="rod">Documento gerado pelo sistema Programação GPE em ${dataBR(new Date().toISOString())} às ${horaAgora()} · desenvolvido por Victor Ricardo Porto Alcântara.</p></div></div>`;
+    return `<div class="fdoc"><style>${FDOC_CSS}.vp.vp-print .vp-gr,.vp.vp-print .vp-gc{--gj:#2a78d6;--gn:#eb6834}.vp.vp-print .vp-gc{break-inside:avoid;--gj:#2a78d6;--gn:#eb6834}.vp.vp-print .vp-cw{overflow:visible}.vp.vp-print .vp-kpi b{font-size:24px}.vp.vp-print .vp-gr{grid-template-columns:repeat(2,minmax(0,1fr))!important}.vp.vp-print .vp-gtop{grid-template-columns:repeat(6,minmax(0,1fr))!important}</style><div class="r-body vp vp-print" style="${vars}">${fhead("RELATÓRIO GRÁFICO DAS VISTORIAS DE PROCESSO", "SITUAÇÃO EM " + new Date().toLocaleDateString("pt-BR"))}${graficos(A, true).join("")}<p class="rod">Documento gerado pelo sistema Programação GPE em ${dataBR(new Date().toISOString())} às ${horaAgora()} · desenvolvido por Victor Ricardo Porto Alcântara.</p></div></div>`;
   }
   async function baixarGrafVist(tipo, btn) {
     if (!downloads) { toast("Download não disponível aqui."); return; }
@@ -4031,6 +4084,7 @@ function montar(root) {
     if (ds.rsit) { S.rsit = ds.rsit; S.lim = 40; render(); return; }
     if (ds.indvist) { const sel = root.querySelector("#vp-rv-" + ds.indvist); const uid = sel ? sel.value : ""; if (!uid) { toast("Escolha o vistoriador"); return; } indicarRota(+ds.indvist, uid); return; }
     if (ds.geo) { localizar(); return; }
+    if (ds.gps) { if (S.busy.gps) return; let w = null; try { w = window.open("", "_blank"); if (w) w.document.write("<p style=\"font:16px sans-serif;padding:20px\">Calculando o melhor caminho da rota…</p>"); } catch (e) {} abrirGps(+ds.gps, w); return; }
     if (ds.geostop) { if (S.geo) S.geo.on = false; render(); return; }
     if (ds.tiraum) { if (await gravar([ds.tiraum], { rota: null })) toast("Vistoriador retirado desta parada"); return; }
     if (ds.tirarvist) { if (t.dataset.arm !== "1") { t.dataset.arm = "1"; t.textContent = "toque de novo"; setTimeout(() => { if (t.isConnected) { t.dataset.arm = ""; render(); } }, 4000); return; } indicarRota(+ds.tirarvist, ""); return; }
