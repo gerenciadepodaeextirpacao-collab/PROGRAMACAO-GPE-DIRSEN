@@ -414,6 +414,27 @@ nav.tabs button[aria-current="page"]{background:linear-gradient(180deg,#ff8c42 0
 .mtab .pc{display:inline-block;min-width:44px;padding:1px 6px;border-radius:99px;font-weight:700;font-size:12px;text-align:center}
 .mtab .pc.ok{background:var(--ok-bg);color:var(--ok)}.mtab .pc.wr{background:var(--warn-bg);color:var(--warn)}.mtab .pc.bd{background:var(--bad-bg);color:var(--bad)}
 .mtab tr.atual td{background:var(--sunk)}
+/* acompanhamento da programação: um dia por vez */
+.acd{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin:10px 0 12px}
+.acd button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:6px 0 5px;display:grid;gap:1px;justify-items:center;cursor:pointer;color:var(--muted);font:700 11px var(--body);letter-spacing:.04em;min-width:0}
+.acd button b{font:700 16px/1.05 var(--display);color:var(--ink)}
+.acd button small{font:600 10px var(--body);letter-spacing:0;color:var(--muted)}
+.acd button.hj{border-color:var(--accent)}
+.acd button[aria-pressed="true"]{background:var(--forest,#1f6b3a);border-color:var(--forest,#1f6b3a);color:#d8eadd}.acd button[aria-pressed="true"] b,.acd button[aria-pressed="true"] small{color:#fff}
+.acd button .al{display:block;width:6px;height:6px;border-radius:50%;background:var(--bad);margin-top:1px}
+.acdia{font:700 18px var(--display);margin:0 0 2px;color:var(--ink)}
+.acrow{width:100%;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 12px;margin:0 0 8px;display:block;cursor:pointer;color:var(--ink);font:inherit}
+.acrow[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
+.acrow.vz{opacity:.62;cursor:default;padding:9px 12px}
+.acrow .t{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.acrow .t b{font:700 15px var(--display);letter-spacing:.02em;text-transform:uppercase}
+.acrow .t small{color:var(--muted);font-size:12px;text-align:right}
+.acrow .hl{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin-top:6px}.acrow .hl b{color:var(--ink)}
+.acrow .hl b.ok{color:var(--ok)}.acrow .hl b.wr{color:#8a5a10}.acrow .hl b.bd{color:var(--bad)}
+.acrow .hb{position:relative;height:10px;background:var(--line);border-radius:6px;margin-top:3px}
+.acrow .hb i{position:absolute;left:0;top:0;bottom:0;border-radius:6px}
+.acrow .hb .m{position:absolute;top:-4px;bottom:-4px;left:66.67%;border-left:2px solid var(--ink)}
+.acrow .st{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12.5px;margin-top:7px;color:var(--muted)}.acrow .st em{font-style:normal;font-weight:800}
 /* acompanhamento da programação (grade turma × dia) */
 .agrid{overflow-x:auto;margin:6px -4px 0;padding:0 4px 4px}
 .agrid table{border-collapse:separate;border-spacing:3px;width:100%;min-width:560px;table-layout:fixed}
@@ -1929,7 +1950,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.07k";
+const APP_VERSAO="2026.11.07l";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -7952,6 +7973,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("#evo [data-evo]
 const ST_COR={SIM:"var(--ok)",PARCIAL:"var(--warn)","NÃO":"var(--bad)",ATRASADO:"var(--accent)",PROGRAMADO:"var(--idle)"};
 const ST_NOME={SIM:"Executado",PARCIAL:"Parcial","NÃO":"Não executado",ATRASADO:"Sem baixa",PROGRAMADO:"A executar"};
 let acSel=null;
+let acDia=null;
 function acompHtml(F){
   const sw=+(F.sem||semanaDe(F.dia||hoje())||0); if(!sw) return "";
   const b0=semIni(sw);
@@ -7961,24 +7983,33 @@ function acompHtml(F){
   const ord=["NÃO","ATRASADO","PARCIAL","SIM","PROGRAMADO"];
   const cont={}; base.forEach(r=>{const k=stKey(r); cont[k]=(cont[k]||0)+1;});
   const tot=base.length, baix=(cont.SIM||0)+(cont.PARCIAL||0)+(cont["NÃO"]||0), hj=hoje();
-  if(acSel&&!dias.includes(acSel.d)) acSel=null;
-  let h=`<div class="dcard full" id="acomp"><h3>Acompanhamento da programação · ${sw}ª semana (${periodoSem(sw)}) <small>${tot} programado${tot===1?"":"s"} · ${baix} com baixa · ${cont.ATRASADO||0} sem baixa</small></h3>
-    <p class="dcap">Meta de <b>R$ 50 mil por dia em cada supervisão (PODA II: R$ 75 mil, 3 equipamentos)</b> – soma de todas as equipes e equipamentos da turma no dia (não é por equipamento). Número = serviços programados; <b>prog.</b> = % do valor programado; <b>prod.</b> = % do valor executado (produção). Verde: atingiu · amarelo: 70% ou mais · vermelho: abaixo. Cada bolinha é um serviço; toque num dia para ver a lista.</p>
-    <div class="alg">${ord.map(k=>`<span><i style="background:${ST_COR[k]}"></i>${ST_NOME[k]}${cont[k]?" ("+cont[k]+")":""}</span>`).join("")}</div>
-    <div class="agrid"><table><thead><tr><th class="tm">Turma</th>${dias.map(d=>`<th class="${d===hj?"hj":""}${F.dia===d?" hj":""}">${diaDe(d)}<small>${d.slice(8,10)}/${d.slice(5,7)}</small></th>`).join("")}</tr></thead><tbody>`;
-  sups.forEach(s=>{ h+=`<tr><td class="tm">${esc(s.id)}<small>${esc(s.enc)}</small></td>`;
-    dias.forEach(d=>{ const rs=base.filter(r=>r.supervisao===s.id&&r.data===d).sort((a,b)=>ord.indexOf(stKey(a))-ord.indexOf(stKey(b)));
-      if(!rs.length){ h+=`<td><div class="acell vazio" aria-hidden="true">${trabalha(s.id,d)?"—":"<small>folga</small>"}</div></td>`; return; }
-      const al=rs.some(r=>{const k=stKey(r);return k==="ATRASADO"||k==="NÃO"});
-      const sel=acSel&&acSel.s===s.id&&acSel.d===d;
-      const pd=rs.reduce((a,r)=>a+receitaDe(prevQ(r)),0), ex=rs.reduce((a,r)=>a+execRec(r),0);
-      h+=`<td><button type="button" class="acell${al?" alerta":""}" data-ac="${esc(s.id)}|${d}" aria-pressed="${sel}" title="${esc(s.id)} · ${fmtD(d)}: programado ${brl(pd)} · executado ${brl(ex)} · meta ${brl(metaDe(s.id))} por dia na supervisão · ${rs.map(r=>ST_NOME[stKey(r)]).join(", ")}"><b>${rs.length}</b>${trabalha(s.id,d)?`<span class="mt mt-${metaCls(pd,s.id)}">prog. ${pd?Math.round(pd/metaDe(s.id)*100):0}%</span>${ex||d<=hj?`<span class="mt mt-${metaCls(ex,s.id)}">prod. ${ex?Math.round(ex/metaDe(s.id)*100):0}%</span>`:""}`:`<span class="mt">folga</span>`}<span class="adots">${rs.map(r=>`<i style="background:${ST_COR[stKey(r)]||"var(--idle)"}"></i>`).join("")}</span></button></td>`; });
-    h+=`</tr>`; });
-  h+=`</tbody></table></div>`;
-  if(acSel){ const rs=base.filter(r=>r.supervisao===acSel.s&&r.data===acSel.d);
-    h+=`<div class="adet"><div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline"><b style="font:700 15px var(--display);letter-spacing:.04em;text-transform:uppercase">${esc(acSel.s)} · ${diaDe(acSel.d)} ${fmtD(acSel.d)}</b><button type="button" class="btn sec" data-acx style="min-height:34px;padding:0 10px;font-size:12px">Fechar</button></div>
-      ${rs.map(r=>{const k=stKey(r);return `<button type="button" class="it" data-acid="${esc(r.id)}"><span class="lc">${esc(r.bairro)} — ${esc(r.logradouro)}</span><span class="pill ${k}">${ST_NOME[k]}</span>
-        <span class="mt">${esc(r.equipe||"")} · previsto ${brl(receitaDe(prevQ(r)))}${k==="SIM"||k==="PARCIAL"?" · executado "+brl(execRec(r)):""}${k==="NÃO"?(r.outraEquipe?" · "+esc(outraTxt(r)):" · remarcado p/ "+fmtD(r.proxData)+(r.motivo?" · "+esc(r.motivo):"")):""}${r.impactoQueda?" · afetado por queda":""}</span></button>`}).join("")}</div>`; }
+  if(!acDia||!dias.includes(acDia)) acDia=dias.includes(F.dia)?F.dia:dias.includes(hj)?hj:dias[0];
+  if(acSel&&acSel.d!==acDia) acSel=null;
+  const d=acDia, doDia=base.filter(r=>r.data===d);
+  const W=v=>Math.min(100,v/150*100), cor=k=>k==="ok"?"var(--ok)":k==="wr"?"#d39a2c":"var(--bad)";
+  const ICO={SIM:["✔","var(--ok)","executado"],PARCIAL:["◐","#8a5a10","parcial"],ATRASADO:["⏳","var(--accent)","sem baixa"],"NÃO":["✖","var(--bad)","não exec."],PROGRAMADO:["○","var(--muted)","a executar"]};
+  let h=`<div class="dcard full" id="acomp"><h3>Acompanhamento da programação · ${sw}ª semana (${periodoSem(sw)}) <small>${tot} programado${tot===1?"":"s"} · ${baix} com baixa · ${cont.ATRASADO||0} sem baixa${cont["NÃO"]?" · "+cont["NÃO"]+" não executado"+(cont["NÃO"]===1?"":"s"):""}</small></h3>
+    <div class="acd" role="group" aria-label="Dia da semana">${dias.map(x=>{ const n=base.filter(r=>r.data===x).length, al=base.some(r=>r.data===x&&["ATRASADO","NÃO"].includes(stKey(r)));
+      return `<button type="button" data-acd="${x}" aria-pressed="${x===d}" class="${x===hj?"hj":""}" title="${fmtD(x)} · ${n} serviço${n===1?"":"s"}">${diaDe(x)}<b>${x.slice(8,10)}</b><small>${n?n+" serv.":"—"}</small>${al?`<span class="al" title="tem serviço sem baixa ou não executado"></span>`:""}</button>`; }).join("")}</div>
+    <p class="acdia">${({0:"Domingo",1:"Segunda",2:"Terça",3:"Quarta",4:"Quinta",5:"Sexta",6:"Sábado"})[new Date(d+"T12:00").getDay()]}, ${fmtD(d)}${d===hj?" · hoje":""}</p>
+    <p class="dcap">Cada turma: quanto foi <b>programado</b> e quanto foi <b>produzido</b> no dia, em % da meta (risco preto = meta: R$ 50 mil por supervisão; PODA II R$ 75 mil). Toque na turma para ver os serviços.</p>`;
+  const semP=[], folg=[];
+  sups.forEach(s=>{ const rs=doDia.filter(r=>r.supervisao===s.id).sort((a,b)=>ord.indexOf(stKey(a))-ord.indexOf(stKey(b)));
+    if(!rs.length){ (trabalha(s.id,d)?semP:folg).push(s.id); return; }
+    const m=metaDe(s.id), pd=rs.reduce((a,r)=>a+receitaDe(prevQ(r)),0), ex=rs.reduce((a,r)=>a+execRec(r),0);
+    const pp=Math.round(pd/m*100), pe=Math.round(ex/m*100), kp=metaCls(pd,s.id), ke=metaCls(ex,s.id), mostraE=ex||d<=hj;
+    const st={}; rs.forEach(r=>{const k=stKey(r); st[k]=(st[k]||0)+1;});
+    const sel=acSel&&acSel.s===s.id&&acSel.d===d;
+    h+=`<button type="button" class="acrow" data-ac="${esc(s.id)}|${d}" aria-pressed="${sel}" title="Programado ${brl(pd)} · produzido ${brl(ex)} · meta ${brl(m)}"><div class="t"><b>${esc(s.id)}</b><small>${esc(s.enc||"")} · ${rs.length} serviço${rs.length===1?"":"s"}</small></div>
+      <div class="hl"><span>Programado <small>${brlS?brlS(pd):brl(pd)}</small></span><b class="${kp}">${pp}%</b></div><div class="hb"><i style="width:${W(pp)}%;background:#9fb3a5"></i><span class="m"></span></div>
+      ${mostraE?`<div class="hl"><span>Produzido <small>${brlS?brlS(ex):brl(ex)}</small></span><b class="${ke}">${pe}%</b></div><div class="hb"><i style="width:${W(pe)}%;background:${cor(ke)}"></i><span class="m"></span></div>`:`<div class="hl"><span>Produzido</span><b style="color:var(--muted)">ainda não</b></div>`}
+      <div class="st">${ord.slice().reverse().filter(k=>st[k]).sort((a,b)=>["SIM","PARCIAL","ATRASADO","NÃO","PROGRAMADO"].indexOf(a)-["SIM","PARCIAL","ATRASADO","NÃO","PROGRAMADO"].indexOf(b)).map(k=>`<span><em style="color:${ICO[k][1]}">${ICO[k][0]} ${st[k]}</em> ${ICO[k][2]}</span>`).join("")}</div></button>`;
+    if(sel) h+=`<div class="adet" style="margin:-4px 0 10px">${rs.map(r=>{const k=stKey(r);return `<button type="button" class="it" data-acid="${esc(r.id)}"><span class="lc">${esc(r.bairro)} — ${esc(r.logradouro)}</span><span class="pill ${k}">${ST_NOME[k]}</span>
+        <span class="mt">${esc(r.equipe||"")} · previsto ${brl(receitaDe(prevQ(r)))}${k==="SIM"||k==="PARCIAL"?" · executado "+brl(execRec(r)):""}${k==="NÃO"?(r.outraEquipe?" · "+esc(outraTxt(r)):" · remarcado p/ "+fmtD(r.proxData)+(r.motivo?" · "+esc(r.motivo):"")):""}${r.impactoQueda?" · afetado por queda":""}</span></button>`}).join("")}</div>`;
+  });
+  if(!doDia.length) h+=`<div class="dempty">Nenhum serviço programado neste dia.</div>`;
+  if(semP.length) h+=`<div class="acrow vz"><div class="t"><b style="font-size:13px">Sem programação (${semP.length})</b></div><small style="color:var(--muted);font-size:12px">${semP.map(esc).join(" · ")}</small></div>`;
+  if(folg.length) h+=`<div class="acrow vz"><div class="t"><b style="font-size:13px">De folga (${folg.length})</b></div><small style="color:var(--muted);font-size:12px">${folg.map(esc).join(" · ")}</small></div>`;
   h+=`</div>`;
   return h;
 }
@@ -7991,6 +8022,7 @@ function feedHtml(F){
     ${top.length?`<div class="feed">${top.map(({r,l})=>`<div class="ev"><time>${quando(l.em)}</time><span class="ac"><b>${esc(l.por||"—")}</b> · ${esc(l.acao||"")}</span><span class="lo">${esc(r.supervisao||"")} · ${esc(r.bairro||"")} — ${esc(r.logradouro||"")}</span></div>`).join("")}</div>`:`<div class="dempty">Nenhuma movimentação registrada ainda.</div>`}</div>`;
 }
 document.addEventListener("click",e=>{
+  const dd=e.target.closest("#acomp [data-acd]"); if(dd){ acDia=dd.dataset.acd; acSel=null; renderPainel(); return; }
   const c=e.target.closest("#acomp [data-ac]"); if(c){ const [s,d]=c.dataset.ac.split("|"); acSel=(acSel&&acSel.s===s&&acSel.d===d)?null:{s,d}; renderPainel(); const el=document.querySelector("#acomp .adet"); if(el) el.scrollIntoView({block:"nearest",behavior:"smooth"}); return; }
   if(e.target.closest("#acomp [data-acx]")){ acSel=null; renderPainel(); return; }
   const it=e.target.closest("#acomp [data-acid]"); if(it){ const r=byId(it.dataset.acid); if(r) detalhe(r,false,true); }
