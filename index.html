@@ -1927,7 +1927,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.06h";
+const APP_VERSAO="2026.11.06i";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -3367,6 +3367,10 @@ function montar(root) {
     return h + `</div>`;
   }
 
+  // paradas que aparecem na tela (respeita a busca): indicar/tirar o vistoriador vale só para elas
+  const termo = () => S.q.trim().toLowerCase();
+  const casa = (p, term) => !term || [p.processo, p.endereco, p.setor, p.ged, p.parecer, R(p).responsavel, dono(p) && dono(p).vistoriador].join(" ").toLowerCase().includes(term);
+  const visiveis = (ro) => { const term = termo(); return ro.ps.filter((p) => (!S.hide || !R(p).vistoriado || S.f[p.id]) && casa(p, term)); };
   function rotas() {
     const coord = pode.coord();
     const regs = REGS.filter((r) => listaRotas(r).length);
@@ -3384,8 +3388,9 @@ function montar(root) {
     let alguma = false;
     rotasDe(S.cur).forEach((ro, ci) => {
       const ch = ro.ps;
-      const show = ch.filter((p) => (!S.hide || !R(p).vistoriado || S.f[p.id]) && (!term || [p.processo, p.endereco, p.setor, p.ged, p.parecer, R(p).responsavel, dono(p) && dono(p).vistoriador].join(" ").toLowerCase().includes(term)));
-      const pend = ch.filter((p) => !R(p).vistoriado), feitos = ch.length - pend.length;
+      const show = visiveis(ro);
+      const pendT = ch.filter((p) => !R(p).vistoriado), feitos = ch.length - pendT.length;
+      const filtrada = !!term && show.length < ch.length, pend = filtrada ? show.filter((p) => !R(p).vistoriado) : pendT;
       if (!show.length) { if (!term && ch.length && !pend.length) { alguma = true; h += `<section class="vp-card" style="padding:12px 14px"><b>Rota ${ro.n}</b> <span class="vp-sp vp-s-ja_executado">✔ Concluída · ${ch.length} vistoriados</span></section>`; } return; } alguma = true;
       const po = ch.reduce((a, p) => a + p.qtd_poda, 0), ex = ch.reduce((a, p) => a + p.qtd_extirpacao, 0);
       const links = pend.length ? gm(pend) : [];
@@ -3395,15 +3400,15 @@ function montar(root) {
       const dv = S.draft && S.draft[ci] !== undefined ? S.draft[ci] : atual === "__mix" ? "" : atual;
       let resp = "";
       if (!pend.length) resp = `<span class="vp-sp vp-s-ja_executado">Rota concluída</span>`;
-      else if (coord) resp = `<span class="vp-lab">Vistoriador</span><select id="vp-rv-${ci}" data-rvsel="${ci}"><option value="">${atual === "__mix" ? "Vários – escolha para unificar" : "— Escolher o vistoriador —"}</option>${S.vist.map((v) => `<option value="${esc(v.uid)}"${v.uid === dv ? " selected" : ""}>${esc(v.rot || v.nome)}</option>`).join("")}</select><button class="vp-btn vp-warn" data-indvist="${ci}">${atual && atual !== "__mix" ? "Trocar" : "Indicar"}</button>${atual && atual !== "__mix" ? `<span class="vp-ok">Indicado: <b>${esc(nomeDe(atual))}</b> <button class="vp-btn" data-tirarvist="${ci}" style="padding:3px 8px;font-size:12px">tirar</button></span>` : atual === "__mix" ? `<span class="vp-ok">Vários vistoriadores: ${esc(nomes.filter(Boolean).map(nomeDe).join(", "))}</span>` : `<span class="vp-need" style="flex-basis:100%">Rota sem vistoriador: escolha o nome acima (você também pode lançar a vistoria direto, sem indicar ninguém)</span>`}`;
+      else if (coord) resp = `<span class="vp-lab">Vistoriador</span><select id="vp-rv-${ci}" data-rvsel="${ci}"><option value="">${atual === "__mix" ? "Vários – escolha para unificar" : "— Escolher o vistoriador —"}</option>${S.vist.map((v) => `<option value="${esc(v.uid)}"${v.uid === dv ? " selected" : ""}>${esc(v.rot || v.nome)}</option>`).join("")}</select><button class="vp-btn vp-warn" data-indvist="${ci}">${atual && atual !== "__mix" ? "Trocar" : "Indicar"}${filtrada ? ` (${pend.length})` : ""}</button>${atual && atual !== "__mix" ? `<span class="vp-ok">Indicado: <b>${esc(nomeDe(atual))}</b> <button class="vp-btn" data-tirarvist="${ci}" style="padding:3px 8px;font-size:12px">tirar</button></span>` : atual === "__mix" ? `<span class="vp-ok">Vários vistoriadores: ${esc(nomes.filter(Boolean).map(nomeDe).join(", "))}</span>` : `<span class="vp-need" style="flex-basis:100%">Rota sem vistoriador: escolha o nome acima (você também pode lançar a vistoria direto, sem indicar ninguém)</span>`}`;
       else resp = `<span class="vp-sp vp-env">✔ Sua rota · ${pend.length} a vistoriar</span>`;
-      h += `<section class="vp-card${!coord || (atual && atual === meuId()) ? " vp-mine" : ""}"><div class="vp-head"><div><b>Rota ${ro.n}</b> <small>${ch.length} paradas · ${po} poda · ${ex} extirpação · ${feitos} vistoriados</small></div>
+      h += `<section class="vp-card${!coord || (atual && atual === meuId()) ? " vp-mine" : ""}"><div class="vp-head"><div><b>Rota ${ro.n}</b> <small>${ch.length} paradas · ${po} poda · ${ex} extirpação · ${feitos} vistoriados</small>${filtrada ? `<div class="vp-need" style="margin-top:4px">🔎 Busca ativa: mostrando <b>${show.length} de ${ch.length}</b> paradas. ${coord ? `Indicar / tirar vale <b>só para ${pend.length === 1 ? "a parada mostrada" : "as " + pend.length + " paradas mostradas"}</b>.` : ""}</div>` : ""}</div>
       <div class="vp-sets">${[...new Set(ch.map((p) => p.setor))].map(esc).join(" · ")}</div>
       <div class="vp-resp">${resp}</div>
       <div class="vp-row">${links.map((u, k) => `<a class="vp-btn vp-pri" href="${u}" target="_blank" rel="noopener">🧭 Abrir a rota no GPS${links.length > 1 ? " · trecho " + (k + 1) : ""}</a>`).join("")}<button class="vp-btn" data-copy="${ci}">Copiar lista</button></div></div>
       <div class="vp-prog"><i style="width:${pct(feitos, ch.length)}%"></i></div><ol>`;
       h += show.map((p) => `<li class="vp-stop${R(p).vistoriado ? " vp-done" : ""}"><span class="vp-seq">${String(ro.base + ch.indexOf(p) + 1).padStart(3, "0")}</span>
-        <div>${linhaProc(p)}${docHtml(p, true)}</div><div class="vp-q">${qtdPills(p)}</div>
+        <div>${linhaProc(p)}${coord && dono(p) && !R(p).vistoriado ? `<div class="vp-msg" style="margin:2px 0">👤 Vistoriador: <b>${esc(dono(p).vistoriador || "")}</b> <button class="vp-btn" data-tiraum="${p.id}" style="padding:2px 8px;font-size:12px">tirar só desta parada</button></div>` : ""}${docHtml(p, true)}</div><div class="vp-q">${qtdPills(p)}</div>
         ${blocoVistoria(p)}</li>`).join("") + `</ol></section>`;
     });
     if (!alguma) h += `<p class="vp-msg">Nenhum processo com esse filtro.</p>`;
@@ -3779,12 +3784,12 @@ function montar(root) {
   async function indicarRota(ci, uid) {
     if (!pode.coord()) return;
     const ro = rotasDe(S.cur)[ci]; if (!ro) return;
-    const ids = ro.ps.filter((p) => !R(p).vistoriado).map((p) => p.id);
+    const ids = visiveis(ro).filter((p) => !R(p).vistoriado).map((p) => p.id);
     if (!ids.length) { toast("Rota já concluída"); return; }
     const v = S.vist.find((x) => x.uid === uid);
     if (uid && !v) { toast("Escolha o vistoriador"); return; }
     const ok = await gravar(ids, { rota: uid ? { vistoriador: v.nome, uid, em: new Date().toISOString(), por: usuario() } : null });
-    if (ok) { if (S.draft) delete S.draft[ci]; toast(uid ? `Rota ${ro.n} indicada para ${v.nome}` : `Vistoriador retirado da rota ${ro.n}`); }
+    if (ok) { if (S.draft) delete S.draft[ci]; const q = ids.length + (ids.length === 1 ? " parada" : " paradas"); toast(uid ? `${q} da rota ${ro.n} para ${v.nome}` : `Vistoriador retirado de ${q} da rota ${ro.n}`); }
   }
   async function salvarForm(id) {
     const f = S.f[id]; if (!f || S.busy[id]) return;
@@ -3854,6 +3859,7 @@ function montar(root) {
     if (ds.pmostra) { S.pmostra = ds.pmostra; S.lim = 40; render(); return; }
     if (ds.rsit) { S.rsit = ds.rsit; S.lim = 40; render(); return; }
     if (ds.indvist) { const sel = root.querySelector("#vp-rv-" + ds.indvist); const uid = sel ? sel.value : ""; if (!uid) { toast("Escolha o vistoriador"); return; } indicarRota(+ds.indvist, uid); return; }
+    if (ds.tiraum) { if (await gravar([ds.tiraum], { rota: null })) toast("Vistoriador retirado desta parada"); return; }
     if (ds.tirarvist) { if (t.dataset.arm !== "1") { t.dataset.arm = "1"; t.textContent = "toque de novo"; setTimeout(() => { if (t.isConnected) { t.dataset.arm = ""; render(); } }, 4000); return; } indicarRota(+ds.tirarvist, ""); return; }
     if (ds.ini) { abrirForm(ds.id, ds.ini); render(); return; }
     if (ds.alterar) { abrirForm(ds.alterar); render(); return; }
