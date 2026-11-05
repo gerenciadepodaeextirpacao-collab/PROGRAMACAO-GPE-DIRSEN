@@ -1954,7 +1954,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.07m";
+const APP_VERSAO="2026.11.07o";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -5231,7 +5231,7 @@ const manSlots=midia=>{ const ex=[]; for(let n=2;n<=MAN_VID_MAX;n++) if(midia?.[
   return [MAN_SLOTS[0],...ex,...MAN_SLOTS.slice(1)].concat(MAN_ANT.filter(s=>midia?.[s.k])); };
 /* ---------- fotos do serviço registradas pelo fiscal de turma (O.S / processo) ---------- */
 // o fiscal tira as 3 fotos (antes, durante, depois); elas entram sozinhas no relatório que o supervisor assina na baixa
-const fotosFisPode=r=>ehFiscal()&&fotosPede(r)&&!!r.osDia?.start&&!r.osDia?.fim&&!r.arquivado&&!r._fila&&!!db&&r.supervisao===sessao.sup&&(!r.equipe||!acesso?.[sessao.id]?.equipe||r.equipe===acesso[sessao.id].equipe)&&!r.relat?.ass&&r.status!=="NÃO";
+const fotosFisPode=r=>ehFiscal()&&fotosPede(r)&&!!r.osDia?.start&&!r.osDia?.fim&&!r.arquivado&&!r._fila&&!!db&&r.supervisao===sessao.sup&&osDoFiscal(r,acesso?.[sessao.id])&&!r.relat?.ass&&r.status!=="NÃO";
 function fotosFisHtml(r){ if(!fotosPede(r)) return ""; const ff=r.fotosFiscal||{}, n=REL_SLOTS.filter(x=>ff[x.k]).length;
   const info=n?`<p class="note" style="margin:4px 0 0">📷 Fotos do serviço registradas pelo fiscal: <b>${n} de 3</b>${ff.por?" · "+esc(ff.por):""}${ff.em?" · "+fmtHora(ff.em):""}${ehFiscal()?"":" – entram no relatório na baixa"}</p>`:"";
   return info+(fotosFisPode(r)?`<button type="button" class="btn pri" id="shFotFis" style="min-height:52px">📷 ${n?"Ver / completar as fotos do serviço":"Registrar fotos do serviço (antes, durante, depois)"}</button>`:""); }
@@ -8397,17 +8397,23 @@ if(location.hash==="#pend") setTimeout(()=>{ try{ if(sessao) show("pend"); }catc
 setInterval(()=>{ try{ if(sessao&&avLigado()) renderPend(); }catch(e){} },5*60*1000);
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-pendv]"); if(b){ show(b.dataset.pendv); scrollTo(0,0); } });
 /* ---------- O.S do dia: o supervisor inicia a ordem de serviço de cada equipe no dia da execução e envia ao fiscal da equipe ---------- */
+// fiscais ativos da supervisão (qualquer equipe) e o fiscal escolhido para a O.S antes de enviar
+const fiscaisSup=sup=>Object.entries(acesso||{}).filter(([,u])=>u.perfil==="fiscal"&&u.ativo&&u.sup===sup).map(([id,u])=>({id,nome:u.nome,equipe:u.equipe||""})).sort((a,b)=>a.nome.localeCompare(b.nome,"pt"));
+const OS_FIS_ESC={};
+// quem vê a O.S: se o supervisor trocou o fiscal, só o fiscal escolhido; senão, pela equipe do fiscal (como antes)
+const osDoFiscal=(r,me)=>{ const o=r.osDia; if(o?.semFiscal) return false; if(o?.fiscalTroca) return o.fiscal?.id===sessao.id; return !me?.equipe||(r.equipe||"")===me.equipe||o?.fiscal?.id===sessao.id; };
 const fiscalDe=(sup,eq)=>{ const L=Object.entries(acesso||{}).filter(([,u])=>u.perfil==="fiscal"&&u.ativo&&u.sup===sup); const f=L.find(([,u])=>u.equipe===eq)||L.find(([,u])=>!u.equipe); return f?{id:f[0],nome:f[1].nome,zap:f[1].zap||""}:null; };
 const osPodeIniciar=sup=>!!sessao&&!soLeitura()&&((["supervisor","supervisor1"].includes(sessao.perfil)&&sessao.sup===sup)||(isGerente()&&noEscopo(sup))||(sessao.perfil==="coordenador"&&noEscopo(sup))||(sessao.perfil==="gerencia_op"&&noEscopo(sup)));
 function osDiaGrupos(){ if(!sessao) return []; const d=hoje(), G=[];
   todos().filter(r=>r.data===d&&!r.avulso&&!r.ocorrencia&&!r.arquivado&&r.supervisao&&noEscopo(r.supervisao)&&(!travado()||r.supervisao===sessao.sup)).forEach(r=>{
     const k=r.supervisao+"|"+(r.equipe||""); let g=G.find(x=>x.k===k); if(!g){ g={k,sup:r.supervisao,eq:r.equipe||"",rs:[]}; G.push(g); } g.rs.push(r); });
   let L=G.sort((a,b)=>(SUPS.findIndex(s=>s.id===a.sup)-SUPS.findIndex(s=>s.id===b.sup))||a.eq.localeCompare(b.eq));
-  if(sessao.perfil==="fiscal"){ const me=acesso?.[sessao.id]; if(me?.equipe) L=L.filter(g=>g.eq===me.equipe); }
-  return L.map(g=>({...g,os:g.rs.find(r=>r.osDia)?.osDia||null,fis:fiscalDe(g.sup,g.eq)})); }
+  L=L.map(g=>({...g,os:g.rs.find(r=>r.osDia)?.osDia||null,fis:OS_FIS_ESC[g.k]||fiscalDe(g.sup,g.eq)}));
+  if(sessao.perfil==="fiscal"){ const me=acesso?.[sessao.id]; L=L.filter(g=>g.os?osDoFiscal({osDia:g.os,equipe:g.eq},me):(!me?.equipe||g.eq===me.equipe)); }
+  return L; }
 const osNum=(sup,eq,d)=>{ const s=supOf(sup)||{}; const L=(sup.match(/\(([A-Z])\)/)||[])[1]||""; return `${d.slice(2).replace(/-/g,"")}-P${ROMANO[s.grupo]||""}${(s.turno||"")[0]||""}${L}-${(eq||"").slice(0,1)||"0"}`; };
 function osDiaTxt(g){ const o=g.os||{}, d=hoje(), pv=g.rs.reduce((a,r)=>a+receitaDe(prevQ(r)),0);
-  return [`*ORDEM DE SERVIÇO Nº ${o.num||osNum(g.sup,g.eq,d)} – INICIADA*`,`COMURG · Gerência de Poda e Extirpação`,``,`📅 ${fmtD(d)} (${diaDe(d)})`,`👷 ${g.sup} · ${g.eq}${g.rs[0]?.viatura?" · "+g.rs[0].viatura:""}`,`Supervisor: ${nomeSupDe(g.sup)||"—"}`,`Fiscal: ${o.fiscal?.nome||g.fis?.nome||"—"}`,...(o.membros?.length?[``,`*Equipe (${o.membros.length}):*`,...o.membros.map(m=>`• ${m.nome} – ${m.funcao}`)]:[]),``,
+  return [`*ORDEM DE SERVIÇO Nº ${o.num||osNum(g.sup,g.eq,d)} – INICIADA*`,`COMURG · Gerência de Poda e Extirpação`,``,`📅 ${fmtD(d)} (${diaDe(d)})`,`👷 ${g.sup} · ${g.eq}${g.rs[0]?.viatura?" · "+g.rs[0].viatura:""}`,`Supervisor: ${nomeSupDe(g.sup)||"—"}`,`Fiscal: ${o.semFiscal?"sem fiscal – o supervisor faz o papel de fiscal":o.fiscal?.nome||g.fis?.nome||"—"}`,...(o.membros?.length?[``,`*Equipe (${o.membros.length}):*`,...o.membros.map(m=>`• ${m.nome} – ${m.funcao}`)]:[]),``,
     `*Serviços do dia (${g.rs.length}):*`,...g.rs.map((r,i)=>`${i+1}. ${r.bairro||""} — ${r.logradouro||""}${tipoTxt(r)?` · ${tipoTxt(r)}`:""}${r.processo?` · nº ${procNum(r)}`:""}\n   ${qtdTxtPlano(prevQ(r))||"—"}`),``,
     `Previsto: ${brl(pv)}`,o.em?`Iniciada às ${new Date(o.em).toTimeString().slice(0,5)} por ${o.por||"—"}.`:""].filter(x=>x!==null).join("\n"); }
 // O.S finalizadas pelo fiscal que ainda têm serviço sem baixa: aparecem para o supervisor (Início e Pendências)
@@ -8421,7 +8427,7 @@ function osFimHtml(){ const L=osFimGrupos(); if(!L.length) return "";
 document.addEventListener("click",e=>{ const b=e.target.closest(".osfim [data-baixa]"); if(!b) return; e.stopPropagation(); const r=todosGlobal().find(x=>x.id===b.dataset.baixa); if(r) abrirBaixa(r); },true);
 function osDiaHtml(){ const L=osDiaGrupos().filter(g=>sessao.perfil==="fiscal"||!g.os); if(!L.length) return ""; // depois de iniciada e enviada ao fiscal, a O.S some do Início (o fiscal continua vendo a dele)
   return `<div class="osdia"><div class="osdh">ORDEM DE SERVIÇO DO DIA · ${fmtDs(hoje())}</div>${L.map(g=>{ const k=esc(g.k), n=g.rs.length;
-    const fis=g.fis?`fiscal: <b>${esc(g.fis.nome)}</b>`:`<span style="color:var(--bad)">sem fiscal cadastrado para esta equipe (Acessos)</span>`;
+    const fis=(g.fis?`fiscal: <b>${esc(g.fis.nome)}</b>`:`<span style="color:var(--bad)">sem fiscal cadastrado para esta equipe (Acessos)</span>`)+(osPodeIniciar(g.sup)?` · <button type="button" data-osfis="${k}" style="border:0;background:none;padding:0;color:var(--accent);font:inherit;font-weight:700;cursor:pointer;text-decoration:underline">trocar</button>`:"");
     if(g.os) return `<div class="osl ok"><div><b>✅ ${esc(g.sup)} · ${esc(g.eq)}</b><small>O.S nº ${esc(g.os.num)} enviada às ${new Date(g.os.em).toTimeString().slice(0,5)} por ${esc(g.os.por||"—")} · ${n} serviço${n===1?"":"s"} · para ${esc(g.os.fiscal?.nome||"o fiscal")}</small>${osEtapaHtml(g.os)}</div>
       <div class="osb"><button type="button" class="btn sec" data-osenv="${k}">👁 Ver a O.S</button><button type="button" class="btn sec" data-ospdf="${k}">📄 PDF</button></div></div>`;
     return `<div class="osl"><div><b>🟠 ${esc(g.sup)} · ${esc(g.eq)}</b><small>${n} serviço${n===1?"":"s"} programado${n===1?"":"s"} para hoje · ${fis}</small></div>
@@ -8429,7 +8435,7 @@ function osDiaHtml(){ const L=osDiaGrupos().filter(g=>sessao.perfil==="fiscal"||
 // O.S no detalhe do serviço: iniciar (só no dia da execução) ou reenviar ao fiscal
 // etapas da O.S do dia: 1 enviada pelo supervisor → 2 recebida pelo fiscal → 3 equipe cadastrada → 4 start (em execução)
 const hm=t=>t?new Date(t).toTimeString().slice(0,5):"";
-function osEtapaHtml(o){ if(!o) return ""; const E=[["Enviada",o.em,o.por],["Recebida",o.recebida?.em,o.recebida?.por],["Equipe",o.membros?.length?(o.equipeEm||o.recebida?.em||o.em):null,o.membros?.length?o.membros.length+" pessoa"+(o.membros.length>1?"s":""):""],["Em execução",o.start?.em,o.start?.por],["Finalizada",o.fim?.em,o.fim?.por]];
+function osEtapaHtml(o){ if(!o) return ""; if(o.semFiscal) return `<div class="oset"><span class="ok"><b>🧑‍💼 Supervisor no lugar do fiscal</b><small>${hm(o.semFiscal.em)}</small></span><span class="${o.membros?.length?"ok":""}"><b>${o.membros?.length?"✔":"○"} Equipe</b>${o.membros?.length?`<small>${o.membros.length} pessoa${o.membros.length>1?"s":""}</small>`:""}</span></div>`; const E=[["Enviada",o.em,o.por],["Recebida",o.recebida?.em,o.recebida?.por],["Equipe",o.membros?.length?(o.equipeEm||o.recebida?.em||o.em):null,o.membros?.length?o.membros.length+" pessoa"+(o.membros.length>1?"s":""):""],["Em execução",o.start?.em,o.start?.por],["Finalizada",o.fim?.em,o.fim?.por]];
   return `<div class="oset">${E.map(([t,em,q])=>`<span class="${em?"ok":""}"><b>${em?"✔":"○"} ${t}</b>${em?`<small>${t==="Equipe"?esc(q):hm(em)}</small>`:""}</span>`).join("")}</div>`; }
 async function fisOsAtualiza(g,patch,acao){ const os={...g.os,...patch}; let ok=true;
   for(const r of g.rs){ const fresh=todosGlobal().find(x=>x.id===r.id)||r, upd={...fresh}; delete upd.id; delete upd._fila; upd.osDia=os; upd._acao=acao; const res=await saveDoc(r.id,upd); if(res!=="ok"&&res!=="fila") ok=false; else r.osDia=os; }
@@ -8445,10 +8451,10 @@ function abrirOsDia(){ const host=$("#sheetHost"), G=osDiaGrupos(), d=hoje();
   const card=g=>{ const k=esc(g.k), n=g.rs.length, pv=g.rs.reduce((a,r)=>a+receitaDe(prevQ(r)),0), fis=g.os?.fiscal||g.fis;
     const lista=`<ol class="osdl">${g.rs.map(r=>`<li><b>${esc(r.bairro||"")} — ${esc(r.logradouro||"")}</b><small>${esc(tipoTxt(r)||"")}${r.processo?" · nº "+esc(procNum(r)):""} · ${esc(qtdTxtPlano(prevQ(r))||"—")}</small></li>`).join("")}</ol>`;
     return `<div class="osdc ${g.os?"ok":""}"><div class="osdt"><b>${g.os?"✅":"🟠"} ${esc(g.sup)} · ${esc(g.eq||"equipe")}</b><span>${n} serviço${n===1?"":"s"} · ${brl(pv)}${g.rs[0]?.viatura?" · "+esc(g.rs[0].viatura):""}</span>
-      <span>${fis?`Fiscal: <b>${esc(fis.nome)}</b>`:`<em style="color:var(--bad);font-style:normal">Sem fiscal cadastrado para esta equipe (Acessos)</em>`}</span>
-      ${g.os?`<span style="color:var(--ok)">O.S nº <b>${esc(g.os.num)}</b> enviada às ${new Date(g.os.em).toTimeString().slice(0,5)} por ${esc(g.os.por||"—")}</span>${osEtapaHtml(g.os)}`:""}
+      <span>${g.os?.semFiscal?`🧑‍💼 <b>Sem fiscal hoje</b> – o supervisor faz o papel de fiscal (a O.S não foi enviada a ninguém)`:fis?`Fiscal: <b>${esc(fis.nome)}</b>`:`<em style="color:var(--bad);font-style:normal">Sem fiscal cadastrado para esta equipe (Acessos)</em>`}${g.os?.fiscalTroca&&!g.os?.semFiscal?` <small style="color:var(--muted)">(no lugar de ${esc(g.os.fiscalTroca.de||"titular")})</small>`:""}${osPodeIniciar(g.sup)&&!g.os?.fim?` <button type="button" class="btn sec" data-osfis="${k}" style="min-height:32px;padding:0 10px;font-size:12px;margin-left:4px">🔄 ${g.os?(g.os.semFiscal?"Enviar a um fiscal":"Trocar o fiscal"):fis?"Outro fiscal / sem fiscal":"Sem fiscal: supervisor acompanha"}</button>`:""}</span>
+      ${g.os?`<span style="color:var(--ok)">O.S nº <b>${esc(g.os.num)}</b> ${g.os.semFiscal?"registrada":"enviada"} às ${new Date(g.os.em).toTimeString().slice(0,5)} por ${esc(g.os.por||"—")}</span>${osEtapaHtml(g.os)}`:""}
       ${g.os?.membros?.length?`<span>👷 Equipe: ${g.os.membros.map(m=>`<b>${esc(m.nome)}</b> (${esc(m.funcao.toLowerCase())})`).join(" · ")}</span>`:""}</div>${lista}
-      <div class="osb">${g.os?`<button type="button" class="btn sec" data-osenv="${k}">👁 Ver a O.S</button>${g.os.membros?.length?"":`<small style="color:var(--muted);align-self:center">👷 Aguardando o fiscal formar a equipe</small>`}`:osPodeIniciar(g.sup)?`<button type="button" class="btn pri" data-osini="${k}">▶ Iniciar O.S e enviar ao fiscal</button>`:`<small>Aguardando o supervisor iniciar.</small>`}
+      <div class="osb">${g.os?`<button type="button" class="btn sec" data-osenv="${k}">👁 Ver a O.S</button>${g.os.semFiscal&&osPodeIniciar(g.sup)?`<button type="button" class="btn sec" data-oseqsup="${k}">👷 ${g.os.membros?.length?"Alterar":"Informar"} a equipe</button>`:g.os.membros?.length?"":`<small style="color:var(--muted);align-self:center">👷 Aguardando o fiscal formar a equipe</small>`}`:osPodeIniciar(g.sup)?`<button type="button" class="btn pri" data-osini="${k}">▶ Iniciar O.S e enviar ao fiscal</button>`:`<small>Aguardando o supervisor iniciar.</small>`}
       <button type="button" class="btn sec" data-ospdf="${k}">📄 PDF</button></div></div>`; };
   host.innerHTML=`<div class="sheet" id="sh"><div class="panel" role="dialog" aria-label="Iniciar O.S do dia">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:22px">O.S do dia · ${diaDe(d)} ${fmtDs(d)}</b><button type="button" class="btn sec" data-osdx style="min-height:44px;padding:0 14px">Fechar</button></div>
@@ -8461,7 +8467,7 @@ function osSel(g){ return {det:true,rows:g.rs,sub:"O.S Nº "+(g.os?.num||osNum(g
 function osEnviar(g){ const txt=osDiaTxt(g), f=g.os?.fiscal||g.fis, fisV=sessao.perfil==="fiscal";
   const box=document.createElement("div"); box.className="sheet"; box.style.zIndex=40;
   box.innerHTML=`<div class="panel" role="dialog" aria-label="O.S do dia"><b style="font-family:var(--display);font-size:22px">O.S nº ${esc(g.os?.num||"")}</b>
-    <p class="note" style="margin:0">${fisV?"Ordem de serviço enviada pelo supervisor pelo app.":f?`✅ Enviada pelo app ao fiscal <b>${esc(f.nome)}</b>. Ela já aparece no app dele – <b>não é preciso mandar pelo WhatsApp</b>.`:`<span style="color:var(--bad)">Nenhum fiscal cadastrado para esta equipe em Acessos</span>: cadastre o fiscal para a O.S chegar no app dele.`}</p>
+    <p class="note" style="margin:0">${fisV?"Ordem de serviço enviada pelo supervisor pelo app.":g.os?.semFiscal?"🧑‍💼 <b>Sem fiscal hoje</b>: o supervisor faz o papel de fiscal. A O.S não foi enviada a ninguém.":f?`✅ Enviada pelo app ao fiscal <b>${esc(f.nome)}</b>. Ela já aparece no app dele – <b>não é preciso mandar pelo WhatsApp</b>.`:`<span style="color:var(--bad)">Nenhum fiscal cadastrado para esta equipe em Acessos</span>: cadastre o fiscal para a O.S chegar no app dele.`}</p>
     <details class="zaptx"><summary>Ver o texto da O.S</summary><pre style="white-space:pre-wrap;font:13px/1.45 var(--body,inherit);background:var(--sunk);border-radius:10px;padding:10px;margin:6px 0 0;max-height:38vh;overflow:auto">${esc(txt)}</pre></details>
     <div class="zapprev" data-osprev><div class="midph">Montando a O.S…</div></div>
     <button type="button" class="btn sec" data-ospdf="${esc(g.k)}">📄 PDF da O.S</button>
@@ -8482,7 +8488,7 @@ function eqcUltima(g){ try{ const v=JSON.parse(ls.get("gpe_eqc_"+g.k,"null")||"n
 function eqcAbrir(g,onOk,editar){ const box=document.createElement("div"); box.className="sheet"; box.style.zIndex=40;
   let L=(g.os?.membros?.length?g.os.membros:eqcUltima(g))||EQ_PADRAO();
   // 1ª linha: o fiscal de turma, preenchido automático (quem está preenchendo, se for o fiscal)
-  const fisNome=(ehFiscal()?sessao.nome:(fiscalDe(g.sup,g.eq)?.nome||"")).toUpperCase();
+  const fisNome=(ehFiscal()?sessao.nome:g.os?.semFiscal?(nomeSupDe(g.sup)||sessao.nome||""):(g.os?.fiscal?.nome||fiscalDe(g.sup,g.eq)?.nome||"")).toUpperCase();
   L=L.map(m=>({...m})).filter(m=>m.funcao!==EQ_FISCAL); L.unshift({nome:fisNome,funcao:EQ_FISCAL,fixo:1});
   const linha=(m,i)=>{ const outra=m.funcao&&!EQ_FUNC.includes(m.funcao);
     if(m.fixo) return `<div class="eqcl" data-i="${i}" data-fixo="1"><span class="eqcn">${i+1}</span><input data-eqn value="${esc(m.nome||"")}" ${m.nome?"readonly":""} placeholder="Nome do fiscal" aria-label="Fiscal de turma"><select data-eqf disabled aria-label="Função"><option selected>${EQ_FISCAL}</option></select><input data-eqo hidden><span></span></div>`;
@@ -8516,13 +8522,36 @@ async function eqcSalvar(g,M){ const os={...g.os,membros:M,equipeEm:new Date().t
   for(const r of g.rs){ const upd={...r}; delete upd.id; delete upd._fila; upd.osDia=os; upd._acao=`Atualizou a equipe da O.S nº ${os.num}`; const res=await saveDoc(r.id,upd); if(res!=="ok"&&res!=="fila") ok=false; else r.osDia=os; }
   if(!ok){ toast("Não foi possível salvar a equipe agora. Tente de novo."); return false; }
   toast("Equipe da O.S atualizada."); try{renderAll()}catch(e){} try{ if($("#sheetHost .panel[aria-label='Iniciar O.S do dia']")) abrirOsDia(); }catch(e){} return true; }
+function osEscolherFiscal(g){ const L=fiscaisSup(g.sup), atual=(g.os?.fiscal||g.fis)?.id||"", tit=fiscalDe(g.sup,g.eq);
+  const box=document.createElement("div"); box.className="sheet"; box.style.zIndex=45;
+  box.innerHTML=`<div class="panel" role="dialog" aria-label="Escolher o fiscal da O.S"><b style="font-family:var(--display);font-size:20px">${g.os?"Fiscal da O.S":"Quem vai acompanhar a O.S"}</b>
+    <p class="note" style="margin:0">${esc(g.sup)} · ${esc(g.eq||"equipe")}. Escolha qualquer fiscal da supervisão${g.os?`. A O.S sai do app de <b>${esc(g.os.fiscal?.nome||"quem estava")}</b> e passa para o escolhido, que confirma o recebimento`:" – útil quando o titular está ausente"}.</p>
+    <div style="display:grid;gap:6px"><label style="display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--sunk)"><input type="radio" name="osfisr" value="__sup" ${g.os?.semFiscal?"checked":""} style="width:20px;height:20px"><span><b>🧑‍💼 Sem fiscal hoje</b><small style="display:block;color:var(--muted)">O supervisor faz o papel de fiscal. A O.S não é enviada a ninguém.</small></span></label>${L.map(f=>`<label style="display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer"><input type="radio" name="osfisr" value="${esc(f.id)}" ${f.id===atual?"checked":""} style="width:20px;height:20px"><span><b>${esc(f.nome)}</b><small style="display:block;color:var(--muted)">${f.equipe?"fiscal da "+esc(f.equipe.toLowerCase()):"fiscal da turma – todas as equipes"}${tit&&tit.id===f.id?" · titular desta equipe":""}</small></span></label>`).join("")}</div>
+    <button type="button" class="btn pri" data-osfok>Confirmar</button><button type="button" class="btn sec" data-osfx>Cancelar</button></div>`;
+  document.body.appendChild(box);
+  box.addEventListener("click",async e=>{ if(e.target===box||e.target.closest("[data-osfx]")){ box.remove(); return; }
+    const okb=e.target.closest("[data-osfok]"); if(!okb) return; const id=box.querySelector("input[name=osfisr]:checked")?.value; if(!id){ toast("Escolha o fiscal"); return; }
+    if(id==="__sup"){ if(g.os?.semFiscal){ box.remove(); return; } okb.disabled=true; okb.textContent="Salvando…"; const em=new Date().toISOString(), sf={em,por:sessao.nome||""};
+      const patch=g.os?{fiscal:null,recebida:null,semFiscal:sf,fiscalTroca:{de:g.os.fiscal?.nome||"",deId:g.os.fiscal?.id||"",em,por:sessao.nome||""}}:{num:osNum(g.sup,g.eq,hoje()),em,por:sessao.nome||"",porId:sessao.id,fiscal:null,membros:[],semFiscal:sf};
+      delete OS_FIS_ESC[g.k];
+      const ok=await fisOsAtualiza(g,patch,g.os?`O.S nº ${g.os.num} retirada do fiscal ${g.os.fiscal?.nome||""}: sem fiscal, o supervisor faz o papel de fiscal`:`O.S nº ${patch.num} sem fiscal: o supervisor faz o papel de fiscal`);
+      if(ok){ box.remove(); toast("Sem fiscal hoje: o supervisor faz o papel de fiscal. A O.S não foi enviada a ninguém.",6000); try{ if($("#sheetHost").innerHTML) abrirOsDia(); }catch(x){} } else { okb.disabled=false; okb.textContent="Confirmar"; } return; }
+    const u=acesso[id]||{}, nf={id,nome:u.nome||""};
+    if(!g.os){ if(tit&&tit.id===id) delete OS_FIS_ESC[g.k]; else OS_FIS_ESC[g.k]=nf; box.remove(); toast("Fiscal escolhido: "+nf.nome+". Agora inicie a O.S."); try{ if($("#sheetHost").innerHTML) abrirOsDia(); renderAll(); }catch(x){} return; }
+    if(g.os.fiscal?.id===id){ box.remove(); return; }
+    okb.disabled=true; okb.textContent="Trocando…";
+    const ok=await fisOsAtualiza(g,{fiscal:nf,recebida:null,semFiscal:null,fiscalTroca:{de:g.os.semFiscal?"supervisor (sem fiscal)":g.os.fiscal?.nome||"",deId:g.os.fiscal?.id||"",em:new Date().toISOString(),por:sessao.nome||""}},`Trocou o fiscal da O.S nº ${g.os.num}: ${g.os.fiscal?.nome||"—"} → ${nf.nome}`);
+    if(ok){ box.remove(); toast("O.S enviada ao fiscal "+nf.nome+". Ela saiu do app de "+(g.os.fiscalTroca?.de||"quem estava")+".",6000); try{ if($("#sheetHost").innerHTML) abrirOsDia(); }catch(x){} } else { okb.disabled=false; okb.textContent="Trocar e enviar ao fiscal escolhido"; } }); }
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-oseqsup]"); if(!b) return; e.stopPropagation(); const g=osDiaGrupos().find(x=>x.k===b.dataset.oseqsup); if(!g||!g.os||!osPodeIniciar(g.sup)) return; eqcAbrir(g,M=>eqcSalvar(g,M),true); },true);
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-osfis]"); if(!b) return; e.stopPropagation(); const g=osDiaGrupos().find(x=>x.k===b.dataset.osfis); if(!g){ toast("O.S não encontrada."); return; } if(!osPodeIniciar(g.sup)) return; osEscolherFiscal(g); },true);
 async function osIniciar(g,btn){ // a equipe agora é formada pelo fiscal de turma, depois que recebe a O.S
   return osIniciarCom(g,btn,(g.os?.membros)||[]); }
 async function osIniciarCom(g,btn,M){
   btn.disabled=true; btn.textContent="Iniciando…";
-  const em=new Date().toISOString(), fis=g.fis, os={num:osNum(g.sup,g.eq,hoje()),em,por:sessao.nome||"",porId:sessao.id,fiscal:fis?{id:fis.id,nome:fis.nome}:null,membros:M};
+  const em=new Date().toISOString(), fis=OS_FIS_ESC[g.k]||g.fis, os={num:osNum(g.sup,g.eq,hoje()),em,por:sessao.nome||"",porId:sessao.id,fiscal:fis?{id:fis.id,nome:fis.nome}:null,membros:M};
   let ok=true; for(const r of g.rs){ const upd={...r}; delete upd.id; delete upd._fila; upd.osDia=os; upd._acao=`Iniciou a O.S nº ${os.num}${fis?" e enviou ao fiscal "+fis.nome:""}`; const res=await saveDoc(r.id,upd); if(res!=="ok"&&res!=="fila") ok=false; else r.osDia=os; }
   if(!ok){ toast("Não foi possível iniciar a O.S agora. Tente de novo."); btn.disabled=false; btn.textContent="▶ Iniciar O.S e enviar ao fiscal"; btn.dataset.armed=""; return false; }
+  delete OS_FIS_ESC[g.k];
   toast(fis?"O.S nº "+os.num+" iniciada e enviada pelo app ao fiscal "+fis.nome+".":"O.S nº "+os.num+" iniciada. Cadastre o fiscal desta equipe em Acessos.",6000); try{ if(btn.closest("#sheetHost")) $("#sheetHost").innerHTML=""; }catch(e){} try{renderAll()}catch(e){} }
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-osini],[data-osenv],[data-ospdf],[data-osimg],[data-oseq]"); if(!b) return;
   const k=b.dataset.osini||b.dataset.osenv||b.dataset.ospdf||b.dataset.osimg||b.dataset.oseq, g=osDiaGrupos().find(x=>x.k===k); if(!g){ toast("O.S não encontrada."); return; }
@@ -8544,7 +8573,7 @@ document.addEventListener("change",async e=>{ const c=e.target.closest("[data-fp
   const det=c.closest("details"); const sm=det?.querySelector("summary small"); if(sm) sm.textContent=`${FIS_PERMS.filter(x=>fisPerm()[x.k]).length} de ${FIS_PERMS.length} ativos`;
   det?.querySelectorAll("[data-fperm]").forEach(x=>x.checked=!!fisPerm()[x.dataset.fperm]); });
 function fisOsGrupos(dias=7){ const me=acesso?.[sessao.id]||{}, lim=new Date(Date.now()-dias*864e5).toISOString(), G={};
-  todosGlobal().filter(r=>r.osDia&&!r.arquivado&&r.supervisao===sessao.sup&&(!me.equipe||(r.equipe||"")===me.equipe||r.osDia.fiscal?.id===sessao.id)&&(r.osDia.em||"")>=lim)
+  todosGlobal().filter(r=>r.osDia&&!r.arquivado&&r.supervisao===sessao.sup&&osDoFiscal(r,me)&&(r.osDia.em||"")>=lim)
     .forEach(r=>{ const k=r.osDia.num||r.osDia.em; (G[k]=G[k]||{os:r.osDia,rs:[]}).rs.push(r); });
   return Object.values(G).sort((a,b)=>(b.os.em||"").localeCompare(a.os.em||"")); }
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-fiseq]"); if(!b||sessao?.perfil!=="fiscal"||!fisPode("equipe")) return;
