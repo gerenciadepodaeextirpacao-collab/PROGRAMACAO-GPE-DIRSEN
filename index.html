@@ -1929,7 +1929,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.07j";
+const APP_VERSAO="2026.11.07k";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -3557,7 +3557,7 @@ function montar(root) {
   // paradas que aparecem na tela (respeita a busca): indicar/tirar o vistoriador vale só para elas
   const termo = () => S.q.trim().toLowerCase();
   const casa = (p, term) => !term || [p.processo, p.endereco, p.setor, p.ged, p.parecer, R(p).responsavel, dono(p) && dono(p).vistoriador].join(" ").toLowerCase().includes(term);
-  const visiveis = (ro) => { const term = termo(); return ro.ps.filter((p) => (!S.hide || !R(p).vistoriado || S.f[p.id]) && casa(p, term)); };
+  const visiveis = (ro) => { const term = termo(); return ro.ps.filter((p) => S.f[p.id] || ((!S.hide || !R(p).vistoriado) && casa(p, term))); };
   function rotas() {
     if (!S.carregando) { vigiarPos(); if (!S._gfT) S._gfT = setTimeout(geoFundo, 2500); }
     const coord = pode.coord();
@@ -3570,7 +3570,7 @@ function montar(root) {
     h += `<div class="vp-row">${regs.map((r) => { const l = listaRotas(r), dd = l.filter((p) => R(p).vistoriado).length; return `<button class="vp-chip" data-reg="${r}" aria-pressed="${r === S.cur}">${cap(r)}<small>${dd ? dd + "/" : ""}${l.length}</small></button>`; }).join("")}</div>
     <div class="vp-ctl">${coord ? `<label class="vp-f">Paradas por rota<input type="number" id="vp-per" min="3" max="40" value="${n}" style="width:80px"></label>` : ""}
     <div class="vp-f vp-grow"><span>Ponto de partida</span><b style="font-size:14px;padding:10px 0">📍 Sempre a sua localização atual</b></div>
-    <label class="vp-f vp-grow">Buscar<input type="search" id="vp-q" value="${esc(S.q)}" placeholder="Processo, rua, setor, vistoriador"></label></div>
+    <label class="vp-f vp-grow">Buscar<input type="search" id="vp-q" name="vp-busca-proc" autocomplete="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-form-type="other" value="${esc(S.q)}" placeholder="Processo, rua, setor, vistoriador"></label></div>
     <div class="vp-row"><label class="vp-row" style="font-size:14px"><input type="checkbox" id="vp-hide" ${S.hide ? "" : "checked"}> Mostrar os já vistoriados (para conferir ou alterar)</label></div>
     ${coord ? (() => { const g = S.geo, ng = semGeo().length; return g && g.on ? `<div class="vp-vb"><b>📍 Localizando os endereços no mapa… ${g.feito} de ${g.total}</b><div class="vp-prog"><i style="width:${pct(g.feito, g.total)}%"></i></div><span class="vp-msg">Cerca de 1 a 2 segundos por endereço. Pode continuar usando o app; as rotas se reorganizam no fim. Se parar, continua de onde parou.</span><div class="vp-row"><button class="vp-btn" data-geostop="1">Parar</button></div></div>`
       : `<div class="vp-row" style="align-items:center"><span class="vp-msg" style="flex:1 1 260px">Rotas montadas por <b>regional</b> e por <b>setor</b>: os setores vizinhos ficam em sequência e cada rota fecha sem quebrar o setor.${ng ? ` <b>${ng}</b> endereço${ng === 1 ? "" : "s"} ainda sem localização no mapa: localize para a ordem ficar pela distância real.` : " Todos os endereços do filtro estão localizados no mapa."}</span>${ng ? `<button class="vp-btn vp-pri" data-geo="1">📍 Localizar ${ng} no mapa e otimizar</button>` : ""}</div>`; })() : ""}
@@ -4062,7 +4062,7 @@ function montar(root) {
   }
   // assinatura eletrônica do vistoriador no relatório de serviço do "já executado"
   const pxAss = (id) => "vj" + String(id).replace(/[^A-Za-z0-9]/g, "");
-  const assBloco = (p) => `<div class="vp-vb" style="border-color:var(--lf)"><b>✍ Assinatura do relatório de serviço</b><span class="vp-msg">Como vistoriador, você assina o relatório que comprova o serviço já executado. Assina como <b>${esc(usuario())}</b>${matDe(acesso && acesso[meuId()] || {}) ? " · matrícula " + esc(matDe(acesso[meuId()])) : ""}.</span><div class="vp-sigf">${sigFormHtml(pxAss(p.id), meuId())}</div></div>`;
+  const assBloco = (p) => `<div class="vp-vb" style="border-color:var(--lf)"><b>✍ Assinatura do relatório de serviço</b><span class="vp-msg">Como vistoriador, você assina o relatório que comprova o serviço já executado. Assina como <b>${esc(usuario())}</b>${matDe(acesso && acesso[meuId()] || {}) ? " · matrícula " + esc(matDe(acesso[meuId()])) : ""}.</span><div class="vp-sigf"><input type="text" name="username" autocomplete="username" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">${sigFormHtml(pxAss(p.id), meuId())}</div></div>`;
   async function assinarVist(id) {
     const px = pxAss(id), uid = meuId(), p = S.proc.find((x) => x.id === id) || {};
     const erro = await conferirAss(px, uid); if (erro) return { erro };
@@ -4379,7 +4379,7 @@ const opHtml=o=>o?`<div class="sigsei"><span class="sl">Operador que encerrou o 
 const codVerif=async(obj)=>(await hashPin("gpe-verif",JSON.stringify(obj))).slice(0,10).toUpperCase();
 // bloco de senha: quem ainda não tem senha de assinatura cria ali mesmo (confirmando a senha de entrar)
 const sigFormHtml=(px,uid)=>assins[uid]?.hash
-  ? `<label class="f">Senha de assinatura<input id="${px}Sig" type="password" autocomplete="off" inputmode="text"></label>`
+  ? `<label class="f">Senha de assinatura<input id="${px}Sig" type="password" autocomplete="new-password" inputmode="text"></label>`
   : `<p class="note" style="margin:0"><b>Você ainda não tem senha de assinatura.</b> Crie agora uma senha só para assinar (pelo menos 6 caracteres, diferente da senha de entrar no app).</p>
      <div class="row2"><label class="f">Nova senha de assinatura<input id="${px}SigN" type="password" autocomplete="new-password"></label><label class="f">Repita a senha<input id="${px}SigC" type="password" autocomplete="new-password"></label></div>
      <label class="f">Senha de entrar no app (para confirmar que é você)<input id="${px}SigL" type="password" autocomplete="off"></label>`;
