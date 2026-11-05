@@ -1929,7 +1929,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.07e";
+const APP_VERSAO="2026.11.07f";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -3467,6 +3467,7 @@ function montar(root) {
     const corpo = S.carregando ? `<p class="vp-msg">Carregando processos…</p>` : S.erro ? `<p class="vp-msg">${esc(S.erro)}</p>`
       : S.tela === "exec" && (pode.sup() || pode.fis()) ? execTurma() : S.tela === "resumo" && pode.resumo() ? resumo() : S.tela === "pdfs" && pode.coord() ? pdfs() : rotas();
     root.innerHTML = cab() + (S.erroGrav ? `<p class="vp-need" style="background:#fdecea;padding:10px 12px;border-radius:8px">⚠ ${esc(S.erroGrav)}</p>` : "") + corpo + `<div class="vp-toast" id="vp-toast" role="status"></div>`;
+    Object.entries(S.sigv || {}).forEach(([k, v]) => { const el = root.querySelector("#" + cssId(k)); if (el) el.value = v; });
     if (fid) { const el = root.querySelector("#" + cssId(fid)); if (el) { el.focus(); if (sel) try { el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
   }
   function cab() {
@@ -3508,7 +3509,8 @@ function montar(root) {
     if (f.sit === "ja_executado") {
       const img = f.preview || (f.fotoPath ? fotoUrl(f.fotoPath) : "");
       h += `<div class="vp-foto">${img ? `<img src="${img}" alt="Foto anexada">` : ""}<label class="vp-btn vp-filebtn${img ? "" : " vp-pri"}">${img ? "Trocar foto" : "📷 Foto que comprova o serviço feito"}<input type="file" accept="image/*" capture="environment" data-ffoto="${p.id}"></label></div>
-        ${img ? "" : `<span class="vp-need">Foto obrigatória: ela fica no Resumo para quem dá baixa no SEI / Intranet.</span>`}`;
+        ${img ? "" : `<span class="vp-need">Foto obrigatória: ela fica no Resumo para quem dá baixa no SEI / Intranet.</span>`}
+        ${assBloco(p)}`;
     }
     if (f.sit === "nao_executado") {
       h += `<div class="vp-row"><span class="vp-lab">Equipamento necessário</span>${EQUIPS.map((q) => `<button class="vp-opt" data-feq="${q}" data-id="${p.id}" aria-pressed="${f.equip === q}">${q}</button>`).join("")}</div>
@@ -3824,7 +3826,7 @@ function montar(root) {
         </div>
         ${docLinks(r).length ? `<div class="vp-doc">${docLinks(r).map(([k, u2]) => `<a class="vp-btn" href="${esc(u2)}" target="_blank" rel="noopener">${k === "pdf" ? "📄 PDF do processo" : "🔗 Link do processo"}</a>`).join("")}</div>` : ""}
         <div class="vp-msg" style="margin-top:4px">Registrado em ${fHora(r.atualizado_em)}${r.atualizado_por ? " por " + esc(r.atualizado_por) : ""}${r.rota && r.rota.vistoriador ? " · rota indicada para " + esc(r.rota.vistoriador) : ""}</div>
-        ${r.situacao === "ja_executado" && r.foto_path ? `<span class="vp-lab" style="margin-top:6px">Relatório de serviço (para responder no SEI / Intranet)</span><div class="vp-row"><button class="vp-btn vp-pri" data-vrelpdf="${p.id}">📄 Baixar em PDF</button><button class="vp-btn" data-vreldocx="${p.id}">📝 Baixar em Word</button></div>` : ""}
+        ${r.situacao === "ja_executado" && r.foto_path ? (r.ass && r.ass.em ? `<span class="vp-msg" style="margin-top:6px">✍ Assinado eletronicamente por <b>${esc(r.ass.nome)}</b> em ${fHora(r.ass.em)} · código ${esc(r.ass.cod || "")}</span>` : r.resp_uid === meuId() ? `${assBloco(p)}<div class="vp-row"><button class="vp-btn vp-pri" data-vassinar="${p.id}">✍ Assinar o relatório</button></div>` : `<span class="vp-need" style="margin-top:6px">Relatório ainda sem a assinatura do vistoriador ${esc(r.responsavel || "")}: ele assina ao abrir este processo no Resumo ou ao corrigir a vistoria.</span>`) : ""}${r.situacao === "ja_executado" && r.foto_path ? `<span class="vp-lab" style="margin-top:6px">Relatório de serviço (para responder no SEI / Intranet)</span><div class="vp-row"><button class="vp-btn vp-pri" data-vrelpdf="${p.id}">📄 Baixar em PDF</button><button class="vp-btn" data-vreldocx="${p.id}">📝 Baixar em Word</button></div>` : ""}
         <div class="vp-row" style="margin-top:6px">${r.foto_path ? `<button class="vp-btn" data-baixafoto="${p.id}">⬇ Baixar a foto</button>` : ""}<button class="vp-btn" data-rab="${p.id}">Fechar</button></div>
         ${r.situacao === "nao_executado" ? envioHtml(p) : ""}
         ${baixaHtml(p)}
@@ -3878,7 +3880,7 @@ function montar(root) {
     const obs = [`Vistoria de processo em ${fDia(dv)}${r.responsavel ? " (" + r.responsavel + ")" : ""}: serviço constatado já executado no local, conforme foto da vistoria.`, `Quantidade do processo: ${p.qtd_poda} poda · ${p.qtd_extirpacao} extirpação${p.qtd_destocamento ? " · " + p.qtd_destocamento + " destocamento" : ""}.`, r.observacao ? "Obs. da vistoria: " + r.observacao : ""].filter(Boolean).join(" ");
     return { id: "vist-" + p.id, tipo: "PROCESSO", procSist: sistemaDe(p), processo: p.processo, supervisao: "", equipe: "", fiscal: "",
       bairro: p.setor || "", logradouro: p.endereco || "", status: "SIM", data: dv, dataExec: dv, obs, qtd: {},
-      relat: { processo: p.processo, sist: sistemaDe(p), ped: "", parecer: parecerTxt(p.parecer), vistoria: dv, solicitante: "", arvore: "", galho: "", matricula: String(((acesso || {})[r.resp_uid] || {}).matricula || "").replace(/^m/i, ""), midia: { durante: r.foto_path }, ass: { nome: r.responsavel || "" } },
+      relat: { processo: p.processo, sist: sistemaDe(p), ped: "", parecer: parecerTxt(p.parecer), vistoria: dv, solicitante: "", arvore: "", galho: "", matricula: (r.ass && r.ass.mat) || String(((acesso || {})[r.resp_uid] || {}).matricula || "").replace(/^m/i, ""), midia: { durante: r.foto_path }, ass: r.ass && r.ass.em ? { ...r.ass } : { nome: r.responsavel || "" } },
       htmlFix: (h) => h.replace("<b>Data da Execução do Serviço:</b>", "<b>" + ROT_JA + "</b>").replace("Assinatura do Supervisor Responsável Pelo Serviço:", "Vistoriador responsável pela constatação:")
         .replace(/<table><tr><td class="h">ANTES<\/td>[\s\S]*?<\/table>/, `<table><tr><td class="h" style="text-align:center">FOTO DA VISTORIA – SERVIÇO JÁ EXECUTADO</td></tr><tr><td class="ft" style="height:300px"><img src="${esc(midUrl(r.foto_path) || "")}" alt="" style="max-height:290px"></td></tr></table>`)
         .replace(/<p style="text-align:center;font-size:11px;color:#9b1f18[^>]*>[^<]*<\/p>/, "").replace("ASSINATURA DO RESPONSÁVEL", "ASSINATURA DO VISTORIADOR"),
@@ -4014,6 +4016,18 @@ function montar(root) {
     const ok = await gravar(ids, { rota: uid ? { vistoriador: v.nome, uid, em: new Date().toISOString(), por: usuario() } : null });
     if (ok) { if (S.draft) delete S.draft[ci]; const q = ids.length + (ids.length === 1 ? " parada" : " paradas"); toast(uid ? `${q} da rota ${ro.n} para ${v.nome}` : `Vistoriador retirado de ${q} da rota ${ro.n}`); }
   }
+  // assinatura eletrônica do vistoriador no relatório de serviço do "já executado"
+  const pxAss = (id) => "vj" + String(id).replace(/[^A-Za-z0-9]/g, "");
+  const assBloco = (p) => `<div class="vp-vb" style="border-color:var(--lf)"><b>✍ Assinatura do relatório de serviço</b><span class="vp-msg">Como vistoriador, você assina o relatório que comprova o serviço já executado. Assina como <b>${esc(usuario())}</b>${matDe(acesso && acesso[meuId()] || {}) ? " · matrícula " + esc(matDe(acesso[meuId()])) : ""}.</span><div class="vp-sigf">${sigFormHtml(pxAss(p.id), meuId())}</div></div>`;
+  async function assinarVist(id) {
+    const px = pxAss(id), uid = meuId(), p = S.proc.find((x) => x.id === id) || {};
+    const erro = await conferirAss(px, uid); if (erro) return { erro };
+    const u = (acesso && acesso[uid]) || {}, em = new Date().toISOString();
+    const ass = { uid, nome: usuario(), cargo: "Vistoriador" + (u.perfil && PERF[u.perfil] ? " (" + PERF[u.perfil] + ")" : ""), mat: matDe(u), sup: u.sup || "", como: "pelo próprio acesso", em };
+    ass.cod = await codVerif({ id: "vist-" + id, processo: p.processo || "", uid, em, st: "JA" });
+    Object.keys(S.sigv || {}).forEach((k) => { if (k.startsWith(px)) delete S.sigv[k]; });
+    return { ass };
+  }
   async function salvarForm(id) {
     const f = S.f[id]; if (!f || S.busy[id]) return;
     const p = S.proc.find((x) => x.id === id);
@@ -4021,14 +4035,15 @@ function montar(root) {
     if (!f.data) { toast("Informe a data da vistoria"); return; }
     if (f.sit === "ja_executado" && !f.file && !f.fotoPath) { toast("Anexe a foto que comprova o serviço feito"); return; }
     if (f.sit === "nao_executado" && !f.equip) { toast("Escolha o equipamento necessário"); return; }
+    let ass = null; if (f.sit === "ja_executado") { const a = await assinarVist(id); if (a.erro) { toast("Assinatura do relatório: " + a.erro); return; } ass = a.ass; }
     S.busy[id] = 1; render();
     try {
       let fotoPath = f.fotoPath;
       if (f.sit === "ja_executado" && f.file) { try { fotoPath = await midEnviar({ tipo: "foto", janelaH: 24 }, f.file); } catch (x) { throw new Error(midErro(x)); } }
       const r0 = S.reg[id] || {};
       const base = { vistoriado: true, data_vistoria: f.data, observacao: f.obs.trim() || null, responsavel: r0.vistoriado && r0.responsavel ? r0.responsavel : usuario(), resp_uid: r0.vistoriado && r0.resp_uid ? r0.resp_uid : meuId() };
-      const campos = f.sit === "ja_executado" ? Object.assign(base, { situacao: "ja_executado", foto_path: fotoPath, equipamento: null })
-        : Object.assign(base, { situacao: "nao_executado", foto_path: null, equipamento: f.equip, urbantrim: null });
+      const campos = f.sit === "ja_executado" ? Object.assign(base, { situacao: "ja_executado", foto_path: fotoPath, equipamento: null, ass })
+        : Object.assign(base, { situacao: "nao_executado", foto_path: null, equipamento: f.equip, urbantrim: null, ass: null });
       delete S.busy[id];
       if (await gravar([id], campos)) { fecharForm(id); render(); toast("Vistoria salva no resumo · o endereço saiu da rota"); }
     } catch (e) { delete S.busy[id]; render(); toast("Não foi possível salvar: " + (e.message || e)); }
@@ -4084,6 +4099,7 @@ function montar(root) {
     if (ds.rsit) { S.rsit = ds.rsit; S.lim = 40; render(); return; }
     if (ds.indvist) { const sel = root.querySelector("#vp-rv-" + ds.indvist); const uid = sel ? sel.value : ""; if (!uid) { toast("Escolha o vistoriador"); return; } indicarRota(+ds.indvist, uid); return; }
     if (ds.geo) { localizar(); return; }
+    if (ds.vassinar) { const a = await assinarVist(ds.vassinar); if (a.erro) { toast("Assinatura: " + a.erro); return; } if (await gravar([ds.vassinar], { ass: a.ass })) toast("Relatório assinado"); return; }
     if (ds.gps) { if (S.busy.gps) return; let w = null; try { w = window.open("", "_blank"); if (w) w.document.write("<p style=\"font:16px sans-serif;padding:20px\">Calculando o melhor caminho da rota…</p>"); } catch (e) {} abrirGps(+ds.gps, w); return; }
     if (ds.geostop) { if (S.geo) S.geo.on = false; render(); return; }
     if (ds.tiraum) { if (await gravar([ds.tiraum], { rota: null })) toast("Vistoriador retirado desta parada"); return; }
@@ -4148,6 +4164,7 @@ function montar(root) {
     }
   });
   root.addEventListener("input", (e) => {
+    if (e.target.id && /^vj/.test(e.target.id)) { S.sigv = S.sigv || {}; S.sigv[e.target.id] = e.target.value; return; }
     const t = e.target, ds = t.dataset;
     if (t.id === "vp-q") { S.q = t.value; render(); return; }
     if (t.id === "vp-rq") { S.rq = t.value; render(); return; }
