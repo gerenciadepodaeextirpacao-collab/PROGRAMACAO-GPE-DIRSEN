@@ -1929,7 +1929,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.07i";
+const APP_VERSAO="2026.11.07j";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -3451,11 +3451,42 @@ function montar(root) {
     sem.forEach((p) => { let at = -1; seq.forEach((q, i) => { if (q._set === p._set) at = i; }); if (at >= 0) seq.splice(at + 1, 0, p); else seq.push(p); });
     return (_caminhoMemo[key] = seq);
   }
+  // ---------- mapa do próprio app: cada ponto com o nº do processo e o endereço ----------
+  const LEAF = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/";
+  let _leaf = null;
+  const carregarLeaflet = () => _leaf || (_leaf = new Promise((ok, no) => { if (window.L && window.L.map) return ok();
+    const c = document.createElement("link"); c.rel = "stylesheet"; c.href = LEAF + "leaflet.min.css"; document.head.appendChild(c);
+    const j = document.createElement("script"); j.src = LEAF + "leaflet.min.js"; j.onload = () => ok(); j.onerror = () => { _leaf = null; no(new Error("load")); }; document.head.appendChild(j); }));
+  async function abrirMapa(stops, foco, titulo) {
+    const ps = stops.filter((p) => geoDe(p)); const faltam = stops.length - ps.length;
+    if (!ps.length) { toast("Esses endereços ainda não foram localizados no mapa"); return; }
+    document.getElementById("vpMapa")?.remove();
+    const ov = document.createElement("div"); ov.id = "vpMapa";
+    ov.style.cssText = "position:fixed;inset:0;z-index:9999;background:#fff;display:flex;flex-direction:column;font-family:inherit;color:#18221b";
+    ov.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid #d9e0d8;background:#f3f5f1"><b style="flex:1;font-size:15px">🗺 ${esc(titulo || "Mapa")}${faltam ? ` <small style="color:#b42318;font-weight:600">· ${faltam} sem posição no mapa</small>` : ""}</b><button type="button" id="vpMapaX" style="font:inherit;font-weight:700;padding:8px 14px;border-radius:8px;border:1px solid #d9e0d8;background:#fff;cursor:pointer">✕ Fechar</button></div><div id="vpMapaC" style="flex:1;min-height:0"><p style="padding:16px">Carregando o mapa…</p></div>`;
+    document.body.appendChild(ov); const fechar = () => { ov.remove(); document.removeEventListener("keydown", esq); }; const esq = (e) => { if (e.key === "Escape") fechar(); };
+    ov.querySelector("#vpMapaX").onclick = fechar; document.addEventListener("keydown", esq);
+    try { await carregarLeaflet(); } catch (e) { ov.querySelector("#vpMapaC").innerHTML = `<p style="padding:16px">Sem internet para carregar o mapa.</p>`; return; }
+    const box = ov.querySelector("#vpMapaC"); box.innerHTML = "";
+    const L = window.L, m = L.map(box, { zoomControl: true }); L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(m);
+    const bounds = [];
+    ps.forEach((p, i) => { const g = geoDe(p), r = R(p), foc = foco === p.id, num = stops.length > 1 ? stops.indexOf(p) + 1 : "";
+      const ic = L.divIcon({ className: "", iconSize: [30, 30], iconAnchor: [15, 15], html: `<div style="width:30px;height:30px;border-radius:50%;background:${foc ? "#b42318" : "#1f6b3a"};color:#fff;font:700 13px/30px sans-serif;text-align:center;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)">${num || "📍"}</div>` });
+      const dl = docLinks(r)[0];
+      const pop = `<div style="font:13px/1.4 sans-serif;min-width:200px"><b style="font-size:14px">${num ? num + " · " : ""}Proc. ${esc(p.processo)}</b><br>${esc(p.endereco)}<br><span style="color:#5b6a5f">${esc(p.setor || "")} · ${esc(cap(p.regional))}${p.parecer && p.parecer !== "SEM NUMERO" ? " · Parecer " + esc(parecerTxt(p.parecer)) : ""}</span><br>${p.qtd_poda ? p.qtd_poda + " poda " : ""}${p.qtd_extirpacao ? p.qtd_extirpacao + " extirpação" : ""}${g.n === "setor" ? `<br><i style="color:#b42318">posição aproximada (pelo setor)</i>` : ""}
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><a href="https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=${g.lat.toFixed(6)},${g.lng.toFixed(6)}" target="_blank" rel="noopener" style="background:#1f6b3a;color:#fff;padding:5px 9px;border-radius:6px;text-decoration:none;font-weight:700">🧭 Ir até aqui</a>${dl ? `<a href="${esc(dl[1])}" target="_blank" rel="noopener" style="border:1px solid #1f6b3a;color:#1f6b3a;padding:5px 9px;border-radius:6px;text-decoration:none;font-weight:700">📄 Processo</a>` : ""}</div></div>`;
+      const mk = L.marker([g.lat, g.lng], { icon: ic, zIndexOffset: foc ? 1000 : 0 }).addTo(m).bindPopup(pop);
+      mk.bindTooltip(`${num ? num + " · " : ""}${esc(p.processo)}<br><span style="font-weight:400">${esc(String(p.endereco).slice(0, 40))}</span>`, { permanent: true, direction: "top", offset: [0, -16], opacity: 0.95 });
+      bounds.push([g.lat, g.lng]); if (foc) setTimeout(() => mk.openPopup(), 300); });
+    if (S.pos) { L.circleMarker([S.pos.lat, S.pos.lng], { radius: 8, color: "#fff", weight: 3, fillColor: "#2a78d6", fillOpacity: 1 }).addTo(m).bindTooltip("Você está aqui"); if (!foco) bounds.push([S.pos.lat, S.pos.lng]); }
+    const f = foco && ps.find((p) => p.id === foco); if (f) { const g = geoDe(f); m.setView([g.lat, g.lng], 17); } else m.fitBounds(bounds, { padding: [40, 40], maxZoom: 17 });
+    setTimeout(() => m.invalidateSize(), 50);
+  }
   const alvoGps = (p) => { const g = geoDe(p); return g ? g.lat.toFixed(6) + "," + g.lng.toFixed(6) : mapaQ(p); };
   // links do Google Maps: sem "origin" = parte da localização atual; até 10 paradas por link
   const linksGps = (seq) => { const L = []; for (let i = 0; i < seq.length; i += 10) { const seg = seq.slice(i, i + 10), dest = seg[seg.length - 1], wp = seg.slice(0, -1);
     let u = "https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=" + encodeURIComponent(alvoGps(dest)); if (wp.length) u += "&waypoints=" + encodeURIComponent(wp.map(alvoGps).join("|")); L.push(u); } return L; };
-  const linhaProc = (p) => `<div class="vp-e">${esc(p.endereco)}</div><div class="vp-m">${p.manual ? `<span class="vp-tag" style="background:#e8eefc;color:#2b4fa8">cadastrado à mão</span>` : ""}${p.ano ? `<span class="vp-tag">${p.ano}</span>` : ""}${p.ged ? `<span class="vp-tag">GED ${esc(p.ged)}</span>` : ""}<span>Proc. ${procLink(p, `<code>${esc(p.processo)}</code>`)}</span>${p.parecer && p.parecer !== "SEM NUMERO" ? `<span>Parecer ${esc(parecerTxt(p.parecer))}</span>` : ""}<span>${esc(p.setor)} · ${cap(p.regional)}</span>${p.editado ? `<span class="vp-tag" style="background:#fff4d6;color:#8a5a00" title="Editado por ${esc(p.editado.por || "")}">✏️ editado</span>` : ""}<a class="vp-gm" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapaQ(p))}" target="_blank" rel="noopener">📍 localização</a></div>`;
+  const linhaProc = (p) => `<div class="vp-e">${esc(p.endereco)}</div><div class="vp-m">${p.manual ? `<span class="vp-tag" style="background:#e8eefc;color:#2b4fa8">cadastrado à mão</span>` : ""}${p.ano ? `<span class="vp-tag">${p.ano}</span>` : ""}${p.ged ? `<span class="vp-tag">GED ${esc(p.ged)}</span>` : ""}<span>Proc. ${procLink(p, `<code>${esc(p.processo)}</code>`)}</span>${p.parecer && p.parecer !== "SEM NUMERO" ? `<span>Parecer ${esc(parecerTxt(p.parecer))}</span>` : ""}<span>${esc(p.setor)} · ${cap(p.regional)}</span>${p.editado ? `<span class="vp-tag" style="background:#fff4d6;color:#8a5a00" title="Editado por ${esc(p.editado.por || "")}">✏️ editado</span>` : ""}${geoDe(p) ? `<button type="button" class="vp-gm" data-mapa1="${p.id}" style="background:none;border:0;padding:0;font:inherit;cursor:pointer">📍 localização</button>` : `<a class="vp-gm" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapaQ(p))}" target="_blank" rel="noopener">📍 localização</a>`}</div>`;
   const qtdPills = (p) => `${p.qtd_poda ? `<span class="vp-pill vp-po">${p.qtd_poda} poda</span>` : ""}${p.qtd_extirpacao ? `<span class="vp-pill vp-ex">${p.qtd_extirpacao} extirp.</span>` : ""}`;
   const estPill = (r) => { const e = vistEst(r); return e === "pendente" ? "" : `<span class="vp-sp ${EST[e][1]}">${EST[e][0]}</span>`; };
 
@@ -3564,7 +3595,7 @@ function montar(root) {
       h += `<section class="vp-card${!coord || (atual && atual === meuId()) ? " vp-mine" : ""}"><div class="vp-head"><div><b>Rota ${ro.n}</b> <small>${S.hide ? `${pendT.length} a vistoriar` : `${ch.length} paradas · ${feitos} vistoriados`} · ${po} poda · ${ex} extirpação</small>${filtrada ? `<div class="vp-need" style="margin-top:4px">🔎 Busca ativa: mostrando <b>${show.length} de ${ch.length}</b> paradas. ${coord ? `Indicar / tirar vale <b>só para ${pend.length === 1 ? "a parada mostrada" : "as " + pend.length + " paradas mostradas"}</b>.` : ""}</div>` : ""}</div>
       <div class="vp-sets">${[...new Set(ch.map((p) => p.setor))].map(esc).join(" · ")}</div>
       <div class="vp-resp">${resp}</div>
-      <div class="vp-row">${lnk.map((u, k) => `<a class="vp-btn vp-pri" href="${u}" target="_blank" rel="noopener" data-gpsa="${ci}" data-k="${k}">🧭 ${lnk.length > 1 ? "Trecho " + (k + 1) + " no GPS · paradas " + (k * 10 + 1) + " a " + Math.min(seqG.length, k * 10 + 10) : "Abrir a rota no GPS"}</a>`).join("")}<button class="vp-btn" data-copy="${ci}">Copiar lista</button></div>
+      <div class="vp-row">${lnk.map((u, k) => `<a class="vp-btn vp-pri" href="${u}" target="_blank" rel="noopener" data-gpsa="${ci}" data-k="${k}">🧭 ${lnk.length > 1 ? "Trecho " + (k + 1) + " no GPS · paradas " + (k * 10 + 1) + " a " + Math.min(seqG.length, k * 10 + 10) : "Abrir a rota no GPS"}</a>`).join("")}${seqG.length ? `<button class="vp-btn" data-mapar="${ci}">🗺 Ver no mapa</button>` : ""}<button class="vp-btn" data-copy="${ci}">Copiar lista</button></div>
       ${lnk.length ? `<span class="vp-msg">Parte da sua localização atual e passa pelas paradas na ordem da lista abaixo (a mais perto primeiro).${lnk.length > 1 ? " O Google Maps aceita até 10 paradas por vez: termine um trecho e abra o próximo." : ""}${S.pos ? "" : " Libere a localização do celular para a ordem sair da sua posição."}</span>` : ""}</div>
       <div class="vp-prog"><i style="width:${pct(feitos, ch.length)}%"></i></div><ol>`;
       h += show.map((p) => `<li class="vp-stop${R(p).vistoriado ? " vp-done" : ""}"><span class="vp-seq">${String(ro.base + ch.indexOf(p) + 1).padStart(3, "0")}</span>
@@ -4117,6 +4148,8 @@ function montar(root) {
     if (ds.rsit) { S.rsit = ds.rsit; S.lim = 40; render(); return; }
     if (ds.indvist) { const sel = root.querySelector("#vp-rv-" + ds.indvist); const uid = sel ? sel.value : ""; if (!uid) { toast("Escolha o vistoriador"); return; } indicarRota(+ds.indvist, uid); return; }
     if (ds.geo) { localizar(); return; }
+    if (ds.mapa1) { const p = S.proc.find((x) => x.id === ds.mapa1); if (p) abrirMapa([p], p.id, "Proc. " + p.processo); return; }
+    if (ds.mapar) { const ro = rotasDe(S.cur)[+ds.mapar]; if (!ro) return; const seq = ordemGps(visiveis(ro).filter((p) => !R(p).vistoriado)); abrirMapa(seq, null, `Rota ${ro.n} · ${seq.length} paradas`); return; }
     if (ds.vassinar) { const a = await assinarVist(ds.vassinar); if (a.erro) { toast("Assinatura: " + a.erro); return; } if (await gravar([ds.vassinar], { ass: a.ass })) toast("Relatório assinado"); return; }
     if (ds.geostop) { if (S.geo) S.geo.on = false; render(); return; }
     if (ds.tiraum) { if (await gravar([ds.tiraum], { rota: null })) toast("Vistoriador retirado desta parada"); return; }
