@@ -1954,7 +1954,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.07v";
+const APP_VERSAO="2026.11.07w";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -8682,6 +8682,9 @@ function renderInicio(){
     {v:"campo",t:"Ver serviços em aberto",i:ICO.campo,c:"t-or",ok:pode("campo")&&!lanca},
     {v:"chk",t:"Ver checklists",i:ICO.chk,ok:pode("chk")&&!lanca}
   ].filter(x=>x.ok);
+  // escala de trabalho: botão no Início para quem pode cadastrar / atualizar (antes ficava só no menu Mais)
+  if(!soLeitura()&&!ehFiscal()&&SUPS.some(x=>podeEditarEscala(x.id))){ const minha=travado()&&sessao.sup, cfg=minha&&escCfg(sessao.sup);
+    tiles.push({a:"escala",t:minha?"Minha escala de trabalho":"Escala de trabalho das turmas",sub:minha?(cfg?(trabalha(sessao.sup,hoje())?"(hoje: dia de trabalho)":"(hoje: folga)"):"(ainda não cadastrada)"):"",i:svgI('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M8 14h3M8 17h6"/>'),c:minha&&!cfg?"t-warn":"t-gr"}); }
   if(isGerente()) tiles.push({a:"acessos",t:"Acessos",i:ICO.acessos,c:"t-pu"});
   if(travado()&&(ehSup()||sessao.perfil==="supervisor1")&&podeEditarEscala(sessao.sup)&&!escCfg(sessao.sup)) av+=`<button type="button" class="inav warn" data-escala="${esc(sessao.sup)}">${ICO.form}<span><b>Cadastre a escala de trabalho da sua turma</b><small>Assim o app só cobra nos seus dias de trabalho</small></span><em>Cadastrar</em></button>`;
   const escHj=travado()&&escCfg(sessao.sup)?(trabalha(sessao.sup,hoje())?" · hoje: dia de trabalho":" · hoje: FOLGA"):"";
