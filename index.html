@@ -1954,7 +1954,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.07t";
+const APP_VERSAO="2026.11.07v";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -8690,7 +8690,7 @@ function renderInicio(){
     <div class="inq">O QUE VOCÊ QUER FAZER?</div>
     <div class="intiles">${tiles.map(x=>`<button type="button" class="intile ${x.c||""}" data-iv="${x.v||""}" data-ia="${x.a||""}">${x.i}<span>${esc(x.t)}${x.sub?`<small class="insub">${esc(x.sub)}</small>`:""}</span></button>`).join("")}</div>`;
 }
-document.addEventListener("click",e=>{ const b=e.target.closest("#inicioBox [data-iv]"); if(!b) return; if(b.dataset.ia==="acessos") return abrirAcessos(); if(b.dataset.ia==="osdia") return abrirOsDia(); irPara(b.dataset.iv,b.dataset.ia); });
+document.addEventListener("click",e=>{ const b=e.target.closest("#inicioBox [data-iv]"); if(!b) return; if(b.dataset.ia==="acessos") return abrirAcessos(); if(b.dataset.ia==="escala") return abrirEscala(travado()?sessao.sup:""); if(b.dataset.ia==="osdia") return abrirOsDia(); irPara(b.dataset.iv,b.dataset.ia); });
 const AJUDA={
   vist:{c:"Vistoria dos processos do relatório, por rota.",p:["O coordenador escolhe o filtro (GED, ano e regional), o app monta as rotas e ele indica o vistoriador de cada rota.","O vistoriador só vê as rotas indicadas para ele. Abrir a rota no GPS traça o caminho; tocar no número do processo abre o PDF.","Em cada processo informe a situação: Já executado (data + foto) ou Não executado (equipamento).","Tudo vai para o Resumo das vistorias, de onde a equipe da baixa no SEI / Intranet tira as informações."]},
   pend:{c:"Tudo o que precisa de atenção, em um só lugar.",p:["Cada aviso mostra a quantidade e do que se trata. Toque nele para resolver.","Gerente e coordenador têm os botões de cobrar no WhatsApp.","O número no sino do rodapé é o total de pendências."]},
