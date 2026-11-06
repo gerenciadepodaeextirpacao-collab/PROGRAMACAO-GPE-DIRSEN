@@ -1471,7 +1471,7 @@ body.sofiscal nav.tabs{display:none!important}
 
 </main>
 
-<footer class="devby devfoot">Programação GPE · Desenvolvido por <b>Victor Ricardo Porto Alcântara</b></footer>
+<footer class="devby devfoot">Programação GPE · <span id="verRod"></span> · Desenvolvido por <b>Victor Ricardo Porto Alcântara</b></footer>
 <nav class="tabs"><div class="wrap">
   <button type="button" data-v="form" aria-current="page">Programar</button>
   <button type="button" data-v="campo">Serviços em aberto</button>
@@ -1954,7 +1954,8 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.07w";
+const APP_VERSAO="2026.11.07x";
+try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -7610,7 +7611,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-chkfazer]
 // ---------- ESCALA DE TRABALHO: cada supervisor cadastra a da sua turma (gerente, coordenador e gerente operacional cadastram para as turmas da sua área) ----------
 // escala: supervisor / supervisor 1 da própria turma, coordenador e gerência do escopo; nos perfis abaixo do gerente vale o botão "Cadastrar / atualizar a escala" em Acessos (ligado por padrão)
 const podeEditarEscala=sup=>{ if(!sessao||soLeitura()) return false; const per=sessao.perfil;
-  if(PERF_ABAIXO.includes(per)&&!abaOn(per,"escala")) return false;
+  if(PERF_ABAIXO.includes(per)&&acesso?.[sessao.id]?.abas?.escala===false) return false; // só bloqueia se foi desligado na própria pessoa
   return ((ehSup()||per==="supervisor1")&&sessao.sup===sup)||(isGerente()&&noEscopo(sup))||((per==="coordenador"||per==="gerencia_op"||per==="ger_equipe")&&noEscopo(sup)); };
 const DSEM=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
 const ESC_DOC_CSS=`.escano{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.escano .em{border:1px solid #d5ddd2;border-radius:10px;padding:6px;background:#fff;color:#16231a}.escano .em h4{margin:0;font-size:13px;text-transform:uppercase;letter-spacing:.3px;color:#005f27}.escano .em p{margin:1px 0 4px;font-size:10.5px;color:#5b6a5f;line-height:1.25}.escano .em p b{color:#16231a}.escano .em .vira{color:#b4570f;font-weight:700}.escano .g{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}.escano .g i{font-style:normal;font-size:9px;text-align:center;color:#7a7f78;font-weight:700}.escano .g span{font-size:11px;text-align:center;border-radius:4px;padding:2px 0;line-height:1.35;font-variant-numeric:tabular-nums}.escano .g .t{background:#1f9d55;color:#fff;font-weight:700}.escano .g .f{background:#f2f2ef;color:#8a8f88}.escano .g .fa{background:#fde3cf;color:#a3480b;font-weight:700}.escano .g .hj{outline:2px solid #f37020;outline-offset:-1px}.escleg{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;align-items:center;color:inherit}.escleg span{display:inline-flex;align-items:center;gap:4px}.escleg i{width:14px;height:14px;border-radius:3px;display:inline-block}.escano{margin:6px 0}.escano .em{break-inside:avoid}`;
@@ -8344,7 +8345,7 @@ function abrirMais(){ if(sessao?.perfil==="gerencia_op"||(sessao?.perfil==="fisc
   itens.push({k:"a:ajuda",t:"Ajuda desta tela",i:svgI('<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17v.5"/>')},{k:"a:sair",t:"Sair",i:ICO.sair,c:"sair"});
   host.innerHTML=`<div class="sheet" id="sh"><div class="panel" role="dialog" aria-label="Mais opções">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:22px">Mais opções</b><button type="button" class="btn sec" id="maisFechar" style="min-height:44px;padding:0 14px">Fechar</button></div>
-    <p class="note" style="margin:0">${esc(sessao?.nome||"")} · ${esc(PERF[sessao?.perfil]||"")}${sessao?.sup?" · "+esc(sessao.sup):""}</p>
+    <p class="note" style="margin:0">${esc(sessao?.nome||"")} · ${esc(PERF[sessao?.perfil]||"")}${sessao?.sup?" · "+esc(sessao.sup):""} · <b>versão ${APP_VERSAO}</b></p>
     <div class="maislist">${itens.map(x=>`<button type="button" class="maisit ${x.c||""}" data-mk="${x.k}">${x.i}<span>${esc(x.t)}</span><b aria-hidden="true">›</b></button>`).join("")}</div>
   </div></div>`;
   const close=()=>host.innerHTML="";
