@@ -976,6 +976,14 @@ input::placeholder,textarea::placeholder{text-transform:none}
 .acdet>summary::before{content:"▸ ";}.acdet[open]>summary::before{content:"▾ ";}.acdetb{display:grid;gap:8px;margin-top:4px}
 .acinfo>summary{cursor:pointer;font-size:13px;color:var(--muted);font-weight:600}
 .pcinfo{all:unset;cursor:pointer;display:grid;gap:2px;flex:1;min-width:0;padding:4px 6px;border-radius:8px}.pcinfo:hover,.pcinfo:focus-visible{background:var(--sunk);outline:none}
+.pcsup>h3 small{font-weight:600;opacity:.85}.pcres{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;margin:2px 0 6px}.pcres b{font-weight:800}
+.pcsup .pcrow.pcl{flex-wrap:nowrap!important;align-items:center;padding:6px 0!important;gap:8px}.pcsup .pcrow.pcl .pcinfo small{color:var(--ink);font-size:13.5px}
+.pcsup .pcrow.pcl .pcx{min-height:36px!important;width:40px!important;padding:0!important}
+.pccat{font:700 13px var(--body);color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:10px 0 0;padding-top:8px;border-top:1px solid var(--line)}
+.ctger{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0}.ctger>div{border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:grid;gap:2px;background:var(--surface)}.ctger b{font-size:13px}.ctger span{font-size:12.5px;color:var(--muted)}.ctger strong{color:var(--ink)}
+@media (max-width:520px){.ctger{grid-template-columns:1fr}}
+.bshit{display:grid;gap:3px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface);cursor:pointer;font:inherit;color:var(--ink);width:100%}.bshit .lc{font-size:14px}.bshit .mt{font-size:12.5px;color:var(--muted)}.bshit .pill{justify-self:start}
+.pcsupact{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:8px}.pcsupact .btn{margin:0!important}.pcsupact .btn.sec{padding:0 16px}
 .pcinfo b{font-size:15px}.pcinfo small{font-size:13px;color:var(--muted);line-height:1.35}.pcinfo em{font-style:normal;font-size:12px;font-weight:700;color:var(--brand)}
 .pdsup{display:grid;gap:2px;background:var(--sunk);border-radius:10px;padding:8px 10px}.pdsup b{font-size:16px}.pdsup span{font-size:13px;color:var(--muted)}
 .pdh{font:700 13px var(--body);letter-spacing:.4px;color:var(--brand);margin-top:4px}
@@ -1042,6 +1050,7 @@ body.sofiscal nav.tabs{display:none!important}
 .osfimc{display:grid;gap:6px;padding:8px 0;border-top:1px solid rgba(0,0,0,.08)}.osfimc small{color:var(--muted)}
 .qregra{background:#fff3e8;border:1.5px solid var(--accent);border-radius:10px;padding:8px 12px;margin:0 0 8px;color:var(--ink,#1a2b1f)}.extrasegue{background:var(--accent);color:#fff;border-radius:10px;padding:10px 12px;font-size:.92em;line-height:1.35}.extracard{border:2px dashed var(--accent)!important}
 .extrab{display:inline-block;font:700 11px var(--body);padding:2px 7px;border-radius:99px;background:#fff1e6;color:#b34a00;border:1px solid #f3b27a;vertical-align:middle;margin-left:4px}
+#tSup th,#tItem th,#tMot th{white-space:normal;line-height:1.15;vertical-align:bottom;font-size:11px;letter-spacing:0}#tSup td,#tSup th{padding-left:8px;padding-right:8px}#tSup th:not(:first-child),#tItem th:not(:first-child){min-width:58px}#tSup td:first-child{min-width:150px}#tSup td,#tItem td{white-space:nowrap}#tSup td:first-child,#tItem td:first-child{white-space:normal}
 </style>
 
 <div id="login" class="login" hidden>
@@ -1113,7 +1122,7 @@ body.sofiscal nav.tabs{display:none!important}
 
   <form id="form" novalidate>
   <section class="card extracard" id="secExtra" hidden>
-    <label class="ck" style="font-weight:700"><input type="checkbox" id="extraChk"> ⚡ Serviço extra – enviado fora da programação da semana</label>
+    <input type="checkbox" id="extraChk" hidden><b style="font-size:17px">⚡ Serviço fora de programação</b>
     <p class="note" style="margin:0">Use só quando a gerência ou outro órgão <b>enviar um serviço para executar agora</b> (nesta semana ou hoje). <b>Não é para uso rotineiro</b>: o normal é programar na semana anterior. Fica marcado como EXTRA e aparece nos relatórios.</p>
     <div id="extraCampos" hidden style="display:grid;gap:10px">
       <div class="row2"><label class="f">Quem enviou / determinou (obrigatório)<select id="extraOrigem"><option value="">Selecione…</option><option>Gerência</option><option>Diretoria</option><option>Prefeitura / Secretaria</option><option>Ouvidoria / Central 156</option><option>Equatorial</option><option>Defesa Civil</option><option value="Outro">Outro (digitar)</option></select></label>
@@ -1459,8 +1468,11 @@ body.sofiscal nav.tabs{display:none!important}
   <h2 style="margin-top:22px;font-size:22px">Detalhamento</h2>
   <div id="contrato"></div>
   <div class="kpis" id="kpis" style="margin-top:10px" hidden></div>
+  <div id="tSupCab"></div>
   <div class="tbl"><table id="tSup"></table></div>
+  <div id="tItemCab"></div>
   <div class="tbl"><table id="tItem"></table></div>
+  <div id="tMotCab"></div>
   <div class="tbl"><table id="tMot"></table></div>
   <div class="actions" style="grid-template-columns:1fr">
     <button type="button" class="btn pri" id="xlsxBtn">Baixar planilha Excel</button>
@@ -1515,9 +1527,9 @@ const SUPS_ALL = [
 const ESCOPO_PERF={gerencia_op:["PODA III","PODA IV"]}, ESC_DIRSEN=["PODA I","PODA II"], ESC_DIROP=["PODA III","PODA IV"];
 // só o gerente (Victor) tem visão geral; DIROP vê PODA III e IV; todos os outros (DIRSEN, diretoria) veem PODA I e II
 // escopo de visão: administrador vê tudo; gerente DIRSEN (Victor) vê PODA I e II; gerente DIROP (Pedro) vê PODA III e IV
-// Victor (gerente DIRSEN, desenvolvedor do app): acesso total, sem nenhuma restrição – vê e faz tudo, de todas as podas (I a IV)
+// Victor = gerente da DIRSEN: vê só a DIRSEN (PODA I e II). Pedro = gerente da DIROP: só a DIROP (PODA III e IV). Só o administrador vê e controla tudo.
 function ehVictor(){ try{ if(!sessao||sessao.porGerente||sessao.perfil!=="gerencia") return false; const n=(acesso?.[sessao.id]?.nome||sessao.nome||""); return /VICTOR\s+RICARDO/i.test(n.normalize("NFD").replace(/[\u0300-\u036f]/g,"")); }catch(e){ return false; } }
-function escopoG(){ try{ if(!sessao||sessao.perfil==="admin"||ehVictor()) return null; if(sessao.perfil==="gerencia_op"||sessao.sup===LOT_DIROP) return ESC_DIROP; return ESC_DIRSEN; }catch(e){ return null; } }
+function escopoG(){ try{ if(!sessao||sessao.perfil==="admin") return null; if(sessao.perfil==="gerencia_op"||sessao.sup===LOT_DIROP) return ESC_DIROP; return ESC_DIRSEN; }catch(e){ return null; } }
 const escDirop=()=>escopoG()===ESC_DIROP;
 const noEscopo=sup=>{ const g=escopoG(); if(!g) return true; const so=SUPS_ALL.find(s=>s.id===sup); return !!so&&g.includes(so.grupo); };
 const supsVis=()=>{ const g=escopoG(); return g?SUPS_ALL.filter(s=>g.includes(s.grupo)):SUPS_ALL; };
@@ -1667,7 +1679,7 @@ const PERF={admin:"Administrador",diretoria:"Diretoria",gerencia:"Gerente",geren
 const ORD={admin:-1,diretoria:0,gerencia:1,gerencia_op:1.5,ger_equipe:2,coordenador:3,supervisor:4,supervisor1:5,fiscal:6};
 const PERF_DESC={admin:"Administrador (vê tudo no app, sem restrição)",diretoria:"Diretoria (consulta geral)",gerencia:"Gerente DIRSEN (PODA I e PODA II + acessos)",gerencia_op:"Gerente DIROP (só PODA III e PODA IV)",ger_equipe:"Gerência (visão geral)",coordenador:"Coordenador (visão geral)",supervisor:"Supervisor",supervisor1:"Supervisor 1 (serviços em aberto, registro emergencial, lista e painel da turma)",fiscal:"Fiscal de turma"};
 // Supervisor 1: só Baixas, Quedas, Lista e Painel (da própria turma); não programa nem faz checklist
-const SUP1_ABAS=new Set(["inicio","campo","oc","lista","resumo"]);
+const SUP1_ABAS=new Set(["inicio","campo","oc","lista","resumo","vist","escala"]);
 // lotação do Supervisor 1: uma turma, ou a Gerência / Diretoria (aí ele vê todas as turmas, só nessas abas)
 // lotação das gerências: DIRSEN (PODA I e II, controle geral do app) e DIROP (só PODA III e IV)
 const LOT_DIRSEN="GERÊNCIA DE PODA E EXTIRPAÇÃO - DIRSEN", LOT_DIROP="GERÊNCIA DE PODA E EXTIRPAÇÃO - DIROP";
@@ -1687,7 +1699,7 @@ let acesso=null, acessoLoaded=false, canAdmin=false, sessao=ls.get("gpe_sessao",
 // gerente e coordenador têm visão geral; só o gerente cuida dos acessos
 const isGer=()=>GERAL.has(sessao?.perfil) && sessao?.perfil!=="diretoria";
 const soLeitura=()=>sessao?.perfil==="diretoria";
-const isAdm=()=>sessao?.perfil==="admin"||ehVictor();
+const isAdm=()=>sessao?.perfil==="admin";
 const ehGerPerf=p=>p==="gerencia"||p==="admin"; // perfis com os poderes de gerente (acessos, senhas, atualizações)
 const isGerente=()=>ehGerPerf(sessao?.perfil);
 const podeCriarAdm=()=>sessao?.perfil==="gerencia"&&!sessao?.porGerente; // só o Victor (gerente DIRSEN) cadastra administrador
@@ -1792,7 +1804,7 @@ function applyPerms(){
   $("#testeBtn").hidden=!isGerente(); $("#testeBtn").setAttribute("aria-pressed",String(modoTeste())); barTeste();
   const tabs=[...document.querySelectorAll("nav.tabs button")];
   tabs.forEach(b=>b.hidden = ehVictor() ? false : PERF_ABAIXO.includes(per) ? !abaOn(per,b.dataset.v) : abaPadraoOculta(per,b.dataset.v));
-  function abaPadraoOculta(per,v){ const b={dataset:{v}}; return (b.dataset.v==="upd" && !ehGerPerf(per)) || (b.dataset.v==="orc" && !["admin","gerencia","gerencia_op","coordenador"].includes(per)) || (per==="fiscal" && b.dataset.v!=="inicio" && b.dataset.v!=="mais" && !fisAbas().has(b.dataset.v)) || (per==="diretoria" && (b.dataset.v==="form"||b.dataset.v==="campo"||b.dataset.v==="oc")) || (per==="supervisor" && b.dataset.v==="resumo") || (per==="supervisor1" && !SUP1_ABAS.has(b.dataset.v)); }
+  function abaPadraoOculta(per,v){ const b={dataset:{v}}; return (b.dataset.v==="upd" && !ehGerPerf(per)) || (b.dataset.v==="orc" && !["admin","gerencia","gerencia_op","fiscal"].includes(per)) || (per==="fiscal" && b.dataset.v!=="inicio" && b.dataset.v!=="mais" && !fisAbas().has(b.dataset.v)) || (per==="diretoria" && (b.dataset.v==="form"||b.dataset.v==="campo"||b.dataset.v==="oc")) || (per==="supervisor" && b.dataset.v==="resumo") || (per==="supervisor1" && !SUP1_ABAS.has(b.dataset.v)); }
   if(PERF_ABAIXO.includes(per)&&PERM_ABAS.some(x=>x.k===curView)&&!abaOn(per,curView)) show("inicio");
   document.body.classList.toggle("sofiscal",per==="fiscal"&&[...fisAbas()].filter(k=>k!=="vist").length<=1); if(per==="fiscal"&&!fisAbas().has(curView)) show("inicio");
   const nvis=tabs.filter(b=>!b.hidden).length, nw=document.querySelector("nav.tabs .wrap"); nw.style.gridTemplateColumns=`repeat(${nvis},1fr)`; nw.classList.toggle("t6",nvis>=6); navAjustar();
@@ -1954,7 +1966,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.07x";
+const APP_VERSAO="2026.11.08k";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -2180,8 +2192,12 @@ const FIS_PERMS=[
   {k:"chk",t:"Checklist e comunicar defeito",d:"Preencher o checklist do equipamento (quem assina é o supervisor) e comunicar defeito."},
   {k:"oc",t:"Registro emergencial",d:"Registrar galho ou árvore caída."},
   {k:"lista",t:"Lista",d:"Consultar a lista de serviços e baixar a planilha."},
+  {k:"form",t:"Programar a semana",d:"Fazer a programação da semana da turma."},
+  {k:"resumo",t:"Painel",d:"Painel, acompanhamento e relatórios da turma."},
+  {k:"orc",t:"Orçamento",d:"Propostas orçamentárias."},
+  {k:"escala",t:"Cadastrar / atualizar a escala de trabalho",d:"Cadastrar e mudar a escala da turma."},
   {k:"vrota",t:"Receber rota de vistoria",d:"Aparece na lista de vistoriadores: a coordenação pode indicar rotas de vistoria de processo para ele fazer.",pad:1},
-  {k:"vist",t:"Executar serviços da vistoria",d:"Receber do supervisor os serviços da vistoria para executar e anexar as fotos antes, durante e depois (vão para o relatório de serviço).",pad:1}];
+  {k:"vist",t:"Vistoria de processo e serviços da vistoria",d:"Ver a aba Vistoria e receber do supervisor os serviços da vistoria para executar com as fotos antes, durante e depois. Sem isso, a aba só aparece quando houver rota ou serviço indicado para ele."}];
 const fisPerm=(uid=sessao?.id)=>{ const o={}; FIS_PERMS.forEach(x=>o[x.k]=!!(x.fixo||x.pad)); const sv={...(assins?.perm_fiscal?.p||{}),...(acesso?.[uid]?.abas||{})}; Object.keys(sv).forEach(k=>{ if(k in o&&!FIS_PERMS.find(x=>x.k===k).fixo) o[k]=!!sv[k]; }); return o; };
 // liberação de acessos por pessoa (Acessos → ⚙ Gerenciar → Acessos desta pessoa), feita pelo administrador / Victor
 const abasPessoaLista=u=>u.perfil==="fiscal"?[...FIS_PERMS.filter(x=>!x.fixo),...ASS_PERMS]:PERF_ABAIXO.includes(u.perfil)?[...PERM_ABAS,...ASS_PERMS]:[];
@@ -2194,18 +2210,19 @@ function abasPessoaHtml(id,u){ const L=abasPessoaLista(u); if(!L.length||!podeFi
 // permissão de ASSINAR (por pessoa): relatório de serviço e checklist. Gerente/administrador sempre assinam;
 // sem marcação na pessoa, o padrão é: supervisor assina, os demais perfis não.
 const ASS_PERMS=[{k:"ass_rel",t:"✍ Assinar relatório de serviço",d:"Assina o relatório na baixa, com a própria senha de assinatura.",ass:1},{k:"ass_chk",t:"✍ Assinar checklist",d:"Assina a entrega e o recebimento do checklist e o comunicado de defeito.",ass:1}];
-const assPadrao=u=>u?.perfil==="supervisor";
+const assPadrao=u=>u?.perfil==="supervisor"||u?.perfil==="supervisor1";
 const podeAssinar=(uid,tipo)=>{ const u=acesso?.[uid]; if(!u||u.ativo===false) return false; if(ehGerPerf(u.perfil)||u.perfil==="admin") return true; const k="ass_"+tipo, pa=u.abas; if(pa&&(k in pa)) return !!pa[k]; return assPadrao(u); };
 const travadoU=u=>!!u&&!GERAL.has(u.perfil)&&!lotGeral(u);
 const fisPode=k=>!ehFiscal()||!!fisPerm()[k];
-const fisAbas=()=>{ const P=fisPerm(), A=new Set(["inicio"]); if(P.campo||P.baixa) A.add("campo"); if(P.pend) A.add("pend"); if(P.chk) A.add("chk"); if(P.oc) A.add("oc"); if(P.lista) A.add("lista"); if(P.vist||P.vrota||vistTemFiscal()) A.add("vist"); return A; };
+const fisAbas=()=>{ const P=fisPerm(), A=new Set(["inicio"]); if(P.campo||P.baixa) A.add("campo"); if(P.pend) A.add("pend"); if(P.chk) A.add("chk"); if(P.oc) A.add("oc"); if(P.lista) A.add("lista"); if(P.form) A.add("form"); if(P.resumo) A.add("resumo"); if(P.orc) A.add("orc"); if(P.vist||vistTemFiscal()) A.add("vist"); return A; };
 const vistTemFiscal=()=>{ try{ return !!sessao&&(VIST.nMeus(sessao.id)>0||VIST.nFiscal(sessao.id)>0); }catch(e){ return false; } };
 const podeFisPerm=()=>isAdm()||podeCriarAdm();
 // acessos dos demais perfis abaixo do gerente: o administrador ativa / desativa cada aba por perfil (documento "perm_perfis")
 const PERF_ABAIXO=["ger_equipe","coordenador","supervisor","supervisor1"];
-const PERM_ABAS=[{k:"pend",t:"Pendências",d:"Avisos e cobranças da turma."},{k:"form",t:"Programar",d:"Fazer a programação da semana."},{k:"campo",t:"Em aberto / dar baixa",d:"Ver os serviços e dar baixa."},{k:"chk",t:"Checklist e comunicar defeito",d:"Checklist do equipamento e comunicado de defeito."},{k:"oc",t:"Registro emergencial",d:"Galho ou árvore caída."},{k:"vist",t:"Vistoria de processo",d:"Rotas de vistoria, já executado / não executado e serviços enviados à turma."},{k:"lista",t:"Lista",d:"Lista de serviços e planilha."},{k:"resumo",t:"Painel",d:"Painel, acompanhamento e relatórios."},{k:"orc",t:"Orçamento",d:"Propostas orçamentárias."},{k:"escala",t:"Cadastrar / atualizar a escala de trabalho",d:"Cadastrar e mudar a escala da turma (dias de trabalho e folgas), para o app só cobrar nos dias de trabalho."}];
-const abaPadrao=(per,v)=>{ if(v==="pend"||v==="escala") return true; if(v==="upd") return false; return !((v==="orc"&&per!=="coordenador")||(per==="supervisor"&&v==="resumo")||(per==="supervisor1"&&!SUP1_ABAS.has(v))); };
-const abaOn=(per,v,uid=sessao?.id)=>{ const pa=acesso?.[uid]?.abas; if(pa&&PERM_ABAS.some(x=>x.k===v)&&(v in pa)) return !!pa[v]; const o=assins?.perm_perfis?.p?.[per]; if(o&&PERM_ABAS.some(x=>x.k===v)&&(v in o)) return !!o[v]; return abaPadrao(per,v); };
+const PERM_ABAS=[{k:"pend",t:"Pendências",d:"Avisos e cobranças da turma."},{k:"form",t:"Programar",d:"Fazer a programação da semana."},{k:"campo",t:"Em aberto / dar baixa",d:"Ver os serviços e dar baixa."},{k:"chk",t:"Checklist e comunicar defeito",d:"Checklist do equipamento e comunicado de defeito."},{k:"oc",t:"Registro emergencial",d:"Galho ou árvore caída."},{k:"vist",t:"Vistoria de processo",d:"Rotas de vistoria, já executado / não executado e serviços enviados à turma."},{k:"lista",t:"Lista",d:"Lista de serviços e planilha."},{k:"resumo",t:"Painel",d:"Painel, acompanhamento e relatórios."},{k:"orc",t:"Orçamento",d:"Propostas orçamentárias."},{k:"escala",t:"Cadastrar / atualizar a escala de trabalho",d:"Cadastrar e mudar a escala da turma (dias de trabalho e folgas), para o app só cobrar nos dias de trabalho. Supervisor e supervisor 1 sempre têm."},{k:"busca",t:"Pesquisar serviço por endereço",d:"Procurar serviços pelo endereço (menu Mais)."}];
+const abaPadrao=(per,v)=>{ if(v==="pend") return true; if(v==="escala") return per==="supervisor"||per==="supervisor1"; if(v==="busca") return !["supervisor","supervisor1"].includes(per); if(v==="upd"||v==="orc") return false; return !((per==="supervisor"&&v==="resumo")||(per==="supervisor1"&&!SUP1_ABAS.has(v))); };
+const abaFixa=(per,v)=>v==="escala"&&(per==="supervisor"||per==="supervisor1");
+const abaOn=(per,v,uid=sessao?.id)=>{ if(abaFixa(per,v)) return true; const pa=acesso?.[uid]?.abas; if(pa&&PERM_ABAS.some(x=>x.k===v)&&(v in pa)) return !!pa[v]; const o=assins?.perm_perfis?.p?.[per]; if(o&&PERM_ABAS.some(x=>x.k===v)&&(v in o)) return !!o[v]; return abaPadrao(per,v); };
 function permPerfisHtml(){ const d=assins?.perm_perfis;
   return `<details class="card fpm" style="margin:0"><summary><span class="step" style="margin:0">Acessos dos demais perfis</span> <small>abaixo do gerente</small></summary>
     <p class="note" style="margin:6px 0 4px">Ative ou desative as abas de cada perfil. Vale na hora para todas as pessoas daquele perfil. O Início fica sempre ativo.${d?.por?` Última alteração: ${esc(d.por)} em ${fmtHora(d.em)}.`:""}</p>
@@ -2523,9 +2540,19 @@ function proxSemTurma(sup,P){ const dias=P.dias.filter(x=>trabalha(sup,x)); cons
   const feitos=dias.filter(x=>L.some(r=>r.supervisao===sup&&r.data===x&&!r.avulso&&!r.arquivado&&!r.ocorrencia));
   return {dias,feitos,falta:dias.filter(x=>!feitos.includes(x)),ok:dias.length>0&&feitos.length>=dias.length}; }
 // serviço extra: enviado fora da programação semanal (uso eventual); libera data a partir de hoje e exige quem enviou + justificativa
-const ehExtra=()=>form.mode==="prog"&&!!$("#extraChk")?.checked;
+const ehExtra=()=>(form.mode==="prog"||form.mode==="avulso")&&!!$("#extraChk")?.checked;
+// Início › Serviço fora de programação: escolher entre serviço enviado (registro + baixa) e registro emergencial (galho / árvore caída)
+function abrirForaProg(okEx,okOc){ if(okEx&&!okOc) return abrirExtra(); if(okOc&&!okEx) return irPara("oc");
+  const host=$("#sheetHost"), op=(k,cor,ic,t,d)=>`<button type="button" data-fp="${k}" style="display:flex;flex-direction:column;align-items:flex-start;gap:10px;text-align:left;border:0;border-radius:18px;padding:20px 18px;min-height:150px;background:${cor};color:#fff;font:inherit;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.15)"><span style="display:inline-flex;width:52px;height:52px;border-radius:14px;background:rgba(255,255,255,.22);align-items:center;justify-content:center">${ic}</span><b style="font-family:var(--display);font-size:24px;line-height:1.05;letter-spacing:.3px;text-transform:uppercase">${t}</b><small style="font-size:14px;line-height:1.3;opacity:.95">${d}</small></button>`;
+  host.innerHTML=`<div class="sheet" id="sh"><div class="panel" role="dialog" aria-label="Serviço fora de programação">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:22px">O que você vai registrar?</b><button type="button" class="btn sec" id="fpX" style="min-height:44px;padding:0 14px">Fechar</button></div>
+    <div class="fpgrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:4px">${op("ex","#e8731f",svgI('<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>').replace("<svg",'<svg style="width:30px;height:30px;color:#fff"'),"Serviço fora da programação","Gerência ou outro órgão mandou executar. Registre aqui e depois dê a baixa.")}${op("oc","#b3261e",ICO.oc.replace("<svg",'<svg style="width:30px;height:30px;color:#fff"'),"Registro emergencial","Galho ou árvore caída atendida na hora.")}</div></div></div>`;
+  const close=()=>host.innerHTML="";
+  $("#sh").onclick=e=>{ if(e.target.id==="sh") return close(); const b=e.target.closest("[data-fp]"); if(!b) return; close(); if(b.dataset.fp==="ex") abrirExtra(); else irPara("oc"); };
+  $("#fpX").onclick=close; }
+function abrirExtra(){ limpar("prog"); form.extraModo=true; $("#extraChk").checked=true; show("form"); scrollTo(0,0); modeUI(); extraUI(); }
 const extraTxt=r=>r?.extra?`⚡ Serviço extra – enviado por ${r.extra.origem||"—"}${r.extra.just?": "+r.extra.just:""}`:"";
-function extraUI(){ const sec=$("#secExtra"); if(!sec) return; sec.hidden=form.mode!=="prog"; const on=ehExtra(); $("#extraCampos").hidden=!on;
+function extraUI(){ const sec=$("#secExtra"); if(!sec) return; const mx=form.mode==="prog"||form.mode==="avulso"; if(mx&&!form.extraModo&&$("#extraChk").checked) form.extraModo=true; sec.hidden=!mx||!form.extraModo; const on=ehExtra(); $("#extraCampos").hidden=!on;
   $("#extraOutroW").hidden=$("#extraOrigem").value!=="Outro"; { const o=$("#extraJustSel").value==="Outra"; $("#extraJustLbl").textContent=o?"Escreva a justificativa (obrigatória)":"Complemento (opcional)"; $("#extraJust").placeholder=o?"Ex.: pedido urgente da gerência para atender reclamação de morador":"Ex.: nº do protocolo, nome de quem pediu"; }
   if(on){ const sup=form.sup, lim=iso(new Date(Date.now()-30*864e5)), n=todosGlobal().filter(r=>r.extra&&r.supervisao===sup&&(r.data||"")>=lim&&r.id!==form.base?.id).length;
     $("#extraCont").innerHTML=n?`Esta turma já teve <b>${n} serviço${n>1?"s":""} extra${n>1?"s":""}</b> nos últimos 30 dias.${n>=3?" <b style='color:var(--bad)'>Atenção: está ficando rotineiro – a gerência acompanha esses lançamentos.</b>":""}`:"Primeiro serviço extra desta turma nos últimos 30 dias."; }
@@ -2645,7 +2672,7 @@ function modeUI(){
   $("#subFields").hidden = $("#semSub").checked;
   $("#pctBox").hidden = !parc; if(parc) pctUI();
   mdUI(); if(m==="baixa") remUI();
-  const T={prog:[form.base?"Corrigir programação":"Programar serviço", form.base?"Altere o que for preciso e salve.":"Lance aqui cada serviço da programação da turma. Depois de salvar, a turma e a data continuam preenchidas para você lançar o próximo.", form.base?"Salvar alterações":"Salvar programação"],
+  const T=((m==="prog"||m==="avulso")&&form.extraModo)?[form.base?"Corrigir serviço fora de programação":"Serviço fora de programação","Serviço enviado pela gerência ou outro órgão para executar agora. Registre aqui (quem enviou, justificativa e os dados do serviço). Depois de executar, dê a baixa em Dar baixa no serviço: em Processo SEI ou Processo Intranet a baixa pede as 3 fotos (antes, durante e depois) e a assinatura, e gera o relatório de serviço completo.",form.base?"Salvar alterações":"Salvar serviço"]:{prog:[form.base?"Corrigir programação":"Programar serviço", form.base?"Altere o que for preciso e salve.":"Lance aqui cada serviço da programação da turma. Depois de salvar, a turma e a data continuam preenchidas para você lançar o próximo.", form.base?"Salvar alterações":"Salvar programação"],
     baixa:[form.base&&!isProg(form.base)?"Corrigir baixa":"Dar baixa","Informe o que aconteceu com este serviço programado.","Salvar baixa"],
     avulso:[form.base?"Corrigir serviço sem programação":"Serviço sem programação","Para emergências e pedidos feitos na hora.","Salvar serviço"],
     ocorr:[form.base?"Corrigir galho / árvore caída":"Galho / árvore caída","Emergência atendida na hora: registre o que foi feito e se isso afetou a programação da turma no dia.","Salvar atendimento"]}[m];
@@ -2653,14 +2680,14 @@ function modeUI(){
   $("#editBar").hidden = !(form.base || m!=="prog");
   $("#secGeo").hidden = m==="prog"; geoUI(); metaUI();
   if(m==="ocorr") renderImp();
-  $("#editTxt").textContent = m==="baixa" ? "Baixa de programação" : m==="avulso" ? "Serviço sem programação" : m==="ocorr" ? "Ocorrência de galho / árvore caída" : "Editando programação";
+  $("#editTxt").textContent = (m==="avulso"&&form.extraModo) ? "Serviço fora de programação" : m==="baixa" ? "Baixa de programação" : m==="avulso" ? "Serviço sem programação" : m==="ocorr" ? "Ocorrência de galho / árvore caída" : "Editando programação";
 }
 
 function lembrar(){ const t=ls.get("gpe_turma",{}); ls.set("gpe_turma",{...t,sup:form.sup||t.sup,equipe:$("#equipe").value,viatura:$("#viatura").value,fiscal:($("#fiscal").value||$("#fiscalN").value||t.fiscal||"")}) }
 function limpar(mode="prog", keep={}){
   form.mode=mode; form.tipo=""; servCarregar(""); form.st=""; form.pctModo="qtd"; form.pcts={}; if($("#pctItens")) $("#pctItens").innerHTML=""; if($("#mdDias")) $("#mdDias").value=1; if($("#pctVal")) $("#pctVal").value=""; form.base=null; form.geo=null; form.geoAuto=false; if($("#geoTxt")) $("#geoTxt").value="";
   ["bairro","logradouro","processo","parecer","ped","procSist","areaId","proxData","motivo","motivoTxt","obs","s_bairro","s_logradouro","s_processo","s_tipo","s_data","dataExec"].forEach(id=>$("#"+id).value=""); bairroCarregar("bairro",""); bairroCarregar("s_bairro",""); try{servUI()}catch(e){}
-  $("#semSub").checked=false; try{ $("#extraChk").checked=false; ["extraOrigem","extraOutro","extraJust","extraJustSel"].forEach(id=>$("#"+id).value=""); }catch(e){}
+  $("#semSub").checked=false; form.extraModo=false; try{ $("#extraChk").checked=false; ["extraOrigem","extraOutro","extraJust","extraJustSel"].forEach(id=>$("#"+id).value=""); }catch(e){}
   form.okSemItens=false; form.oc=""; ["ocHora","ocOrigem","ocProt","ocQtd"].forEach(id=>$("#"+id).value=""); ["ocVia","ocRede","ocDano"].forEach(id=>$("#"+id).checked=false); setPressed($("#ocChips"),""); $("#ocQLbl").textContent="Quantidade";
   writeQ("q_",{}, $("#qtdMain")); writeQ("s_",{}, $("#qtdSub")); showPrev({});
   const t=ls.get("gpe_turma",{});
@@ -2671,10 +2698,10 @@ function limpar(mode="prog", keep={}){
   setPressed($("#supChips"),form.sup); setPressed($("#tipoChips"),""); setPressed($("#stChips"),"");
   $("#err").hidden=true; $("#dupMsg").hidden=true; motivoUI(); procUI(); sProcUI(); modeUI(); if(typeof renderSemProg==="function") renderSemProg();
 }
-$("#clearBtn").onclick=()=>limpar(form.mode==="baixa"?"prog":form.mode);
+$("#clearBtn").onclick=()=>{ if((form.mode==="prog"||form.mode==="avulso")&&form.extraModo&&!form.base) return abrirExtra(); limpar(form.mode==="baixa"?"prog":form.mode); };
 $("#cancelEdit").onclick=()=>{ const back=form.mode!=="prog", oc=form.mode==="ocorr"; limpar("prog"); if(back) show(oc?"oc":"campo"); };
 
-function fillCommon(r){ try{ const x=r?.extra; $("#extraChk").checked=!!x; $("#extraOrigem").value=x?([...$("#extraOrigem").options].some(o=>o.value===x.origem)?x.origem:"Outro"):""; $("#extraOutro").value=x&&![...$("#extraOrigem").options].some(o=>o.value===x.origem)?x.origem:""; { const js=$("#extraJustSel"), ok=x&&x.justSel&&[...js.options].some(o=>o.value===x.justSel); js.value=x?(ok?x.justSel:"Outra"):""; $("#extraJust").value=x?(ok?(x.justComp||""):(x.just||"")):""; } }catch(e){}
+function fillCommon(r){ try{ const x=r?.extra; $("#extraChk").checked=!!x; form.extraModo=!!x; $("#extraOrigem").value=x?([...$("#extraOrigem").options].some(o=>o.value===x.origem)?x.origem:"Outro"):""; $("#extraOutro").value=x&&![...$("#extraOrigem").options].some(o=>o.value===x.origem)?x.origem:""; { const js=$("#extraJustSel"), ok=x&&x.justSel&&[...js.options].some(o=>o.value===x.justSel); js.value=x?(ok?x.justSel:"Outra"):""; $("#extraJust").value=x?(ok?(x.justComp||""):(x.just||"")):""; } }catch(e){}
   form.sup=r.supervisao||""; $("#equipe").value=r.equipe||"1ª EQUIPE"; $("#viatura").value=(r.viatura==="SKAY"||r.viatura==="SKY")?"SKY 5074.0":(r.viatura||"SPLINTER 5063.6");
   $("#data").value=r.data||""; dataUI(); if(r.semana)$("#semana").value=r.semana+"ª";
   bairroCarregar("bairro",r.bairro||""); endCarregar("e_", r.logradouro||""); form.tipo=r.tipo||""; $("#processo").value=r.processo||""; $("#parecer").value=r.parecer||""; $("#ped").value=r.ped||""; $("#procSist").value=r.procSist||""; $("#areaId").value=r.areaId||""; servCarregar(r.servico);
@@ -2900,7 +2927,7 @@ $("#form").addEventListener("submit", async ev=>{
   if(m!=="baixa"){
     if(!common.supervisao) e.push("escolha a supervisão");
     if(m==="prog"&&common.supervisao&&(!base||base.equipe!==common.equipe||base.viatura!==common.viatura)){ const ev=eqVtErro(common.supervisao,common.equipe,common.viatura); if(ev) e.push(ev); }
-    if(m==="prog"&&ehExtra()){ if(!$("#extraOrigem").value) e.push("serviço extra: informe quem enviou / determinou"); else if($("#extraOrigem").value==="Outro"&&!$("#extraOutro").value.trim()) e.push("serviço extra: digite quem enviou");
+    if(ehExtra()){ if(!$("#extraOrigem").value) e.push("serviço extra: informe quem enviou / determinou"); else if($("#extraOrigem").value==="Outro"&&!$("#extraOutro").value.trim()) e.push("serviço extra: digite quem enviou");
       if(!$("#extraJustSel").value) e.push("serviço extra: escolha a justificativa"); else if($("#extraJustSel").value==="Outra"&&$("#extraJust").value.trim().length<10) e.push("serviço extra: escreva a justificativa (mínimo 10 letras)"); if(common.data&&common.data<hoje()) e.push("serviço extra: a data não pode ser antes de hoje"); }
     if(m==="prog"&&!ehExtra()&&common.data&&(!base||base.data!==common.data)){ const P=proxSemInfo(); if(common.data<P.ini) e.push(`a programação é sempre para a próxima semana: escolha uma data a partir de ${diaDe(P.ini)} ${fmtD(P.ini)} (${P.sem}ª semana). Não é permitido programar para a semana atual nem para datas passadas`); }
     if(m==="prog"&&common.supervisao&&common.data&&escCfg(common.supervisao)&&!trabalha(common.supervisao,common.data)) e.push(`${diaDe(common.data)} ${fmtDs(common.data)} é folga da ${common.supervisao} pela escala de trabalho – programe num dia de trabalho`);
@@ -2978,7 +3005,7 @@ $("#form").addEventListener("submit", async ev=>{
       body.ocorrencia={tipo:form.oc, hora:$("#ocHora").value, origem:$("#ocOrigem").value, protocolo:$("#ocProt").value.trim(), qtd:parseInt($("#ocQtd").value)||1, via:$("#ocVia").checked, rede:$("#ocRede").checked, danos:$("#ocDano").checked};
       const cands=impCands(); body.ocorrencia.impacto = !cands.length ? {houve:false, semProg:true, servicos:[]}
         : {houve:!!form.impHouve, servicos: form.impHouve ? cands.filter(r=>form.impSel?.[r.id]).map(r=>({id:r.id, efeito:form.impSel[r.id], local:r.bairro+" — "+r.logradouro, equipe:r.equipe||""})) : []}; }
-    if(m==="avulso"){ body.avulso=true; body.origem=base?.origem||"app"; body.autor=base?.autor||myId||null; body.criadoEm=base?.criadoEm||now; body.dataExec=$("#dataExec").value||common.data; body.qtdPrevista={}; }
+    if(m==="avulso"){ body.extra = ehExtra() ? {origem:$("#extraOrigem").value==="Outro"?$("#extraOutro").value.trim().toUpperCase():$("#extraOrigem").value, ...(()=>{ const sel=$("#extraJustSel").value, c=$("#extraJust").value.trim().toUpperCase(); return sel==="Outra"?{just:c,justSel:"Outra",justComp:""}:{just:sel.toUpperCase()+(c?" – "+c:""),justSel:sel,justComp:c}; })(), por:sessao?.nome||"", uid:myId||null, em:base?.extra?.em||now} : null; if(!body.extra) delete body.extra; body.avulso=true; body.origem=base?.origem||"app"; body.autor=base?.autor||myId||null; body.criadoEm=base?.criadoEm||now; body.dataExec=$("#dataExec").value||common.data; body.qtdPrevista={}; }
     // o que ficou por fazer: tudo (não executado) ou a diferença previsto − executado (parcial)
     let remQ=null;
     if(m==="baixa" && form.st==="NÃO") remQ=prevQ(base);
@@ -3074,7 +3101,7 @@ $("#form").addEventListener("submit", async ev=>{
   if(m==="baixa"&&relTem(base)&&body?.status==="SIM"&&body?.relat?.ass&&downloads&&res!=="perm"&&res!=="quota") setTimeout(()=>relOferecer(id),400);
   else if(m==="baixa"&&body?.substituto?.relat?.ass&&downloads&&res!=="perm"&&res!=="quota") setTimeout(()=>relOferecer(id+"~s"),400);
   if(m==="prog"){ const av=avisoContrato(id,body); if(av) setTimeout(()=>toast(av,7000),3100); }
-  if(m==="prog" && !base){ ls.set("gpe_progdata", body.data); limpar("prog",{sup:body.supervisao,equipe:body.equipe,viatura:body.viatura,data:body.data}); scrollTo(0,0); }
+  if(m==="prog" && !base){ const ex=!!body.extra; ls.set("gpe_progdata", body.data); limpar("prog",{sup:body.supervisao,equipe:body.equipe,viatura:body.viatura,data:body.data}); if(ex){ form.extraModo=true; $("#extraChk").checked=true; modeUI(); extraUI(); } scrollTo(0,0); }
   else { limpar("prog"); show(m==="prog"?"lista":m==="ocorr"?"oc":"campo"); scrollTo(0,0); }
   renderAll();
   if(m!=="prog" && res!=="perm" && res!=="quota") setTimeout(()=>abrirMsg({...body,id}),400);
@@ -3115,6 +3142,8 @@ const VIST_PROC=()=>{ const RG=["CENTRO OESTE","SUL","LESTE","NORTE","OESTE"]; r
 // quem indica o supervisor (coordenação) e quem dá baixa no SEI / Intranet
 // Resumo das vistorias, baixa no sistema, indicar vistoriador e PDFs: só de coordenador para cima
 // (coordenador, gerência, gerentes, administrador; a diretoria só consulta)
+// coordenação e gerência só veem os processos da própria gerência (DIRSEN ou DIROP); administrador vê todos
+const vistGerVis=()=>{ try{ if(!sessao||!vistAlto()) return null; const e=escopoG(); return !e?null:e===ESC_DIROP?"DIROP":"DIRSEN"; }catch(e){ return null; } };
 const vistAlto=()=>!!sessao&&(ORD[sessao.perfil]??99)<=ORD.coordenador;
 const vistCoord=()=>vistAlto()&&!soLeitura();
 const vistBaixaSis=(uid=sessao?.id)=>{ const u=acesso?.[uid]; if(!u||u.ativo===false) return false; if(ehGerPerf(u.perfil)||u.perfil==="admin") return true; return !!(u.abas&&u.abas.baixa_sis); };
@@ -3274,13 +3303,13 @@ function montar(root) {
   let _base = null;
   // processos do relatório + processos cadastrados manualmente
   const todosProc = () => { _base = _base || VIST_PROC(); const man = Object.entries(VIST.regs || {}).filter(([k, r]) => k.startsWith("m_") && r && r.manual && !r.manual.removido).map(([k, r], i) => { const m = r.manual;
-      return { id: k, regional: REGN.includes(m.regional) ? m.regional : "CENTRO OESTE", ordem: 100000 + i, setor: m.setor || "", setor_aproximado: true, endereco: m.endereco || "", processo: m.processo || "", ged: m.ged || "", ano: +m.ano || null, parecer: m.parecer || "", qtd_poda: +m.po || 0, qtd_extirpacao: +m.ex || 0, qtd_destocamento: +m.de || 0, relatorio_data: "", manual: true }; });
+      return { id: k, regional: REGN.includes(m.regional) ? m.regional : "CENTRO OESTE", ordem: 100000 + i, setor: m.setor || "", setor_aproximado: true, endereco: m.endereco || "", processo: m.processo || "", ged: m.ged || "", ano: +m.ano || null, parecer: m.parecer || "", qtd_poda: +m.po || 0, qtd_extirpacao: +m.ex || 0, qtd_destocamento: +m.de || 0, relatorio_data: "", manual: true, ger: m.ger === "DIROP" ? "DIROP" : "DIRSEN" }; });
     // correções feitas pela coordenação (✏️ Editar) por cima do relatório
     const ED = (p) => { const e = (VIST.regs || {})[p.id] && VIST.regs[p.id].edicao; if (!e) return p;
       const q = { ...p, editado: e }; ["processo", "ged", "parecer", "endereco", "setor", "loc"].forEach((k) => { if (e[k] != null) q[k] = e[k]; });
       if (e.ano != null) q.ano = +e.ano || null; if (REGN.includes(e.regional)) q.regional = e.regional;
       [["po", "qtd_poda"], ["ex", "qtd_extirpacao"], ["de", "qtd_destocamento"]].forEach(([a, b]) => { if (e[a] != null) q[b] = +e[a] || 0; }); return q; };
-    return _base.concat(man).map(ED); };
+    const gv = vistGerVis(); return _base.concat(man).map(ED).filter((p) => !gv || (p.ger || "DIRSEN") === gv); };
   function carregar() { VIST.iniciar(); S.proc = todosProc(); listas(); S.erro = ""; S.carregando = !VIST.pronto; if (!VIST.pronto) setTimeout(() => { VIST.iniciar(); if (S.carregando && VIST.pronto) { S.carregando = false; S.reg = VIST.regs; render(); } }, 1500); render(); }
   function aoVivo() { VIST.ouvir(() => { S.reg = VIST.regs; S.rotas = VIST.rotas; const n0 = S.proc.length; S.proc = todosProc(); if (S.proc.length !== n0) _idx = null; S.carregando = false; if (VIST.erro) S.erro = VIST.erro; if (!root.hidden && root.offsetParent !== null) render(); }); S.reg = VIST.regs; S.rotas = VIST.rotas; }
   async function gravar(ids, campos) {
@@ -3723,7 +3752,7 @@ function montar(root) {
     try { if (await gravar([id], mudou ? { edicao, geo: null } : { edicao })) { S.ed = null; S.proc = todosProc(); _idx = null; toast("Informações atualizadas"); } }
     finally { delete S.busy.ed; render(); }
   }
-  function novoHtml() { const n = S.novo; if (!n) return "";
+  function novoHtml() { const n = S.novo; if (!n) return ""; const gSel = !vistGerVis();
     const inp = (k, ph, extra) => `<input type="text" id="vp-nv-${k}" data-nv="${k}" value="${esc(n[k] || "")}" placeholder="${ph}" ${extra || ""}>`;
     return `<div class="vp-card" style="padding:14px;display:flex;flex-direction:column;gap:8px;border-color:var(--lf)"><b style="font-size:18px">➕ Cadastrar processo</b>
       <p class="vp-msg">Para processo que não veio no relatório. Ele entra na regional escolhida, aparece nas rotas e no Resumo como os outros.</p>
@@ -3731,7 +3760,7 @@ function montar(root) {
       <div class="vp-ctl"><label class="vp-f vp-grow">GED${inp("ged", "0000663-2024")}</label><label class="vp-f vp-grow">Parecer técnico${inp("parecer", "Ex.: 1031/2025")}</label><label class="vp-f" style="width:90px">Ano${inp("ano", "2024", 'inputmode="numeric"')}</label></div>
       <label class="vp-f">Endereço *${inp("endereco", "Rua, número, quadra, lote")}</label>
       <div class="vp-ctl"><label class="vp-f vp-grow">Setor / bairro${inp("setor", "Ex.: Setor Marista")}</label>
-      <label class="vp-f">Regional *<select id="vp-nv-regional" data-nv="regional"><option value="">Escolher…</option>${REGN.map((r) => `<option value="${r}"${n.regional === r ? " selected" : ""}>${cap(r)}</option>`).join("")}</select></label></div>
+      ${gSel ? `<label class="vp-f">Gerência *<select data-nv="ger"><option value="DIRSEN"${n.ger !== "DIROP" ? " selected" : ""}>DIRSEN</option><option value="DIROP"${n.ger === "DIROP" ? " selected" : ""}>DIROP</option></select></label>` : ""}<label class="vp-f">Regional *<select id="vp-nv-regional" data-nv="regional"><option value="">Escolher…</option>${REGN.map((r) => `<option value="${r}"${n.regional === r ? " selected" : ""}>${cap(r)}</option>`).join("")}</select></label></div>
       <div class="vp-ctl"><label class="vp-f" style="width:90px">Poda${inp("po", "0", 'inputmode="numeric"')}</label><label class="vp-f" style="width:90px">Extirpação${inp("ex", "0", 'inputmode="numeric"')}</label><label class="vp-f" style="width:90px">Destoca${inp("de", "0", 'inputmode="numeric"')}</label></div>
       <span class="vp-lab">PDF do processo</span>
       <label class="vp-btn vp-filebtn ${n.file ? "" : "vp-pri"}">${n.file ? "📄 " + esc(n.file.name) + " (trocar)" : "Escolher o PDF"}<input type="file" accept="application/pdf,.pdf" data-nvpdf="1"></label>
@@ -3747,7 +3776,7 @@ function montar(root) {
     S.busy.nv = 1; render();
     try {
       const id = "m_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-      const doc = { processo_id: id, manual: { processo: n.processo.trim(), ged: n.ged.trim(), parecer: n.parecer.trim(), endereco: n.endereco.trim().toUpperCase(), setor: n.setor.trim(), regional: n.regional, ano: n.ano.trim(), po: +n.po || 0, ex: +n.ex || 0, de: +n.de || 0, por: usuario(), uid: meuId(), em: new Date().toISOString() } };
+      const doc = { processo_id: id, manual: { processo: n.processo.trim(), ged: n.ged.trim(), parecer: n.parecer.trim(), endereco: n.endereco.trim().toUpperCase(), setor: n.setor.trim(), regional: n.regional, ano: n.ano.trim(), po: +n.po || 0, ex: +n.ex || 0, de: +n.de || 0, ger: vistGerVis() || (n.ger === "DIROP" ? "DIROP" : "DIRSEN"), por: usuario(), uid: meuId(), em: new Date().toISOString() } };
       if (link) doc.proc_link = link;
       if (n.file) { if (!assets) throw new Error("envio de PDF não liberado neste acesso; use o link"); const up = await assets.upload(n.file, { type: "application/pdf" }); doc.proc_pdf = { id: up.id, url: up.url || "", nome: n.file.name, em: new Date().toISOString(), por: usuario() }; }
       if (await gravar([id], doc)) {
@@ -5884,7 +5913,7 @@ function ritmoMes(mes){ const h=hoje(); if(mesDe(h)!==mes) return mes<mesDe(h)?1
 function ctStatus(x){ return x.pt>1.0001?["NÃO","Acima do contrato"]:x.pt>=0.9?["PARCIAL","Atenção"]:["SIM","Dentro"]; }
 function renderContrato(){
   const host=$("#contrato"); if(!host) return;
-  if(!sessao || travado() || escDirop()){ host.innerHTML=""; return; }
+  if(!sessao || travado()){ host.innerHTML=""; return; }
   const all=todosGlobal();
   const ms=new Set([mesDe(hoje())]); all.forEach(r=>{ if(r.data) ms.add(mesDe(r.data)); if(r.dataExec) ms.add(mesDe(r.dataExec)); });
   const meses=[...ms].filter(m=>/^\d{4}-\d\d$/.test(m)).sort().reverse();
@@ -5893,9 +5922,13 @@ function renderContrato(){
   const V=(k)=>its.reduce((a,x)=>a+x[k]*ITENS.find(i=>i.c===x.c).p,0);
   const vc=V("cq"), ve=V("e"), vp=V("p"), vt=ve+vp;
   const acima=its.filter(x=>x.pt>1.0001);
+  // o contrato é um só para as duas gerências (DIRSEN e DIROP) e as 16 supervisões: mostra quanto cada gerência consumiu
+  const grpDe=r=>(SUPS_ALL.find(x=>x.id===r.supervisao)||{}).grupo||"", parte=G=>{ const ii=contratoMes(sel,all.filter(r=>G.includes(grpDe(r)))); const Vx=k=>ii.reduce((a,x)=>a+x[k]*ITENS.find(i=>i.c===x.c).p,0); return {e:Vx("e"),p:Vx("p")}; };
+  const pD=parte(ESC_DIRSEN), pO=parte(ESC_DIROP);
   host.innerHTML=`<section class="ct">
     <div class="ct-h"><h3>Contrato mensal</h3><select id="ctMes" aria-label="Mês do contrato">${meses.map(m=>`<option value="${m}" ${m===sel?"selected":""}>${mesLbl(m)}</option>`).join("")}</select></div>
-    <p class="note" style="margin:0">Todas as turmas. <b>Executado</b> conta pela data em que o serviço foi feito (inclui serviços feitos no lugar e sem programação); <b>a executar</b> é a programação ainda em aberto no mês.${rit>0&&rit<1?` Mês decorrido: <b>${Math.round(rit*100)}%</b> (linha tracejada).`:""}</p>
+    <p class="note" style="margin:0"><b>Contrato único das duas gerências (DIRSEN e DIROP) e das 16 supervisões</b>: os valores somam todas as turmas. <b>Executado</b> conta pela data em que o serviço foi feito (inclui serviços feitos no lugar e sem programação); <b>a executar</b> é a programação ainda em aberto no mês.${rit>0&&rit<1?` Mês decorrido: <b>${Math.round(rit*100)}%</b> (linha tracejada).`:""}</p>
+    <div class="ctger">${[["DIRSEN · PODA I e II",pD],["DIROP · PODA III e IV",pO]].map(([n,x])=>`<div><b>${n}</b><span>executado <strong>${brlK(x.e)}</strong> (${vc?Math.round(x.e/vc*100):0}% do contrato) · a executar ${brlK(x.p)}</span></div>`).join("")}</div>
     <div class="ct-k">
       <div><span>Contrato no mês</span><b>${brlK(vc)}</b></div>
       <div><span>Executado</span><b>${brlK(ve)}</b><i>${vc?Math.round(ve/vc*100):0}% do contrato</i></div>
@@ -5953,14 +5986,21 @@ function renderResumo(){
     <div class="kpi"><span>Receita prevista</span><b>${brlK(Rp)}</b></div>
     <div class="kpi"><span>Receita executada</span><b>${brlK(Re)}</b></div>`;
   const sups=SUPS.filter(s=>(!grp||s.grupo===grp)&&(!rsup||s.id===rsup)); const T={prog:0,ex:0,nao:0,pend:0,av:0,rp:0,re:0};
-  $("#tSup").innerHTML=`<thead><tr><th>Turma</th><th>Prog.</th><th>Exec.</th><th>Remarc.</th><th>Sem baixa</th><th>Sem prog.</th><th>Prevista</th><th>Executada</th></tr></thead><tbody>`+
+  try{ const f=rptFiltro(); $("#tSupCab").innerHTML=`<h3 style="margin:18px 0 2px;font-size:19px">Quadro por turma – quantidade de serviços e receita</h3>
+    <p class="note" style="margin:0 0 4px"><b>Período:</b> ${esc(periodoTxt(f))}${f.sup?" · <b>Turma:</b> "+esc(f.sup):f.grp?" · <b>Grupo:</b> "+esc(f.grp):""}. Cada número é a <b>quantidade de serviços</b> (endereços) da turma no período; os valores em R$ são a receita pelos preços do contrato.</p>
+    <p class="note" style="margin:0 0 8px;font-size:12px"><b>Programados</b>: serviços lançados na programação · <b>Executados</b>: baixa como executado ou parcial · <b>Remarcados</b>: baixa como não executado (foi para outra data) · <b>Sem baixa (atrasados)</b>: a data já passou e ninguém deu baixa · <b>Fora da programação</b>: serviços extras / emergenciais feitos sem estar programados · <b>Receita prevista</b>: valor do que foi programado · <b>Receita executada</b>: valor do que foi feito.</p>${!rows.length?`<p class="note" style="margin:0 0 8px;color:var(--bad)"><b>Nenhum serviço lançado neste período</b> – por isso tudo está zerado. Troque a semana ou o dia no filtro acima.</p>`:""}`; }catch(e){}
+  $("#tSup").innerHTML=`<thead><tr><th>Turma / supervisor</th><th>Programados</th><th>Executados</th><th>Remarcados</th><th>Sem baixa (atrasados)</th><th>Fora da programação</th><th>Receita prevista</th><th>Receita executada</th></tr></thead><tbody>`+
     sups.map(s=>{const b=bySup[s.id]||{prog:0,ex:0,nao:0,pend:0,av:0,rp:0,re:0};Object.keys(T).forEach(k=>T[k]+=b[k]);
       return `<tr><td>${esc(s.id)}<br><span class="note">${esc(s.enc)}</span></td><td>${b.prog}</td><td>${b.ex}</td><td>${b.nao}</td><td>${b.pend}</td><td>${b.av}</td><td>${brl(b.rp)}</td><td>${brl(b.re)}</td></tr>`}).join("")+
     `</tbody><tfoot><tr><td>Total</td><td>${T.prog}</td><td>${T.ex}</td><td>${T.nao}</td><td>${T.pend}</td><td>${T.av}</td><td>${brl(T.rp)}</td><td>${brl(T.re)}</td></tr></tfoot>`;
-  $("#tItem").innerHTML=`<thead><tr><th>Item do contrato</th><th>Previsto</th><th>Executado</th><th>Receita exec.</th></tr></thead><tbody>`+
+  try{ const f=rptFiltro(), per=`${esc(periodoTxt(f))}${f.sup?" · <b>Turma:</b> "+esc(f.sup):f.grp?" · <b>Grupo:</b> "+esc(f.grp):" · todas as turmas"}`;
+    $("#tItemCab").innerHTML=`<h3 style="margin:18px 0 2px;font-size:19px">Quantidade de árvores por item do contrato</h3>
+    <p class="note" style="margin:0 0 8px"><b>Período:</b> ${per}. Os números são <b>quantidades de árvores</b> (unidades do contrato), não de serviços. <b>Previsto</b>: árvores programadas · <b>Executado</b>: árvores que tiveram baixa como executadas · <b>Receita executada</b>: executado × preço unitário do contrato.${!rows.length?` <b style="color:var(--bad)">Nenhum serviço lançado neste período – por isso tudo está zerado.</b>`:""}</p>`;
+    $("#tMotCab").innerHTML=`<h3 style="margin:18px 0 2px;font-size:19px">Motivos de não execução (remarcações)</h3><p class="note" style="margin:0 0 8px"><b>Período:</b> ${per}. Quantas vezes cada motivo foi informado na baixa como não executado.</p>`; }catch(e){}
+  $("#tItem").innerHTML=`<thead><tr><th>Item do contrato</th><th>Árvores previstas</th><th>Árvores executadas</th><th>Receita executada</th></tr></thead><tbody>`+
     ITENS.map(i=>{const o=it[i.c]||{p:0,e:0};return `<tr><td><b>${i.c}</b> <span class="note">${i.d}</span></td><td>${int(o.p)}</td><td>${int(o.e)}</td><td>${brl(o.e*i.p)}</td></tr>`}).join("")+`</tbody>`;
   const ms=Object.entries(mot).sort((a,b)=>b[1]-a[1]);
-  $("#tMot").innerHTML=`<thead><tr><th>Motivo de não execução</th><th>Vezes</th></tr></thead><tbody>`+(ms.length?ms.map(([m,n])=>`<tr><td>${esc(m)}</td><td>${n}</td></tr>`).join(""):`<tr><td colspan="2" style="text-align:left;color:var(--muted)">Nenhuma remarcação nesta seleção.</td></tr>`)+`</tbody>`;
+  $("#tMot").innerHTML=`<thead><tr><th>Motivo</th><th>Vezes informado</th></tr></thead><tbody>`+(ms.length?ms.map(([m,n])=>`<tr><td>${esc(m)}</td><td>${n}</td></tr>`).join(""):`<tr><td colspan="2" style="text-align:left;color:var(--muted)">Nenhuma remarcação nesta seleção.</td></tr>`)+`</tbody>`;
   try{renderPainel()}catch(e){console.error(e)}
 }
 $("#rSup").innerHTML=`<option value="">Todas as turmas</option>`+SUPS.map(s=>`<option value="${esc(s.id)}">${esc(s.id)} · ${esc(s.enc)}</option>`).join("");
@@ -6251,7 +6291,7 @@ function buildReport(){
         let h=`<div class="kpi-r" style="margin:4px 0 12px">
           <div class="k"><span>Programado (previsto)</span><b>${brlS(Rp)}</b><i>${esc(periodo)}</i></div>
           <div class="k"><span>Executado</span><b>${brlS(Re)}</b><i>${pct(Re,Rp)} do programado</i></div>`;
-        if(!travado()&&!escDirop()){
+        if(!travado()){
           let mes=mesDe(hoje()); if(f.dia) mes=mesDe(f.dia); else if(f.sem){const b=semIni(+f.sem);mes=b.getFullYear()+"-"+String(b.getMonth()+1).padStart(2,"0");}
           const its=contratoMes(mes,todosGlobal()), pr=c=>ITENS.find(i=>i.c===c).p;
           const vc=its.reduce((a,x)=>a+x.cq*pr(x.c),0), ve=its.reduce((a,x)=>a+x.e*pr(x.c),0), vt=its.reduce((a,x)=>a+x.t*pr(x.c),0);
@@ -6281,7 +6321,7 @@ function buildReport(){
       ${legend([["Prevista",RC.prev],["Executada",RC.exec]])}
       ${chH(sups.map(supLbl),[{name:"Prevista",color:RC.prev,vals:sups.map(s=>S[s.id].rp)},{name:"Executada",color:RC.exec,vals:sups.map(s=>S[s.id].re)}],brlS)}</div>
 
-    ${(!travado()&&!escDirop()&&f.sem&&!f.dia)?(()=>{ const its=contratoSemana(f);
+    ${(!travado()&&f.sem&&!f.dia)?(()=>{ const its=contratoSemana(f);
       const vc=its.reduce((a,x)=>a+x.cq*ITENS.find(i=>i.c===x.c).p,0), vp=its.reduce((a,x)=>a+x.p*ITENS.find(i=>i.c===x.c).p,0), ve=its.reduce((a,x)=>a+x.e*ITENS.find(i=>i.c===x.c).p,0);
       const pc=(a,b)=>b?Math.round(a/b*100)+"%":"—", u=c=>ITENS.find(i=>i.c===c).p;
       const st=v=>v>=1?["SIM","Atingiu"]:v>=.7?["PARCIAL","Perto"]:["NÃO","Abaixo"];
@@ -6296,7 +6336,7 @@ function buildReport(){
       </tbody><tfoot><tr><td>Total em valor</td><td style="white-space:nowrap">${brl(vc)}</td><td style="white-space:nowrap">${brl(vp)}</td><td>${pc(vp,vc)}</td><td style="white-space:nowrap">${brl(ve)}</td><td>${pc(ve,vc)}</td><td></td></tr></tfoot></table>
       <p class="note" style="margin:4px 0 0">Situação compara o <b>programado</b> com a cota: Atingiu = 100% ou mais · Perto = 70% a 99% · Abaixo = menos de 70%.</p></div>`; })():""}
 
-    ${(!travado()&&!escDirop())?(()=>{ let mes=mesDe(hoje()); if(f.dia) mes=mesDe(f.dia); else if(f.sem){const b=semIni(+f.sem);mes=b.getFullYear()+"-"+String(b.getMonth()+1).padStart(2,"0");}
+    ${(!travado())?(()=>{ let mes=mesDe(hoje()); if(f.dia) mes=mesDe(f.dia); else if(f.sem){const b=semIni(+f.sem);mes=b.getFullYear()+"-"+String(b.getMonth()+1).padStart(2,"0");}
       const its=contratoMes(mes,todosGlobal()); const pr=c=>ITENS.find(i=>i.c===c).p; const vc=its.reduce((a,x)=>a+x.cq*pr(x.c),0), ve=its.reduce((a,x)=>a+x.e*pr(x.c),0), vt=its.reduce((a,x)=>a+x.t*pr(x.c),0);
       return `<div class="blk"><h3>Contrato mensal · ${mesLbl(mes)}</h3><p class="cap">${(f.sup||f.grp)?"Valores de todas as turmas (o contrato é único). ":""}Contrato ${brl(vc)} · executado ${brl(ve)} (${vc?Math.round(ve/vc*100):0}%) · executado + a executar ${brl(vt)} (${vc?Math.round(vt/vc*100):0}%). Barra escura = executado; clara = programação em aberto; traço = limite do contrato.</p>
       <table><thead><tr><th>Item</th><th>Contrato</th><th>Executado</th><th>A executar</th><th style="width:150px">Uso do contrato</th><th>Saldo</th><th>Situação</th></tr></thead><tbody>
@@ -6829,7 +6869,7 @@ function planilhaGPE(){
   ws.h(r,20);r+=2;
 
   // contrato mensal
-  if(!travado()&&!escDirop()){
+  if(!travado()){
     let mes=mesDe(hoje());if(f.dia) mes=mesDe(f.dia); else if(f.sem){const b=semIni(+f.sem);mes=b.getFullYear()+"-"+String(b.getMonth()+1).padStart(2,"0")}
     const its=contratoMes(mes,todosGlobal());
     section(ws,r,NC,`CONTRATO MENSAL · ${mesLbl(mes).toUpperCase()} (todas as turmas)`);r++;
@@ -7478,9 +7518,27 @@ function pendAcoes(it){ const z=zapSup(it.sup); if(!z) return `<span class="pcse
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-pczimg]"); if(!b) return; const it=(window.__PCL||[])[+b.dataset.pczimg]; if(!it) return; abrirZapImg({z:zapSup(it.sup),sup:it.sup,txt:pendMsg(it)}); });
 document.addEventListener("click",e=>{ if(e.target.closest("[data-ligzap]")) toast("No WhatsApp, toque no ícone 📞 do contato para fazer a ligação.",6000); });
 const CANC_CAT={chk:["Checklist obrigatório","data-cobchk"],bx:["Serviços sem baixa","data-cobbx"],prog:["Programação da próxima semana","id=\"cobrarZap\""]};
+// pendências juntas por supervisão: um cartão por turma com checklist, programação e baixa; uma mensagem só para o supervisor
+const PC_ICO={chk:["📋","checklist"],prog:["📅","programação"],bx:["⏳","sem baixa"]};
+function pendMsgSup(sup,its){ const P=[]; try{
+  const ch=its.filter(x=>x.cat==="chk"); if(ch.length) P.push(msgChkPend([{sup,its:ch.map(x=>x.x)}],sup));
+  if(its.some(x=>x.cat==="prog")) P.push(msgCobranca(sup));
+  const rs=its.filter(x=>x.cat==="bx").map(x=>todosGlobal().find(r=>r.id===x.rid)).filter(Boolean); if(rs.length) P.push(msgSemBaixa([{s:supOf(sup)||{id:sup},rs}],sup)); }catch(e){}
+  return P.filter(Boolean).join("\n\n━━━━━━━━━━━━\n\n"); }
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-pcsupimg]"); if(!b) return; const sup=b.dataset.pcsupimg, its=(window.__PCL||[]).filter(x=>x.sup===sup); if(!its.length) return; abrirZapImg({z:zapSup(sup),sup,txt:pendMsgSup(sup,its)}); });
 function pendCancHtml(L){
   let h=""; window.__PCL=L;
-  Object.entries(CANC_CAT).forEach(([k,[tit,cob]])=>{ const it=L.filter(x=>x.cat===k); if(!it.length) return;
+  const ord=["prog","chk","bx"], porSup={}; L.forEach(x=>(porSup[x.sup]=porSup[x.sup]||[]).push(x));
+  Object.entries(porSup).sort((a,b)=>b[1].length-a[1].length||supNome(a[0]).localeCompare(supNome(b[0]),"pt")).forEach(([sup,its])=>{
+    its.sort((a,b)=>ord.indexOf(a.cat)-ord.indexOf(b.cat)); const z=zapSup(sup), cont={}; its.forEach(x=>cont[x.cat]=(cont[x.cat]||0)+1);
+    h+=`<section class="alert pcsup"><h3>⚠ ${esc(supNome(sup))} <small>(${its.length})</small></h3>
+      <div class="pcres">${ord.filter(k=>cont[k]).map(k=>`<span>${PC_ICO[k][0]} <b>${k==="prog"?"":cont[k]+" "}</b>${k==="prog"?"programação incompleta":k==="chk"?(cont[k]===1?"checklist":"checklists"):"sem baixa"}</span>`).join("")}</div>
+      ${ord.filter(k=>cont[k]).map(k=>`<div class="pccat">${PC_ICO[k][0]} ${esc(CANC_CAT[k][0])}${cont[k]>1?" ("+cont[k]+")":""}</div>`+its.filter(x=>x.cat===k).map(x=>`<div class="pcrow pcl"><button type="button" class="pcinfo" data-pcdet="${L.indexOf(x)}" aria-label="Ver detalhes"><small>${esc(x.txt)}</small><em>Ver detalhes ›</em></button><button type="button" class="pcx" data-canc="${esc(x.key)}" data-canctxt="${esc(x.sup+" · "+x.txt)}" aria-label="Cancelar este aviso" title="Cancelar este aviso">✕</button></div>`).join("")).join("")}
+      <div class="pcsupact">${z?`<button type="button" class="btn zapcob" data-pcsupimg="${esc(sup)}">🖼 Mandar tudo para ${esc((z.nome||"o supervisor").split(" ")[0])} no WhatsApp</button><a class="btn sec" href="https://wa.me/${z.num}" target="_blank" rel="noopener" data-ligzap="1" style="display:flex;align-items:center;justify-content:center;text-decoration:none">📞 Ligar</a>`:`<span class="pcsem">Supervisor sem WhatsApp no cadastro (Acessos)</span>`}</div></section>`; });
+  // cobrança geral (todas as turmas de uma vez), como antes
+  const cats=Object.entries(CANC_CAT).filter(([k])=>L.some(x=>x.cat===k));
+  if(cats.length>0&&Object.keys(porSup).length>1) h+=`<details class="card pcanc"><summary>💬 Cobrar todas as turmas de uma vez</summary><div style="display:grid;gap:8px;margin-top:8px">${cats.map(([k,[tit,cob]])=>`<button type="button" class="btn zapcob" ${cob}>💬 ${esc(tit)} – todas as turmas</button>`).join("")}</div></details>`;
+  if(false) Object.entries(CANC_CAT).forEach(([k,[tit,cob]])=>{ const it=L.filter(x=>x.cat===k); if(!it.length) return;
     h+=`<section class="alert"><h3>⚠ ${tit} (${it.length})</h3>${it.map(x=>`<div class="pcrow"><button type="button" class="pcinfo" data-pcdet="${L.indexOf(x)}" aria-label="Ver detalhes"><b>${esc(supNome(x.sup))}</b><small>${esc(x.txt)}</small><em>Ver detalhes ›</em></button><div class="pcacts">${pendAcoes(x)}<button type="button" class="pcx" data-canc="${esc(x.key)}" data-canctxt="${esc(x.sup+" · "+x.txt)}" aria-label="Cancelar este aviso">✕ Cancelar</button></div></div>`).join("")}<button type="button" class="btn zapcob" ${cob}>💬 Cobrar no WhatsApp</button></section>`; });
   const canc=Object.entries(notifCanc).filter(([k,v])=>{ const sup=v?.sup||""; return !sup||podeCobrarSup(sup); }).sort((a,b)=>(b[1].em||"").localeCompare(a[1].em||""));
   if(canc.length) h+=`<details class="card pcanc"><summary>Avisos cancelados (${canc.length})</summary>${canc.slice(0,60).map(([k,v])=>`<div class="pcrow"><span><b>${esc(v.txt||k)}</b><small>Cancelado por ${esc(v.nome||"")} em ${v.em?fmtHora(v.em):""}${v.motivo?" · motivo: "+esc(v.motivo):""}</small></span><button type="button" class="pcx des" data-descanc="${esc(k)}">↺ Desfazer</button></div>`).join("")}</details>`;
@@ -7611,7 +7669,8 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-chkfazer]
 // ---------- ESCALA DE TRABALHO: cada supervisor cadastra a da sua turma (gerente, coordenador e gerente operacional cadastram para as turmas da sua área) ----------
 // escala: supervisor / supervisor 1 da própria turma, coordenador e gerência do escopo; nos perfis abaixo do gerente vale o botão "Cadastrar / atualizar a escala" em Acessos (ligado por padrão)
 const podeEditarEscala=sup=>{ if(!sessao||soLeitura()) return false; const per=sessao.perfil;
-  if(PERF_ABAIXO.includes(per)&&acesso?.[sessao.id]?.abas?.escala===false) return false; // só bloqueia se foi desligado na própria pessoa
+  if(per==="fiscal") return !!fisPerm().escala&&sessao.sup===sup;
+  if((per==="coordenador"||per==="ger_equipe")&&!abaOn(per,"escala")) return false; // coordenador e gerência: só se liberado em Acessos
   return ((ehSup()||per==="supervisor1")&&sessao.sup===sup)||(isGerente()&&noEscopo(sup))||((per==="coordenador"||per==="gerencia_op"||per==="ger_equipe")&&noEscopo(sup)); };
 const DSEM=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
 const ESC_DOC_CSS=`.escano{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.escano .em{border:1px solid #d5ddd2;border-radius:10px;padding:6px;background:#fff;color:#16231a}.escano .em h4{margin:0;font-size:13px;text-transform:uppercase;letter-spacing:.3px;color:#005f27}.escano .em p{margin:1px 0 4px;font-size:10.5px;color:#5b6a5f;line-height:1.25}.escano .em p b{color:#16231a}.escano .em .vira{color:#b4570f;font-weight:700}.escano .g{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}.escano .g i{font-style:normal;font-size:9px;text-align:center;color:#7a7f78;font-weight:700}.escano .g span{font-size:11px;text-align:center;border-radius:4px;padding:2px 0;line-height:1.35;font-variant-numeric:tabular-nums}.escano .g .t{background:#1f9d55;color:#fff;font-weight:700}.escano .g .f{background:#f2f2ef;color:#8a8f88}.escano .g .fa{background:#fde3cf;color:#a3480b;font-weight:700}.escano .g .hj{outline:2px solid #f37020;outline-offset:-1px}.escleg{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;align-items:center;color:inherit}.escleg span{display:inline-flex;align-items:center;gap:4px}.escleg i{width:14px;height:14px;border-radius:3px;display:inline-block}.escano{margin:6px 0}.escano .em{break-inside:avoid}`;
@@ -7854,7 +7913,7 @@ function renderPainel(){
   </div>`;
   h+=acompHtml(F);
   // contrato do mês
-  if(!travado()&&!escDirop()){
+  if(!travado()){
     let mes=mesDe(hoje()); if(F.dia) mes=mesDe(F.dia); else if(sem){const b=semIni(+sem);mes=b.getFullYear()+"-"+String(b.getMonth()+1).padStart(2,"0");}
     const its=contratoMes(mes,todosGlobal());
     const pr=cd=>ITENS.find(i=>i.c===cd).p; const VC=its.reduce((a,x)=>a+x.cq*pr(x.c),0), VE=its.reduce((a,x)=>a+x.e*pr(x.c),0), VT=its.reduce((a,x)=>a+x.t*pr(x.c),0);
@@ -7873,7 +7932,7 @@ function renderPainel(){
         <span style="position:absolute;top:31px;left:${100/sc}%;transform:translateX(-100%);font-size:11px;color:var(--muted);white-space:nowrap">100% · ${brlS(VC)}</span>
       </div></div>`;
   }
-  if(!travado()&&!escDirop()&&sem){ const its=contratoSemana({sem}), u=c=>ITENS.find(i=>i.c===c).p;
+  if(!travado()&&sem){ const its=contratoSemana({sem}), u=c=>ITENS.find(i=>i.c===c).p;
     const vc=its.reduce((a,x)=>a+x.cq*u(x.c),0), vp=its.reduce((a,x)=>a+x.p*u(x.c),0), ve=its.reduce((a,x)=>a+x.e*u(x.c),0);
     const mx=Math.max(vc,vp,ve,1), w=v=>Math.min(100,v/mx*100), pc=v=>vc?Math.round(v/vc*100)+"%":"—";
     h+=`<div class="dcard full"><h3>Contrato da semana · ${sem}ª (${periodoSem(+sem)}) <small>cota ${brlS(vc)}</small></h3>
@@ -7963,7 +8022,7 @@ function evoLine(cats, series, W){
   return `<svg class="dv" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${esc(series.map(s=>s.name+": "+cats.map((c,i)=>c+" "+(s.vals[i]==null?"—":brl(s.vals[i]))).join(", ")).join("; "))}">${g}</svg>`;
 }
 function evolucaoHtml(F, W){
-  const {M,W:WK}=agregaPeriodos(F), vc=VCMES(), mostraCt=!travado()&&!escDirop();
+  const {M,W:WK}=agregaPeriodos(F), vc=VCMES(), mostraCt=!travado();
   const modos=[["sem","Semanal"],["mes","Mensal"],["ano","Anual"]];
   let corpo="", cap="";
   if(evoModo==="sem"){
@@ -7992,7 +8051,7 @@ function evolucaoHtml(F, W){
     <p class="dcap">${cap}</p>${corpo||`<div class="dempty">Sem lançamentos para mostrar.</div>`}</div>`;
 }
 function resumoMesHtml(F){
-  const {M}=agregaPeriodos(F), vc=VCMES(), mostraCt=!travado()&&!escDirop(), mesHoje=hoje().slice(0,7);
+  const {M}=agregaPeriodos(F), vc=VCMES(), mostraCt=!travado(), mesHoje=hoje().slice(0,7);
   const ks=Object.keys(M).filter(Boolean).sort().reverse(); if(!ks.length) return "";
   const pc=(v,b)=>{ if(!b) return "—"; const x=Math.round(v/b*100); return `<span class="pc ${x>=90?"ok":x>=60?"wr":"bd"}">${x}%</span>`; };
   const T={prev:0,exec:0,ep:0,ee:0,prog:0,SIM:0,PARCIAL:0,NAO:0,oc:0}; ks.forEach(k=>Object.keys(T).forEach(c=>T[c]+=M[k][c]||0));
@@ -8331,7 +8390,7 @@ function navAjustar(){
 }
 function navMarcar(tab){ const m=document.querySelector('nav.tabs button[data-v="mais"]'); if(m&&NAV_MAIS.includes(tab)) m.setAttribute("aria-current","page"); }
 function irPara(v,acao){
-  if(v==="form" && form.mode!=="prog") limpar("prog");
+  if(v==="form" && (form.mode!=="prog"||form.extraModo)) limpar("prog");
   show(v); scrollTo(0,0);
   if(acao==="chkNovo") setTimeout(()=>{ document.querySelector('[data-kt="lista"]')?.click(); $("#kNovo")?.click(); },60);
   if(acao==="man") setTimeout(()=>{ document.querySelector('[data-kt="man"]')?.click(); setTimeout(()=>$("#kManut")?.click(),60); },60);
@@ -8341,6 +8400,7 @@ function abrirMais(){ if(sessao?.perfil==="gerencia_op"||(sessao?.perfil==="fisc
   const itens=NAV_MAIS.map(v=>({k:"v:"+v,t:VIEW_NOME[v],i:ICO[v]}));
   if(isGerente()&&!sessao?.porGerente) itens.push({k:"a:zerar",t:"Zerar dados de teste",i:ICO.alerta});
   if(isGerente()) itens.push({k:"a:acessos",t:"Acessos",i:ICO.acessos},{k:"a:teste",t:modoTeste()?"Desligar modo teste":"Modo teste",i:ICO.teste});
+  if(!PERF_ABAIXO.includes(sessao?.perfil)||abaOn(sessao.perfil,"busca")) itens.push({k:"a:busca",t:"Pesquisar serviço por endereço",i:svgI('<circle cx="11" cy="11" r="7"/><path d="m20 20-4.2-4.2"/>')});
   if(!soLeitura()&&SUPS.some(x=>podeEditarEscala(x.id))) itens.push({k:"a:escala",t:travado()?"Minha escala de trabalho":"Escala de trabalho das turmas",i:ICO.form});
   itens.push({k:"a:ajuda",t:"Ajuda desta tela",i:svgI('<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17v.5"/>')},{k:"a:sair",t:"Sair",i:ICO.sair,c:"sair"});
   host.innerHTML=`<div class="sheet" id="sh"><div class="panel" role="dialog" aria-label="Mais opções">
@@ -8351,10 +8411,30 @@ function abrirMais(){ if(sessao?.perfil==="gerencia_op"||(sessao?.perfil==="fisc
   const close=()=>host.innerHTML="";
   $("#sh").onclick=e=>{ if(e.target.id==="sh") close(); const b=e.target.closest("[data-mk]"); if(!b) return; const [t,k]=b.dataset.mk.split(":"); close();
     if(t==="v") irPara(k);
-    else if(k==="acessos") abrirAcessos(); else if(k==="teste") $("#testeBtn").click(); else if(k==="sair") $("#sairBtn").click(); else if(k==="ajuda") abrirAjuda(curView); else if(k==="escala") abrirEscala(travado()?sessao.sup:""); else if(k==="zerar") abrirZerar(); };
+    else if(k==="acessos") abrirAcessos(); else if(k==="teste") $("#testeBtn").click(); else if(k==="sair") $("#sairBtn").click(); else if(k==="ajuda") abrirAjuda(curView); else if(k==="escala") abrirEscala(travado()?sessao.sup:""); else if(k==="busca") abrirBuscaEnd(); else if(k==="zerar") abrirZerar(); };
   $("#maisFechar").onclick=close;
 }
 // aba Pendências: junta os avisos do Painel, o checklist obrigatório e as pendências do checklist; o número aparece no ícone do sino
+// pesquisar serviço por endereço (bairro, rua, quadra/lote, processo) em toda a programação que a pessoa pode ver
+const nBusca=t=>String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/\b(RUA|R|AVENIDA|AV|ALAMEDA|AL|SETOR|ST|S|JARDIM|JD|VILA|VL|QUADRA|QD|Q|LOTE|LT)\b\.?/g," ").replace(/[^A-Z0-9]+/g," ").replace(/\b0+(\d)/g,"$1").trim();
+function abrirBuscaEnd(){
+  const host=$("#sheetHost"); let q0=ls.get("gpe_buscaend","");
+  host.innerHTML=`<div class="sheet" id="bsh"><div class="panel" role="dialog" aria-label="Pesquisar serviço por endereço">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:22px">Pesquisar serviço por endereço</b><button type="button" class="btn sec" id="bshX" style="min-height:44px;padding:0 14px">Fechar</button></div>
+    <label class="f">Endereço, bairro ou nº do processo<input type="search" id="bshQ" value="${esc(q0)}" placeholder="Ex.: Rua 1134 Marista · T-25 Bueno · 25.30.000012368" autocomplete="off" autocorrect="off" spellcheck="false" data-lpignore="true"></label>
+    <p class="note" style="margin:0" id="bshInfo"></p><div id="bshRes" style="display:grid;gap:8px"></div>
+    ${histCarregado?"":`<p class="note" style="margin:0">A pesquisa olha os últimos 200 dias. Para procurar em datas mais antigas, carregue antes o histórico em Painel › Evolução.</p>`}</div></div>`;
+  const qi=$("#bshQ"), res=$("#bshRes"), inf=$("#bshInfo");
+  const roda=()=>{ const q=nBusca(qi.value); ls.set("gpe_buscaend",qi.value);
+    if(q.replace(/\s/g,"").length<2){ res.innerHTML=""; inf.textContent="Digite parte do endereço (rua, bairro, quadra) ou do processo."; return; }
+    const ps=q.split(" ").filter(Boolean);
+    const L=todos(true).filter(r=>!r.arquivado&&!r.ocorrencia).filter(r=>{ const t=" "+nBusca([r.bairro,r.logradouro,r.processo,r.ped,r.relat?.processo,r.obs].join(" "))+" "; return ps.every(p=>/^\d+$/.test(p)?new RegExp("[^0-9]"+p+"[^0-9]").test(t):t.includes(p)); }).sort((a,b)=>(b.data||"").localeCompare(a.data||""));
+    inf.textContent=L.length?`${L.length} serviço${L.length===1?"":"s"} encontrado${L.length===1?"":"s"}${L.length>80?" (mostrando os 80 mais recentes)":""}. Toque para ver o detalhe.`:"Nenhum serviço encontrado com esse endereço.";
+    res.innerHTML=L.slice(0,80).map(r=>{ const k=stKey(r); return `<button type="button" class="it bshit" data-bsh="${esc(r.id)}" style="text-align:left"><span class="lc"><b>${fmtD(r.data)}</b> · ${esc(r.bairro||"")} — ${esc(r.logradouro||"")}</span><span class="pill ${k}">${ST_NOME[k]||k}</span>
+      <span class="mt">${esc(supNome(r.supervisao))}${r.equipe?" · "+esc(r.equipe):""} · ${esc(r.tipo||"")}${r.processo?" · proc. "+esc(r.processo):""}${k==="SIM"||k==="PARCIAL"?" · executado "+brl(execRec(r)):" · previsto "+brl(receitaDe(prevQ(r)))}</span></button>`; }).join(""); };
+  let tm=null; qi.oninput=()=>{ clearTimeout(tm); tm=setTimeout(roda,180); }; roda(); setTimeout(()=>qi.focus(),60);
+  $("#bsh").onclick=e=>{ if(e.target.id==="bsh"||e.target.closest("#bshX")){ host.innerHTML=""; return; } const b=e.target.closest("[data-bsh]"); if(b){ const r=todos(true).find(x=>x.id===b.dataset.bsh); if(r) detalhe(r,false,true); } };
+}
 function renderPend(){
   const box=$("#pendBox"); if(!box||!sessao) return;
   const canc=!travado()&&!soLeitura()&&SUPS.some(x=>podeCobrarSup(x.id)), CL=canc?pendCancItens():[];
@@ -8673,9 +8753,9 @@ function renderInicio(){
     {v:"campo",t:"Dar baixa no serviço",i:ICO.campo,c:"t-or",ok:pode("campo")&&lanca&&!ehFiscal()},
     {v:"campo",t:"Fotos das O.S / processos",sub:"(antes, durante, depois)",i:ICO.campo,c:"t-or",ok:pode("campo")&&ehFiscal()},
     {v:"form",t:"Programar a semana",i:ICO.form,c:"t-gr",ok:pode("form")},
+    {a:"extra",t:"Serviço extra",sub:"(fora da programação ou emergencial)",i:svgI('<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>'),c:"t-warn",ok:(pode("form")&&!soLeitura()&&!ehFiscal())||pode("oc")},
     {v:"chk",a:"chkNovo",t:"Checklist do equipamento",i:ICO.chk,ok:pode("chk")&&lanca},
     {v:"chk",a:"man",t:"Comunicar defeito",i:ICO.man,c:"t-bad",ok:pode("chk")&&lanca},
-    {v:"oc",t:"Registro emergencial",i:ICO.oc,c:"t-warn",ok:pode("oc")},
     {v:"vist",t:"Vistoria de processo",sub:(()=>{ try{ const P=[]; const n=VIST.nMeus(sessao.id); if(n) P.push(n+" para você vistoriar"); const e=ehFiscal()?VIST.nFiscal(sessao.id):travado()&&sessao.sup?VIST.nTurmaAberto(sessao.sup):0; if(e) P.push(e+" para executar"); return P.length?"("+P.join(" · ")+")":""; }catch(e){ return ""; } })(),i:ICO.vist,c:"t-gr",ok:pode("vist")},
     {v:"resumo",t:"Ver o painel",i:ICO.resumo,c:"t-pu",ok:pode("resumo")},
     {v:"lista",t:"Lista e exportar",sub:"(PROGRAMAÇÃO)",i:ICO.lista,ok:pode("lista")},
@@ -8684,7 +8764,8 @@ function renderInicio(){
     {v:"chk",t:"Ver checklists",i:ICO.chk,ok:pode("chk")&&!lanca}
   ].filter(x=>x.ok);
   // escala de trabalho: botão no Início para quem pode cadastrar / atualizar (antes ficava só no menu Mais)
-  if(!soLeitura()&&!ehFiscal()&&SUPS.some(x=>podeEditarEscala(x.id))){ const minha=travado()&&sessao.sup, cfg=minha&&escCfg(sessao.sup);
+  // "Escala de trabalho das turmas" (gerência / coordenação) fica só no menu Mais; no Início só a "Minha escala" de quem é da turma
+  if(!soLeitura()&&!ehFiscal()&&travado()&&sessao.sup&&podeEditarEscala(sessao.sup)){ const minha=travado()&&sessao.sup, cfg=minha&&escCfg(sessao.sup);
     tiles.push({a:"escala",t:minha?"Minha escala de trabalho":"Escala de trabalho das turmas",sub:minha?(cfg?(trabalha(sessao.sup,hoje())?"(hoje: dia de trabalho)":"(hoje: folga)"):"(ainda não cadastrada)"):"",i:svgI('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M8 14h3M8 17h6"/>'),c:minha&&!cfg?"t-warn":"t-gr"}); }
   if(isGerente()) tiles.push({a:"acessos",t:"Acessos",i:ICO.acessos,c:"t-pu"});
   if(travado()&&(ehSup()||sessao.perfil==="supervisor1")&&podeEditarEscala(sessao.sup)&&!escCfg(sessao.sup)) av+=`<button type="button" class="inav warn" data-escala="${esc(sessao.sup)}">${ICO.form}<span><b>Cadastre a escala de trabalho da sua turma</b><small>Assim o app só cobra nos seus dias de trabalho</small></span><em>Cadastrar</em></button>`;
@@ -8694,7 +8775,7 @@ function renderInicio(){
     <div class="inq">O QUE VOCÊ QUER FAZER?</div>
     <div class="intiles">${tiles.map(x=>`<button type="button" class="intile ${x.c||""}" data-iv="${x.v||""}" data-ia="${x.a||""}">${x.i}<span>${esc(x.t)}${x.sub?`<small class="insub">${esc(x.sub)}</small>`:""}</span></button>`).join("")}</div>`;
 }
-document.addEventListener("click",e=>{ const b=e.target.closest("#inicioBox [data-iv]"); if(!b) return; if(b.dataset.ia==="acessos") return abrirAcessos(); if(b.dataset.ia==="escala") return abrirEscala(travado()?sessao.sup:""); if(b.dataset.ia==="osdia") return abrirOsDia(); irPara(b.dataset.iv,b.dataset.ia); });
+document.addEventListener("click",e=>{ const b=e.target.closest("#inicioBox [data-iv]"); if(!b) return; if(b.dataset.ia==="acessos") return abrirAcessos(); if(b.dataset.ia==="escala") return abrirEscala(travado()?sessao.sup:""); if(b.dataset.ia==="osdia") return abrirOsDia(); if(b.dataset.ia==="extra") return abrirForaProg(NAV_PERM.has("form")&&!soLeitura()&&!ehFiscal(),NAV_PERM.has("oc")); irPara(b.dataset.iv,b.dataset.ia); });
 const AJUDA={
   vist:{c:"Vistoria dos processos do relatório, por rota.",p:["O coordenador escolhe o filtro (GED, ano e regional), o app monta as rotas e ele indica o vistoriador de cada rota.","O vistoriador só vê as rotas indicadas para ele. Abrir a rota no GPS traça o caminho; tocar no número do processo abre o PDF.","Em cada processo informe a situação: Já executado (data + foto) ou Não executado (equipamento).","Tudo vai para o Resumo das vistorias, de onde a equipe da baixa no SEI / Intranet tira as informações."]},
   pend:{c:"Tudo o que precisa de atenção, em um só lugar.",p:["Cada aviso mostra a quantidade e do que se trata. Toque nele para resolver.","Gerente e coordenador têm os botões de cobrar no WhatsApp.","O número no sino do rodapé é o total de pendências."]},
