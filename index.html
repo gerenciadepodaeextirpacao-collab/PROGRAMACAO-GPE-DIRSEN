@@ -1954,7 +1954,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.07s";
+const APP_VERSAO="2026.11.07t";
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
   {v:"2026.10.29n", d:"29/10/2026", itens:["PDF e imagem passam a se chamar ORDEM DE SERVIÇO: baixada da aba Programar sai como \"PROGRAMAÇÃO DE SERVIÇO\" e da aba Em aberto (baixa) como \"BAIXA DE SERVIÇO\", uma equipe por vez","Na Lista: só serviços programados = PROGRAMAÇÃO DE SERVIÇO; com baixa = BAIXA DE SERVIÇO"]},
@@ -2202,8 +2202,8 @@ const vistTemFiscal=()=>{ try{ return !!sessao&&(VIST.nMeus(sessao.id)>0||VIST.n
 const podeFisPerm=()=>isAdm()||podeCriarAdm();
 // acessos dos demais perfis abaixo do gerente: o administrador ativa / desativa cada aba por perfil (documento "perm_perfis")
 const PERF_ABAIXO=["ger_equipe","coordenador","supervisor","supervisor1"];
-const PERM_ABAS=[{k:"pend",t:"Pendências",d:"Avisos e cobranças da turma."},{k:"form",t:"Programar",d:"Fazer a programação da semana."},{k:"campo",t:"Em aberto / dar baixa",d:"Ver os serviços e dar baixa."},{k:"chk",t:"Checklist e comunicar defeito",d:"Checklist do equipamento e comunicado de defeito."},{k:"oc",t:"Registro emergencial",d:"Galho ou árvore caída."},{k:"vist",t:"Vistoria de processo",d:"Rotas de vistoria, já executado / não executado e serviços enviados à turma."},{k:"lista",t:"Lista",d:"Lista de serviços e planilha."},{k:"resumo",t:"Painel",d:"Painel, acompanhamento e relatórios."},{k:"orc",t:"Orçamento",d:"Propostas orçamentárias."}];
-const abaPadrao=(per,v)=>{ if(v==="pend") return true; if(v==="upd") return false; return !((v==="orc"&&per!=="coordenador")||(per==="supervisor"&&v==="resumo")||(per==="supervisor1"&&!SUP1_ABAS.has(v))); };
+const PERM_ABAS=[{k:"pend",t:"Pendências",d:"Avisos e cobranças da turma."},{k:"form",t:"Programar",d:"Fazer a programação da semana."},{k:"campo",t:"Em aberto / dar baixa",d:"Ver os serviços e dar baixa."},{k:"chk",t:"Checklist e comunicar defeito",d:"Checklist do equipamento e comunicado de defeito."},{k:"oc",t:"Registro emergencial",d:"Galho ou árvore caída."},{k:"vist",t:"Vistoria de processo",d:"Rotas de vistoria, já executado / não executado e serviços enviados à turma."},{k:"lista",t:"Lista",d:"Lista de serviços e planilha."},{k:"resumo",t:"Painel",d:"Painel, acompanhamento e relatórios."},{k:"orc",t:"Orçamento",d:"Propostas orçamentárias."},{k:"escala",t:"Cadastrar / atualizar a escala de trabalho",d:"Cadastrar e mudar a escala da turma (dias de trabalho e folgas), para o app só cobrar nos dias de trabalho."}];
+const abaPadrao=(per,v)=>{ if(v==="pend"||v==="escala") return true; if(v==="upd") return false; return !((v==="orc"&&per!=="coordenador")||(per==="supervisor"&&v==="resumo")||(per==="supervisor1"&&!SUP1_ABAS.has(v))); };
 const abaOn=(per,v,uid=sessao?.id)=>{ const pa=acesso?.[uid]?.abas; if(pa&&PERM_ABAS.some(x=>x.k===v)&&(v in pa)) return !!pa[v]; const o=assins?.perm_perfis?.p?.[per]; if(o&&PERM_ABAS.some(x=>x.k===v)&&(v in o)) return !!o[v]; return abaPadrao(per,v); };
 function permPerfisHtml(){ const d=assins?.perm_perfis;
   return `<details class="card fpm" style="margin:0"><summary><span class="step" style="margin:0">Acessos dos demais perfis</span> <small>abaixo do gerente</small></summary>
@@ -7608,7 +7608,10 @@ function chkObrigAlerta(modo){
 }
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-chkfazer]"); if(!b) return; const d=b.dataset.chkfazer; if($("#kData")) $("#kData").value=d; irPara("chk","chkNovo"); setTimeout(()=>{ const f=$("#kfData"); if(f){ f.value=d; f.dispatchEvent(new Event("change")); } },250); });
 // ---------- ESCALA DE TRABALHO: cada supervisor cadastra a da sua turma (gerente, coordenador e gerente operacional cadastram para as turmas da sua área) ----------
-const podeEditarEscala=sup=>!!sessao&&!soLeitura()&&(((ehSup()||sessao.perfil==="supervisor1")&&sessao.sup===sup)||(isGerente()&&noEscopo(sup))||((sessao.perfil==="coordenador"||sessao.perfil==="gerencia_op")&&noEscopo(sup)));
+// escala: supervisor / supervisor 1 da própria turma, coordenador e gerência do escopo; nos perfis abaixo do gerente vale o botão "Cadastrar / atualizar a escala" em Acessos (ligado por padrão)
+const podeEditarEscala=sup=>{ if(!sessao||soLeitura()) return false; const per=sessao.perfil;
+  if(PERF_ABAIXO.includes(per)&&!abaOn(per,"escala")) return false;
+  return ((ehSup()||per==="supervisor1")&&sessao.sup===sup)||(isGerente()&&noEscopo(sup))||((per==="coordenador"||per==="gerencia_op"||per==="ger_equipe")&&noEscopo(sup)); };
 const DSEM=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
 const ESC_DOC_CSS=`.escano{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.escano .em{border:1px solid #d5ddd2;border-radius:10px;padding:6px;background:#fff;color:#16231a}.escano .em h4{margin:0;font-size:13px;text-transform:uppercase;letter-spacing:.3px;color:#005f27}.escano .em p{margin:1px 0 4px;font-size:10.5px;color:#5b6a5f;line-height:1.25}.escano .em p b{color:#16231a}.escano .em .vira{color:#b4570f;font-weight:700}.escano .g{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}.escano .g i{font-style:normal;font-size:9px;text-align:center;color:#7a7f78;font-weight:700}.escano .g span{font-size:11px;text-align:center;border-radius:4px;padding:2px 0;line-height:1.35;font-variant-numeric:tabular-nums}.escano .g .t{background:#1f9d55;color:#fff;font-weight:700}.escano .g .f{background:#f2f2ef;color:#8a8f88}.escano .g .fa{background:#fde3cf;color:#a3480b;font-weight:700}.escano .g .hj{outline:2px solid #f37020;outline-offset:-1px}.escleg{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;align-items:center;color:inherit}.escleg span{display:inline-flex;align-items:center;gap:4px}.escleg i{width:14px;height:14px;border-radius:3px;display:inline-block}.escano{margin:6px 0}.escano .em{break-inside:avoid}`;
 // calendário do ano inteiro de uma escala (12 meses); no 12x36 mostra se o mês é de dias pares ou ímpares e avisa a troca depois de mês de 31 dias
@@ -8680,7 +8683,7 @@ function renderInicio(){
     {v:"chk",t:"Ver checklists",i:ICO.chk,ok:pode("chk")&&!lanca}
   ].filter(x=>x.ok);
   if(isGerente()) tiles.push({a:"acessos",t:"Acessos",i:ICO.acessos,c:"t-pu"});
-  if(travado()&&ehSup()&&!escCfg(sessao.sup)) av+=`<button type="button" class="inav warn" data-escala="${esc(sessao.sup)}">${ICO.form}<span><b>Cadastre a escala de trabalho da sua turma</b><small>Assim o app só cobra nos seus dias de trabalho</small></span><em>Cadastrar</em></button>`;
+  if(travado()&&(ehSup()||sessao.perfil==="supervisor1")&&podeEditarEscala(sessao.sup)&&!escCfg(sessao.sup)) av+=`<button type="button" class="inav warn" data-escala="${esc(sessao.sup)}">${ICO.form}<span><b>Cadastre a escala de trabalho da sua turma</b><small>Assim o app só cobra nos seus dias de trabalho</small></span><em>Cadastrar</em></button>`;
   const escHj=travado()&&escCfg(sessao.sup)?(trabalha(sessao.sup,hoje())?" · hoje: dia de trabalho":" · hoje: FOLGA"):"";
   h.innerHTML=`<div class="inhead"><span>${sau},</span><b>${esc(nome)}</b><small>${esc(onde)} · ${dsTxt}${escHj}${hj?` · ${hj} ${hj===1?"serviço programado":"serviços programados"} hoje`:""}</small></div>
     ${INICIO_AVISOS?`<div class="inavs">${av}</div>`:""}${ehFiscal()?fisFotosHtml():osFimHtml()}
