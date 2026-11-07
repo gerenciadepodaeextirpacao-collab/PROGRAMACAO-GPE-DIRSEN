@@ -8,6 +8,8 @@
 <!-- fora do Claude (Netlify): camada que liga o app às funções do Netlify; dentro do Claude ela não é usada -->
 <script src="camada-gpe.js"></script>
 <title>Programação GPE</title>
+<meta name="color-scheme" content="light">
+<script>/* sempre tema claro (o escuro fica ruim de ler no celular) */try{const H=document.documentElement,L=()=>{ if(H.getAttribute("data-theme")!=="light") H.setAttribute("data-theme","light"); };L();new MutationObserver(L).observe(H,{attributes:true,attributeFilter:["data-theme"]});}catch(e){}</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap">
@@ -287,6 +289,7 @@ div.inav{cursor:default}.inbts{display:flex;flex-direction:column;gap:6px}
 .ct-bar i.p{background:var(--c-prev)}
 .ct-bar .lim{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink)}
 .ct-bar .pace{position:absolute;top:-4px;bottom:-4px;width:0;border-left:2px dashed var(--muted)}
+.ctleg{display:grid;gap:5px;font-size:12.5px;color:var(--muted);background:var(--sunk);border-radius:10px;padding:10px 12px}.ctleg>b{color:var(--ink);font-size:13px}.ctleg div{display:flex;gap:8px;align-items:flex-start}.ctleg i{flex:none;width:22px;height:12px;border-radius:3px;margin-top:3px}.ctleg i.lnp{width:0;height:16px;border-left:2px dashed var(--muted);margin:0 10px;border-radius:0}.ctleg i.lnl{width:3px;height:16px;background:var(--ink);margin:0 9px;border-radius:0}.ctleg span b{color:var(--ink)}
 .ct-nums{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
 .ct-nums b{color:var(--ink)}
 .ocbtn{background:var(--bad-bg);color:var(--bad);border:1.5px solid var(--bad)}
@@ -1050,7 +1053,22 @@ body.sofiscal nav.tabs{display:none!important}
 .osfimc{display:grid;gap:6px;padding:8px 0;border-top:1px solid rgba(0,0,0,.08)}.osfimc small{color:var(--muted)}
 .qregra{background:#fff3e8;border:1.5px solid var(--accent);border-radius:10px;padding:8px 12px;margin:0 0 8px;color:var(--ink,#1a2b1f)}.extrasegue{background:var(--accent);color:#fff;border-radius:10px;padding:10px 12px;font-size:.92em;line-height:1.35}.extracard{border:2px dashed var(--accent)!important}
 .extrab{display:inline-block;font:700 11px var(--body);padding:2px 7px;border-radius:99px;background:#fff1e6;color:#b34a00;border:1px solid #f3b27a;vertical-align:middle;margin-left:4px}
-#tSup th,#tItem th,#tMot th{white-space:normal;line-height:1.15;vertical-align:bottom;font-size:11px;letter-spacing:0}#tSup td,#tSup th{padding-left:8px;padding-right:8px}#tSup th:not(:first-child),#tItem th:not(:first-child){min-width:58px}#tSup td:first-child{min-width:150px}#tSup td,#tItem td{white-space:nowrap}#tSup td:first-child,#tItem td:first-child{white-space:normal}
+#tSup th,#tItem th,#tMot th{white-space:normal;line-height:1.15;vertical-align:bottom;font-size:11px;letter-spacing:0}
+/* tabelas do painel sem barra de rolar: as colunas se ajustam à largura e os valores quebram linha se precisar */
+.tbl:has(#tSup),.tbl:has(#tItem),.tbl:has(#tMot){overflow-x:visible}
+#tSup,#tItem,#tMot,.eximp{table-layout:fixed;width:100%;min-width:0!important}.eximp td,.eximp th{white-space:normal;overflow-wrap:anywhere;font-size:13px;padding-left:6px;padding-right:6px}.eximp th{font-size:11px;letter-spacing:0}.eximp td:first-child,.eximp th:first-child{width:30%}
+#tSup td,#tSup th,#tItem td,#tItem th{padding-left:6px;padding-right:6px;white-space:normal;overflow-wrap:anywhere;font-size:13px}
+#tSup th:first-child,#tSup td:first-child{width:22%}#tItem th:first-child,#tItem td:first-child{width:46%}
+#tSup td:not(:first-child),#tItem td:not(:first-child){font-variant-numeric:tabular-nums}
+@media (max-width:620px){
+  #tSup thead{display:none}#tSup,#tSup tbody,#tSup tfoot{display:block}
+  #tSup tr{display:grid;grid-template-columns:repeat(3,1fr);gap:4px 10px;padding:10px 12px;border-bottom:1px solid var(--line)}
+  #tSup td{display:block;border:0!important;padding:0!important;text-align:left!important;width:auto!important}
+  #tSup td:first-child{grid-column:1/-1;font-weight:700;margin-bottom:2px}
+  #tSup td[data-l]::before{content:attr(data-l);display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.02em}
+  #tSup td.rs{grid-column:span 3/span 3}#tSup td.rs+td.rs{grid-column:auto}
+  #tSup tr td:nth-child(7),#tSup tr td:nth-child(8){grid-column:span 1}
+}
 </style>
 
 <div id="login" class="login" hidden>
@@ -1529,7 +1547,11 @@ const ESCOPO_PERF={gerencia_op:["PODA III","PODA IV"]}, ESC_DIRSEN=["PODA I","PO
 // escopo de visão: administrador vê tudo; gerente DIRSEN (Victor) vê PODA I e II; gerente DIROP (Pedro) vê PODA III e IV
 // Victor = gerente da DIRSEN: vê só a DIRSEN (PODA I e II). Pedro = gerente da DIROP: só a DIROP (PODA III e IV). Só o administrador vê e controla tudo.
 function ehVictor(){ try{ if(!sessao||sessao.porGerente||sessao.perfil!=="gerencia") return false; const n=(acesso?.[sessao.id]?.nome||sessao.nome||""); return /VICTOR\s+RICARDO/i.test(n.normalize("NFD").replace(/[\u0300-\u036f]/g,"")); }catch(e){ return false; } }
-function escopoG(){ try{ if(!sessao||sessao.perfil==="admin") return null; if(sessao.perfil==="gerencia_op"||sessao.sup===LOT_DIROP) return ESC_DIROP; return ESC_DIRSEN; }catch(e){ return null; } }
+function escopoG(){ try{ if(!sessao||sessao.perfil==="admin") return null; if(sessao.perfil==="gerencia_op") return ESC_DIROP; if(sessao.perfil==="gerencia") return ESC_DIRSEN; return escopoLot(sessao.sup); }catch(e){ return null; } }
+// escopo pela lotação ou turma: PODA III / IV e lotações da DIROP → DIROP; PRESIDÊNCIA e DIRSEN/DIROP → as duas; o resto → DIRSEN
+function escopoLot(sup){ if(LOT_AMBAS.includes(sup)) return null; if(LOT_DIROPS.includes(sup)) return ESC_DIROP; const g=(typeof SUPS_ALL!=="undefined"?SUPS_ALL.find(s=>s.id===sup):null)?.grupo; if(g==="PODA III"||g==="PODA IV") return ESC_DIROP; return ESC_DIRSEN; }
+// pessoa (cadastro) aparece para quem está vendo? Victor só vê o pessoal da DIRSEN, Pedro só o da DIROP; administrador vê todos
+const pessoaNoEscopo=u=>{ try{ const e=escopoG(); if(!e||!u) return true; const a=areaAcesso(u); if(a==="adm"||a==="dir") return true; return (e===ESC_DIROP)===(a==="dirop"); }catch(x){ return true; } };
 const escDirop=()=>escopoG()===ESC_DIROP;
 const noEscopo=sup=>{ const g=escopoG(); if(!g) return true; const so=SUPS_ALL.find(s=>s.id===sup); return !!so&&g.includes(so.grupo); };
 const supsVis=()=>{ const g=escopoG(); return g?SUPS_ALL.filter(s=>g.includes(s.grupo)):SUPS_ALL; };
@@ -1683,15 +1705,21 @@ const SUP1_ABAS=new Set(["inicio","campo","oc","lista","resumo","vist","escala"]
 // lotação do Supervisor 1: uma turma, ou a Gerência / Diretoria (aí ele vê todas as turmas, só nessas abas)
 // lotação das gerências: DIRSEN (PODA I e II, controle geral do app) e DIROP (só PODA III e IV)
 const LOT_DIRSEN="GERÊNCIA DE PODA E EXTIRPAÇÃO - DIRSEN", LOT_DIROP="GERÊNCIA DE PODA E EXTIRPAÇÃO - DIROP";
-const LOT_GERAL=[LOT_DIRSEN,LOT_DIROP,"DIRETORIA"], LOT_ANT=["GERÊNCIA DE PODA E EXTIRPAÇÃO"];
-const lotGeral=u=>u?.perfil==="supervisor1"&&(LOT_GERAL.includes(u?.sup)||LOT_ANT.includes(u?.sup));
+// lotações (sem turma). "GPE - DIRSEN" / "GPE - DIROP" são as gerências (valor antigo mantido para não perder os cadastros)
+const LOT_PRES="PRESIDÊNCIA", LOT_DD="DIRSEN/DIROP", LOT_DS="DIRSEN", LOT_DO="DIROP";
+const LOT_GERAL=[LOT_PRES,LOT_DD,LOT_DS,LOT_DO,LOT_DIRSEN,LOT_DIROP,"DIRETORIA"], LOT_ANT=["GERÊNCIA DE PODA E EXTIRPAÇÃO"];
+const LOT_AMBAS=[LOT_PRES,LOT_DD], LOT_DIROPS=[LOT_DO,LOT_DIROP];
+const lotNome=x=>x===LOT_DIRSEN?"GPE - DIRSEN":x===LOT_DIROP?"GPE - DIROP":x;
+const lotGeral=u=>!!u&&(LOT_GERAL.includes(u?.sup)||LOT_ANT.includes(u?.sup));
 const lotRot=p=>GERAL.has(p)?"Lotação":p==="supervisor1"?"Turma / lotação":"Turma";
 const lotOpts=(perfil,sel)=>{ const ger=GERAL.has(perfil), s1=perfil==="supervisor1";
-  const LG=perfil==="gerencia"?[LOT_DIRSEN]:perfil==="gerencia_op"?[LOT_DIROP]:LOT_GERAL;
-  if(ger&&!LG.includes(sel)) sel=perfil==="diretoria"?"DIRETORIA":LG[0];
-  const lots=`<optgroup label="Gerência / diretoria">${LG.map(x=>`<option value="${esc(x)}" ${x===sel?"selected":""}>${esc(x)}</option>`).join("")}</optgroup>`;
+  const e=escopoG(), LG0=perfil==="gerencia"?[LOT_DIRSEN]:perfil==="gerencia_op"?[LOT_DIROP]:LOT_GERAL;
+  // Victor só vê as lotações / turmas da DIRSEN; Pedro só as da DIROP
+  const LG=LG0.filter(x=>!e||sel===x||escopoLot(x)===null&&isAdm()||escopoLot(x)===e);
+  if(ger&&!LG.includes(sel)) sel=perfil==="diretoria"&&LG.includes("DIRETORIA")?"DIRETORIA":LG[0];
+  const lots=`<optgroup label="Lotação (sem turma)">${LG.map(x=>`<option value="${esc(x)}" ${x===sel?"selected":""}>${esc(lotNome(x))}</option>`).join("")}</optgroup>`;
   if(ger) return lots;
-  return SUPS_ALL.map(s=>`<option value="${esc(s.id)}" ${s.id===sel?"selected":""}>${esc(s.id)}</option>`).join("")+(s1?lots:""); };
+  return `<optgroup label="Turma">`+SUPS_ALL.filter(s=>!e||s.id===sel||e.includes(s.grupo)).map(s=>`<option value="${esc(s.id)}" ${s.id===sel?"selected":""}>${esc(s.id)}</option>`).join("")+`</optgroup>`+lots; };
 function lotSync(perfSel,supSel,wrap){ const v=supSel.value; supSel.innerHTML=lotOpts(perfSel.value,v); if(wrap) wrap.firstChild.textContent=lotRot(perfSel.value); }
 // perfis sem turma: enxergam todas as supervisões
 const GERAL=new Set(["admin","diretoria","gerencia","gerencia_op","ger_equipe","coordenador"]);
@@ -1700,9 +1728,9 @@ let acesso=null, acessoLoaded=false, canAdmin=false, sessao=ls.get("gpe_sessao",
 const isGer=()=>GERAL.has(sessao?.perfil) && sessao?.perfil!=="diretoria";
 const soLeitura=()=>sessao?.perfil==="diretoria";
 const isAdm=()=>sessao?.perfil==="admin";
-const ehGerPerf=p=>p==="gerencia"||p==="admin"; // perfis com os poderes de gerente (acessos, senhas, atualizações)
+const ehGerPerf=p=>p==="gerencia"||p==="gerencia_op"||p==="admin"; // perfis com os poderes de gerente (acessos, senhas, atualizações)
 const isGerente=()=>ehGerPerf(sessao?.perfil);
-const podeCriarAdm=()=>sessao?.perfil==="gerencia"&&!sessao?.porGerente; // só o Victor (gerente DIRSEN) cadastra administrador
+const podeCriarAdm=()=>sessao?.perfil==="admin"||(sessao?.perfil==="gerencia"&&!sessao?.porGerente); // administrador e Victor cadastram administrador
 const travado=()=>!!sessao && !GERAL.has(sessao.perfil) && !lotGeral(sessao);
 async function hashPin(salt,pin){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(salt+":"+pin));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
 function novoSal(){return [...crypto.getRandomValues(new Uint8Array(8))].map(x=>x.toString(16).padStart(2,"0")).join("")}
@@ -1794,7 +1822,7 @@ $("#setupForm").addEventListener("submit",async ev=>{
   catch(e){ err.textContent="Não foi possível salvar. Só quem é dono ou editor do app pode configurar os acessos."; err.hidden=false; }
 });
 
-function applyPerms(){
+function applyPerms(){ try{ equipAplicar(); }catch(e){}
   const s=sessao; if(!s) return;
   const per=s.perfil;
   if(ehGerPerf(per)) canAdmin=true; // o gerente (Victor, desenvolvedor do app) tem acesso pleno: Acessos, senhas, atualização e tudo mais, mesmo depois de recarregar a página
@@ -1841,12 +1869,12 @@ function acFiltrar(host){ const q=AC_BUSCA.trim().toLowerCase(); host.querySelec
 function abrirAcessos(){
   if(!isGerente()) return;
   const host=$("#sheetHost");
-  const lista=Object.entries(acesso||{}).sort((a,b)=>(ORD[a[1].perfil]-ORD[b[1].perfil])||(a[1].sup||"").localeCompare(b[1].sup||"")||a[1].nome.localeCompare(b[1].nome));
+  const lista=Object.entries(acesso||{}).filter(([,u])=>pessoaNoEscopo(u)).sort((a,b)=>(ORD[a[1].perfil]-ORD[b[1].perfil])||(a[1].sup||"").localeCompare(b[1].sup||"")||a[1].nome.localeCompare(b[1].nome));
   host.innerHTML=`<div class="sheet" id="sh"><div class="panel" role="dialog" aria-label="Acessos">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:22px">Acessos</b><button type="button" class="btn sec" id="acClose" style="min-height:40px;padding:0 14px">Fechar</button></div>
     <input type="search" id="acBusca" placeholder="🔎 Procurar por nome, matrícula, turma ou perfil" value="${esc(AC_BUSCA)}" autocapitalize="none" style="min-height:46px">
     <details class="acinfo"><summary>Como funcionam os acessos</summary><p class="note" style="margin:6px 0 0">Cada pessoa entra com a <b>matrícula</b> (ex.: m859209) e uma senha de pelo menos 6 caracteres (letras e números). Só o <b>administrador</b> vê tudo, sem restrição. O <b>gerente DIRSEN</b> vê o PODA I e o PODA II; o <b>gerente DIROP</b> vê o PODA III e o PODA IV. Quem está lotado na <b>DIRSEN</b> (ou diretoria) vê só o PODA I e o PODA II; quem está lotado na <b>DIROP</b> vê só o PODA III e o PODA IV (a diretoria só consulta); supervisor e fiscal só a própria turma.</p></details><p class="note" style="margin:0">${canAdmin?"":" <b>Você não é dono nem editor deste app: pode ver, mas não alterar.</b>"}</p>
-    ${AC_AREAS.filter(ar=>isAdm()||ar.k!=="dirop").map(ar=>{ const it=lista.filter(([id,u])=>areaAcesso(u)===ar.k); if(!it.length&&(ar.k==="dir"||ar.k==="adm")) return ""; return `<div class="acsec"><div class="acsech"><b>${ar.t}</b><span>${ar.d} · ${it.length} ${it.length===1?"pessoa":"pessoas"}</span></div><div class="list">${it.length?"":`<p class="note" style="margin:0">Ninguém cadastrado ainda.</p>`}${it.map(([id,u])=>`<div class="prog accard" data-uid="${esc(id)}" data-busca="${esc([u.nome,matDe(u),PERF[u.perfil]||u.perfil,u.sup,u.equipe].filter(Boolean).join(" ").toLowerCase())}">
+    ${AC_AREAS.filter(ar=>isAdm()||(escopoG()===ESC_DIROP?ar.k!=="dirsen":ar.k!=="dirop")).map(ar=>{ const it=lista.filter(([id,u])=>areaAcesso(u)===ar.k); if(!it.length&&(ar.k==="dir"||ar.k==="adm")) return ""; return `<div class="acsec"><div class="acsech"><b>${ar.t}</b><span>${ar.d} · ${it.length} ${it.length===1?"pessoa":"pessoas"}</span></div><div class="list">${it.length?"":`<p class="note" style="margin:0">Ninguém cadastrado ainda.</p>`}${it.map(([id,u])=>`<div class="prog accard" data-uid="${esc(id)}" data-busca="${esc([u.nome,matDe(u),PERF[u.perfil]||u.perfil,u.sup,u.equipe].filter(Boolean).join(" ").toLowerCase())}">
       <div class="achead" style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b style="font-size:16px">${esc(u.nome)}</b><span class="pill ${!u.ativo?"NÃO":(u.hash&&matDe(u))?"SIM":"ATRASADO"}">${!u.ativo?"Desativado":!matDe(u)?"Sem matrícula":u.hash?"Liberado":"Sem senha"}</span></div>
       <div class="note">${u.perfil==="admin"?"Usuário":"Matrícula"} <b>${esc(matDe(u)||"—")}</b> · ${PERF[u.perfil]||u.perfil}${u.sup?" · "+esc(u.sup):""}${u.zap?` · 📱 ${esc(zapFmt(u.zap))}`:u.perfil==="supervisor"?` · <span style="color:var(--warn)">sem WhatsApp</span>`:""}${u.perfil==="fiscal"?` · <b>fiscal de turma – ${u.equipe?esc(u.equipe.toLowerCase()):"sem equipe fixa (todas as equipes)"}</b>`:""}${u.perfil==="gerencia"?` · <b style="color:var(--ok)">💬 cobra todas as podas</b>`:u.perfil==="gerencia_op"?` · <b style="color:var(--ok)">💬 cobra Poda III e IV</b>`:cobraFlag(u)?` · <b style="color:var(--ok)">💬 cobra Poda I e II</b>`:""}</div>
       ${canAdmin?`<details class="acdet" data-acdet="${esc(id)}" ${AC_ABERTOS.has(id)?"open":""}><summary>⚙ Gerenciar: senha, assinatura e editar</summary><div class="acdetb">
@@ -1863,7 +1891,7 @@ function abrirAcessos(){
         <div class="row2"><label class="f">Matrícula<input data-edmat autocapitalize="none" value="${esc(matDe(u))}" placeholder="Ex.: m859209"></label>
         <label class="f">Nome<input data-ednome value="${esc(u.nome)}"></label></div>
         <label class="f">WhatsApp (com DDD)<input data-edzap inputmode="tel" value="${esc(zapFmt(u.zap))}" placeholder="(00) 00000-0000" maxlength="15"></label>
-        <label class="ck"><input type="checkbox" data-edcobra ${cobraFlag(u)?"checked":""}><span>💬 Pode cobrar no WhatsApp as turmas da Poda I e II</span></label>
+        <label class="ck"><input type="checkbox" data-edcobra ${cobraFlag(u)?"checked":""}><span>💬 Pode cobrar no WhatsApp as turmas da ${cobraTxt(u.sup)}</span></label>
         <div class="row2"><label class="f">Perfil<select data-edperf>${Object.entries(PERF).filter(([k])=>k!=="admin"||podeCriarAdm()||u.perfil==="admin").map(([k,t])=>`<option value="${k}" ${k===u.perfil?"selected":""}>${PERF_DESC[k]}</option>`).join("")}</select></label>
         <label class="f" data-edsupw>${lotRot(u.perfil)}<select data-edsup>${lotOpts(u.perfil,u.sup)}</select></label></div>
         <label class="f" data-edeqw ${u.perfil==="fiscal"?"":"hidden"}>Equipe do fiscal (recebe a O.S do dia)<select data-edeq><option value="" ${!u.equipe?"selected":""}>Sem equipe (todas as equipes)</option>${["1ª EQUIPE","2ª EQUIPE","3ª EQUIPE"].map(q=>`<option value="${q}" ${u.equipe===q?"selected":""}>Fiscal de turma – ${q.toLowerCase()}</option>`).join("")}</select></label>
@@ -1877,7 +1905,7 @@ function abrirAcessos(){
       <div class="row2"><label class="f"><span id="nuMatLbl">Matrícula</span><input id="nuMat" autocapitalize="none" placeholder="Ex.: m859209"></label>
       <label class="f" id="nuNomeW">Nome<input id="nuNome" placeholder="Ex.: JOÃO DA SILVA"></label></div>
       <label class="f" id="nuZapW">WhatsApp (com DDD)<input id="nuZap" inputmode="tel" placeholder="(00) 00000-0000" maxlength="15"></label>
-      <label class="ck" id="nuCobraW"><input type="checkbox" id="nuCobra"><span>💬 Pode cobrar no WhatsApp as turmas da Poda I e II</span></label>
+      <label class="ck" id="nuCobraW"><input type="checkbox" id="nuCobra"><span id="nuCobraT">💬 Pode cobrar no WhatsApp as turmas da ${cobraTxt()}</span></label>
       <div class="row2"><label class="f">Perfil<select id="nuPerf">${["supervisor","supervisor1","fiscal","coordenador","ger_equipe","gerencia","gerencia_op","diretoria","admin"].filter(k=>k!=="admin"||podeCriarAdm()).map(k=>`<option value="${k}">${PERF_DESC[k]}</option>`).join("")}</select></label>
       <label class="f">Senha<input id="nuPin" type="password" placeholder="Mínimo 6 caracteres"></label></div>
       <label class="f" id="nuSupW">Turma<select id="nuSup">${lotOpts("supervisor","")}</select></label>
@@ -1892,10 +1920,12 @@ function abrirAcessos(){
   host.querySelectorAll("[data-acdet]").forEach(d=>d.addEventListener("toggle",()=>{ d.open?AC_ABERTOS.add(d.dataset.acdet):AC_ABERTOS.delete(d.dataset.acdet); }));
   const bq=$("#acBusca"); if(bq){ bq.oninput=()=>{ AC_BUSCA=bq.value; acFiltrar(host); }; acFiltrar(host); }
   host.querySelectorAll("[data-edperf]").forEach(s=>s.onchange=()=>{const w=s.closest(".inline").querySelector("[data-edsupw]");lotSync(s,w.querySelector("[data-edsup]"),w); const q=s.closest(".inline").querySelector("[data-edeqw]"); if(q) q.hidden=s.value!=="fiscal";});
+  const nus=$("#nuSup"); if(nus) nus.addEventListener("change",()=>{ const t=$("#nuCobraT"); if(t) t.textContent="💬 Pode cobrar no WhatsApp as turmas da "+cobraTxt(nus.value); });
   const perf=$("#nuPerf"); if(perf) perf.onchange=()=>{lotSync(perf,$("#nuSup"),$("#nuSupW")); $("#nuEqW").hidden=perf.value!=="fiscal";
     const adm=perf.value==="admin"; ["#nuNomeW","#nuZapW","#nuCobraW","#nuSupW"].forEach(q=>{ const x=$(q); if(x) x.hidden=adm; }); $("#nuAdmNota").hidden=!adm;
     $("#nuMatLbl").textContent=adm?"Usuário de acesso":"Matrícula"; $("#nuMat").placeholder=adm?"Ex.: admgpe":"Ex.: m859209"; };
-  const salvar=async(id,dados,msg)=>{ try{ await dbUpdate(db.doc("cfg/acesso"),{usuarios:{[id]:dados}}); toast(msg); abrirAcessos(); }catch(e){ toast("Não foi possível salvar. Só dono ou editor do app altera acessos."); } };
+  const salvar=async(id,dados,msg)=>{ try{ await dbUpdate(db.doc("cfg/acesso"),{usuarios:{[id]:dados}}); toast(msg); abrirAcessos(); }catch(e){ toast("Não foi possível salvar: "+acErro(e)); } };
+const acErro=e=>{ const m=String(e?.message||e||""); return /gerente|acessos|permiss|acesso inválido/i.test(m)?"o banco de dados recusou ("+m+"). Rode no Supabase o arquivo ATUALIZAR_PERMISSOES.sql que mandei.":m||"tente de novo"; };
   host.querySelector(".panel").addEventListener("click",async e=>{
     const cpl=e.target.closest("[data-cplink]"); if(cpl){ const u=LINKS_APP[+cpl.dataset.cplink].u; (navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast("Link copiado.")).catch(()=>{ prompt("Copie o link:",u); }); return; }
     const sp=e.target.closest("[data-savepin]"); if(sp){const id=sp.dataset.savepin, pin=host.querySelector(`[data-pin="${id}"]`).value;
@@ -1919,9 +1949,10 @@ function abrirAcessos(){
     const ed=e.target.closest("[data-edit]"); if(ed){const box=host.querySelector(`[data-editbox="${ed.dataset.edit}"]`); box.hidden=!box.hidden; return;}
     const ab=e.target.closest("[data-abasalv]"); if(ab){ if(!podeFisPerm()) return; const id=ab.dataset.abasalv, u=acesso[id], o={};
       host.querySelectorAll(`[data-pabas="${CSS.escape(id)}"]`).forEach(c=>o[c.dataset.pk]=c.checked); if(u.perfil==="fiscal"&&o.baixa) o.campo=true;
+      if(u.perfil==="coordenador"){ try{ const A=JSON.parse(JSON.stringify(acesso)); let n=0; Object.values(A).forEach(x=>{ if(x.perfil==="coordenador"){ x.abas={...o}; n++; } }); await db.doc("cfg/acesso").set({usuarios:A}); toast(`Acessos salvos para os ${n} coordenadores.`); abrirAcessos(); }catch(x){ toast("Não foi possível salvar: "+(x?.message||"tente de novo")); } return; }
       await salvar(id,{abas:o},`Acessos de ${u.nome} atualizados.`); return; }
     const ap=e.target.closest("[data-abapad]"); if(ap){ if(!podeFisPerm()) return; const id=ap.dataset.abapad;
-      try{ const A=JSON.parse(JSON.stringify(acesso)); delete A[id].abas; await db.doc("cfg/acesso").set({usuarios:A}); toast(`${acesso[id].nome}: acessos voltaram ao padrão do perfil.`); abrirAcessos(); }catch(x){ toast("Não foi possível salvar agora."); } return; }
+      try{ const A=JSON.parse(JSON.stringify(acesso)); if(A[id].perfil==="coordenador") Object.values(A).forEach(x=>{ if(x.perfil==="coordenador") delete x.abas; }); else delete A[id].abas; await db.doc("cfg/acesso").set({usuarios:A}); toast(`${acesso[id].nome}: acessos voltaram ao padrão do perfil.`); abrirAcessos(); }catch(x){ toast("Não foi possível salvar agora."); } return; }
     const se=e.target.closest("[data-saveedit]"); if(se){const id=se.dataset.saveedit, box=host.querySelector(`[data-editbox="${id}"]`);
       const nome=box.querySelector("[data-ednome]").value.trim().toUpperCase(), perfil=box.querySelector("[data-edperf]").value, geral=GERAL.has(perfil);
       if(!podeCriarAdm()&&(perfil==="admin")!==(acesso[id]?.perfil==="admin")){toast("Só o Victor (gerente) dá ou tira o perfil de administrador.");return}
@@ -1940,7 +1971,7 @@ function abrirAcessos(){
       if(dl.dataset.armed!=="1"){dl.dataset.armed="1";dl.textContent="Confirmar exclusão";return}
       if(ehGerPerf(u.perfil) && !Object.entries(acesso).some(([k,x])=>k!==id&&ehGerPerf(x.perfil)&&x.ativo&&x.hash)){toast("Não é possível excluir o único gerente / administrador.");return}
       const usuarios={...acesso}; delete usuarios[id];
-      try{ await db.doc("cfg/acesso").set({usuarios}); toast(u.nome+" excluído."); abrirAcessos(); }catch(err){ toast("Não foi possível excluir. Só dono ou editor do app altera acessos."); }
+      try{ await db.doc("cfg/acesso").set({usuarios}); toast(u.nome+" excluído."); abrirAcessos(); }catch(err){ toast("Não foi possível excluir: "+acErro(err)); }
       return;}
     if(e.target.id==="nuAdd"){
       const matricula=matKey($("#nuMat").value), nome=$("#nuNome").value.trim().toUpperCase(), p=$("#nuPerf").value, pin=$("#nuPin").value, sup=$("#nuSup").value;
@@ -1966,7 +1997,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.08k";
+const APP_VERSAO="2026.11.09";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -2216,7 +2247,7 @@ const travadoU=u=>!!u&&!GERAL.has(u.perfil)&&!lotGeral(u);
 const fisPode=k=>!ehFiscal()||!!fisPerm()[k];
 const fisAbas=()=>{ const P=fisPerm(), A=new Set(["inicio"]); if(P.campo||P.baixa) A.add("campo"); if(P.pend) A.add("pend"); if(P.chk) A.add("chk"); if(P.oc) A.add("oc"); if(P.lista) A.add("lista"); if(P.form) A.add("form"); if(P.resumo) A.add("resumo"); if(P.orc) A.add("orc"); if(P.vist||vistTemFiscal()) A.add("vist"); return A; };
 const vistTemFiscal=()=>{ try{ return !!sessao&&(VIST.nMeus(sessao.id)>0||VIST.nFiscal(sessao.id)>0); }catch(e){ return false; } };
-const podeFisPerm=()=>isAdm()||podeCriarAdm();
+const podeFisPerm=()=>isAdm()||((sessao?.perfil==="gerencia"||sessao?.perfil==="gerencia_op")&&!sessao?.porGerente);
 // acessos dos demais perfis abaixo do gerente: o administrador ativa / desativa cada aba por perfil (documento "perm_perfis")
 const PERF_ABAIXO=["ger_equipe","coordenador","supervisor","supervisor1"];
 const PERM_ABAS=[{k:"pend",t:"Pendências",d:"Avisos e cobranças da turma."},{k:"form",t:"Programar",d:"Fazer a programação da semana."},{k:"campo",t:"Em aberto / dar baixa",d:"Ver os serviços e dar baixa."},{k:"chk",t:"Checklist e comunicar defeito",d:"Checklist do equipamento e comunicado de defeito."},{k:"oc",t:"Registro emergencial",d:"Galho ou árvore caída."},{k:"vist",t:"Vistoria de processo",d:"Rotas de vistoria, já executado / não executado e serviços enviados à turma."},{k:"lista",t:"Lista",d:"Lista de serviços e planilha."},{k:"resumo",t:"Painel",d:"Painel, acompanhamento e relatórios."},{k:"orc",t:"Orçamento",d:"Propostas orçamentárias."},{k:"escala",t:"Cadastrar / atualizar a escala de trabalho",d:"Cadastrar e mudar a escala da turma (dias de trabalho e folgas), para o app só cobrar nos dias de trabalho. Supervisor e supervisor 1 sempre têm."},{k:"busca",t:"Pesquisar serviço por endereço",d:"Procurar serviços pelo endereço (menu Mais)."}];
@@ -2625,7 +2656,9 @@ function mdDatas(sup,ini,n){ const out=[]; let d=parseD(ini); if(!d) return out;
   while(out.length<n&&guard<90){ const x=iso(d); if(trabalha(sup,x)) out.push(x); d.setDate(d.getDate()+1); guard++; } return out; }
 function mdPartes(q,n){ const ps=[...Array(n)].map(()=>({})); ITENS.forEach(i=>{ const Q=+q[i.c]||0; if(!Q) return; const b=Math.floor(Q/n), r=Q%n; ps.forEach((p,k)=>{ const v=b+(k<r?1:0); if(v) p[i.c]=v; }); }); return ps; }
 const mdTxt=q=>ITENS.filter(i=>+q[i.c]).map(i=>`<b>${q[i.c]}</b> ${i.g==="P"?"poda":"extirp."} ${i.c}`).join(" · ");
-function mdUI(){ const on=form.mode==="prog"&&!form.base; $("#multiCard").hidden=!on; if(!on) return;
+// fracionar também quando o gerente edita uma programação ainda sem baixa (e que ainda não foi dividida)
+const mdPode=()=>form.mode==="prog"&&(!form.base||((!form.base.status||form.base.status==="PROGRAMADO")&&!form.base.multiDia));
+function mdUI(){ const on=mdPode(); $("#multiCard").hidden=!on; if(!on) return;
   const n=Math.max(1,Math.min(15,parseInt($("#mdDias").value)||1)); const h=$("#mdPrev");
   if(n<2){ h.innerHTML=""; return; }
   const q=readQ("q_"), ds=mdDatas(form.sup,$("#data").value,n), ps=mdPartes(q,n);
@@ -2958,7 +2991,7 @@ $("#form").addEventListener("submit", async ev=>{
     body.extra = ehExtra() ? {origem:$("#extraOrigem").value==="Outro"?$("#extraOutro").value.trim().toUpperCase():$("#extraOrigem").value, ...(()=>{ const sel=$("#extraJustSel").value, c=$("#extraJust").value.trim().toUpperCase(); return sel==="Outra"?{just:c,justSel:"Outra",justComp:""}:{just:sel.toUpperCase()+(c?" – "+c:""),justSel:sel,justComp:c}; })(), por:sessao?.nome||"", uid:myId||null, em:base?.extra?.em||now} : null;
     delete body.id; delete body._fila;
     if(dup) body.dupCiente={com:dup.id,em:now,por:nomeAutor()||""};
-    const nd=!base?Math.max(1,Math.min(15,parseInt($("#mdDias").value)||1)):1;
+    const nd=mdPode()&&!manterBaixa?Math.max(1,Math.min(15,parseInt($("#mdDias").value)||1)):1;
     if(nd>1&&Object.keys(q).length){ const ds=mdDatas(common.supervisao||form.sup,common.data,nd), ps=mdPartes(q,nd), gid="md"+Date.now().toString(36), tot=qtdTxtPlano(q);
       const partes=ds.map((d,k)=>({d,q:ps[k]})).filter(x=>Object.keys(x.q).length);
       if(partes.length<2) e.push("as quantidades são pequenas demais para dividir em "+nd+" dias – diminua os dias ou use a baixa parcial por porcentagem");
@@ -3143,7 +3176,7 @@ const VIST_PROC=()=>{ const RG=["CENTRO OESTE","SUL","LESTE","NORTE","OESTE"]; r
 // Resumo das vistorias, baixa no sistema, indicar vistoriador e PDFs: só de coordenador para cima
 // (coordenador, gerência, gerentes, administrador; a diretoria só consulta)
 // coordenação e gerência só veem os processos da própria gerência (DIRSEN ou DIROP); administrador vê todos
-const vistGerVis=()=>{ try{ if(!sessao||!vistAlto()) return null; const e=escopoG(); return !e?null:e===ESC_DIROP?"DIROP":"DIRSEN"; }catch(e){ return null; } };
+const vistGerVis=()=>{ try{ if(!sessao||!["gerencia","gerencia_op"].includes(sessao.perfil)) return null; const e=escopoG(); return !e?null:e===ESC_DIROP?"DIROP":"DIRSEN"; }catch(e){ return null; } };
 const vistAlto=()=>!!sessao&&(ORD[sessao.perfil]??99)<=ORD.coordenador;
 const vistCoord=()=>vistAlto()&&!soLeitura();
 const vistBaixaSis=(uid=sessao?.id)=>{ const u=acesso?.[uid]; if(!u||u.ativo===false) return false; if(ehGerPerf(u.perfil)||u.perfil==="admin") return true; return !!(u.abas&&u.abas.baixa_sis); };
@@ -3168,7 +3201,7 @@ V.nMeus=uid=>{ const ids=new Set(VIST_RAW.map(a=>a[0])); return Object.entries(V
 const ESTILO = `
 .vp{--bg:#f3f5f1;--sf:#fff;--ink:#18221b;--mu:#5b6a5f;--ln:#d9e0d8;--lf:#1f6b3a;--lfs:#e2efe5;--bk:#8a5a2b;--bks:#f4e9dc;--rd:#b42318;
   color:var(--ink);font-size:15px;line-height:1.45;display:flex;flex-direction:column;gap:12px}
-@media (prefers-color-scheme:dark){.vp{--bg:#111713;--sf:#18201b;--ink:#e4ece5;--mu:#9aaa9e;--ln:#2b362e;--lf:#6cc58a;--lfs:#1d3324;--bk:#d9a46c;--bks:#33271b;--rd:#f97066}}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .vp{--bg:#111713;--sf:#18201b;--ink:#e4ece5;--mu:#9aaa9e;--ln:#2b362e;--lf:#6cc58a;--lfs:#1d3324;--bk:#d9a46c;--bks:#33271b;--rd:#f97066}}
 .vp *{box-sizing:border-box}
 .vp h2{font-size:24px;margin:0;line-height:1.1}.vp h3{font-size:18px;margin:12px 0 0}
 .vp .vp-sub{color:var(--mu);margin:0;font-size:14px}
@@ -3237,7 +3270,7 @@ const ESTILO = `
 .vp .vp-gtop>div{background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:2px;min-width:0}
 .vp .vp-gtop b{font-size:24px;line-height:1.1;font-variant-numeric:tabular-nums}.vp .vp-gtop b small{font-size:12px;color:var(--mu);font-weight:600}
 .vp .vp-gtop span{font-size:12px;color:var(--mu)}
-@media (prefers-color-scheme:dark){.vp .vp-gr{--gj:#3987e5;--gn:#d95926}}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .vp .vp-gr{--gj:#3987e5;--gn:#d95926}}
 .vp .vp-gc{background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:12px 14px;min-width:0}
 .vp .vp-gc h4{margin:0 0 2px;font-size:15px}.vp .vp-gc .vp-gs{margin:0 0 10px;font-size:12px;color:var(--mu)}
 .vp .vp-leg{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mu);margin:0 0 8px}.vp .vp-leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
@@ -3289,14 +3322,14 @@ function montar(root) {
   const usuario = () => (typeof sessao !== "undefined" && sessao && sessao.nome) || "";
   const meuId = () => (typeof sessao !== "undefined" && sessao && sessao.id) || "";
   const S = { proc: [], reg: {}, rotas: {}, sups: [], tela: "rotas", grp: LS("vp-grp") || "all", yr: LS("vp-yr") || "all", cur: LS("vp-reg") || "CENTRO OESTE",
-    start: LS("vp-start") || "", per: +(LS("vp-per") || 10), q: "", hide: true, minhas: false, f: {}, doc: {}, x: {}, lim: 40, supF: "", erro: "", carregando: true, busy: {} };
+    start: LS("vp-start") || "", per: +(LS("vp-per2") || 0), q: "", hide: true, minhas: false, f: {}, doc: {}, x: {}, lim: 40, supF: "", erro: "", carregando: true, busy: {} };
   const pode = { lancar: () => !soLeitura(), coord: () => vistCoord(), resumo: () => vistAlto(), sup: () => !!sessao && travado() && !!sessao.sup && sessao.perfil !== "fiscal", fis: () => !!sessao && sessao.perfil === "fiscal" };
   const minhaAlguma = () => Object.values(S.reg || {}).some((r) => r && r.rota && r.rota.uid === meuId() && !r.vistoriado);
 
   // ---------------- dados ----------------
   function listas() {
     S.sups = SUPS.filter((x) => noEscopo(x.id)).map((x) => ({ nome: x.id, turma: nomeSupDe(x.id) || "" }));
-    S.vist = Object.entries(acesso || {}).filter(([id, u]) => u && u.ativo !== false && u.nome && u.perfil !== "admin" && (u.perfil !== "fiscal" || fisPerm(id).vrota)).map(([id, u]) => ({ uid: id, nome: u.nome, rot: u.nome + (u.perfil === "fiscal" ? " (fiscal)" : "") })).sort((a, b) => a.nome.localeCompare(b.nome, "pt"));
+    S.vist = Object.entries(acesso || {}).filter(([id, u]) => u && u.ativo !== false && u.nome && u.perfil !== "admin" && pessoaNoEscopo(u) && (u.perfil !== "fiscal" || fisPerm(id).vrota)).map(([id, u]) => ({ uid: id, nome: u.nome, rot: u.nome + (u.perfil === "fiscal" ? " (fiscal)" : "") })).sort((a, b) => a.nome.localeCompare(b.nome, "pt"));
     const quem = meuId(); if (S._ini !== quem) { S._ini = quem; S.tela = pode.fis() ? (minhaAlguma() || !VIST.nFiscal(quem) ? "rotas" : "exec") : pode.sup() && VIST.nTurmaAberto(sessao.sup) && !minhaAlguma() ? "exec" : pode.resumo() && !pode.coord() && !minhaAlguma() ? "resumo" : "rotas"; }
   }
   const REGN = ["CENTRO OESTE", "SUL", "LESTE", "NORTE", "OESTE"];
@@ -3452,10 +3485,12 @@ function montar(root) {
     } catch (e) { toast("Não foi possível consultar o mapa: " + (e && e.message || e) + ". Confira a internet e tente de novo."); }
     S.geo.on = false; render(); toast(`Localização: ${S.geo.rua} pela rua · ${S.geo.setor} pelo setor · ${S.geo.falhou} não achados. As rotas foram reorganizadas.`);
   }
+  // aguardando baixa no sistema = já executado (constatado na vistoria) + executado pela turma, ainda sem baixa
+  const aguardaBx = (p) => !R(p).baixa && (vistEst(R(p)) === "ja_executado" || !!R(p).execucao);
   const dono = (p) => R(p).rota || null;
   const minha = (p) => { const d = dono(p); return !!d && d.uid === meuId(); };
   const deOutro = (p) => { const d = dono(p); return !!d && d.uid !== meuId(); };
-  const nPer = () => Math.max(3, Math.min(40, S.per || 10));
+  const nPer = () => (S.per > 0 ? S.per : Infinity); // 0 / vazio = sem limite
   // a rota é montada pelo app: processos da regional que passam no filtro (GED / ano), na ordem de proximidade, em blocos de N paradas
   const falta = (p) => !S.hide || !R(p).vistoriado || !!S.f[p.id];
   const listaRotas = (reg) => pode.coord() ? doReg(reg).filter((p) => inG(p) && (!S.minhas || minha(p)) && falta(p)) : doReg(reg).filter((p) => (minha(p) && falta(p)) || (R(p).vistoriado && R(p).resp_uid === meuId() && !S.hide));
@@ -3628,7 +3663,7 @@ function montar(root) {
     let h = "";
     if (!coord && !regs.length) return `<div class="vp-card" style="padding:16px"><b>Nenhuma rota indicada para você.</b><p class="vp-msg" style="margin-top:6px">O coordenador indica o vistoriador de cada rota. Quando ele indicar você, a rota aparece aqui.</p></div>`;
     h += `<div class="vp-row">${regs.map((r) => { const l = listaRotas(r), dd = l.filter((p) => R(p).vistoriado).length; return `<button class="vp-chip" data-reg="${r}" aria-pressed="${r === S.cur}">${cap(r)}<small>${dd ? dd + "/" : ""}${l.length}</small></button>`; }).join("")}</div>
-    <div class="vp-ctl">${coord ? `<label class="vp-f">Paradas por rota<input type="number" id="vp-per" min="3" max="40" value="${n}" style="width:80px"></label>` : ""}
+    <div class="vp-ctl">${coord ? `<label class="vp-f">Paradas por rota<input type="number" id="vp-per" min="1" inputmode="numeric" value="${S.per > 0 ? S.per : ""}" placeholder="sem limite" style="width:110px"></label>` : ""}
     <div class="vp-f vp-grow"><span>Ponto de partida</span><b style="font-size:14px;padding:10px 0">📍 Sempre a sua localização atual</b></div>
     <label class="vp-f vp-grow">Buscar<input type="search" id="vp-q" name="vp-busca-proc" autocomplete="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-form-type="other" value="${esc(S.q)}" placeholder="Processo, rua, setor, vistoriador"></label></div>
     <div class="vp-row"><label class="vp-row" style="font-size:14px"><input type="checkbox" id="vp-hide" ${S.hide ? "" : "checked"}> Mostrar os já vistoriados (para conferir ou alterar)</label></div>
@@ -3824,7 +3859,7 @@ function montar(root) {
   }
   function listaResumo() {
     const term = (S.rq || "").trim().toLowerCase();
-    return S.proc.filter((p) => R(p).vistoriado && (S.rsit === "all" || !S.rsit || (S.rsit === "urb" ? (R(p).urbantrim || {}).st === "pend" && vistEst(R(p)) === "nao_executado" : S.rsit === "semenv" ? R(p).situacao === "nao_executado" && !R(p).envio : S.rsit === "env" ? !!R(p).envio && !R(p).execucao : S.rsit === "exe" ? !!R(p).execucao : S.rsit === "semb" ? !R(p).baixa : S.rsit === "bx" ? !!R(p).baixa : vistEst(R(p)) === S.rsit)) && (!S.rreg || p.regional === S.rreg)
+    return S.proc.filter((p) => R(p).vistoriado && (S.rsit === "all" || !S.rsit || (S.rsit === "urb" ? (R(p).urbantrim || {}).st === "pend" && vistEst(R(p)) === "nao_executado" : S.rsit === "semenv" ? R(p).situacao === "nao_executado" && !R(p).envio : S.rsit === "env" ? !!R(p).envio && !R(p).execucao : S.rsit === "exe" ? !!R(p).execucao : S.rsit === "semb" ? aguardaBx(p) : S.rsit === "bx" ? !!R(p).baixa : vistEst(R(p)) === S.rsit)) && (!S.rreg || p.regional === S.rreg)
       && (!term || [p.processo, p.endereco, p.setor, p.ged, R(p).responsavel, R(p).equipamento, R(p).observacao].join(" ").toLowerCase().includes(term)))
       .sort((a, b) => ((R(b).data_vistoria || "") + (R(b).atualizado_em || "")).localeCompare((R(a).data_vistoria || "") + (R(a).atualizado_em || "")));
   }
@@ -3912,7 +3947,7 @@ function montar(root) {
     <div class="vp-kpi"><b style="color:var(--bk)">${c.nao_executado}</b><span>Não executados</span><em>${A.byEq.map((x) => x.n + " " + x.q).join(" · ")}</em></div></div>
     ${graficos(A)}
     <h3>Vistorias realizadas</h3>
-    <div class="vp-row">${[["all", "Todas", d], ["ja_executado", "Já executado", c.ja_executado], ["nao_executado", "Não executado", c.nao_executado], ["semenv", "Não executado sem envio", A.D.filter((p) => R(p).situacao === "nao_executado" && !R(p).envio).length], ["env", "Enviados para execução", A.D.filter((p) => R(p).envio && !R(p).execucao).length], ["exe", "Executados pela turma", A.D.filter((p) => R(p).execucao).length], ["semb", "Aguardando baixa no sistema", A.D.filter((p) => !R(p).baixa).length], ["bx", "Baixados no sistema", A.D.filter((p) => R(p).baixa).length]].map(([k, t, q]) => `<button class="vp-chip" data-rsit="${k}" aria-pressed="${(S.rsit || "all") === k}">${t}<small>${q}</small></button>`).join("")}</div>
+    <div class="vp-row">${[["all", "Todas", d], ["ja_executado", "Já executado", c.ja_executado], ["nao_executado", "Não executado", c.nao_executado], ["semenv", "Não executado sem envio", A.D.filter((p) => R(p).situacao === "nao_executado" && !R(p).envio).length], ["env", "Enviados para execução", A.D.filter((p) => R(p).envio && !R(p).execucao).length], ["exe", "Executados pela turma", A.D.filter((p) => R(p).execucao).length], ["semb", "Aguardando baixa no sistema", A.D.filter(aguardaBx).length], ["bx", "Baixados no sistema", A.D.filter((p) => R(p).baixa).length]].map(([k, t, q]) => `<button class="vp-chip" data-rsit="${k}" aria-pressed="${(S.rsit || "all") === k}">${t}<small>${q}</small></button>`).join("")}</div>
     <div class="vp-ctl"><label class="vp-f">Regional<select id="vp-rreg"><option value="">Todas</option>${REGS.map((r) => `<option value="${r}"${S.rreg === r ? " selected" : ""}>${cap(r)}</option>`).join("")}</select></label>
     <label class="vp-f vp-grow">Buscar<input type="search" id="vp-rq" value="${esc(S.rq || "")}" placeholder="Processo, rua, vistoriador"></label></div>
     ${L.length ? `<section class="vp-card"><ol>${L.slice(0, S.lim).map((p) => { const r = R(p), u = r.urbantrim || {};
@@ -4238,7 +4273,7 @@ function montar(root) {
   });
   root.addEventListener("change", async (e) => {
     const t = e.target, ds = t.dataset;
-    if (t.id === "vp-per") { S.per = +t.value || 10; LS("vp-per", S.per); render(); return; }
+    if (t.id === "vp-per") { S.per = Math.max(0, +t.value || 0); LS("vp-per2", S.per); render(); return; }
     if (t.id === "vp-start") { S.start = t.value; LS("vp-start", S.start); render(); return; }
     if (t.id === "vp-hide") { S.hide = !t.checked; render(); return; }
     if (ds.rvsel !== undefined) { S.draft = S.draft || {}; S.draft[ds.rvsel] = t.value; if (t.value) indicarRota(+ds.rvsel, t.value); return; }
@@ -5516,6 +5551,40 @@ document.querySelector(".ksub").onclick=e=>{ const b=e.target.closest("[data-kt]
   if(g) renderChkGraf(); else { kModo=b.dataset.kt==="man"?"man":"chk"; renderChk(); } };
 $("#kgData").value=hoje(); $("#kgData").onchange=renderChkGraf;
 $("#kgSup").innerHTML=optTurmas(); $("#kgSup").value=meuSup()||"";
+// ---------- equipamentos (prefixo / placa): o administrador cadastra; cada gerência só vê os seus ----------
+const EQUIP_BASE=[...$("#viatura").options].map(o=>({v:o.value,tipo:o.value.split(" ")[0],ger:"DIRSEN",reserva:/reserva/i.test(o.textContent),ativo:true}));
+const equipLista=()=>{ const d=assins?.equip_lista; return Array.isArray(d?.itens)?d.itens:EQUIP_BASE; };
+const equipGerVis=()=>{ const e=escopoG(); return !e?null:e===ESC_DIROP?"DIROP":"DIRSEN"; };
+const equipVis=()=>{ const g=equipGerVis(); return equipLista().filter(x=>x.ativo!==false&&(!g||x.ger===g)); };
+function equipAplicar(){ try{ const sel=$("#viatura"), v0=sel.value, L=equipVis();
+  sel.innerHTML=L.map(x=>`<option value="${esc(x.v)}">${esc(x.v)}${x.reserva?" (reserva)":""}</option>`).join("")+(v0&&form?.base?.viatura===v0&&!L.some(x=>x.v===v0)?`<option value="${esc(v0)}">${esc(v0)}</option>`:"");
+  if(v0&&[...sel.options].some(o=>o.value===v0)) sel.value=v0;
+  const kg=$("#kgVt"); if(kg){ const k0=kg.value; kg.innerHTML='<option value="">Todos os equipamentos</option>'+L.map(x=>`<option value="${esc(x.v)}">${esc(x.v)}${x.reserva?" (reserva)":""}</option>`).join(""); kg.value=k0; } }catch(e){} }
+const podeEquip=()=>isAdm()||isGerente();
+function abrirEquip(){ if(!podeEquip()) return; const host=$("#sheetHost"), g=equipGerVis();
+  const L=equipLista().map((x,i)=>({...x,i})).filter(x=>!g||x.ger===g);
+  host.innerHTML=`<div class="sheet" id="sh"><div class="panel" role="dialog" aria-label="Equipamentos">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:22px">Equipamentos</b><button type="button" class="btn sec" id="eqX" style="min-height:44px;padding:0 14px">Fechar</button></div>
+    <p class="note" style="margin:0">Equipamentos que aparecem na programação, na O.S, no checklist e no comunicado de defeito. ${g?`Você vê os equipamentos da <b>${g}</b>.`:"Os da <b>DIRSEN</b> aparecem só para o gerente Victor e as turmas PODA I e II; os da <b>DIROP</b>, só para o gerente Pedro e as turmas PODA III e IV."}</p>
+    <div class="list">${L.length?L.map(x=>`<div class="item" style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><div><b>${esc(x.v)}</b>${x.reserva?` <span class="pill PROGRAMADO">reserva</span>`:""}<div class="note">${esc(x.ger)}${x.ativo===false?` · <b style="color:var(--bad)">desativado</b>`:""}</div></div>
+      <div style="display:flex;gap:6px"><button type="button" class="btn sec" style="min-height:40px;font-size:13px" data-eqat="${x.i}">${x.ativo===false?"Reativar":"Desativar"}</button><button type="button" class="btn danger" style="min-height:40px;font-size:13px" data-eqdel="${x.i}">Excluir</button></div></div>`).join(""):`<p class="note">Nenhum equipamento cadastrado.</p>`}</div>
+    <section class="card" style="margin:0"><div class="step">Cadastrar equipamento</div>
+      <div class="row2"><label class="f">Tipo<select id="eqTipo">${["SPLINTER","SKY","VAN","CESTO AÉREO","CAMINHÃO","MUNCK","TRATOR","OUTRO"].map(t=>`<option>${t}</option>`).join("")}</select></label>
+      <label class="f">Prefixo / placa<input id="eqPref" placeholder="Ex.: 5080.0" autocapitalize="characters"></label></div>
+      <div class="row2"><label class="f">Gerência<select id="eqGer" ${g?"disabled":""}>${["DIRSEN","DIROP"].map(x=>`<option ${x===(g||"DIRSEN")?"selected":""}>${x}</option>`).join("")}</select></label>
+      <label class="ck" style="align-self:end"><input type="checkbox" id="eqRes"><span>É reserva (pode ser usado por qualquer equipe)</span></label></div>
+      <p class="err" id="eqErr" hidden></p><button type="button" class="btn pri" id="eqAdd">Cadastrar</button></section></div></div>`;
+  const close=()=>host.innerHTML="", erro=t=>{ const e=$("#eqErr"); e.textContent=t; e.hidden=!t; };
+  const grava=async(itens,msg)=>{ const doc={itens,por:sessao?.nome||"",em:new Date().toISOString()}; const ant=assins.equip_lista;
+    try{ await db.collection(ASS_COL).doc("equip_lista").set(doc); assins.equip_lista=doc; equipAplicar(); toast(msg); abrirEquip(); }catch(e){ assins.equip_lista=ant; erro("Não foi possível salvar agora: "+(e?.message||"tente de novo")); } };
+  $("#eqX").onclick=close; $("#sh").onclick=async e=>{ if(e.target.id==="sh") return close();
+    const at=e.target.closest("[data-eqat]"), dl=e.target.closest("[data-eqdel]"), I=JSON.parse(JSON.stringify(equipLista()));
+    if(at){ const x=I[+at.dataset.eqat]; x.ativo=x.ativo===false; return grava(I,`${x.v} ${x.ativo?"reativado":"desativado"}.`); }
+    if(dl){ if(dl.dataset.armed!=="1"){ dl.dataset.armed="1"; dl.textContent="Confirmar"; return; } const x=I.splice(+dl.dataset.eqdel,1)[0]; return grava(I,`${x.v} excluído.`); } };
+  $("#eqAdd").onclick=()=>{ const t=$("#eqTipo").value, p=$("#eqPref").value.trim().toUpperCase(); if(!p) return erro("Informe o prefixo ou a placa.");
+    const v=(t==="OUTRO"?p:t+" "+p).replace(/\s+/g," "), I=JSON.parse(JSON.stringify(equipLista()));
+    if(I.some(x=>x.v===v)) return erro("Esse equipamento já está cadastrado.");
+    I.push({v,tipo:t,ger:g||$("#eqGer").value,reserva:$("#eqRes").checked,ativo:true}); grava(I,`${v} cadastrado.`); }; }
 $("#kgVt").innerHTML='<option value="">Todos os equipamentos</option>'+[...$("#viatura").options].map(o=>`<option value="${esc(o.value)}">${esc(o.textContent)}</option>`).join("");
 $("#kgPer").onchange=renderChkGraf; $("#kgSup").onchange=renderChkGraf; $("#kgVt").onchange=renderChkGraf;
 
@@ -5936,7 +6005,12 @@ function renderContrato(){
       <div><span>Saldo</span><b>${brlK(Math.max(0,vc-vt))}</b><i>${vt>vc?"<b style='color:var(--bad)'>"+brlK(vt-vc)+" acima</b>":"disponível"}</i></div>
     </div>
     ${acima.length?`<div class="err" style="margin:0">Acima do contrato em ${mesLbl(sel)}: ${acima.map(x=>`<b>${x.c}</b> (${int(x.t)} de ${int(x.cq)})`).join(", ")}.</div>`:""}
-    <div class="lg" style="display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted)"><span><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--c-exec);margin-right:4px"></i>Executado</span><span><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--c-prev);margin-right:4px"></i>A executar</span><span><i style="display:inline-block;width:2px;height:10px;background:var(--ink);margin-right:4px"></i>Limite do contrato</span></div>
+    <div class="ctleg"><b>Como ler a barra de cada item</b>
+      <div><i style="background:var(--c-exec)"></i><span><b>Azul escuro – executado:</b> quantidade já feita no mês (com baixa).</span></div>
+      <div><i style="background:var(--c-prev)"></i><span><b>Azul claro – a executar:</b> o que está programado e ainda não teve baixa.</span></div>
+      <div><i style="background:var(--sunk);border:1px solid var(--line)"></i><span><b>Cinza – saldo livre:</b> o que ainda cabe no contrato.</span></div>
+      <div><i class="lnp"></i><span><b>Risco tracejado – ritmo do mês:</b> até onde o executado deveria estar hoje (${rit>0&&rit<1?Math.round(rit*100)+"% do mês decorrido":"parte do mês que já passou"}). Azul escuro antes do tracejado = atrasado; depois = adiantado.</span></div>
+      <div><i class="lnl"></i><span><b>Risco preto – limite do contrato:</b> quantidade contratada no mês (100%). Passar dele = acima do contrato.</span></div></div>
     ${its.map(x=>{const sc=Math.max(1,x.pt), [cls,txt]=ctStatus(x), w=v=>Math.min(100,v/sc*100);
       return `<div class="ct-row"><div class="ct-top"><div><b>${x.c}</b> <span class="d">${x.d}</span></div><span class="pill ${cls}">${txt}</span></div>
       <div class="ct-bar" role="img" aria-label="${x.c}: executado ${x.e}, a executar ${x.p}, contrato ${x.cq}">
@@ -5991,8 +6065,8 @@ function renderResumo(){
     <p class="note" style="margin:0 0 8px;font-size:12px"><b>Programados</b>: serviços lançados na programação · <b>Executados</b>: baixa como executado ou parcial · <b>Remarcados</b>: baixa como não executado (foi para outra data) · <b>Sem baixa (atrasados)</b>: a data já passou e ninguém deu baixa · <b>Fora da programação</b>: serviços extras / emergenciais feitos sem estar programados · <b>Receita prevista</b>: valor do que foi programado · <b>Receita executada</b>: valor do que foi feito.</p>${!rows.length?`<p class="note" style="margin:0 0 8px;color:var(--bad)"><b>Nenhum serviço lançado neste período</b> – por isso tudo está zerado. Troque a semana ou o dia no filtro acima.</p>`:""}`; }catch(e){}
   $("#tSup").innerHTML=`<thead><tr><th>Turma / supervisor</th><th>Programados</th><th>Executados</th><th>Remarcados</th><th>Sem baixa (atrasados)</th><th>Fora da programação</th><th>Receita prevista</th><th>Receita executada</th></tr></thead><tbody>`+
     sups.map(s=>{const b=bySup[s.id]||{prog:0,ex:0,nao:0,pend:0,av:0,rp:0,re:0};Object.keys(T).forEach(k=>T[k]+=b[k]);
-      return `<tr><td>${esc(s.id)}<br><span class="note">${esc(s.enc)}</span></td><td>${b.prog}</td><td>${b.ex}</td><td>${b.nao}</td><td>${b.pend}</td><td>${b.av}</td><td>${brl(b.rp)}</td><td>${brl(b.re)}</td></tr>`}).join("")+
-    `</tbody><tfoot><tr><td>Total</td><td>${T.prog}</td><td>${T.ex}</td><td>${T.nao}</td><td>${T.pend}</td><td>${T.av}</td><td>${brl(T.rp)}</td><td>${brl(T.re)}</td></tr></tfoot>`;
+      return `<tr><td>${esc(s.id)}<br><span class="note">${esc(s.enc)}</span></td>${tSupCels(b)}</tr>`}).join("")+
+    `</tbody><tfoot><tr><td>Total</td>${tSupCels(T)}</tr></tfoot>`;
   try{ const f=rptFiltro(), per=`${esc(periodoTxt(f))}${f.sup?" · <b>Turma:</b> "+esc(f.sup):f.grp?" · <b>Grupo:</b> "+esc(f.grp):" · todas as turmas"}`;
     $("#tItemCab").innerHTML=`<h3 style="margin:18px 0 2px;font-size:19px">Quantidade de árvores por item do contrato</h3>
     <p class="note" style="margin:0 0 8px"><b>Período:</b> ${per}. Os números são <b>quantidades de árvores</b> (unidades do contrato), não de serviços. <b>Previsto</b>: árvores programadas · <b>Executado</b>: árvores que tiveram baixa como executadas · <b>Receita executada</b>: executado × preço unitário do contrato.${!rows.length?` <b style="color:var(--bad)">Nenhum serviço lançado neste período – por isso tudo está zerado.</b>`:""}</p>`;
@@ -6124,6 +6198,7 @@ function chL(cats, series, fmt, W=714, H=200){
 }
 
 // "Semana 33ª · de 19/10 a 25/10/2026"
+const tSupCels=b=>[["Programados",b.prog],["Executados",b.ex],["Remarcados",b.nao],["Sem baixa",b.pend],["Fora da program.",b.av],["Receita prevista",brl(b.rp)],["Receita executada",brl(b.re)]].map(([l,v])=>`<td data-l="${l}">${v}</td>`).join("");
 function semTxt(s){ if(!s) return ""; const [a,b]=periodoSem(+s).split(" a "); return `Semana ${s}ª · de ${a} a ${b}`; }
 function periodoSem(s){const b=semIni(s);const e=new Date(b);e.setDate(b.getDate()+6);const f=d=>String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0");return f(b)+" a "+f(e)+"/"+e.getFullYear()}
 function rptFiltro(){const dia=$("#rDia").value; return {dia, sem:dia?String(semanaDe(dia)||""):$("#rSem").value, grp:$("#rGrp").value, sup:$("#rSup").value}}
@@ -7450,7 +7525,8 @@ const CHK_OBRIG_INI="2026-10-28"; // obrigatório a partir do turno NOTURNO que 
 // quem cobra no WhatsApp: Poda I e II = o gerente (Victor) e quem tiver "pode cobrar" em Acessos (Cleomar); Poda III e IV = o gerente e o gerente operacional DIROP (Pedro)
 const GRP_COBRA_DIRSEN=new Set(["PODA I","PODA II"]);
 const cobraFlag=u=>!!u&&(u.cobra===true||(u.cobra!==false&&/^CLEOMAR\b/i.test(u.nome||"")));
-const podeCobrarSup=sup=>{ if(!sessao||travado()||soLeitura()) return false; if(isGerente()) return noEscopo(sup); if(GRP_COBRA_DIRSEN.has(supOf(sup)?.grupo)) return cobraFlag(acesso?.[sessao.id]); return sessao.perfil==="gerencia_op"; };
+const cobraTxt=sup=>{ const e=sup?escopoLot(sup):escopoG(); return e===ESC_DIROP?"Poda III e IV":e===ESC_DIRSEN?"Poda I e II":"gerência da pessoa"; };
+const podeCobrarSup=sup=>{ if(!sessao||travado()||soLeitura()) return false; if(isGerente()) return noEscopo(sup); return noEscopo(sup)&&cobraFlag(acesso?.[sessao.id]); };
 // ---------- CANCELAR NOTIFICAÇÃO: quem cobra a turma (gerente, Cleomar na Poda I/II, Pedro na Poda III/IV) cancela o aviso para todos, com motivo ----------
 let notifCanc={};
 // cancelamentos de aviso: cada um num documento próprio (coleção assinaturas, id "canc_…"), que gerente e coordenador conseguem gravar;
@@ -7906,12 +7982,13 @@ function renderPainel(){
     <button type="button" class="btn zapcob dkzap" id="zapResumo">💬 Enviar no WhatsApp (imagem ou texto)</button>
   </div>
   <div class="dkpis full">
-    <div class="dk"><span>Receita executada</span><b title="${esc2(brl(Re))}">${brlS(Re)}</b><i>${pctR}% de ${brlS(Rp)} previstos</i><div class="bar" role="img" aria-label="${pctR}% da receita prevista"><div style="width:${Math.min(100,pctR)}%"></div></div></div>
+    <div class="dk"><span>Receita executada</span><b title="${esc2(brl(Re))}">${brlS(Re)}</b><i>${pctR}% de ${brlS(Rp)} previstos</i><i style="display:block;margin-top:2px;font-weight:600;color:${Rp-Re>0?"var(--bad)":"var(--ok)"}">${Rp-Re>0?"Falta "+brlS(Rp-Re)+" ("+Math.max(0,100-pctR)+"%)":"Meta prevista atingida"}</i><div class="bar" role="img" aria-label="${pctR}% da receita prevista"><div style="width:${Math.min(100,pctR)}%"></div></div></div>
     <div class="dk"><span>Cumprimento</span><b>${cump===null?"—":cump+"%"}</b><i>${c.SIM} exec. · ${c.PARCIAL} parc. · ${c.NAO} não exec.</i><div class="bar" role="img" aria-label="${cump||0}% de cumprimento"><div style="width:${cump||0}%"></div></div></div>
     <div class="dk"><span>Árvores executadas</span><b>${nf0(Ep+Ee)}</b><i>${nf0(Ep)} podas · ${nf0(Ee)} extirp. · previstas ${nf0(Pp+Pe)}</i></div>
     <div class="dk${(c.late+ocAg)?" warn":""}"><span>Pendências</span><b>${nf0(c.late+ocAg)}</b><i>${c.late} sem baixa · ${ocAg} queda${ocAg===1?"":"s"} aguardando</i></div>
   </div>`;
   h+=acompHtml(F);
+  try{ h+=extraImpHtml(rows); }catch(e){}
   // contrato do mês
   if(!travado()){
     let mes=mesDe(hoje()); if(F.dia) mes=mesDe(F.dia); else if(sem){const b=semIni(+sem);mes=b.getFullYear()+"-"+String(b.getMonth()+1).padStart(2,"0");}
@@ -8081,6 +8158,30 @@ function acAnda(per,ref,k){ const r=new Date(ref+"T12:00");
   else if(per==="qui"){ if(k>0){ if(r.getDate()<=15) r.setDate(16); else { r.setMonth(r.getMonth()+1,1); } } else { if(r.getDate()<=15){ r.setDate(0); r.setDate(16); } else r.setDate(1); } }
   else r.setMonth(r.getMonth()+k,1);
   return isoD(r); }
+// demonstrativo do impacto do serviço feito fora da programação (serviço extra enviado + registro emergencial + sem programação)
+function extraImpHtml(rows){
+  const fora=rows.filter(r=>r.extra||r.ocorrencia||r.avulso); if(!fora.length) return "";
+  const dExec=r=>r.dataExec||r.data, chave=r=>r.supervisao+"|"+dExec(r);
+  const dias=new Set(fora.map(chave));
+  const prog=rows.filter(r=>!r.extra&&!r.ocorrencia&&!r.avulso);
+  const afet=prog.filter(r=>(r.status==="NÃO"||r.status==="PARCIAL")&&dias.has(r.supervisao+"|"+r.data));
+  const reF=fora.reduce((a,r)=>a+execRec(r),0), reT=rows.reduce((a,r)=>a+execRec(r),0);
+  const perda=afet.reduce((a,r)=>a+Math.max(0,receitaDe(prevQ(r))-execRec(r)),0);
+  const nEx=fora.filter(r=>r.extra).length, nOc=fora.filter(r=>r.ocorrencia).length, nAv=fora.length-nEx-nOc;
+  const porT={}; fora.forEach(r=>{ const t=porT[r.supervisao]||(porT[r.supervisao]={n:0,re:0,af:0,pe:0}); t.n++; t.re+=execRec(r); });
+  afet.forEach(r=>{ const t=porT[r.supervisao]||(porT[r.supervisao]={n:0,re:0,af:0,pe:0}); t.af++; t.pe+=Math.max(0,receitaDe(prevQ(r))-execRec(r)); });
+  const porO={}; fora.filter(r=>r.extra).forEach(r=>{ const k=r.extra.origem||"—"; porO[k]=(porO[k]||0)+1; });
+  const pct=reT?Math.round(reF/reT*100):0;
+  return `<div class="dcard full"><h3>Impacto do serviço fora da programação <small>serviço extra, registro emergencial e sem programação</small></h3>
+    <p class="dcap">O que as turmas fizeram fora da programação no período e o que isso tirou da programação: serviços programados para a mesma turma no mesmo dia que ficaram <b>não executados</b> ou <b>parciais</b>.</p>
+    <div class="dkpis" style="margin:8px 0">
+      <div class="dk"><span>Fora da programação</span><b>${fora.length}</b><i>${nEx} extra${nEx===1?"":"s"} · ${nOc} emergencia${nOc===1?"l":"is"}${nAv?" · "+nAv+" sem programação":""}</i></div>
+      <div class="dk"><span>Receita fora da programação</span><b>${brlS(reF)}</b><i>${pct}% de toda a receita executada</i></div>
+      <div class="dk${afet.length?" warn":""}"><span>Programados afetados</span><b>${afet.length}</b><i>não executados ou parciais nos mesmos dias</i></div>
+      <div class="dk${perda?" warn":""}"><span>Receita adiada</span><b>${brlS(perda)}</b><i>o que deixou de ser feito da programação</i></div></div>
+    <div class="tbl" style="margin-top:4px"><table class="eximp"><thead><tr><th>Turma</th><th>Fora da programação</th><th>Receita fora</th><th>Programados afetados</th><th>Receita adiada</th></tr></thead><tbody>${Object.entries(porT).sort((a,b)=>b[1].n-a[1].n).map(([k,t])=>`<tr><td>${esc(k)}<br><span class="note">${esc(nomeSupDe(k)||"")}</span></td><td>${t.n}</td><td>${brl(t.re)}</td><td>${t.af}</td><td>${brl(t.pe)}</td></tr>`).join("")}</tbody></table></div>
+    ${Object.keys(porO).length?`<p class="note" style="margin:8px 0 0"><b>Quem mandou os serviços extras:</b> ${Object.entries(porO).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`${esc(k)} (${n})`).join(" · ")}</p>`:""}</div>`;
+}
 function acompHtml(F){
   const sw=+(F.sem||semanaDe(F.dia||hoje())||0); if(!sw) return "";
   const hj=hoje(), sups=SUPS.filter(s=>(!F.grp||s.grupo===F.grp)&&(!F.sup||s.id===F.sup));
@@ -8400,6 +8501,8 @@ function abrirMais(){ if(sessao?.perfil==="gerencia_op"||(sessao?.perfil==="fisc
   const itens=NAV_MAIS.map(v=>({k:"v:"+v,t:VIEW_NOME[v],i:ICO[v]}));
   if(isGerente()&&!sessao?.porGerente) itens.push({k:"a:zerar",t:"Zerar dados de teste",i:ICO.alerta});
   if(isGerente()) itens.push({k:"a:acessos",t:"Acessos",i:ICO.acessos},{k:"a:teste",t:modoTeste()?"Desligar modo teste":"Modo teste",i:ICO.teste});
+  itens.push({k:"a:rels",t:"Relatórios prontos para baixar",i:svgI('<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M12 12v6m-3-3 3 3 3-3"/>')});
+  if(podeEquip()) itens.push({k:"a:equip",t:"Equipamentos (cadastrar)",i:svgI('<rect x="2" y="9" width="13" height="8" rx="1"/><path d="M15 12h4l3 3v2h-7"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/>')});
   if(!PERF_ABAIXO.includes(sessao?.perfil)||abaOn(sessao.perfil,"busca")) itens.push({k:"a:busca",t:"Pesquisar serviço por endereço",i:svgI('<circle cx="11" cy="11" r="7"/><path d="m20 20-4.2-4.2"/>')});
   if(!soLeitura()&&SUPS.some(x=>podeEditarEscala(x.id))) itens.push({k:"a:escala",t:travado()?"Minha escala de trabalho":"Escala de trabalho das turmas",i:ICO.form});
   itens.push({k:"a:ajuda",t:"Ajuda desta tela",i:svgI('<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17v.5"/>')},{k:"a:sair",t:"Sair",i:ICO.sair,c:"sair"});
@@ -8411,12 +8514,30 @@ function abrirMais(){ if(sessao?.perfil==="gerencia_op"||(sessao?.perfil==="fisc
   const close=()=>host.innerHTML="";
   $("#sh").onclick=e=>{ if(e.target.id==="sh") close(); const b=e.target.closest("[data-mk]"); if(!b) return; const [t,k]=b.dataset.mk.split(":"); close();
     if(t==="v") irPara(k);
-    else if(k==="acessos") abrirAcessos(); else if(k==="teste") $("#testeBtn").click(); else if(k==="sair") $("#sairBtn").click(); else if(k==="ajuda") abrirAjuda(curView); else if(k==="escala") abrirEscala(travado()?sessao.sup:""); else if(k==="busca") abrirBuscaEnd(); else if(k==="zerar") abrirZerar(); };
+    else if(k==="acessos") abrirAcessos(); else if(k==="teste") $("#testeBtn").click(); else if(k==="sair") $("#sairBtn").click(); else if(k==="ajuda") abrirAjuda(curView); else if(k==="escala") abrirEscala(travado()?sessao.sup:""); else if(k==="busca") abrirBuscaEnd(); else if(k==="equip") abrirEquip(); else if(k==="rels") abrirRelatorios(); else if(k==="zerar") abrirZerar(); };
   $("#maisFechar").onclick=close;
 }
 // aba Pendências: junta os avisos do Painel, o checklist obrigatório e as pendências do checklist; o número aparece no ícone do sino
 // pesquisar serviço por endereço (bairro, rua, quadra/lote, processo) em toda a programação que a pessoa pode ver
 const nBusca=t=>String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/\b(RUA|R|AVENIDA|AV|ALAMEDA|AL|SETOR|ST|S|JARDIM|JD|VILA|VL|QUADRA|QD|Q|LOTE|LT)\b\.?/g," ").replace(/[^A-Z0-9]+/g," ").replace(/\b0+(\d)/g,"$1").trim();
+// Mais › Relatórios prontos: só os relatórios de serviço já preenchidos e assinados, para baixar em PDF ou Word
+function abrirRelatorios(){
+  const host=$("#sheetHost"); let q0=ls.get("gpe_relq","");
+  host.innerHTML=`<div class="sheet" id="rsh"><div class="panel" role="dialog" aria-label="Relatórios prontos">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:22px">Relatórios prontos para baixar</b><button type="button" class="btn sec" id="rshX" style="min-height:44px;padding:0 14px">Fechar</button></div>
+    <p class="note" style="margin:0">Relatórios de serviço já preenchidos (com as fotos e assinados) dos serviços executados. Toque em PDF ou Word para baixar.</p>
+    <label class="f">Procurar<input type="search" id="rshQ" value="${esc(q0)}" placeholder="Processo, SEI, endereço, bairro ou turma" autocomplete="off" autocorrect="off" spellcheck="false" data-lpignore="true"></label>
+    <p class="note" style="margin:0" id="rshInfo"></p><div id="rshRes" style="display:grid;gap:8px"></div></div></div>`;
+  const qi=$("#rshQ"), res=$("#rshRes"), inf=$("#rshInfo");
+  const roda=()=>{ ls.set("gpe_relq",qi.value); const ps=nBusca(qi.value).split(" ").filter(Boolean);
+    const L=todos(true).filter(r=>!r.arquivado&&relLiberado(r)).filter(r=>{ if(!ps.length) return true; const t=" "+nBusca([r.bairro,r.logradouro,r.processo,r.ped,r.relat?.processo,r.relat?.ped,r.supervisao,supNome(r.supervisao)].join(" "))+" "; return ps.every(p=>t.includes(p)); })
+      .sort((a,b)=>(b.dataExec||b.data||"").localeCompare(a.dataExec||a.data||""));
+    inf.textContent=L.length?`${L.length} relatório${L.length===1?"":"s"} pronto${L.length===1?"":"s"}${L.length>100?" (mostrando os 100 mais recentes)":""}.`:"Nenhum relatório pronto encontrado.";
+    res.innerHTML=L.slice(0,100).map(r=>`<div class="item" style="display:grid;gap:6px"><div><b>${fmtD(r.dataExec||r.data)}</b> · ${esc(r.bairro||"")} — ${esc(r.logradouro||"")}<div class="note">${esc(supNome(r.supervisao))}${r.equipe?" · "+esc(r.equipe):""} · ${esc(r.tipo||"")}${(r.relat?.processo||r.processo)?" · proc. "+esc(r.relat?.processo||r.processo):""}${r.relat?.sist?" ("+esc(r.relat.sist)+")":""}</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><button type="button" class="btn pri" style="min-height:44px;font-size:14px" data-relpdf="${esc(r.id)}">📄 PDF</button><button type="button" class="btn sec" style="min-height:44px;font-size:14px" data-reldocx="${esc(r.id)}">📝 Word</button></div></div>`).join(""); };
+  let tm=null; qi.oninput=()=>{ clearTimeout(tm); tm=setTimeout(roda,180); }; roda();
+  $("#rsh").onclick=e=>{ if(e.target.id==="rsh"||e.target.closest("#rshX")) host.innerHTML=""; };
+}
 function abrirBuscaEnd(){
   const host=$("#sheetHost"); let q0=ls.get("gpe_buscaend","");
   host.innerHTML=`<div class="sheet" id="bsh"><div class="panel" role="dialog" aria-label="Pesquisar serviço por endereço">
@@ -8883,7 +9004,7 @@ limpar("prog"); ajudaMontar(); show(sessao?"inicio":ls.get("gpe_tab","campo")); 
   }, err=>{});
   db.collection(ORC_COL).limit(1000).onSnapshot(snap=>{ orcs=snap.docs.map(d=>({...d.data(),id:d.id})); try{ if(curView==="orc") renderOrc(); }catch(e){} }, err=>{});
   db.collection(MAN_COL).where("data",">=",MAN_CORTE).limit(1000).onSnapshot(snap=>{ mans=snap.docs.map(d=>({...d.data(),id:d.id})); try{renderChk();renderChkGraf()}catch(e){} }, err=>{});
-  db.collection(ASS_COL).limit(500).onSnapshot(snap=>{ assins={}; const et={}; const cd={}; snap.docs.forEach(d=>{ if(d.id.startsWith("esc_")) et[d.id]=d.data(); else if(d.id.startsWith("canc_")) cd[d.id]=d.data(); else assins[d.id]=d.data(); }); escTurmas=et; escMesclar(); cancDocs=cd; cancMesclar(); if(sessao?.perfil==="fiscal"||PERF_ABAIXO.includes(sessao?.perfil)){ try{applyPerms()}catch(e){} } try{renderAll()}catch(e){} }, err=>{});
+  db.collection(ASS_COL).limit(500).onSnapshot(snap=>{ assins={}; const et={}; const cd={}; snap.docs.forEach(d=>{ if(d.id.startsWith("esc_")) et[d.id]=d.data(); else if(d.id.startsWith("canc_")) cd[d.id]=d.data(); else assins[d.id]=d.data(); }); escTurmas=et; escMesclar(); cancDocs=cd; cancMesclar(); equipAplicar(); if(sessao?.perfil==="fiscal"||PERF_ABAIXO.includes(sessao?.perfil)){ try{applyPerms()}catch(e){} } try{renderAll()}catch(e){} }, err=>{});
   db.collection(COL).where("status","==","PROGRAMADO").limit(1000).onSnapshot(snap=>{
     pendentes=snap.docs.map(d=>({...d.data(),id:d.id})); mergeRegs(); renderAll();
   }, err=>{});
