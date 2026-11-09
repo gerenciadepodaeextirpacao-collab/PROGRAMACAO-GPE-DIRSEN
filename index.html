@@ -2045,7 +2045,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.10e";
+const APP_VERSAO="2026.11.10f";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -3394,7 +3394,7 @@ function montar(root) {
       const q = { ...p, editado: e }; ["processo", "ged", "parecer", "endereco", "setor", "loc", "urbantrim"].forEach((k) => { if (e[k] != null) q[k] = e[k]; });
       if (e.ano != null) q.ano = +e.ano || null; if (REGN.includes(e.regional)) q.regional = e.regional;
       [["po", "qtd_poda"], ["ex", "qtd_extirpacao"], ["de", "qtd_destocamento"]].forEach(([a, b]) => { if (e[a] != null) q[b] = +e[a] || 0; }); return q; };
-    const gv = vistGerVis(); return _base.concat(man).map(ED).filter((p) => !gv || (p.ger || "DIRSEN") === gv); };
+    const gv = vistGerVis(); return _base.concat(man).map(ED).map((p) => ((VIST.regs || {})[p.id] || {}).urb_cad ? { ...p, urbantrim: "sim" } : p).filter((p) => !gv || (p.ger || "DIRSEN") === gv); };
   function carregar() { VIST.iniciar(); S.proc = todosProc(); listas(); S.erro = ""; S.carregando = !VIST.pronto; if (!VIST.pronto) setTimeout(() => { VIST.iniciar(); if (S.carregando && VIST.pronto) { S.carregando = false; S.reg = VIST.regs; render(); } }, 1500); render(); }
   function aoVivo() { VIST.ouvir(() => { S.reg = VIST.regs; S.rotas = VIST.rotas; const n0 = S.proc.length; S.proc = todosProc(); if (S.proc.length !== n0) _idx = null; S.carregando = false; if (VIST.erro) S.erro = VIST.erro; if (!root.hidden && root.offsetParent !== null) render(); }); S.reg = VIST.regs; S.rotas = VIST.rotas; }
   async function gravar(ids, campos) {
@@ -4099,6 +4099,10 @@ function montar(root) {
       ${x.fotos ? `<span class="vp-lab">Relatório de serviço (para responder no SEI / Intranet)</span><div class="vp-row"><button class="vp-btn vp-pri" data-vrelpdf="${p.id}">📄 Baixar em PDF</button><button class="vp-btn" data-vreldocx="${p.id}">📝 Baixar em Word</button></div>` : ""}
       ${comBotoes && pode.coord() ? `<div class="vp-row"><button class="vp-btn" data-exdesfaz="${p.id}">Desfazer execução</button></div>` : ""}</div>`;
   }
+  // Urbantrim: já executado não precisa lançar; para executar, o processo tem que estar cadastrado no Urbantrim
+  const urbOk = (p) => p.urbantrim === "sim";
+  const urbHtml = (p) => urbOk(p) ? `<span class="vp-msg" style="color:#1f6b3a">✔ Cadastrado no Urbantrim${R(p).urb_cad ? ` (informado por ${esc(R(p).urb_cad.por || "–")} em ${fHora(R(p).urb_cad.em)})` : ""}</span>`
+    : `<div class="vp-need" style="background:#fdecea;border-color:#f3b8b2;color:#8a1c12">⚠ <b>Para executar, o processo tem que estar cadastrado no Urbantrim.</b> ${p.urbantrim === "nao" ? "Ele foi marcado como fora do Urbantrim." : "Ainda não foi informado se está no Urbantrim."} Cadastre no Urbantrim e depois toque abaixo.${pode.coord() ? `<div class="vp-row" style="margin-top:6px"><button class="vp-btn vp-pri" data-urbok="${p.id}">✔ Já cadastrei no Urbantrim</button></div>` : ""}</div>`;
   function envioHtml(p) {
     const r = R(p), e = r.envio, ef = r.envio_fiscal, x = (S.ev || {})[p.id] || {};
     if (r.execucao) return execFeitaHtml(p, true);
@@ -4106,7 +4110,8 @@ function montar(root) {
       <span class="vp-msg">${ef ? `📲 O supervisor repassou ao fiscal <b>${esc(ef.nome)}</b> em ${fHora(ef.em)}. Aguardando a execução e as 3 fotos.` : "Aguardando o supervisor repassar ao fiscal."}</span>${pode.coord() ? `<div class="vp-row"><button class="vp-btn" data-evedit="${p.id}">Trocar a supervisão</button><button class="vp-btn" data-evcancel="${p.id}">Cancelar envio</button></div>` : ""}</div>`;
     if (!pode.coord()) return `<div class="vp-msg">Ainda não enviado para execução.</div>`;
     const sups = SUPS.filter((q) => noEscopo(q.id));
-    return `<div class="vp-vb"><span class="vp-lab">Enviar para uma supervisão executar</span>
+    if (!urbOk(p)) return `<div class="vp-vb"><span class="vp-lab">Enviar para uma supervisão executar</span>${urbHtml(p)}</div>`;
+    return `<div class="vp-vb"><span class="vp-lab">Enviar para uma supervisão executar</span>${urbHtml(p)}
       <select id="vp-ev-${p.id}" data-evsup="${p.id}"><option value="">— Escolher a supervisão / turma —</option>${sups.map((q) => `<option value="${esc(q.id)}"${(x.sup || (e && e.sup)) === q.id ? " selected" : ""}>${esc(supNome(q.id))}</option>`).join("")}</select>
       <span class="vp-msg">Equipamento indicado na vistoria: <b>${esc(r.equipamento || "–")}</b>. O supervisor recebe no Início e repassa ao fiscal, que executa e anexa as fotos antes, durante e depois.</span>
       <div class="vp-row"><button class="vp-btn vp-warn" data-evenviar="${p.id}">📤 Enviar para execução</button>${x.edit ? `<button class="vp-btn" data-evx="${p.id}">Cancelar</button>` : ""}</div></div>`;
@@ -4176,7 +4181,8 @@ function montar(root) {
     if (b && !x.edit) return `<div class="vp-vb" style="border-color:var(--lf)"><div class="vp-row"><span class="vp-sp vp-env">✔ Baixado no ${esc(b.sistema === "INTRANET" ? "Intranet" : b.sistema)}</span><span>em <b>${fDia(b.data)}</b> por <b>${esc(b.por || "–")}</b>${b.doc ? ` · doc. ${esc(b.doc)}` : ""}</span></div>${pode.lancar() ? `<div class="vp-row"><button class="vp-btn" data-bxedit="${p.id}">Corrigir</button><button class="vp-btn" data-bxdesfaz="${p.id}">Desfazer baixa</button></div>` : ""}</div>`;
     if (!pode.lancar()) return `<div class="vp-msg">Baixa no sistema: ainda não informada.</div>`;
     const sis = x.sis || (b && b.sistema) || sistemaDe(p);
-    return `<div class="vp-vb"><span class="vp-lab">Baixa no sistema</span>
+    const urbB = vistEst(r) === "ja_executado" ? `<span class="vp-msg">Urbantrim: <b>não precisa lançar</b> (constatado na vistoria que já estava executado).</span>` : `<span class="vp-msg">Urbantrim: ${urbOk(p) ? `<b style="color:#1f6b3a">✔ cadastrado</b>` : `<b style="color:#b42318">⚠ não cadastrado</b> – cadastre no Urbantrim antes de finalizar.`}</span>`;
+    return `<div class="vp-vb"><span class="vp-lab">Baixa no sistema</span>${urbB}
       <div class="vp-row">${["SEI", "INTRANET", "GED"].map((k) => `<button class="vp-opt" data-bxsis="${k}" data-id="${p.id}" aria-pressed="${sis === k}">${k === "INTRANET" ? "Intranet" : k}</button>`).join("")}</div>
       <label class="vp-row" style="font-size:13px;color:var(--mu);font-weight:600">Data da baixa <input type="date" id="vp-bxd-${p.id}" data-bxdata="${p.id}" value="${esc(x.data || (b && b.data) || hoje())}" max="${hoje()}"></label>
       <input type="text" id="vp-bxn-${p.id}" data-bxdoc="${p.id}" value="${esc(x.doc != null ? x.doc : (b && b.doc) || "")}" placeholder="Nº do despacho / documento (opcional)">
@@ -4272,7 +4278,9 @@ function montar(root) {
     if (ds.planilha) { baixarPlanilha(); return; }
     if (ds.rab) { S.rab = S.rab || {}; S.rab[ds.rab] = !S.rab[ds.rab]; render(); return; }
     if (ds.baixafoto) { baixarFoto(ds.baixafoto); return; }
+    if (ds.urbok) { if (await gravar([ds.urbok], { urb_cad: { por: usuario(), uid: meuId(), em: new Date().toISOString() } })) { S.proc = todosProc(); _idx = null; render(); toast("Marcado como cadastrado no Urbantrim"); } return; }
     if (ds.evenviar) { const id = ds.evenviar, sel = root.querySelector("#vp-ev-" + cssId(id)), sup = sel ? sel.value : ""; if (!sup) { toast("Escolha a supervisão"); return; }
+      { const pp = S.proc.find((q) => q.id === id); if (pp && !urbOk(pp)) { toast("Cadastre o processo no Urbantrim antes de enviar para execução"); return; } }
       if (await gravar([id], { envio: { sup, em: new Date().toISOString(), por: usuario(), uid: meuId() }, envio_fiscal: null, execucao: null })) { if (S.ev) delete S.ev[id]; toast("Enviado para " + supNome(sup)); } return; }
     if (ds.evedit) { S.ev = S.ev || {}; S.ev[ds.evedit] = { edit: 1 }; render(); return; }
     if (ds.evx) { delete S.ev[ds.evx]; render(); return; }
