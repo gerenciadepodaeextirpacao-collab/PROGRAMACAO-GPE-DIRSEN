@@ -2045,7 +2045,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.10b";
+const APP_VERSAO="2026.11.10d";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -3373,7 +3373,9 @@ function montar(root) {
   const meuId = () => (typeof sessao !== "undefined" && sessao && sessao.id) || "";
   const S = { proc: [], reg: {}, rotas: {}, sups: [], tela: "rotas", grp: LS("vp-grp") || "all", yr: LS("vp-yr") || "all", cur: LS("vp-reg") || "CENTRO OESTE",
     start: LS("vp-start") || "", per: +(LS("vp-per2") || 0), q: "", hide: true, minhas: false, ver: LS("vp-ver2") || "todas", f: {}, doc: {}, x: {}, lim: 40, supF: "", erro: "", carregando: true, busy: {} };
-  const pode = { lancar: () => !soLeitura(), coord: () => vistCoord(), resumo: () => vistAlto(), sup: () => !!sessao && travado() && !!sessao.sup && sessao.perfil !== "fiscal", fis: () => !!sessao && sessao.perfil === "fiscal" };
+  // cadastrador(a): também cuida dos PDFs dos processos
+  const ehCadastrador = () => { try { return !!sessao && cargoK(acesso?.[sessao.id] || sessao) === "cadastrador"; } catch (e) { return false; } };
+  const pode = { pdf: () => vistCoord() || ehCadastrador(), lancar: () => !soLeitura(), coord: () => vistCoord(), resumo: () => vistAlto(), sup: () => !!sessao && travado() && !!sessao.sup && sessao.perfil !== "fiscal", fis: () => !!sessao && sessao.perfil === "fiscal" };
   const minhaAlguma = () => Object.values(S.reg || {}).some((r) => r && r.rota && r.rota.uid === meuId() && !r.vistoriado);
 
   // ---------------- dados ----------------
@@ -3650,7 +3652,7 @@ function montar(root) {
     const ae = document.activeElement; const fid = ae && root.contains(ae) && ae.id ? ae.id : null;
     let sel = null; try { sel = fid && ae.tagName !== "SELECT" ? [ae.selectionStart, ae.selectionEnd] : null; } catch (e) {}
     const corpo = S.carregando ? `<p class="vp-msg">Carregando processos…</p>` : S.erro ? `<p class="vp-msg">${esc(S.erro)}</p>`
-      : S.tela === "exec" && (pode.sup() || pode.fis()) ? execTurma() : S.tela === "resumo" && pode.resumo() ? resumo() : S.tela === "pdfs" && pode.coord() ? pdfs() : rotas();
+      : S.tela === "exec" && (pode.sup() || pode.fis()) ? execTurma() : S.tela === "resumo" && pode.resumo() ? resumo() : S.tela === "pdfs" && pode.pdf() ? pdfs() : rotas();
     root.innerHTML = cab() + (S.erroGrav ? `<p class="vp-need" style="background:#fdecea;padding:10px 12px;border-radius:8px">⚠ ${esc(S.erroGrav)}</p>` : "") + corpo + `<div class="vp-toast" id="vp-toast" role="status"></div>`;
     Object.entries(S.sigv || {}).forEach(([k, v]) => { const el = root.querySelector("#" + cssId(k)); if (el) el.value = v; });
     if (fid) { const el = root.querySelector("#" + cssId(fid)); if (el) { el.focus(); if (sel) try { el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
@@ -3664,7 +3666,7 @@ function montar(root) {
     if (pode.sup()) T.push(["exec", `Para executar (${VIST.nTurmaAberto(sessao.sup)})`]);
     if (pode.fis()) T.push(["exec", `Para executar (${VIST.nFiscal(meuId())})`]);
     if (pode.resumo()) T.push(["resumo", `Resumo das vistorias (${d})`]);
-    if (pode.coord()) T.push(["pdfs", `📄 PDFs dos processos (${all.filter((p) => docLinks(R(p)).length).length}/${all.length})`]);
+    if (pode.pdf()) T.push(["pdfs", `📄 PDFs dos processos (${all.filter((p) => docLinks(R(p)).length).length}/${all.length})`]);
     if (!T.some(([k]) => k === S.tela)) S.tela = T[0][0];
     return `<div><p class="vp-sub">${all.length} processos · ${d} vistoriados · relatório de ${fDia(VIST_REL)}</p></div>
     <div class="vp-tabs">${T.map(([k, t]) => `<button class="vp-tab" data-tela="${k}" aria-pressed="${S.tela === k}">${t}</button>`).join("")}</div>
@@ -7713,12 +7715,14 @@ function pendMsgSup(sup,its){ const P=[]; try{
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-pcsupimg]"); if(!b) return; const sup=b.dataset.pcsupimg, its=(window.__PCL||[]).filter(x=>x.sup===sup); if(!its.length) return; abrirZapImg({z:zapSup(sup),sup,txt:pendMsgSup(sup,its)}); });
 function pendCancHtml(L){
   let h=""; window.__PCL=L;
+  if(L.length>1) h+=`<button type="button" class="btn danger" data-canclote="*" style="width:100%">✕ Cancelar todas as pendências (${L.length})</button>`;
   const ord=["prog","chk","bx"], porSup={}; L.forEach(x=>(porSup[x.sup]=porSup[x.sup]||[]).push(x));
   Object.entries(porSup).sort((a,b)=>b[1].length-a[1].length||supNome(a[0]).localeCompare(supNome(b[0]),"pt")).forEach(([sup,its])=>{
     its.sort((a,b)=>ord.indexOf(a.cat)-ord.indexOf(b.cat)); const z=zapSup(sup), cont={}; its.forEach(x=>cont[x.cat]=(cont[x.cat]||0)+1);
     h+=`<section class="alert pcsup"><h3>⚠ ${esc(supNome(sup))} <small>(${its.length})</small></h3>
       <div class="pcres">${ord.filter(k=>cont[k]).map(k=>`<span>${PC_ICO[k][0]} <b>${k==="prog"?"":cont[k]+" "}</b>${k==="prog"?"programação incompleta":k==="chk"?(cont[k]===1?"checklist":"checklists"):"sem baixa"}</span>`).join("")}</div>
       ${ord.filter(k=>cont[k]).map(k=>`<div class="pccat">${PC_ICO[k][0]} ${esc(CANC_CAT[k][0])}${cont[k]>1?" ("+cont[k]+")":""}</div>`+its.filter(x=>x.cat===k).map(x=>`<div class="pcrow pcl"><button type="button" class="pcinfo" data-pcdet="${L.indexOf(x)}" aria-label="Ver detalhes"><small>${esc(x.txt)}</small><em>Ver detalhes ›</em></button><button type="button" class="pcx" data-canc="${esc(x.key)}" data-canctxt="${esc(x.sup+" · "+x.txt)}" aria-label="Cancelar este aviso" title="Cancelar este aviso">✕</button></div>`).join("")).join("")}
+      ${its.length>1?`<button type="button" class="btn sec" data-canclote="${esc(sup)}" style="width:100%;color:var(--bad)">✕ Cancelar as ${its.length} pendências desta turma</button>`:""}
       <div class="pcsupact">${z?`<button type="button" class="btn zapcob" data-pcsupimg="${esc(sup)}">🖼 Mandar tudo para ${esc((z.nome||"o supervisor").split(" ")[0])} no WhatsApp</button><a class="btn sec" href="https://wa.me/${z.num}" target="_blank" rel="noopener" data-ligzap="1" style="display:flex;align-items:center;justify-content:center;text-decoration:none">📞 Ligar</a>`:`<span class="pcsem">Supervisor sem WhatsApp no cadastro (Acessos)</span>`}</div></section>`; });
   // cobrança geral (todas as turmas de uma vez), como antes
   const cats=Object.entries(CANC_CAT).filter(([k])=>L.some(x=>x.cat===k));
@@ -7736,24 +7740,31 @@ async function salvarCanc(novo){ if(!db){ toast("Sem conexão com o banco."); re
       await db.collection(ASS_COL).doc(cancDocId(k)).set(doc); cancDocs[cancDocId(k)]=doc; }
     cancMesclar(); renderAll(); return true; }
   catch(e){ toast("Não foi possível salvar"+(e?.message?" ("+e.message+")":"")+". Tente de novo.",6000); return false; } }
+// key pode ser uma lista [{key,txt,sup}] para cancelar várias de uma vez
 function abrirCancelar(key,txt){
-  const sup=(txt||"").split(" · ")[0];
+  const lote=Array.isArray(key)?key:null; if(lote){ txt=lote.length+" pendência"+(lote.length===1?"":"s")+(new Set(lote.map(x=>x.sup)).size===1?" · "+supNome(lote[0].sup):" de "+new Set(lote.map(x=>x.sup)).size+" turmas"); }
+  const sup=lote?"":(txt||"").split(" · ")[0];
   const box=document.createElement("div"); box.className="sheet"; box.style.zIndex=30;
   box.innerHTML=`<div class="panel" role="dialog" aria-label="Cancelar aviso">
-    <b style="font-family:var(--display);font-size:22px">Cancelar este aviso?</b>
+    <b style="font-family:var(--display);font-size:22px">${lote?"Cancelar todas estas pendências?":"Cancelar este aviso?"}</b>
     <p class="note" style="margin:0">${esc(txt)}</p>
     <p class="note" style="margin:0">O aviso some para <b>todos</b> (inclusive para o supervisor) e sai da cobrança. Fica registrado quem cancelou, quando e o motivo. Dá para desfazer em "Avisos cancelados".</p>
-    <div class="pcmots" role="group" aria-label="Motivos prontos">${["Turma fora de escala","Turma não trabalhou (chuva)","Equipamento em manutenção","Já resolvido"].map(m=>`<button type="button" class="chip" data-pcm="${esc(m)}" aria-pressed="false">${esc(m)}</button>`).join("")}</div>
-    <label class="f">Motivo<textarea id="pcMot" placeholder="Toque num motivo acima ou escreva" style="min-height:80px"></textarea></label>
-    <div class="actions" style="grid-template-columns:1fr 1fr;margin:0"><button type="button" class="btn sec" data-pcno>Voltar</button><button type="button" class="btn pri" data-pcok>Cancelar aviso</button></div>
+    <div class="pcmots" role="group" aria-label="Motivos prontos">${["Turma fora de escala","Turma não trabalhou (chuva)","Equipamento em manutenção","Já resolvido"].map(m=>`<button type="button" class="chip" data-pcm="${esc(m)}" aria-pressed="${lote&&m==="Já resolvido"}">${esc(m)}</button>`).join("")}</div>
+    <label class="f">Motivo<textarea id="pcMot" placeholder="Toque num motivo acima ou escreva" style="min-height:80px">${lote?"Já resolvido":""}</textarea></label>
+    <div class="actions" style="grid-template-columns:1fr 1fr;margin:0"><button type="button" class="btn sec" data-pcno>Voltar</button><button type="button" class="btn pri" data-pcok>${lote?"Cancelar as "+lote.length:"Cancelar aviso"}</button></div>
   </div>`;
   document.body.appendChild(box); 
   box.onclick=async e=>{ if(e.target===box||e.target.closest("[data-pcno]")) return box.remove();
     const mb=e.target.closest("[data-pcm]"); if(mb){ box.querySelectorAll("[data-pcm]").forEach(x=>x.setAttribute("aria-pressed",String(x===mb))); box.querySelector("#pcMot").value=mb.dataset.pcm; return; }
     if(e.target.closest("[data-pcok]")){ const mot=box.querySelector("#pcMot").value.trim(); if(mot.length<3){ toast("Escreva o motivo do cancelamento."); return; }
-      if(await salvarCanc({...notifCanc,[key]:{por:sessao.id,nome:sessao.nome,em:new Date().toISOString(),motivo:mot,txt,sup}})){ box.remove(); toast("Aviso cancelado para todos."); } } };
+      const em=new Date().toISOString(), novo={...notifCanc};
+      if(lote){ const bt=e.target.closest("[data-pcok]"); bt.disabled=true; bt.textContent="Cancelando…"; lote.forEach(x=>{ novo[x.key]={por:sessao.id,nome:sessao.nome,em,motivo:mot,txt:x.sup+" · "+x.txt,sup:x.sup}; });
+        if(await salvarCanc(novo)){ box.remove(); toast(lote.length+" pendências canceladas para todos."); } else { bt.disabled=false; bt.textContent="Cancelar as "+lote.length; } return; }
+      novo[key]={por:sessao.id,nome:sessao.nome,em,motivo:mot,txt,sup};
+      if(await salvarCanc(novo)){ box.remove(); toast("Aviso cancelado para todos."); } } };
 }
 document.addEventListener("click",async e=>{ const c=e.target.closest("[data-canc]"); if(c){ abrirCancelar(c.dataset.canc,c.dataset.canctxt); return; }
+  const cl=e.target.closest("[data-canclote]"); if(cl){ const k=cl.dataset.canclote, L=(window.__PCL||[]).filter(x=>k==="*"||x.sup===k).map(x=>({key:x.key,txt:x.txt,sup:x.sup})); if(L.length) abrirCancelar(L); return; }
   const d=e.target.closest("[data-descanc]"); if(d){ const novo={...notifCanc}; delete novo[d.dataset.descanc]; if(await salvarCanc(novo)) toast("Aviso reativado."); } });
 const podeCobrarChk=()=>!!sessao&&(sessao.perfil==="coordenador"||isGerente()||sessao.perfil==="gerencia_op");
 function chkObrigPend(){
