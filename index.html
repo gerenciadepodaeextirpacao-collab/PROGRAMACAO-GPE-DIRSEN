@@ -1922,6 +1922,16 @@ $("#testeBtn").onclick=()=>{ if(!isGerente()) return; const on=!modoTeste(); ls.
 
 /* ---------- tela de acessos (gerência) ---------- */
 // acessos separados por parte: PODA I e II (DIRSEN) e PODA III e IV (DIROP)
+// Acessos separado por departamento (lotação) e por poda (PODA I, II, III, IV); administradores no fim
+const AC_DEP_ORD=["PRESIDÊNCIA","DIRSEN/DIROP","DIRETORIA","DIRSEN","GPE - DIRSEN","DIROP","GPE - DIROP"];
+function acGrupos(lista){ const G={};
+  lista.forEach(([id,u])=>{ let k,t,d; const so=SUPS_ALL.find(x=>x.id===u.sup);
+    if(u.perfil==="admin"){ k="z:adm"; t="Administradores"; d="veem tudo no app, sem restrição"; }
+    else if(so){ const tn=/NOTURNO/i.test(so.id)?"NOTURNO":"DIURNO"; k="p:"+so.grupo+"|"+(tn==="DIURNO"?0:1); t=so.grupo+" "+tn; d=(ESC_DIROP.includes(so.grupo)?"Gerência de Poda e Extirpação – DIROP":"Gerência de Poda e Extirpação – DIRSEN")+" · turmas (A) e (B)"; }
+    else { const nm=u.sup?lotNome(u.sup):"Sem lotação"; k="d:"+nm; t=nm; d="Departamento / lotação"; }
+    (G[k]=G[k]||{k,t,d,it:[]}).it.push([id,u]); });
+  const ordK=k=>k.startsWith("d:")?(()=>{ const i=AC_DEP_ORD.indexOf(k.slice(2)); return i<0?50:i; })():k.startsWith("p:")?100+["PODA I","PODA II","PODA III","PODA IV"].indexOf(k.slice(2).split("|")[0])*2+(+k.split("|")[1]||0):999;
+  return Object.values(G).sort((a,b)=>ordK(a.k)-ordK(b.k)||a.t.localeCompare(b.t)).map(g=>{ if(g.k.startsWith("p:")) g.it.sort((a,b)=>(a[1].sup||"").localeCompare(b[1].sup||"")||(ORD[a[1].perfil]-ORD[b[1].perfil])||a[1].nome.localeCompare(b[1].nome)); return g; }); }
 const AC_AREAS=[{k:"dirsen",t:"PODA I e PODA II",d:"Gerência de Poda e Extirpação – DIRSEN"},{k:"dirop",t:"PODA III e PODA IV",d:"Gerência de Poda e Extirpação – DIROP"},{k:"dir",t:"Diretoria",d:"consulta geral"},{k:"adm",t:"Administradores",d:"veem tudo no app, sem restrição"}];
 function areaAcesso(u){ if(u.perfil==="admin") return "adm"; if(u.perfil==="gerencia_op"||u.sup===LOT_DIROP) return "dirop"; const g=supOf(u.sup)?.grupo; if(g==="PODA III"||g==="PODA IV") return "dirop"; if(u.perfil==="diretoria"||u.sup==="DIRETORIA") return "dir"; return "dirsen"; }
 const AC_ABERTOS=new Set(); let AC_BUSCA="", AC_TAB="lista";
@@ -1936,7 +1946,7 @@ function abrirAcessos(){
     <div id="acTabL" style="display:grid;gap:12px"${canAdmin&&AC_TAB==="novo"?" hidden":""}>
     <input type="search" id="acBusca" placeholder="🔎 Procurar por nome, matrícula, turma ou perfil" value="${esc(AC_BUSCA)}" autocapitalize="none" style="min-height:46px">
     <details class="acinfo"><summary>Como funcionam os acessos</summary><p class="note" style="margin:6px 0 0">Cada pessoa entra com a <b>matrícula</b> (ex.: m859209) e uma senha de pelo menos 6 caracteres (letras e números). Só o <b>administrador</b> vê tudo, sem restrição. O <b>gerente DIRSEN</b> vê o PODA I e o PODA II; o <b>gerente DIROP</b> vê o PODA III e o PODA IV. Quem está lotado na <b>DIRSEN</b> (ou diretoria) vê só o PODA I e o PODA II; quem está lotado na <b>DIROP</b> vê só o PODA III e o PODA IV (a diretoria só consulta); supervisor e fiscal só a própria turma.</p></details><p class="note" style="margin:0">${canAdmin?"":" <b>Você não é dono nem editor deste app: pode ver, mas não alterar.</b>"}</p>
-    ${AC_AREAS.filter(ar=>isAdm()||(escopoG()===ESC_DIROP?ar.k!=="dirsen":ar.k!=="dirop")).map(ar=>{ const it=lista.filter(([id,u])=>areaAcesso(u)===ar.k); if(!it.length&&(ar.k==="dir"||ar.k==="adm")) return ""; return `<div class="acsec"><div class="acsech"><b>${ar.t}</b><span>${ar.d} · ${it.length} ${it.length===1?"pessoa":"pessoas"}</span></div><div class="list">${it.length?"":`<p class="note" style="margin:0">Ninguém cadastrado ainda.</p>`}${it.map(([id,u])=>`<div class="prog accard" data-uid="${esc(id)}" data-busca="${esc([u.nome,matDe(u),PERF[u.perfil]||u.perfil,u.sup,u.equipe].filter(Boolean).join(" ").toLowerCase())}">
+    ${acGrupos(lista).map(ar=>{ const it=ar.it; return `<div class="acsec"><div class="acsech"><b>${ar.t}</b><span>${ar.d} · ${it.length} ${it.length===1?"pessoa":"pessoas"}</span></div><div class="list">${it.length?"":`<p class="note" style="margin:0">Ninguém cadastrado ainda.</p>`}${it.map(([id,u])=>`<div class="prog accard" data-uid="${esc(id)}" data-busca="${esc([u.nome,matDe(u),PERF[u.perfil]||u.perfil,u.sup,u.equipe].filter(Boolean).join(" ").toLowerCase())}">
       <div class="achead" style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b style="font-size:16px">${esc(u.nome)}</b><span class="pill ${!u.ativo?"NÃO":(u.hash&&matDe(u))?"SIM":"ATRASADO"}">${!u.ativo?"Desativado":!matDe(u)?"Sem matrícula":u.hash?"Liberado":"Sem senha"}</span></div>
       <div class="note">${u.perfil==="admin"||u.semMat?"Usuário":"Matrícula"} <b>${esc(matDe(u)||"—")}</b> · ${esc(cargoNome(u))}${u.sup?" · "+esc(u.sup):""}${u.zap?` · 📱 ${esc(zapFmt(u.zap))}`:u.perfil==="supervisor"?` · <span style="color:var(--warn)">sem WhatsApp</span>`:""}${u.perfil==="fiscal"?` · <b>fiscal de turma – ${u.equipe?esc(u.equipe.toLowerCase()):"sem equipe fixa (todas as equipes)"}</b>`:""}${u.perfil==="gerencia"?` · <b style="color:var(--ok)">💬 cobra todas as podas</b>`:u.perfil==="gerencia_op"?` · <b style="color:var(--ok)">💬 cobra Poda III e IV</b>`:cobraFlag(u)?` · <b style="color:var(--ok)">💬 cobra Poda I e II</b>`:""}</div>
       ${canAdmin?`<details class="acdet" data-acdet="${esc(id)}" ${AC_ABERTOS.has(id)?"open":""}><summary>⚙ Gerenciar: senha, assinatura e editar</summary><div class="acdetb">
@@ -2071,7 +2081,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.10l";
+const APP_VERSAO="2026.11.10n";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
