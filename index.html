@@ -2045,7 +2045,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.10d";
+const APP_VERSAO="2026.11.10e";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -3388,10 +3388,10 @@ function montar(root) {
   let _base = null;
   // processos do relatório + processos cadastrados manualmente
   const todosProc = () => { _base = _base || VIST_PROC(); const man = Object.entries(VIST.regs || {}).filter(([k, r]) => k.startsWith("m_") && r && r.manual && !r.manual.removido).map(([k, r], i) => { const m = r.manual;
-      return { id: k, regional: REGN.includes(m.regional) ? m.regional : "CENTRO OESTE", ordem: 100000 + i, setor: m.setor || "", setor_aproximado: true, endereco: m.endereco || "", processo: m.processo || "", ged: m.ged || "", ano: +m.ano || null, parecer: m.parecer || "", qtd_poda: +m.po || 0, qtd_extirpacao: +m.ex || 0, qtd_destocamento: +m.de || 0, relatorio_data: "", manual: true, ger: m.ger === "DIROP" ? "DIROP" : "DIRSEN" }; });
+      return { id: k, regional: REGN.includes(m.regional) ? m.regional : "CENTRO OESTE", ordem: 100000 + i, setor: m.setor || "", setor_aproximado: true, endereco: m.endereco || "", processo: m.processo || "", ged: m.ged || "", ano: +m.ano || null, parecer: m.parecer || "", qtd_poda: +m.po || 0, qtd_extirpacao: +m.ex || 0, qtd_destocamento: +m.de || 0, relatorio_data: "", manual: true, ger: m.ger === "DIROP" ? "DIROP" : "DIRSEN", urbantrim: m.urbantrim || "" }; });
     // correções feitas pela coordenação (✏️ Editar) por cima do relatório
     const ED = (p) => { const e = (VIST.regs || {})[p.id] && VIST.regs[p.id].edicao; if (!e) return p;
-      const q = { ...p, editado: e }; ["processo", "ged", "parecer", "endereco", "setor", "loc"].forEach((k) => { if (e[k] != null) q[k] = e[k]; });
+      const q = { ...p, editado: e }; ["processo", "ged", "parecer", "endereco", "setor", "loc", "urbantrim"].forEach((k) => { if (e[k] != null) q[k] = e[k]; });
       if (e.ano != null) q.ano = +e.ano || null; if (REGN.includes(e.regional)) q.regional = e.regional;
       [["po", "qtd_poda"], ["ex", "qtd_extirpacao"], ["de", "qtd_destocamento"]].forEach(([a, b]) => { if (e[a] != null) q[b] = +e[a] || 0; }); return q; };
     const gv = vistGerVis(); return _base.concat(man).map(ED).filter((p) => !gv || (p.ger || "DIRSEN") === gv); };
@@ -3643,7 +3643,7 @@ function montar(root) {
   // links do Google Maps: sem "origin" = parte da localização atual; até 10 paradas por link
   const linksGps = (seq) => { const L = []; for (let i = 0; i < seq.length; i += 10) { const seg = seq.slice(i, i + 10), dest = seg[seg.length - 1], wp = seg.slice(0, -1);
     let u = "https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=" + encodeURIComponent(alvoGps(dest)); if (wp.length) u += "&waypoints=" + encodeURIComponent(wp.map(alvoGps).join("|")); L.push(u); } return L; };
-  const linhaProc = (p) => `<div class="vp-e">${esc(p.endereco)}</div><div class="vp-m">${p.manual ? `<span class="vp-tag" style="background:#e8eefc;color:#2b4fa8">cadastrado à mão</span>` : ""}${p.ano ? `<span class="vp-tag">${p.ano}</span>` : ""}${p.ged ? `<span class="vp-tag">GED ${esc(p.ged)}</span>` : ""}<span>Proc. ${procLink(p, `<code>${esc(p.processo)}</code>`)}</span>${p.parecer && p.parecer !== "SEM NUMERO" ? `<span>Parecer ${esc(parecerTxt(p.parecer))}</span>` : ""}<span>${esc(p.setor)} · ${cap(p.regional)}</span>${p.editado ? `<span class="vp-tag" style="background:#fff4d6;color:#8a5a00" title="Editado por ${esc(p.editado.por || "")}">✏️ editado</span>` : ""}${geoDe(p) ? `<button type="button" class="vp-gm" data-mapa1="${p.id}" style="background:none;border:0;padding:0;font:inherit;cursor:pointer">📍 localização</button>` : `<a class="vp-gm" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapaQ(p))}" target="_blank" rel="noopener">📍 localização</a>`}</div>`;
+  const linhaProc = (p) => `<div class="vp-e">${esc(p.endereco)}</div><div class="vp-m">${p.manual ? `<span class="vp-tag" style="background:#e8eefc;color:#2b4fa8">cadastrado à mão</span>` : ""}${p.urbantrim === "sim" ? `<span class="vp-tag" style="background:#e3f1e7;color:#1f6b3a">✔ no Urbantrim</span>` : p.urbantrim === "nao" ? `<span class="vp-tag" style="background:#fdecea;color:#b42318">✖ fora do Urbantrim</span>` : ""}${p.ano ? `<span class="vp-tag">${p.ano}</span>` : ""}${p.ged ? `<span class="vp-tag">GED ${esc(p.ged)}</span>` : ""}<span>Proc. ${procLink(p, `<code>${esc(p.processo)}</code>`)}</span>${p.parecer && p.parecer !== "SEM NUMERO" ? `<span>Parecer ${esc(parecerTxt(p.parecer))}</span>` : ""}<span>${esc(p.setor)} · ${cap(p.regional)}</span>${p.editado ? `<span class="vp-tag" style="background:#fff4d6;color:#8a5a00" title="Editado por ${esc(p.editado.por || "")}">✏️ editado</span>` : ""}${geoDe(p) ? `<button type="button" class="vp-gm" data-mapa1="${p.id}" style="background:none;border:0;padding:0;font:inherit;cursor:pointer">📍 localização</button>` : `<a class="vp-gm" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapaQ(p))}" target="_blank" rel="noopener">📍 localização</a>`}</div>`;
   const qtdPills = (p) => `${p.qtd_poda ? `<span class="vp-pill vp-po">${p.qtd_poda} poda</span>` : ""}${p.qtd_extirpacao ? `<span class="vp-pill vp-ex">${p.qtd_extirpacao} extirp.</span>` : ""}`;
   const estPill = (r) => { const e = vistEst(r); return e === "pendente" ? "" : `<span class="vp-sp ${EST[e][1]}">${EST[e][0]}</span>`; };
 
@@ -3825,7 +3825,7 @@ function montar(root) {
     const setor = nome.replace(num, "").replace(/^[\s_.-]+|[\s_.-]+$/g, "").replace(/\(\d+\)/g, "").trim();
     S.novo = { file: pref && pref.file || null, filaIdx: pref ? pref.idx : null, processo: num.trim(), ged, parecer: "", endereco: "", setor, regional: S.preg || "", ano, po: "", ex: "", de: "", link: "" }; }
   // ✏️ editar as informações de um processo (coordenação para cima)
-  function edAbrir(p) { S.ed = { id: p.id, processo: p.processo || "", ged: p.ged || "", parecer: p.parecer && p.parecer !== "SEM NUMERO" ? p.parecer : "", ano: p.ano ? String(p.ano) : "", endereco: p.endereco || "", setor: p.setor || "", regional: p.regional || "", po: String(p.qtd_poda || 0), ex: String(p.qtd_extirpacao || 0), de: String(p.qtd_destocamento || 0), loc: p.loc || "" }; }
+  function edAbrir(p) { S.ed = { id: p.id, processo: p.processo || "", ged: p.ged || "", parecer: p.parecer && p.parecer !== "SEM NUMERO" ? p.parecer : "", ano: p.ano ? String(p.ano) : "", endereco: p.endereco || "", setor: p.setor || "", regional: p.regional || "", po: String(p.qtd_poda || 0), ex: String(p.qtd_extirpacao || 0), de: String(p.qtd_destocamento || 0), loc: p.loc || "", urb: p.urbantrim || "" }; }
   function edHtml(p) { const n = S.ed;
     const inp = (k, ph, extra) => `<input type="text" id="vp-ed-${k}" data-ed="${k}" value="${esc(n[k] || "")}" placeholder="${ph}" ${extra || ""}>`;
     return `<div class="vp-vb" style="border-color:var(--lf);display:flex;flex-direction:column;gap:8px"><b>✏️ Editar as informações do processo</b>
@@ -3835,6 +3835,7 @@ function montar(root) {
       <div class="vp-ctl"><label class="vp-f vp-grow">Setor / bairro${inp("setor", "Ex.: Setor Marista")}</label>
       <label class="vp-f">Regional *<select id="vp-ed-regional" data-ed="regional">${REGN.map((r) => `<option value="${r}"${n.regional === r ? " selected" : ""}>${cap(r)}</option>`).join("")}</select></label></div>
       <div class="vp-ctl"><label class="vp-f" style="width:90px">Poda${inp("po", "0", 'inputmode="numeric"')}</label><label class="vp-f" style="width:90px">Extirpação${inp("ex", "0", 'inputmode="numeric"')}</label><label class="vp-f" style="width:90px">Destoca${inp("de", "0", 'inputmode="numeric"')}</label></div>
+      <label class="vp-f">Cadastrado no Urbantrim?<select data-ed="urb"><option value="">Não informado</option><option value="sim"${n.urb === "sim" ? " selected" : ""}>Sim, já está no Urbantrim</option><option value="nao"${n.urb === "nao" ? " selected" : ""}>Não está no Urbantrim</option></select></label>
       <label class="vp-f">Localização para o GPS (opcional)${inp("loc", "Coordenadas (-16.68, -49.25) ou ponto de referência")}</label>
       <span class="vp-msg">Use quando o endereço não acha o lugar certo no mapa. Vazio = usa o endereço.</span>
       <div class="vp-row"><button class="vp-btn vp-pri" data-edsalvar="${p.id}" ${S.busy.ed ? "disabled" : ""}>${S.busy.ed ? "Salvando…" : "Salvar alterações"}</button><button class="vp-btn" data-edcancel="1">Cancelar</button>${p.editado && !p.manual ? `<button class="vp-btn" data-edorig="${p.id}">Voltar ao original do relatório</button>` : ""}</div>
@@ -3843,7 +3844,7 @@ function montar(root) {
     const n = S.ed; if (!n || S.busy.ed) return;
     if (!n.processo.trim()) { toast("Informe o nº do processo"); return; }
     if (!n.endereco.trim()) { toast("Informe o endereço"); return; }
-    const edicao = { processo: n.processo.trim(), ged: n.ged.trim(), parecer: n.parecer.trim(), ano: n.ano.trim(), endereco: n.endereco.trim(), setor: n.setor.trim(), regional: n.regional, po: +n.po || 0, ex: +n.ex || 0, de: +n.de || 0, loc: n.loc.trim(), por: usuario(), uid: meuId(), em: new Date().toISOString() };
+    const edicao = { processo: n.processo.trim(), ged: n.ged.trim(), parecer: n.parecer.trim(), ano: n.ano.trim(), endereco: n.endereco.trim(), setor: n.setor.trim(), regional: n.regional, po: +n.po || 0, ex: +n.ex || 0, de: +n.de || 0, loc: n.loc.trim(), urbantrim: n.urb || "", por: usuario(), uid: meuId(), em: new Date().toISOString() };
     S.busy.ed = 1; render();
     const p0 = S.proc.find((q) => q.id === id) || {}, mudou = edicao.endereco !== p0.endereco || edicao.setor !== p0.setor;
     try { if (await gravar([id], mudou ? { edicao, geo: null } : { edicao })) { S.ed = null; S.proc = todosProc(); _idx = null; toast("Informações atualizadas"); } }
@@ -3858,6 +3859,7 @@ function montar(root) {
       <label class="vp-f">Endereço *${inp("endereco", "Rua, número, quadra, lote")}</label>
       <div class="vp-ctl"><label class="vp-f vp-grow">Setor / bairro${inp("setor", "Ex.: Setor Marista")}</label>
       ${gSel ? `<label class="vp-f">Gerência *<select data-nv="ger"><option value="DIRSEN"${n.ger !== "DIROP" ? " selected" : ""}>DIRSEN</option><option value="DIROP"${n.ger === "DIROP" ? " selected" : ""}>DIROP</option></select></label>` : ""}<label class="vp-f">Regional *<select id="vp-nv-regional" data-nv="regional"><option value="">Escolher…</option>${REGN.map((r) => `<option value="${r}"${n.regional === r ? " selected" : ""}>${cap(r)}</option>`).join("")}</select></label></div>
+      <label class="vp-f">Cadastrado no Urbantrim? *<select data-nv="urb"><option value="">Escolher…</option><option value="sim"${n.urb === "sim" ? " selected" : ""}>Sim, já está no Urbantrim</option><option value="nao"${n.urb === "nao" ? " selected" : ""}>Não está no Urbantrim</option></select></label>
       <div class="vp-ctl"><label class="vp-f" style="width:90px">Poda${inp("po", "0", 'inputmode="numeric"')}</label><label class="vp-f" style="width:90px">Extirpação${inp("ex", "0", 'inputmode="numeric"')}</label><label class="vp-f" style="width:90px">Destoca${inp("de", "0", 'inputmode="numeric"')}</label></div>
       <span class="vp-lab">PDF do processo</span>
       <label class="vp-btn vp-filebtn ${n.file ? "" : "vp-pri"}">${n.file ? "📄 " + esc(n.file.name) + " (trocar)" : "Escolher o PDF"}<input type="file" accept="application/pdf,.pdf" data-nvpdf="1"></label>
@@ -3868,12 +3870,13 @@ function montar(root) {
     if (!n.processo.trim()) { toast("Informe o nº do processo"); return; }
     if (!n.endereco.trim()) { toast("Informe o endereço"); return; }
     if (!n.regional) { toast("Escolha a regional"); return; }
+    if (!n.urb) { toast("Informe se o processo está cadastrado no Urbantrim"); return; }
     const link = (n.link || "").trim(); if (link && !/^https?:\/\//i.test(link)) { toast("O link precisa começar com http:// ou https://"); return; }
     if (!db) { toast("Sem conexão com o banco."); return; }
     S.busy.nv = 1; render();
     try {
       const id = "m_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-      const doc = { processo_id: id, manual: { processo: n.processo.trim(), ged: n.ged.trim(), parecer: n.parecer.trim(), endereco: n.endereco.trim().toUpperCase(), setor: n.setor.trim(), regional: n.regional, ano: n.ano.trim(), po: +n.po || 0, ex: +n.ex || 0, de: +n.de || 0, ger: vistGerVis() || (n.ger === "DIROP" ? "DIROP" : "DIRSEN"), por: usuario(), uid: meuId(), em: new Date().toISOString() } };
+      const doc = { processo_id: id, manual: { processo: n.processo.trim(), ged: n.ged.trim(), parecer: n.parecer.trim(), endereco: n.endereco.trim().toUpperCase(), setor: n.setor.trim(), regional: n.regional, ano: n.ano.trim(), po: +n.po || 0, ex: +n.ex || 0, de: +n.de || 0, ger: vistGerVis() || (n.ger === "DIROP" ? "DIROP" : "DIRSEN"), urbantrim: n.urb || "", por: usuario(), uid: meuId(), em: new Date().toISOString() } };
       if (link) doc.proc_link = link;
       if (n.file) { if (!assets) throw new Error("envio de PDF não liberado neste acesso; use o link"); const up = await assets.upload(n.file, { type: "application/pdf" }); doc.proc_pdf = { id: up.id, url: up.url || "", nome: n.file.name, em: new Date().toISOString(), por: usuario() }; }
       if (await gravar([id], doc)) {
