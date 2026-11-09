@@ -8,6 +8,8 @@
   const SUPABASE_ANON = "sb_publishable_ekN-TZqBKMwRs6aGHPPejg_rLkBgjgv";
   // ==================================================
   window.GPE_NETLIFY = true;
+  // endereço público das fotos e vídeos no Supabase (bucket "midia")
+  window.GPE_BLOB_URL = (id) => SUPABASE_URL + "/storage/v1/object/public/midia/" + id;
   const erro = (code, message) => Object.assign(new Error(message || code), { code });
   const novoId = () => { const c = "abcdefghijklmnopqrstuvwxyz0123456789"; let s = ""; crypto.getRandomValues(new Uint8Array(20)).forEach(x => s += c[x % 36]); return s; };
   const sessaoId = () => { try { return JSON.parse(localStorage.getItem("gpe_sessao") || "null")?.id || ""; } catch (e) { return ""; } };
@@ -61,6 +63,8 @@
   }
   async function recarregarTudo() { for (const col of Object.keys(cache)) { cache[col].pronto = null; try { await colecao(col); notificar(col); } catch (e) {} } }
   document.addEventListener("visibilitychange", () => { if (!document.hidden) recarregarTudo(); });
+  // reserva: se o aviso ao vivo do banco falhar, atualiza a cada 2 minutos com o app aberto (pendências somem quando a tarefa é feita em outro aparelho)
+  setInterval(() => { if (!document.hidden && navigator.onLine !== false) recarregarTudo(); }, 120000);
   addEventListener("online", () => recarregarTudo());
 
   const docSnap = (id, d) => ({ id, exists: d != null, data: () => (d == null ? undefined : JSON.parse(JSON.stringify(d))), metadata: {} });
@@ -88,6 +92,13 @@
                                 : await c.from("documentos").upsert({ colecao: col, id, dados }, { onConflict: "colecao,id" });
         if (r.error) throw traduz(r.error);
         if (cache[col]) { cache[col].docs[id] = JSON.parse(JSON.stringify(dados)); notificar(col); }
+      },
+      // mescla campos (objetos aninhados se juntam; o resto substitui), como no Claude
+      async update(parte) {
+        const atual = (await this.get()).data();
+        if (atual === undefined) throw erro("invalid_argument", "documento não existe");
+        const mesclar = (a, b) => { const o = { ...a }; for (const [k, v] of Object.entries(b)) o[k] = (v && typeof v === "object" && !Array.isArray(v) && a && typeof a[k] === "object" && a[k] && !Array.isArray(a[k])) ? mesclar(a[k], v) : v; return o; };
+        await this.set(mesclar(atual, parte));
       },
       async delete() {
         const c = await sb().catch(() => { throw erro("unavailable"); });
@@ -123,7 +134,7 @@
       let c; try { c = await sb(); } catch (e) { throw erro("store_unavailable"); }
       const r = await c.storage.from("midia").upload(id, blob, { contentType: tipo, upsert: false });
       if (r.error) throw erro(/mime|type/i.test(r.error.message) ? "unsupported_type" : /size|large/i.test(r.error.message) ? "too_large" : "upstream_error", r.error.message);
-      return { id, url: "/_blob/" + id, sizeBytes: blob.size, contentType: tipo };
+      return { id, url: window.GPE_BLOB_URL(id), sizeBytes: blob.size, contentType: tipo };
     },
     async list() { return { assets: [], usage: { files: 0, bytes: 0, maxFiles: 0, maxBytes: 0 } }; },
     async delete() { return { deleted: false }; }
@@ -133,7 +144,7 @@
   const downloads = { async save({ filename, data }) { const u = URL.createObjectURL(data instanceof Blob ? data : new Blob([data])); const a = document.createElement("a"); a.href = u; a.download = filename || "arquivo"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 60000); } };
 
   /* ---------- user ---------- */
-  const ehGerente = () => { try { return JSON.parse(localStorage.getItem("gpe_sessao") || "null")?.perfil === "gerencia"; } catch (e) { return false; } };
+  const ehGerente = () => { try { const p = JSON.parse(localStorage.getItem("gpe_sessao") || "null")?.perfil; return p === "gerencia" || p === "admin"; } catch (e) { return false; } };
   const user = {
     async id() { let i = localStorage.getItem("gpe_aparelho"); if (!i) { i = "u_" + novoId(); localStorage.setItem("gpe_aparelho", i); } return i; },
     async isOwner() { return ehGerente(); }, async canEdit() { return ehGerente(); }, async can() { return true; },
