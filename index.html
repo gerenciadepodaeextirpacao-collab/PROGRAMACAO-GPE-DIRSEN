@@ -1080,7 +1080,7 @@ body.sofiscal nav.tabs{display:none!important}
     <form id="lgForm" novalidate>
       <div id="lgMain" class="lg-sec">
         <h2>Entrar</h2>
-        <label class="f">Matrícula<input id="lgMat" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Ex.: m859209"></label>
+        <label class="f">Matrícula, usuário ou nome completo<input id="lgMat" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Ex.: m859209 ou MARIA DE SOUZA"></label>
         <label class="f">Senha<input id="lgPin" type="password" autocomplete="current-password" placeholder="Sua senha"></label>
         <div class="err" id="lgErr" hidden></div>
         <button type="submit" class="btn pri">Entrar</button>
@@ -1800,9 +1800,15 @@ async function entrar(ev){
   const mat=$("#lgMat").value, pin=$("#lgPin").value, err=$("#lgErr");
   err.hidden=true;
   if(Date.now()<lgBloq){err.textContent="Muitas tentativas. Aguarde um minuto e tente de novo.";err.hidden=false;return}
-  if(!matKey(mat)){err.textContent="Digite sua matrícula.";err.hidden=false;return}
-  const achado=acharMat(mat); const id=achado?.[0], u=achado?.[1];
-  if(!u){err.textContent="Matrícula não cadastrada. Fale com a gerência.";err.hidden=false;return}
+  if(!matKey(mat)){err.textContent="Digite sua matrícula, usuário ou nome completo.";err.hidden=false;return}
+  // também entra pelo nome completo (para quem não tem matrícula); se houver duas pessoas com o mesmo nome, pede a matrícula ou o usuário
+  let achado=acharMat(mat);
+  if(!achado){ const nn=x=>String(x||"").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ").trim(), alvo=nn(mat);
+    const L=alvo.includes(" ")?Object.entries(acesso||{}).filter(([,x])=>x&&nn(x.nome)===alvo):[];
+    if(L.length>1){err.textContent="Há mais de uma pessoa com esse nome. Entre com a matrícula ou o usuário de acesso.";err.hidden=false;return}
+    achado=L[0]; }
+  const id=achado?.[0], u=achado?.[1];
+  if(!u){err.textContent="Matrícula, usuário ou nome não cadastrado. Fale com a gerência.";err.hidden=false;return}
   // senha do gerente (Victor) entra em qualquer supervisão com a matrícula do supervisor
   const gerPin=async()=>{ if(ehGerPerf(u.perfil)) return null; for(const [gid,g] of Object.entries(acesso||{})){ if(ehGerPerf(g.perfil)&&g.ativo&&g.hash&&await senhaConfere(gid,pin)) return {id:gid,nome:g.nome}; } return null; };
   if(!u.ativo){err.textContent="Esta matrícula está desativada. Fale com a gerência.";err.hidden=false;return}
@@ -1906,7 +1912,7 @@ function abrirAcessos(){
     <details class="acinfo"><summary>Como funcionam os acessos</summary><p class="note" style="margin:6px 0 0">Cada pessoa entra com a <b>matrícula</b> (ex.: m859209) e uma senha de pelo menos 6 caracteres (letras e números). Só o <b>administrador</b> vê tudo, sem restrição. O <b>gerente DIRSEN</b> vê o PODA I e o PODA II; o <b>gerente DIROP</b> vê o PODA III e o PODA IV. Quem está lotado na <b>DIRSEN</b> (ou diretoria) vê só o PODA I e o PODA II; quem está lotado na <b>DIROP</b> vê só o PODA III e o PODA IV (a diretoria só consulta); supervisor e fiscal só a própria turma.</p></details><p class="note" style="margin:0">${canAdmin?"":" <b>Você não é dono nem editor deste app: pode ver, mas não alterar.</b>"}</p>
     ${AC_AREAS.filter(ar=>isAdm()||(escopoG()===ESC_DIROP?ar.k!=="dirsen":ar.k!=="dirop")).map(ar=>{ const it=lista.filter(([id,u])=>areaAcesso(u)===ar.k); if(!it.length&&(ar.k==="dir"||ar.k==="adm")) return ""; return `<div class="acsec"><div class="acsech"><b>${ar.t}</b><span>${ar.d} · ${it.length} ${it.length===1?"pessoa":"pessoas"}</span></div><div class="list">${it.length?"":`<p class="note" style="margin:0">Ninguém cadastrado ainda.</p>`}${it.map(([id,u])=>`<div class="prog accard" data-uid="${esc(id)}" data-busca="${esc([u.nome,matDe(u),PERF[u.perfil]||u.perfil,u.sup,u.equipe].filter(Boolean).join(" ").toLowerCase())}">
       <div class="achead" style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b style="font-size:16px">${esc(u.nome)}</b><span class="pill ${!u.ativo?"NÃO":(u.hash&&matDe(u))?"SIM":"ATRASADO"}">${!u.ativo?"Desativado":!matDe(u)?"Sem matrícula":u.hash?"Liberado":"Sem senha"}</span></div>
-      <div class="note">${u.perfil==="admin"?"Usuário":"Matrícula"} <b>${esc(matDe(u)||"—")}</b> · ${esc(cargoNome(u))}${u.sup?" · "+esc(u.sup):""}${u.zap?` · 📱 ${esc(zapFmt(u.zap))}`:u.perfil==="supervisor"?` · <span style="color:var(--warn)">sem WhatsApp</span>`:""}${u.perfil==="fiscal"?` · <b>fiscal de turma – ${u.equipe?esc(u.equipe.toLowerCase()):"sem equipe fixa (todas as equipes)"}</b>`:""}${u.perfil==="gerencia"?` · <b style="color:var(--ok)">💬 cobra todas as podas</b>`:u.perfil==="gerencia_op"?` · <b style="color:var(--ok)">💬 cobra Poda III e IV</b>`:cobraFlag(u)?` · <b style="color:var(--ok)">💬 cobra Poda I e II</b>`:""}</div>
+      <div class="note">${u.perfil==="admin"||u.semMat?"Usuário":"Matrícula"} <b>${esc(matDe(u)||"—")}</b> · ${esc(cargoNome(u))}${u.sup?" · "+esc(u.sup):""}${u.zap?` · 📱 ${esc(zapFmt(u.zap))}`:u.perfil==="supervisor"?` · <span style="color:var(--warn)">sem WhatsApp</span>`:""}${u.perfil==="fiscal"?` · <b>fiscal de turma – ${u.equipe?esc(u.equipe.toLowerCase()):"sem equipe fixa (todas as equipes)"}</b>`:""}${u.perfil==="gerencia"?` · <b style="color:var(--ok)">💬 cobra todas as podas</b>`:u.perfil==="gerencia_op"?` · <b style="color:var(--ok)">💬 cobra Poda III e IV</b>`:cobraFlag(u)?` · <b style="color:var(--ok)">💬 cobra Poda I e II</b>`:""}</div>
       ${canAdmin?`<details class="acdet" data-acdet="${esc(id)}" ${AC_ABERTOS.has(id)?"open":""}><summary>⚙ Gerenciar: senha, assinatura e editar</summary><div class="acdetb">
       <div class="row2"><input type="password" placeholder="${u.hash?"Nova senha":"Definir senha"}" data-pin="${esc(id)}" aria-label="Senha de ${esc(u.nome)}">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><button type="button" class="btn pri" style="min-height:48px;font-size:14px" data-savepin="${esc(id)}">Salvar senha</button>
@@ -1935,6 +1941,7 @@ function abrirAcessos(){
     </div>
     ${canAdmin?`<div id="acTabN" style="display:grid;gap:12px"${AC_TAB!=="novo"?" hidden":""}><section class="card" style="margin:0"><div class="step">Cadastrar nova pessoa</div>
       <p class="note" id="nuAdmNota" hidden style="margin:0;color:var(--brand)">Administrador: só o <b>usuário de acesso</b> e a <b>senha</b>. Não precisa de matrícula, nome, WhatsApp nem turma. No 1º acesso o app pede para trocar a senha.</p>
+      <label class="ck" id="nuSemMatW"><input type="checkbox" id="nuSemMat"><span>Não tem matrícula (entra com o <b>nome completo</b> ou com um <b>usuário de acesso</b>, ex.: joao.silva)</span></label>
       <div class="row2"><label class="f"><span id="nuMatLbl">Matrícula</span><input id="nuMat" autocapitalize="none" placeholder="Ex.: m859209"></label>
       <label class="f" id="nuNomeW">Nome<input id="nuNome" placeholder="Ex.: JOÃO DA SILVA"></label></div>
       <label class="f" id="nuZapW">WhatsApp (com DDD)<input id="nuZap" inputmode="tel" placeholder="(00) 00000-0000" maxlength="15"></label>
@@ -1958,7 +1965,10 @@ function abrirAcessos(){
   const nus=$("#nuSup"); if(nus) nus.addEventListener("change",()=>{ const t=$("#nuCobraT"); if(t) t.textContent="💬 Pode cobrar no WhatsApp as turmas da "+cobraTxt(nus.value); });
   const perf=$("#nuPerf"); if(perf) perf.onchange=()=>{lotSync(perf,$("#nuSup"),$("#nuSupW")); $("#nuEqW").hidden=cargoBase(perf.value)!=="fiscal";
     const adm=perf.value==="admin"; ["#nuNomeW","#nuZapW","#nuCobraW","#nuSupW"].forEach(q=>{ const x=$(q); if(x) x.hidden=adm; }); $("#nuAdmNota").hidden=!adm;
-    $("#nuMatLbl").textContent=adm?"Usuário de acesso":"Matrícula"; $("#nuMat").placeholder=adm?"Ex.: admgpe":"Ex.: m859209"; };
+    const sm=!adm&&!!$("#nuSemMat")?.checked; { const w=$("#nuSemMatW"); if(w) w.hidden=adm; }
+    $("#nuMatLbl").textContent=adm||sm?"Usuário de acesso":"Matrícula"; $("#nuMat").placeholder=adm?"Ex.: admgpe":sm?"Ex.: joao.silva":"Ex.: m859209";
+    if(sm&&!$("#nuMat").value.trim()){ const n=$("#nuNome").value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").split(/\s+/).filter(Boolean); if(n.length) $("#nuMat").value=n.length>1?n[0]+"."+n[n.length-1]:n[0]; } };
+  { const sm=$("#nuSemMat"); if(sm&&perf) sm.onchange=()=>{ if(!sm.checked&&!/^m\d+$/i.test($("#nuMat").value.trim())) $("#nuMat").value=""; perf.onchange(); }; }
   const salvar=async(id,dados,msg)=>{ try{ await dbUpdate(db.doc("cfg/acesso"),{usuarios:{[id]:dados}}); toast(msg); abrirAcessos(); }catch(e){ toast("Não foi possível salvar: "+acErro(e)); } };
 const acErro=e=>{ const m=String(e?.message||e||""); return /gerente|acessos|permiss|acesso inválido/i.test(m)?"o banco de dados recusou ("+m+"). Rode no Supabase o arquivo ATUALIZAR_PERMISSOES.sql que mandei.":m||"tente de novo"; };
   host.querySelector(".panel").addEventListener("click",async e=>{
@@ -2013,11 +2023,13 @@ const acErro=e=>{ const m=String(e?.message||e||""); return /gerente|acessos|per
       const matricula=matKey($("#nuMat").value), nome=$("#nuNome").value.trim().toUpperCase(), cargo=$("#nuPerf").value, p=cargoBase(cargo), pin=$("#nuPin").value, sup=$("#nuSup").value;
       if(p==="admin"&&!podeCriarAdm()){toast("Só o administrador e o Victor cadastram administrador.");return}
       const adm=p==="admin";
-      if(!matricula){toast(adm?"Informe o usuário de acesso.":"Informe a matrícula.");return}
+      const semMat=!adm&&!!$("#nuSemMat")?.checked;
+      if(!matricula){toast(adm||semMat?"Informe o usuário de acesso.":"Informe a matrícula.");return}
+      if(semMat&&!/^[a-z0-9._-]{3,}$/.test(matricula)){toast("Usuário de acesso: pelo menos 3 letras ou números, sem espaço (pode usar ponto). Ex.: joao.silva");return}
       const dupM=acharMat(matricula); if(dupM){toast((adm?"O usuário ":"A matrícula ")+matricula+" já está cadastrad"+(adm?"o":"a")+" para "+dupM[1].nome+".");return}
       if(!adm&&!nome){toast("Informe o nome.");return} if(!pinOk(pin)){toast(MSG_SENHA);return}
       const zr=adm?"":$("#nuZap").value, zap=zapNorm(zr); if(zr.trim()&&!zap){toast("WhatsApp inválido: use DDD + número, ex.: (62) 99999-1234.");return}
-      AC_TAB="lista"; AC_BUSCA=adm?matricula:nome; const salt=novoSal(); await salvar(uidNovo(),{nome:adm?(nome||"ADMINISTRADOR "+matricula.toUpperCase()):nome,matricula,perfil:p,cargo,sup:adm?"":sup,equipe:p==="fiscal"?$("#nuEq").value:"",zap,cobra:!adm&&!!$("#nuCobra")?.checked,salt,hash:await hashPin(salt,pin),ativo:true,criadoEm:new Date().toISOString(),senhaEm:new Date().toISOString()},nome+" adicionado.");
+      AC_TAB="lista"; AC_BUSCA=adm?matricula:nome; const salt=novoSal(); await salvar(uidNovo(),{nome:adm?(nome||"ADMINISTRADOR "+matricula.toUpperCase()):nome,matricula,perfil:p,cargo,sup:adm?"":sup,equipe:p==="fiscal"?$("#nuEq").value:"",zap,cobra:!adm&&!!$("#nuCobra")?.checked,semMat,salt,hash:await hashPin(salt,pin),ativo:true,criadoEm:new Date().toISOString(),senhaEm:new Date().toISOString()},nome+" adicionado.");
     }
   });
 }
@@ -2033,7 +2045,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.10a";
+const APP_VERSAO="2026.11.10b";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
