@@ -2071,7 +2071,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.10k";
+const APP_VERSAO="2026.11.10l";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -8717,9 +8717,11 @@ function abrirRelatorios(){
   const dig=x=>String(x||"").replace(/\D/g,"");
   const casa=(txt,nums,q)=>{ const ps=nBusca(q).split(" ").filter(Boolean); if(!ps.length) return true; const t=" "+nBusca(txt)+" ", dq=dig(q);
     if(dq.length>=4&&nums.some(n=>dig(n).includes(dq))) return true; return ps.every(p=>t.includes(p)||(dig(p).length>=4&&nums.some(n=>dig(n).includes(dig(p))))); };
+  // cada poda vê o seu: quem é de uma turma só vê os relatórios dela; gerente e coordenação, só os da sua gerência
+  const daTurma=sup=>{ try{ if(isAdm()) return true; if(travado()) return !!sup&&sup===sessao.sup; return sup?noEscopo(sup):!travado(); }catch(e){ return false; } };
   const roda=()=>{ ls.set("gpe_relq",qi.value);
-    const L0=todos(true).filter(r=>!r.arquivado&&relLiberado(r)).filter(r=>casa([r.bairro,r.logradouro,r.processo,r.ped,r.relat?.processo,r.relat?.ped,r.supervisao,supNome(r.supervisao)].join(" "),[r.processo,r.ped,r.relat?.processo,r.relat?.ped],qi.value)).map(r=>({k:"p",r,d:r.dataExec||r.data||""}));
-    let LV=[]; try{ LV=(VIST.relLista?VIST.relLista():[]).filter(v=>casa([v.processo,v.ged,v.endereco,v.setor,v.sup].join(" "),[v.processo,v.ged],qi.value)).map(v=>({k:"v",v,d:v.data||""})); }catch(e){}
+    const L0=todos(true).filter(r=>!r.arquivado&&relLiberado(r)&&daTurma(r.supervisao)).filter(r=>casa([r.bairro,r.logradouro,r.processo,r.ped,r.relat?.processo,r.relat?.ped,r.supervisao,supNome(r.supervisao)].join(" "),[r.processo,r.ped,r.relat?.processo,r.relat?.ped],qi.value)).map(r=>({k:"p",r,d:r.dataExec||r.data||""}));
+    let LV=[]; try{ LV=(VIST.relLista?VIST.relLista():[]).filter(v=>daTurma(v.sup)).filter(v=>casa([v.processo,v.ged,v.endereco,v.setor,v.sup].join(" "),[v.processo,v.ged],qi.value)).map(v=>({k:"v",v,d:v.data||""})); }catch(e){}
     const L=L0.concat(LV).sort((a,b)=>b.d.localeCompare(a.d));
     inf.textContent=L.length?`${L.length} relatório${L.length===1?"":"s"} pronto${L.length===1?"":"s"}${L.length>100?" (mostrando os 100 mais recentes)":""}.`:"Nenhum relatório pronto encontrado.";
     res.innerHTML=L.slice(0,100).map(it=>it.k==="v"?`<div class="item" style="display:grid;gap:6px"><div><b>${fmtD(it.v.data)}</b> · ${esc(it.v.setor||"")} — ${esc(it.v.endereco||"")}<div class="note">🔎 Vistoria de processo · proc. ${esc(it.v.processo)}${it.v.ged?" · GED "+esc(it.v.ged):""}${it.v.sup?" · "+esc(supNome(it.v.sup)):""} · ${it.v.ja?"já estava executado":"executado pela turma"}${it.v.assinado?" · ✍ assinado":` · <b style="color:var(--bad)">sem assinatura</b>`}</div></div>
