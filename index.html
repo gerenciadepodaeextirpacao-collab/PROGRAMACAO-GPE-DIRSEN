@@ -12,7 +12,7 @@
 <script>/* sempre tema claro (o escuro fica ruim de ler no celular) */try{const H=document.documentElement,L=()=>{ if(H.getAttribute("data-theme")!=="light") H.setAttribute("data-theme","light"); };L();new MutationObserver(L).observe(H,{attributes:true,attributeFilter:["data-theme"]});}catch(e){}</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=Lora:ital,wght@1,500&display=swap">
 <style>
 /* Layout: app de campo, uma coluna, barra de abas fixa embaixo; alvos de toque grandes para uso com luva e sol forte */
 :root{
@@ -1069,7 +1069,7 @@ body.sofiscal nav.tabs{display:none!important}
   #tSup td.rs{grid-column:span 3/span 3}#tSup td.rs+td.rs{grid-column:auto}
   #tSup tr td:nth-child(7),#tSup tr td:nth-child(8){grid-column:span 1}
 }
-.lg-frase{margin:4px 0 2px;text-align:center;font-family:var(--display);font-size:20px;line-height:1.2;color:#c2410c;font-weight:700;letter-spacing:.2px}
+.lg-frase{margin:6px 0 4px;text-align:center;font:italic 500 21px/1.3 Lora,Georgia,"Times New Roman",serif;color:#1f4d2e;letter-spacing:0}
 .actabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--sunk);padding:4px;border-radius:12px}.actabs button{font:inherit;font-weight:700;font-size:15px;min-height:46px;border:0;border-radius:9px;background:transparent;color:var(--muted);cursor:pointer;padding:6px 10px}.actabs button small{font-weight:600;opacity:.8}.actabs button[aria-selected="true"]{background:var(--surface,#fff);color:var(--brand);box-shadow:0 1px 3px rgba(0,0,0,.12)}
 </style>
 
@@ -1649,6 +1649,32 @@ const RESET_MARCA="2026-10-28-zerar";
 try{ if(ls.get("gpe_reset","")!==RESET_MARCA){ ls.set("gpe_fila",[]); ls.set("gpe_reset",RESET_MARCA); } }catch(e){}
 const fila = { all(){return ls.get("gpe_fila",[])}, put(id,body){const f=this.all().filter(x=>x.id!==id);f.push({id,body});ls.set("gpe_fila",f);syncUI()}, drop(id){ls.set("gpe_fila",this.all().filter(x=>x.id!==id));syncUI()} };
 function newId(){ return db ? db.collection(COL).doc().id : "l"+Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+// gerente: o serviço foi executado por outra turma → passa para ela (some da turma original e vai para quem executou)
+function abrirTransferir(r){
+  const box=document.createElement("div"); box.className="sheet"; box.style.zIndex=30;
+  const ts=SUPS.filter(s=>s.id!==r.supervisao&&noEscopo(s.id));
+  box.innerHTML=`<div class="panel" role="dialog" aria-label="Transferir para outra turma"><b style="font-family:var(--display);font-size:22px">Executado por outra turma</b>
+    <p class="note" style="margin:0"><b>${esc(fmtD(r.data))}</b> · ${esc(r.bairro||"")} — ${esc(r.logradouro||"")}<br>Hoje está em <b>${esc(supNome(r.supervisao))}</b>${r.equipe?" · "+esc(r.equipe):""}.</p>
+    <p class="note" style="margin:0">O serviço <b>sai da programação desta turma</b> e passa para a turma que executou, no mesmo dia, para ela dar a baixa. A O.S desta turma deixa de valer para este serviço. Fica registrado no histórico.</p>
+    <label class="f">Turma que executou<select id="tfSup"><option value="">— Escolher —</option>${ts.map(s=>`<option value="${esc(s.id)}">${esc(supNome(s.id))}</option>`).join("")}</select></label>
+    <div class="row2"><label class="f">Equipe<select id="tfEq">${["1ª EQUIPE","2ª EQUIPE","3ª EQUIPE"].map(q=>`<option ${q===r.equipe?"selected":""}>${q}</option>`).join("")}</select></label>
+    <label class="f">Equipamento<select id="tfVt">${[...$("#viatura").options].map(o=>`<option value="${esc(o.value)}" ${o.value===r.viatura?"selected":""}>${esc(o.textContent)}</option>`).join("")}</select></label></div>
+    <label class="f">Motivo (opcional)<input id="tfMot" placeholder="Ex.: a PODA I NOTURNO (A) atendeu no lugar"></label>
+    <div class="err" id="tfErr" hidden></div>
+    <div class="actions" style="grid-template-columns:1fr 1fr;margin:0"><button type="button" class="btn sec" data-tfno>Voltar</button><button type="button" class="btn pri" data-tfok>🔁 Transferir</button></div></div>`;
+  document.body.appendChild(box);
+  box.onclick=async e=>{ if(e.target===box||e.target.closest("[data-tfno]")) return box.remove();
+    const ok=e.target.closest("[data-tfok]"); if(!ok) return; const er=box.querySelector("#tfErr"), sup=box.querySelector("#tfSup").value;
+    if(!sup){ er.textContent="Escolha a turma que executou."; er.hidden=false; return; }
+    const fresh=todosGlobal().find(x=>x.id===r.id)||r, upd={...fresh}; delete upd.id; delete upd._fila;
+    const de=fresh.supervisao, so=supOf(sup)||{};
+    Object.assign(upd,{supervisao:sup,grupo:so.grupo||upd.grupo,equipe:box.querySelector("#tfEq").value,viatura:box.querySelector("#tfVt").value,transferido:{de,deEquipe:fresh.equipe||"",para:sup,por:sessao.nome,uid:sessao.id,em:new Date().toISOString(),motivo:box.querySelector("#tfMot").value.trim()}});
+    delete upd.osDia; delete upd.fotosFiscal;
+    upd._acao=`Transferiu de ${de} para ${sup} (executado por outra turma)${upd.transferido.motivo?": "+upd.transferido.motivo:""}`;
+    ok.disabled=true; ok.textContent="Transferindo…";
+    const res=await saveDoc(r.id,upd); if(res!=="ok"&&res!=="fila"){ ok.disabled=false; ok.textContent="🔁 Transferir"; er.textContent="Não foi possível salvar agora. Tente de novo."; er.hidden=false; return; }
+    box.remove(); try{ renderAll(); }catch(x){} toast(`Transferido para ${supNome(sup)}. Agora a baixa é com essa turma.`); };
+}
 async function saveDoc(id, body){
   const acao=body._acao||"Alterou"; body={...body}; delete body._acao;
   body.ultimoUsuario=nomeAutor();
@@ -2045,7 +2071,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.10f";
+const APP_VERSAO="2026.11.10j";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -3242,6 +3268,7 @@ V.nCoord=()=>0; V.nBaixa=()=>0;
 // supervisor: ainda não repassados ao fiscal (aviso no Início); em aberto: todos os não executados da turma
 V.nTurma=sup=>Object.values(V.regs).filter(r=>r&&r.situacao==="nao_executado"&&r.envio&&r.envio.sup===sup&&!r.execucao&&!r.envio_fiscal).length;
 V.nTurmaAberto=sup=>Object.values(V.regs).filter(r=>r&&r.situacao==="nao_executado"&&r.envio&&r.envio.sup===sup&&!r.execucao).length;
+V.nTurmaAssinar=sup=>Object.values(V.regs).filter(r=>r&&r.situacao==="nao_executado"&&r.envio&&r.envio.sup===sup&&r.execucao&&r.execucao.fotos&&!(r.execucao.ass&&r.execucao.ass.em)).length;
 // fiscal: serviços que o supervisor repassou para ele executar e anexar as 3 fotos
 V.nFiscal=uid=>Object.values(V.regs).filter(r=>r&&r.situacao==="nao_executado"&&r.envio&&r.envio_fiscal&&r.envio_fiscal.uid===uid&&!r.execucao).length;
 V.enviadosTurma=V.nTurma;
@@ -3382,7 +3409,7 @@ function montar(root) {
   function listas() {
     S.sups = SUPS.filter((x) => noEscopo(x.id)).map((x) => ({ nome: x.id, turma: nomeSupDe(x.id) || "" }));
     S.vist = Object.entries(acesso || {}).filter(([id, u]) => u && u.ativo !== false && u.nome && u.perfil !== "admin" && pessoaNoEscopo(u) && (u.perfil !== "fiscal" || fisPerm(id).vrota)).map(([id, u]) => ({ uid: id, nome: u.nome, rot: u.nome + (u.perfil === "fiscal" ? " (fiscal)" : "") })).sort((a, b) => a.nome.localeCompare(b.nome, "pt"));
-    const quem = meuId(); if (S._ini !== quem) { S._ini = quem; S.tela = pode.fis() ? (minhaAlguma() || !VIST.nFiscal(quem) ? "rotas" : "exec") : pode.sup() && VIST.nTurmaAberto(sessao.sup) && !minhaAlguma() ? "exec" : pode.resumo() && !pode.coord() && !minhaAlguma() ? "resumo" : "rotas"; }
+    const quem = meuId(); if (S._ini !== quem) { S._ini = quem; S.tela = pode.fis() ? (minhaAlguma() || !VIST.nFiscal(quem) ? "rotas" : "exec") : pode.sup() && (VIST.nTurmaAberto(sessao.sup) || VIST.nTurmaAssinar(sessao.sup)) && !minhaAlguma() ? "exec" : pode.resumo() && !pode.coord() && !minhaAlguma() ? "resumo" : "rotas"; }
   }
   const REGN = ["CENTRO OESTE", "SUL", "LESTE", "NORTE", "OESTE"];
   let _base = null;
@@ -3663,7 +3690,7 @@ function montar(root) {
     const anos = {}; base.forEach((p) => (anos[p.ano || 0] = (anos[p.ano || 0] || 0) + 1));
     const ys = Object.keys(anos).map(Number).sort((a, b) => (a || 9999) - (b || 9999));
     const T = [["rotas", pode.resumo() ? "Rotas" : `Minhas rotas${pode.fis() ? " (" + VIST.nMeus(meuId()) + ")" : ""}`]];
-    if (pode.sup()) T.push(["exec", `Para executar (${VIST.nTurmaAberto(sessao.sup)})`]);
+    if (pode.sup()) T.push(["exec", `Para executar (${VIST.nTurmaAberto(sessao.sup)})${VIST.nTurmaAssinar(sessao.sup) ? " · ✍ " + VIST.nTurmaAssinar(sessao.sup) + " para assinar" : ""}`]);
     if (pode.fis()) T.push(["exec", `Para executar (${VIST.nFiscal(meuId())})`]);
     if (pode.resumo()) T.push(["resumo", `Resumo das vistorias (${d})`]);
     if (pode.pdf()) T.push(["pdfs", `📄 PDFs dos processos (${all.filter((p) => docLinks(R(p)).length).length}/${all.length})`]);
@@ -4076,7 +4103,7 @@ function montar(root) {
     const obs = [`Vistoria de processo em ${fDia(r.data_vistoria)}${r.responsavel ? " (" + r.responsavel + ")" : ""}: serviço encontrado não executado · equipamento ${r.equipamento || "–"}.`, r.observacao ? "Obs. da vistoria: " + r.observacao : "", x.obs ? "Obs. da execução: " + x.obs : ""].filter(Boolean).join(" ");
     return { id: "vist-" + p.id, tipo: "PROCESSO", procSist: sistemaDe(p), processo: p.processo, supervisao: sup, equipe: (fu && fu.equipe) || "", fiscal: x.fiscal || ef.nome || "",
       bairro: p.setor || "", logradouro: p.endereco || "", status: "SIM", data: x.data, dataExec: x.data, obs, qtd: x.qtd || {},
-      relat: { processo: p.processo, sist: sistemaDe(p), ped: "", parecer: parecerTxt(p.parecer), vistoria: r.data_vistoria || "", solicitante: "", arvore: "", galho: "", matricula: relMatSup(sup), midia: x.fotos || {} } };
+      relat: { processo: p.processo, sist: sistemaDe(p), ped: "", parecer: parecerTxt(p.parecer), vistoria: r.data_vistoria || "", solicitante: "", arvore: "", galho: "", matricula: (x.ass && x.ass.mat) || relMatSup(sup), midia: x.fotos || {}, ass: x.ass && x.ass.em ? { ...x.ass } : null } };
   }
   // serviço que a vistoria encontrou JÁ EXECUTADO: relatório com a foto da vistoria; no lugar da data de execução vai a data da vistoria
   function relRecJa(p) {
@@ -4092,10 +4119,18 @@ function montar(root) {
         .replace("Relatório ainda sem assinatura eletrônica do supervisor.", "") };
   }
   const fotos3 = (m) => `<div class="vp-row" style="gap:6px;flex-wrap:nowrap">${REL_SLOTS.map((sl) => { const f = (m || {})[sl.k]; return `<div style="flex:1;min-width:0;text-align:center"><span class="vp-lab" style="display:block">${sl.curto}</span>${f ? `<a href="${esc(fotoAbrir(f))}" target="_blank" rel="noopener"><img src="${esc(fotoUrl(f))}" alt="${sl.curto}" loading="lazy" style="width:100%;height:96px;object-fit:cover;border-radius:6px"></a>` : `<span class="vp-need">falta</span>`}</div>`; }).join("")}</div>`;
+  // o supervisor da turma que executou assina o relatório de serviço (gerente e administrador também podem)
+  const execSup = (p) => { const r = R(p); return (r.envio && r.envio.sup) || (r.execucao && r.execucao.sup) || ""; };
+  const podeAssExec = (p) => !!sessao && !soLeitura() && (isGerente() || (sessao.perfil === "supervisor" && sessao.sup === execSup(p)) || (typeof podeAssinar === "function" && sessao.sup === execSup(p) && sessao.perfil !== "fiscal" && podeAssinar(sessao.id, "rel")));
+  function execAssHtml(p) { const x = R(p).execucao || {};
+    if (x.ass && x.ass.em) return `<span class="vp-msg" style="color:#1f6b3a">✍ Assinado eletronicamente por <b>${esc(x.ass.nome)}</b>${x.ass.cargo ? " (" + esc(x.ass.cargo) + ")" : ""} em ${fHora(x.ass.em)} · código ${esc(x.ass.cod || "")}</span>`;
+    if (podeAssExec(p)) return `<div class="vp-vb" style="border-color:var(--bk)"><b>✍ Assinar o relatório de serviço</b><span class="vp-msg">O relatório só vale com a assinatura do supervisor. Assina como <b>${esc(usuario())}</b>${matDe(acesso && acesso[meuId()] || {}) ? " · matrícula " + esc(matDe(acesso[meuId()])) : ""}.</span><div class="vp-sigf"><input type="text" name="username" autocomplete="username" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">${sigFormHtml(pxAss("x" + p.id), meuId())}</div><div class="vp-row"><button class="vp-btn vp-pri" data-vassexec="${p.id}">✍ Assinar o relatório</button></div></div>`;
+    return `<span class="vp-need">⚠ Relatório ainda <b>sem a assinatura do supervisor</b> ${esc(supNome(execSup(p)))}. Ele assina em Vistoria › Para executar › Já executados.</span>`; }
   function execFeitaHtml(p, comBotoes) {
     const r = R(p), x = r.execucao, e = r.envio || {};
     return `<div class="vp-vb" style="border-color:var(--lf)"><div class="vp-row"><span class="vp-sp vp-s-ja_executado">✔ Executado</span><span><b>${esc(supNome(e.sup || x.sup || ""))}</b> em <b>${fDia(x.data)}</b>${x.fiscal ? " · fiscal " + esc(x.fiscal) : ""}${x.por ? " · registrado por " + esc(x.por) : ""}</span></div>
       ${x.fotos ? fotos3(x.fotos) : ""}${x.qtd && qtdExecTxt(x.qtd) ? `<div class="vp-msg">Executado: <b>${esc(qtdExecTxt(x.qtd))}</b></div>` : ""}${x.obs ? `<div class="vp-msg">Obs.: ${esc(x.obs)}</div>` : ""}
+      ${x.fotos ? execAssHtml(p) : ""}
       ${x.fotos ? `<span class="vp-lab">Relatório de serviço (para responder no SEI / Intranet)</span><div class="vp-row"><button class="vp-btn vp-pri" data-vrelpdf="${p.id}">📄 Baixar em PDF</button><button class="vp-btn" data-vreldocx="${p.id}">📝 Baixar em Word</button></div>` : ""}
       ${comBotoes && pode.coord() ? `<div class="vp-row"><button class="vp-btn" data-exdesfaz="${p.id}">Desfazer execução</button></div>` : ""}</div>`;
   }
@@ -4157,7 +4192,9 @@ function montar(root) {
           <div class="vp-msg" style="margin-top:4px">Equipamento: <b>${esc(r.equipamento || "–")}</b> · enviado por ${esc(r.envio.por || "–")} em ${fHora(r.envio.em)}${ef && fis ? " · repassado por " + esc(ef.por || "–") : ""}${r.observacao ? " · Obs. da vistoria: " + esc(r.observacao) : ""}</div></div><div class="vp-q">${qtdPills(p)}</div>
           <div class="vp-vb">${acao}</div></li>`; }).join("") + `</ol></section>`;
     }
-    if (F.length) h += `<h3>Já executados (${F.length})</h3><section class="vp-card"><ol>${F.slice(0, 30).map((p) => { const ex = R(p).execucao; return `<li class="vp-stop vp-done"><span class="vp-seq"></span><div><div class="vp-e">${esc(p.endereco)}</div><div class="vp-msg">Proc. ${esc(p.processo)} · executado em ${fDia(ex.data)}${ex.fotos ? " · 3 fotos no relatório" : ""}</div></div></li>`; }).join("")}</ol></section>`;
+    { const semAss = F.filter((p) => R(p).execucao.fotos && !(R(p).execucao.ass && R(p).execucao.ass.em));
+      if (semAss.length && !fis) h += `<h3>✍ Para assinar o relatório (${semAss.length})</h3><section class="vp-card"><ol>${semAss.map((p) => `<li class="vp-stop"><span class="vp-seq"></span><div>${linhaProc(p)}${execFeitaHtml(p, false)}</div></li>`).join("")}</ol></section>`; }
+    if (F.length) h += `<h3>Já executados (${F.length})</h3><section class="vp-card"><ol>${F.slice(0, 30).map((p) => { const ex = R(p).execucao; return `<li class="vp-stop vp-done"><span class="vp-seq"></span><div><div class="vp-e">${esc(p.endereco)}</div><div class="vp-msg">Proc. ${esc(p.processo)} · executado em ${fDia(ex.data)}${ex.fotos ? " · 3 fotos no relatório" : ""}${ex.ass && ex.ass.em ? " · ✍ assinado" : " · <b style='color:#b42318'>sem assinatura</b>"}</div></div></li>`; }).join("")}</ol></section>`;
     return h;
   }
   async function execSalvar(id) {
@@ -4318,6 +4355,12 @@ function montar(root) {
     if (ds.geo) { localizar(); return; }
     if (ds.mapa1) { const p = S.proc.find((x) => x.id === ds.mapa1); if (p) abrirMapa([p], p.id, "Proc. " + p.processo); return; }
     if (ds.mapar) { const ro = rotasDe(S.cur)[+ds.mapar]; if (!ro) return; const seq = ordemGps(visiveis(ro).filter((p) => !R(p).vistoriado)); abrirMapa(seq, null, `Rota ${ro.n} · ${seq.length} paradas`); return; }
+    if (ds.vassexec) { const id = ds.vassexec, p = S.proc.find((q) => q.id === id), r = R(p); if (!p || !r.execucao || !podeAssExec(p)) return;
+      const px = pxAss("x" + id), uid = meuId(), erro = await conferirAss(px, uid); if (erro) { toast("Assinatura: " + erro); return; }
+      const u = (acesso && acesso[uid]) || {}, em = new Date().toISOString();
+      const ass = { uid, nome: usuario(), cargo: (typeof cargoDe === "function" ? cargoDe(u) : "") || "Supervisor", mat: matDe(u), sup: execSup(p), como: "pelo próprio acesso", em };
+      ass.cod = await codVerif({ id: "vist-" + id, processo: p.processo || "", uid, em, st: "SIM" });
+      if (await gravar([id], { execucao: { ...r.execucao, ass } })) { Object.keys(S.sigv || {}).forEach((k) => { if (k.startsWith(px)) delete S.sigv[k]; }); toast("Relatório assinado"); render(); } return; }
     if (ds.vassinar) { const a = await assinarVist(ds.vassinar); if (a.erro) { toast("Assinatura: " + a.erro); return; } if (await gravar([ds.vassinar], { ass: a.ass })) toast("Relatório assinado"); return; }
     if (ds.geostop) { if (S.geo) S.geo.on = false; render(); return; }
     if (ds.tiraum) { if (await gravar([ds.tiraum], { rota: null })) toast("Vistoriador retirado desta parada"); return; }
@@ -6035,6 +6078,7 @@ function detalhe(r, abrirAdiar=false, soVer=false){
       ${r.fiscal?`<dt>Fiscal</dt><dd>${esc(r.fiscal)}</dd>`:""}
       ${r.obs?`<dt>Obs.</dt><dd>${esc(r.obs)}</dd>`:""}
       ${r.ultimoUsuario?`<dt>Lançado por</dt><dd>${esc(r.ultimoUsuario)}</dd>`:""}
+      ${r.transferido?`<dt>Transferido</dt><dd>🔁 de <b>${esc(r.transferido.de)}</b> para <b>${esc(r.transferido.para)}</b> por ${esc(r.transferido.por||"")} em ${fmtHora(r.transferido.em)}${r.transferido.motivo?" · "+esc(r.transferido.motivo):""}</dd>`:""}
       ${r.origem==="planilha"?`<dt>Origem</dt><dd>Importado da planilha</dd>`:""}
     </dl>
     ${hist.length?`<div class="hist"><b style="color:var(--ink)">Histórico de remarcações</b>${hist.map(h=>`<span>${fmtD(h.de)} → ${fmtD(h.para)} · ${esc(h.motivo||"")}</span>`).join("")}</div>`:""}
@@ -6044,6 +6088,7 @@ function detalhe(r, abrirAdiar=false, soVer=false){
     ${detOsHtml(r)}
     ${fotosFisHtml(r)}
     ${(!r.ocorrencia&&!r.avulso&&!r._fila&&!r.arquivado&&(isGerente()||(!soVer&&isProg(r)&&isGer())))?`<button type="button" class="btn sec" id="shProg">✏ ${isGerente()?"Editar programação (gerente)":"Corrigir programação (gerência)"}</button>`:""}
+    ${(!r.ocorrencia&&!r._fila&&!r.arquivado&&isGerente()&&!soLeitura())?`<button type="button" class="btn sec" id="shTransf">🔁 Executado por outra turma – transferir</button>`:""}
     ${(soVer||soLeitura()||r.arquivado)?`${soVer&&isProg(r)&&!soLeitura()&&!r.arquivado?`<button type="button" class="btn pri" id="shBaixa" style="min-height:52px;font-size:16px">${r.ocorrencia?"Registrar atendimento":"✔ Dar baixa"}</button>`:""}<button type="button" class="btn sec" id="shClose">Fechar</button>${(soVer&&isGerente()&&!r._fila&&db&&!r.arquivado)?`<button type="button" class="btn danger" id="shDel">${isProg(r)?"Excluir programação":"Excluir lançamento"} (gerente)</button>`:""}`:`<div class="actions" style="grid-template-columns:1fr 1fr">
       ${isProg(r)?`<button type="button" class="btn pri" id="shBaixa">Dar baixa</button>`:`<button type="button" class="btn pri" id="shEdit">Corrigir baixa</button>`}
       <button type="button" class="btn sec" id="shClose">Fechar</button>
@@ -6062,6 +6107,7 @@ function detalhe(r, abrirAdiar=false, soVer=false){
   const sn=$("#shNao"); if(sn) sn.onclick=()=>{close(); abrirBaixa(r,"NÃO")};
   const sm=$("#shMsg"); if(sm) sm.onclick=()=>{close(); abrirMsg(r)};
   const sp=$("#shProg"); if(sp) sp.onclick=()=>{close(); abrirProg(r)};
+  const stf=$("#shTransf"); if(stf) stf.onclick=()=>{close(); abrirTransferir(r)};
   const ad=$("#shAdiar"); if(ad) ad.onclick=()=>{$("#adiarBox").hidden=false;ad.hidden=true};
   const ok=$("#adOk"); if(ok) ok.onclick=async()=>{
     const nd=$("#adData").value, mot=$("#adMot").value;
@@ -6752,7 +6798,7 @@ async function rptPdfMulti(htmls, label, op={}){
 }
 function rptHtmlDoc(html){
   const css=[...document.querySelectorAll("style")].map(s=>s.textContent).join("\n").split("/* ---------- relatório")[1]||"";
-  return `<!doctype html><html lang="pt-BR" style="-webkit-text-size-adjust:100%;text-size-adjust:100%"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Relatório GPE</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap"><style>/* ---------- relatório${css}\nbody{margin:0;background:#e9ece7}.rpt{margin:20px auto;box-shadow:0 2px 14px rgba(0,0,0,.15)}@media print{body{background:#fff}.rpt{margin:0;box-shadow:none}.blk{break-inside:avoid}@page{size:A4;margin:8mm 0}}</style></head><body>${html}</body></html>`;
+  return `<!doctype html><html lang="pt-BR" style="-webkit-text-size-adjust:100%;text-size-adjust:100%"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Relatório GPE</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=Lora:ital,wght@1,500&display=swap"><style>/* ---------- relatório${css}\nbody{margin:0;background:#e9ece7}.rpt{margin:20px auto;box-shadow:0 2px 14px rgba(0,0,0,.15)}@media print{body{background:#fff}.rpt{margin:0;box-shadow:none}.blk{break-inside:avoid}@page{size:A4;margin:8mm 0}}</style></head><body>${html}</body></html>`;
 }
 function abrirRelatorio(){
   if(!loaded){toast("Aguarde os dados carregarem.");return}
@@ -8941,32 +8987,45 @@ function fisOsGrupos(dias=7){ const me=acesso?.[sessao.id]||{}, lim=new Date(Dat
     .forEach(r=>{ const k=r.osDia.num||r.osDia.em; (G[k]=G[k]||{os:r.osDia,rs:[]}).rs.push(r); });
   return Object.values(G).sort((a,b)=>(b.os.em||"").localeCompare(a.os.em||"")); }
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-fiseq]"); if(!b||sessao?.perfil!=="fiscal"||!fisPode("equipe")) return;
-  const g0=fisOsGrupos().find(x=>(x.os.num||x.os.em)===b.dataset.fiseq); if(!g0) return toast("O.S não encontrada.");
+  const g0=fisOsGrupos(30).find(x=>(x.os.num||x.os.em)===b.dataset.fiseq); if(!g0) return toast("O.S não encontrada.");
   const sup=g0.rs[0]?.supervisao||sessao.sup, eq=g0.rs[0]?.equipe||"", g={...g0,sup,eq,k:sup+"|"+eq};
   eqcAbrir(g,M=>eqcSalvar(g,M),true); });
+// finalizar a O.S: o fiscal assina com a senha de assinatura (1ª vez: 654321)
 document.addEventListener("click",async e=>{ const b=e.target.closest("[data-fisfim]"); if(!b||sessao?.perfil!=="fiscal") return;
-  const g=fisOsGrupos().find(x=>(x.os.num||x.os.em)===b.dataset.fisfim); if(!g) return toast("O.S não encontrada."); if(g.os.fim) return;
-  b.disabled=true; if(await fisOsAtualiza(g,{fim:{por:sessao.nome,uid:sessao.id,em:new Date().toISOString()}},`Fiscal finalizou a O.S nº ${g.os.num}`)) toast("O.S finalizada e guardada em 📁 Controle de O.S. O supervisor já pode dar a baixa."); else b.disabled=false; });
+  const g=fisOsGrupos(30).find(x=>(x.os.num||x.os.em)===b.dataset.fisfim); if(!g) return toast("O.S não encontrada."); if(g.os.fim) return;
+  const box=document.createElement("div"); box.className="sheet"; box.style.zIndex=30;
+  box.innerHTML=`<div class="panel" role="dialog" aria-label="Finalizar a O.S"><b style="font-family:var(--display);font-size:22px">Finalizar a O.S nº ${esc(g.os.num||"")}</b>
+    <p class="note" style="margin:0">As 3 fotos estão anexadas. Assine para finalizar: a O.S vai para 📁 Controle de O.S e o supervisor já pode dar a baixa.</p>
+    <p class="note" style="margin:0">Assina como <b>${esc(sessao.nome)}</b>, Fiscal de turma.</p>${sigFormHtml("fosF",sessao.id)}
+    <div class="err" id="fosErr" hidden></div>
+    <div class="actions" style="grid-template-columns:1fr 1fr;margin:0"><button type="button" class="btn sec" data-fosno>Voltar</button><button type="button" class="btn start" data-fosok>✍ Assinar e finalizar</button></div></div>`;
+  document.body.appendChild(box);
+  box.onclick=async ev=>{ if(ev.target===box||ev.target.closest("[data-fosno]")) return box.remove();
+    const ok=ev.target.closest("[data-fosok]"); if(!ok) return; const er=box.querySelector("#fosErr");
+    ok.disabled=true; const r=await conferirAss("fosF",sessao.id); if(r){ er.textContent="Assinatura: "+r; er.hidden=false; ok.disabled=false; return; }
+    const em=new Date().toISOString(), cod=Math.random().toString(36).slice(2,8).toUpperCase();
+    if(await fisOsAtualiza(g,{fim:{por:sessao.nome,uid:sessao.id,em,ass:{nome:sessao.nome,uid:sessao.id,mat:matDe(acesso?.[sessao.id]||{}),cargo:"Fiscal de turma",em,cod}}},`Fiscal assinou e finalizou a O.S nº ${g.os.num}`)){ box.remove(); toast("O.S assinada e finalizada. Guardada em 📁 Controle de O.S; o supervisor já pode dar a baixa."); }
+    else { ok.disabled=false; er.textContent="Não foi possível salvar agora. Tente de novo."; er.hidden=false; } }; });
 document.addEventListener("click",async e=>{ const b=e.target.closest("[data-fisrec],[data-fisstart]"); if(!b||sessao?.perfil!=="fiscal") return;
-  const key=b.dataset.fisrec||b.dataset.fisstart, g=fisOsGrupos().find(x=>(x.os.num||x.os.em)===key); if(!g) return toast("O.S não encontrada.");
+  const key=b.dataset.fisrec||b.dataset.fisstart, g=fisOsGrupos(30).find(x=>(x.os.num||x.os.em)===key); if(!g) return toast("O.S não encontrada.");
   b.disabled=true; const em=new Date().toISOString(), quem={por:sessao.nome,uid:sessao.id,em};
   if(b.dataset.fisrec){ if(await fisOsAtualiza(g,{recebida:quem},`Fiscal confirmou o recebimento da O.S nº ${g.os.num}`)) toast(fisPode("equipe")?"O.S recebida. Agora cadastre a equipe de trabalho.":"O.S recebida. Toque em START quando começar."); else b.disabled=false; return; }
   if(fisPode("equipe")&&!g.os.membros?.length){ b.disabled=false; return toast("Cadastre a equipe de trabalho antes do start."); }
   if(await fisOsAtualiza(g,{start:quem},`Fiscal deu o START na O.S nº ${g.os.num} (começou a executar)`)) toast("Start registrado: O.S em execução."); else b.disabled=false; });
 function renderInicioFiscal(h){
-  const hr=new Date().getHours(), sau=hr<12?"Bom dia":hr<18?"Boa tarde":"Boa noite", me=acesso?.[sessao.id]||{}, G=fisOsGrupos(7), GA=G.filter(g=>!g.os.fim), GC=fisOsGrupos(90).filter(g=>g.os.fim);
+  const hr=new Date().getHours(), sau=hr<12?"Bom dia":hr<18?"Boa tarde":"Boa noite", me=acesso?.[sessao.id]||{}, G=fisOsGrupos(30), GA=G.filter(g=>!g.os.fim), GC=fisOsGrupos(90).filter(g=>g.os.fim);
   const card=g=>{ const o=g.os, d=g.rs[0]?.data||"", nF=g.rs.filter(r=>fotosPede(r)).length, ok=g.rs.filter(r=>fotosPede(r)&&REL_SLOTS.every(x=>r.fotosFiscal?.[x.k]||r.relat?.midia?.[x.k])).length;
     return `<section class="fosc ${nF&&ok===nF?"ok":""}"><div class="fosh"><b>O.S nº ${esc(o.num||"—")}</b><span class="note" style="margin:0">${d?fmtD(d)+" ("+diaDe(d)+")":""}</span></div>
       <p class="note" style="margin:0">${esc(g.rs[0]?.supervisao||"")} · ${esc(g.rs[0]?.equipe||"")}${g.rs[0]?.viatura?" · "+esc(g.rs[0].viatura):""}<br>Enviada por <b>${esc(o.por||"—")}</b>${o.em?" às "+new Date(o.em).toTimeString().slice(0,5):""}${o.membros?.length?`<br>👷 Equipe: ${o.membros.map(m=>`<b>${esc(m.nome)}</b> (${esc((m.funcao||"").toLowerCase())})`).join(" · ")}`:""}</p>
       ${osEtapaHtml(o)}
-      ${(()=>{ const ehHoje=(g.rs[0]?.data||"")>=iso(new Date(Date.now()-864e5)), K=esc(o.num||o.em); if(!ehHoje) return "";
+      ${(()=>{ const ehHoje=!o.fim||(g.rs[0]?.data||"")>=iso(new Date(Date.now()-864e5)), K=esc(o.num||o.em); if(!ehHoje) return "";
         if(!o.recebida) return `<button type="button" class="btn pri" data-fisrec="${K}" style="min-height:54px">📥 Confirmar que recebi a O.S</button><small style="color:var(--muted)">O supervisor vê na hora que você recebeu. Depois cadastre a equipe e dê o start.</small>`;
-        if(o.fim) return `<p class="fisrun">🏁 O.S finalizada às ${hm(o.fim.em)} por ${esc(o.fim.por||"")}</p>`;
+        if(o.fim) return `<p class="fisrun">🏁 O.S finalizada às ${hm(o.fim.em)} por ${esc(o.fim.por||"")}${o.fim.ass?` · ✍ assinada (código ${esc(o.fim.ass.cod||"")})`:""}</p>`;
         if(o.start){ const R=g.rs.filter(r=>fotosPede(r)&&r.status!=="NÃO"), falta=R.filter(r=>!REL_SLOTS.every(x=>r.fotosFiscal?.[x.k]||r.relat?.midia?.[x.k])).length;
           return `<p class="fisrun">🟢 Em execução desde ${hm(o.start.em)}</p>${falta?`<small style="color:var(--muted)">📷 Faltam as fotos de ${falta} serviço${falta>1?"s":""} (O.S Intranet / processo SEI). Depois da última foto aparece o botão para finalizar a O.S.</small>`:`<button type="button" class="btn start" data-fisfim="${K}" style="min-height:60px;font-size:20px">✅ FINALIZAR A O.S</button><small style="color:var(--muted)">${R.length?"Todas as fotos anexadas. ":""}Toque quando a equipe terminar o serviço. O supervisor vê na hora e faz a baixa.</small>`}`; }
         const precisaEq=fisPode("equipe")&&!o.membros?.length;
         return `<button type="button" class="btn ${precisaEq?"sec":"start"}" data-fisstart="${K}" ${precisaEq?"disabled":""} style="min-height:60px;font-size:20px">▶ START · começar a executar a O.S</button>${precisaEq?`<small style="color:var(--bad);font-weight:600">Cadastre a equipe de trabalho para liberar o start.</small>`:""}`; })()}
-      ${(()=>{ const ehHoje=(g.rs[0]?.data||"")>=iso(new Date(Date.now()-864e5)); return ehHoje&&fisPode("equipe")&&o.recebida&&!o.fim?`<button type="button" class="btn ${o.membros?.length?"sec":"pri"}" data-fiseq="${esc(o.num||o.em)}" style="min-height:48px">👷 ${o.membros?.length?`Equipe formada (${o.membros.length}) – editar`:"Formar a equipe (nome e função)"}</button>`:""; })()}
+      ${(()=>{ const ehHoje=!o.fim||(g.rs[0]?.data||"")>=iso(new Date(Date.now()-864e5)); return ehHoje&&fisPode("equipe")&&o.recebida&&!o.fim?`<button type="button" class="btn ${o.membros?.length?"sec":"pri"}" data-fiseq="${esc(o.num||o.em)}" style="min-height:48px">👷 ${o.membros?.length?`Equipe formada (${o.membros.length}) – editar`:"Formar a equipe (nome e função)"}</button>`:""; })()}
       <ol class="fosl">${g.rs.map(r=>{ const tem=fotosPede(r), n=REL_SLOTS.filter(x=>r.fotosFiscal?.[x.k]||r.relat?.midia?.[x.k]).length, k=stKey(r);
         return `<li><span class="fosst ${k==="SIM"?"ok":""}">${esc(ST_NOME[k]||k)}</span><b>${esc(r.bairro||"")} — ${esc(r.logradouro||"")}</b><small>${esc(tipoTxt(r)||r.tipo||"")}${r.processo?" · nº "+esc(procNum(r)):""}<br>${esc(qtdTxtPlano(prevQ(r))||"")}</small>
           ${tem?(!o.start&&!r.relat?.ass?`<small>📷 Fotos: depois do <b>START</b> da O.S (1 antes · 2 durante · 3 depois)</small>`:fotosFisPode(r)?(()=>{ const nx=REL_SLOTS.find(x=>!(r.fotosFiscal?.[x.k]||r.relat?.midia?.[x.k])); return nx?`<button type="button" class="btn pri" data-fotfis="${esc(r.id)}" style="min-height:52px">📷 Foto ${REL_SLOTS.indexOf(nx)+1} de 3 · ${nx.curto} <small style="display:block;font:600 12px var(--body);opacity:.9">${nx.dica}</small></button>`:`<button type="button" class="btn sec" data-fotfis="${esc(r.id)}" style="min-height:48px">✅ 3 fotos registradas – ver</button>`; })():`<small>${r.relat?.ass?"✅ Relatório assinado pelo supervisor":n?`📷 Fotos ${n} de 3`:"Fotos: o supervisor anexa na baixa"}</small>`):(relTem(r)?`<small>Processo GED: sem fotos (o supervisor faz o relatório na baixa)</small>`:`<small>Sem fotos (não é O.S Intranet nem processo SEI)</small>`)}</li>`; }).join("")}</ol></section>`; };
@@ -8976,7 +9035,7 @@ function renderInicioFiscal(h){
     <div class="fosseg" role="tablist"><button type="button" data-fosab="and" aria-pressed="${fosAba!=="ctl"}">📋 Em andamento <b>${G.filter(g=>!g.os.fim).length}</b></button><button type="button" data-fosab="ctl" aria-pressed="${fosAba==="ctl"}">📁 Controle de O.S <b>${GC.length}</b></button></div>
     ${fosAba==="ctl"?`<p class="note" style="margin:0 0 10px">O.S que você já <b>finalizou</b> (últimos 90 dias), para consulta sempre que precisar.</p>${GC.length?GC.map(card).join(""):`<div class="empty">Nenhuma O.S finalizada ainda.</div>`}`:`
     <div class="step" style="margin-bottom:6px">Ordens de serviço recebidas <b>em andamento</b></div>
-    <p class="note" style="margin:0 0 10px">Aqui aparecem as O.S que o supervisor iniciou e enviou para você. Nos serviços de O.S e processo, você pode anexar as fotos <b>antes, durante e depois</b>: elas vão direto para o relatório de serviço. É opcional – se não anexar, o supervisor anexa na baixa.</p>
+    <p class="note" style="margin:0 0 10px">Aqui aparecem as O.S que o supervisor iniciou e enviou para você. A O.S <b>fica aberta durante toda a execução</b>: volte nela a cada etapa para tirar a <b>1ª foto (antes)</b>, depois a <b>2ª (durante)</b> e por último a <b>3ª (depois)</b>. No fim, <b>assine e finalize a O.S</b>. As fotos vão direto para o relatório de serviço.</p>
     ${GA.length?GA.map(card).join(""):`<div class="empty">${GC.length?"Nenhuma O.S em andamento. As finalizadas ficam em <b>📁 Controle de O.S</b>.":"Nenhuma O.S recebida ainda. Quando o supervisor iniciar a O.S do dia e enviar para você, ela aparece aqui."}</div>`}`}`;
 }
 let fosAba="and";
@@ -9010,7 +9069,7 @@ function renderInicio(){
     {a:"rels",t:"Relatórios prontos para baixar",sub:"(PDF ou Word)",i:svgI('<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M12 12v6m-3-3 3 3 3-3"/>'),c:"t-gr",ok:true},
     {v:"chk",a:"chkNovo",t:"Checklist do equipamento",i:ICO.chk,ok:pode("chk")&&lanca},
     {v:"chk",a:"man",t:"Comunicar defeito",i:ICO.man,c:"t-bad",ok:pode("chk")&&lanca},
-    {v:"vist",t:"Vistoria de processo",sub:(()=>{ try{ const P=[]; const n=VIST.nMeus(sessao.id); if(n) P.push(n+" para você vistoriar"); const e=ehFiscal()?VIST.nFiscal(sessao.id):travado()&&sessao.sup?VIST.nTurmaAberto(sessao.sup):0; if(e) P.push(e+" para executar"); return P.length?"("+P.join(" · ")+")":""; }catch(e){ return ""; } })(),i:ICO.vist,c:"t-gr",ok:pode("vist")},
+    {v:"vist",t:"Vistoria de processo",sub:(()=>{ try{ const P=[]; const n=VIST.nMeus(sessao.id); if(n) P.push(n+" para você vistoriar"); const e=ehFiscal()?VIST.nFiscal(sessao.id):travado()&&sessao.sup?VIST.nTurmaAberto(sessao.sup):0; if(e) P.push(e+" para executar"); try{ const a=!ehFiscal()&&travado()&&sessao.sup?VIST.nTurmaAssinar(sessao.sup):0; if(a) P.push(a+" relatório"+(a>1?"s":"")+" para assinar"); }catch(x){} return P.length?"("+P.join(" · ")+")":""; }catch(e){ return ""; } })(),i:ICO.vist,c:"t-gr",ok:pode("vist")},
     {v:"resumo",t:"Ver o painel",i:ICO.resumo,c:"t-pu",ok:pode("resumo")},
     {v:"lista",t:"Lista e exportar",sub:"(PROGRAMAÇÃO)",i:ICO.lista,ok:pode("lista")},
     {v:"orc",t:"Orçamento",i:ICO.orc,c:"t-gr",ok:pode("orc")},
