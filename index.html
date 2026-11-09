@@ -1070,6 +1070,7 @@ body.sofiscal nav.tabs{display:none!important}
   #tSup tr td:nth-child(7),#tSup tr td:nth-child(8){grid-column:span 1}
 }
 .lg-frase{margin:4px 0 2px;text-align:center;font-family:var(--display);font-size:20px;line-height:1.2;color:#c2410c;font-weight:700;letter-spacing:.2px}
+.actabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--sunk);padding:4px;border-radius:12px}.actabs button{font:inherit;font-weight:700;font-size:15px;min-height:46px;border:0;border-radius:9px;background:transparent;color:var(--muted);cursor:pointer;padding:6px 10px}.actabs button small{font-weight:600;opacity:.8}.actabs button[aria-selected="true"]{background:var(--surface,#fff);color:var(--brand);box-shadow:0 1px 3px rgba(0,0,0,.12)}
 </style>
 
 <div id="login" class="login" hidden>
@@ -1702,7 +1703,29 @@ const byId = id => todos().find(r=>r.id===id);
 
 /* ---------- acesso: usuário + PIN ---------- */
 // Lista de pessoas fica no documento cfg/acesso (só quem edita o app pode alterar). O PIN é guardado com hash SHA-256 + sal.
-const PERF={admin:"Administrador",diretoria:"Diretoria",gerencia:"Gerente",gerencia_op:"Gerente DIROP",ger_equipe:"Gerência",coordenador:"Coordenador",supervisor:"Supervisor",supervisor1:"Supervisor 1",fiscal:"Fiscal de turma"};
+const PERF={admin:"Administrador",diretoria:"Diretor",gerencia:"Gerente",gerencia_op:"Gerente DIROP",ger_equipe:"Coordenador",coordenador:"Coordenador",supervisor:"Supervisor",supervisor1:"Fiscal de turma (reserva)",fiscal:"Fiscal de turma"};
+// perfis (cargos) que aparecem no cadastro. Cada um usa as regras de um perfil-base do app; o ADM liga e desliga o resto em "Acessos desta pessoa"
+const CARGOS=[
+  {k:"presidente",t:"Presidente",p:"diretoria",d:"consulta geral, as duas gerências"},
+  {k:"diretor",t:"Diretor",p:"diretoria",d:"consulta geral"},
+  {k:"gerente_dirsen",t:"Gerente – DIRSEN",p:"gerencia",d:"PODA I e PODA II, total"},
+  {k:"gerente_dirop",t:"Gerente – DIROP",p:"gerencia_op",d:"PODA III e PODA IV, total"},
+  {k:"coordenador",t:"Coordenador",p:"coordenador",d:""},
+  {k:"supervisor",t:"Supervisor",p:"supervisor",d:""},
+  {k:"fiscal",t:"Fiscal de turma",p:"fiscal",d:""},
+  {k:"fiscal_res",t:"Fiscal de turma (reserva)",p:"fiscal",d:"substitui o fiscal titular"},
+  {k:"op_moto",t:"Operador motosserra",p:"supervisor1",d:"",abas:["inicio","campo","lista"]},
+  {k:"op_sopr",t:"Operador soprador/operacional",p:"supervisor1",d:"",abas:["inicio","campo","lista"]},
+  {k:"operacional",t:"Operacional",p:"supervisor1",d:"",abas:["inicio","campo","lista"]},
+  {k:"cadastrador",t:"Cadastrador(a)",p:"supervisor1",d:"cadastra programação e processos",abas:["inicio","form","campo","lista","vist"]},
+  {k:"vistoriador",t:"Vistoriador(a)",p:"supervisor1",d:"recebe rotas e faz vistorias",abas:["inicio","vist"]},
+  {k:"admin",t:"Administrador",p:"admin",d:"vê tudo no app, sem restrição"}];
+const CARGO_LEG={diretoria:"diretor",gerencia:"gerente_dirsen",gerencia_op:"gerente_dirop",ger_equipe:"coordenador",coordenador:"coordenador",supervisor:"supervisor",supervisor1:"fiscal_res",fiscal:"fiscal",admin:"admin"};
+const cargoK=u=>{ const c=u?.cargo; if(c&&CARGOS.some(x=>x.k===c&&x.p===u.perfil)) return c; return u?.perfil==="diretoria"&&u?.sup===LOT_PRES?"presidente":CARGO_LEG[u?.perfil]||u?.perfil||""; };
+const cargoObj=k=>CARGOS.find(x=>x.k===k);
+const cargoBase=k=>cargoObj(k)?.p||k;
+const cargoNome=u=>cargoObj(cargoK(u))?.t||PERF[u?.perfil]||"";
+const cargoOpts=(sel,soAdm)=>CARGOS.filter(c=>c.k!=="admin"||soAdm||sel==="admin").filter(c=>!["gerente_dirsen","gerente_dirop","presidente","diretor"].includes(c.k)||isAdm()||sel===c.k||(escopoG()===ESC_DIROP?c.k!=="gerente_dirsen":c.k!=="gerente_dirop")).map(c=>`<option value="${c.k}" ${c.k===sel?"selected":""}>${esc(c.t)}${c.d?" ("+esc(c.d)+")":""}</option>`).join("");
 const ORD={admin:-1,diretoria:0,gerencia:1,gerencia_op:1.5,ger_equipe:2,coordenador:3,supervisor:4,supervisor1:5,fiscal:6};
 const PERF_DESC={admin:"Administrador (vê tudo no app, sem restrição)",diretoria:"Diretoria (consulta geral)",gerencia:"Gerente DIRSEN (PODA I e PODA II + acessos)",gerencia_op:"Gerente DIROP (só PODA III e PODA IV)",ger_equipe:"Gerência (visão geral)",coordenador:"Coordenador (visão geral)",supervisor:"Supervisor",supervisor1:"Supervisor 1 (serviços em aberto, registro emergencial, lista e painel da turma)",fiscal:"Fiscal de turma"};
 // Supervisor 1: só Baixas, Quedas, Lista e Painel (da própria turma); não programa nem faz checklist
@@ -1716,7 +1739,7 @@ const LOT_GERAL=[LOT_PRES,LOT_DD,LOT_DS,LOT_DO,LOT_DIRSEN,LOT_DIROP,"DIRETORIA"]
 const LOT_AMBAS=[LOT_PRES,LOT_DD], LOT_DIROPS=[LOT_DO,LOT_DIROP];
 const lotNome=x=>x===LOT_DIRSEN?"GPE - DIRSEN":x===LOT_DIROP?"GPE - DIROP":x;
 const lotGeral=u=>!!u&&(LOT_GERAL.includes(u?.sup)||LOT_ANT.includes(u?.sup));
-const lotRot=p=>GERAL.has(p)?"Lotação":p==="supervisor1"?"Turma / lotação":"Turma";
+const lotRot=p=>{ p=cargoBase(p); return GERAL.has(p)?"Lotação":p==="supervisor1"?"Turma / lotação":"Turma"; };
 const lotOpts=(perfil,sel)=>{ const ger=GERAL.has(perfil), s1=perfil==="supervisor1";
   const e=escopoG(), LG0=perfil==="gerencia"?[LOT_DIRSEN]:perfil==="gerencia_op"?[LOT_DIROP]:LOT_GERAL;
   // Victor só vê as lotações / turmas da DIRSEN; Pedro só as da DIROP
@@ -1725,7 +1748,7 @@ const lotOpts=(perfil,sel)=>{ const ger=GERAL.has(perfil), s1=perfil==="supervis
   const lots=`<optgroup label="Lotação (sem turma)">${LG.map(x=>`<option value="${esc(x)}" ${x===sel?"selected":""}>${esc(lotNome(x))}</option>`).join("")}</optgroup>`;
   if(ger) return lots;
   return `<optgroup label="Turma">`+SUPS_ALL.filter(s=>!e||s.id===sel||e.includes(s.grupo)).map(s=>`<option value="${esc(s.id)}" ${s.id===sel?"selected":""}>${esc(s.id)}</option>`).join("")+`</optgroup>`+lots; };
-function lotSync(perfSel,supSel,wrap){ const v=supSel.value; supSel.innerHTML=lotOpts(perfSel.value,v); if(wrap) wrap.firstChild.textContent=lotRot(perfSel.value); }
+function lotSync(perfSel,supSel,wrap){ const v=supSel.value, pb=cargoBase(perfSel.value); supSel.innerHTML=lotOpts(pb,perfSel.value==="presidente"?LOT_PRES:v); if(wrap) wrap.firstChild.textContent=lotRot(perfSel.value); }
 // perfis sem turma: enxergam todas as supervisões
 const GERAL=new Set(["admin","diretoria","gerencia","gerencia_op","ger_equipe","coordenador"]);
 let acesso=null, acessoLoaded=false, canAdmin=false, sessao=ls.get("gpe_sessao",null);
@@ -1831,7 +1854,7 @@ function applyPerms(){ try{ equipAplicar(); }catch(e){}
   const s=sessao; if(!s) return;
   const per=s.perfil;
   if(ehGerPerf(per)) canAdmin=true; // o gerente (Victor, desenvolvedor do app) tem acesso pleno: Acessos, senhas, atualização e tudo mais, mesmo depois de recarregar a página
-  $("#whoNome").textContent=s.nome; $("#whoPerfil").textContent=PERF[per]+(s.sup?" · "+s.sup:"")+(s.porGerente?" · 🔑 entrou com a senha do gerente "+s.porGerente.nome.split(" ")[0]:"");
+  $("#whoNome").textContent=s.nome; $("#whoPerfil").textContent=(cargoNome(acesso?.[s.id]||s)||PERF[per])+(s.sup?" · "+s.sup:"")+(s.porGerente?" · 🔑 entrou com a senha do gerente "+s.porGerente.nome.split(" ")[0]:"");
   $("#acessosBtn").hidden=!isGerente();
   try{ refazTurmas(); }catch(e){}
   $("#testeBtn").hidden=!isGerente(); $("#testeBtn").setAttribute("aria-pressed",String(modoTeste())); barTeste();
@@ -1858,7 +1881,7 @@ function refazTurmas(){ const keep=(sel,html)=>{ const el=$(sel); if(!el) return
   keep("#rSup",`<option value="">Todas as turmas</option>`+SUPS.map(s=>`<option value="${esc(s.id)}">${esc(s.id)} · ${esc(s.enc)}</option>`).join(""));
   keep("#rGrp",`<option value="">${escopoG()?escopoG().join(" + "):"Todas as podas"}</option>`+GRUPOS.map(g=>`<option>${g}</option>`).join(""));
   const h=$("#supChips"); if(h){ const on=h.onclick; h.innerHTML=SUPS.map(s=>`<button type="button" class="chip" data-v="${esc(s.id)}" aria-pressed="false">${esc(s.id)}<small>${esc(s.enc)}</small></button>`).join(""); h.onclick=on; }
-  const wp=$("#whoPerfil"); if(wp&&sessao){ const g=travado()?null:escopoG(); wp.innerHTML=esc(PERF[sessao.perfil]||"")+(travado()&&sessao.sup?" · "+esc(sessao.sup):"")+`<span class="escbadge">${travado()?"só a sua turma":g?"vê "+g.join(" e "):"visão geral · todas as podas"}</span>`+(sessao.porGerente?`<span class="escbadge gerkey">🔑 entrou com a senha do gerente ${esc(sessao.porGerente.nome.split(" ")[0])}</span>`:""); }
+  const wp=$("#whoPerfil"); if(wp&&sessao){ const g=travado()?null:escopoG(); wp.innerHTML=esc(cargoNome(acesso?.[sessao.id]||sessao)||"")+(travado()&&sessao.sup?" · "+esc(sessao.sup):"")+`<span class="escbadge">${travado()?"só a sua turma":g?"vê "+g.join(" e "):"visão geral · todas as podas"}</span>`+(sessao.porGerente?`<span class="escbadge gerkey">🔑 entrou com a senha do gerente ${esc(sessao.porGerente.nome.split(" ")[0])}</span>`:""); }
   const lg=document.querySelector("header .logo small"); if(lg) lg.textContent=escDirop()?"Programação GPE · Poda e Extirpação – DIROP":"Programação GPE · Poda e Extirpação – DIRSEN";
   if(escopoG()&&ls.get("gpe_sup","")&&!noEscopo(ls.get("gpe_sup",""))) ls.set("gpe_sup","");
 }
@@ -1869,7 +1892,7 @@ $("#testeBtn").onclick=()=>{ if(!isGerente()) return; const on=!modoTeste(); ls.
 // acessos separados por parte: PODA I e II (DIRSEN) e PODA III e IV (DIROP)
 const AC_AREAS=[{k:"dirsen",t:"PODA I e PODA II",d:"Gerência de Poda e Extirpação – DIRSEN"},{k:"dirop",t:"PODA III e PODA IV",d:"Gerência de Poda e Extirpação – DIROP"},{k:"dir",t:"Diretoria",d:"consulta geral"},{k:"adm",t:"Administradores",d:"veem tudo no app, sem restrição"}];
 function areaAcesso(u){ if(u.perfil==="admin") return "adm"; if(u.perfil==="gerencia_op"||u.sup===LOT_DIROP) return "dirop"; const g=supOf(u.sup)?.grupo; if(g==="PODA III"||g==="PODA IV") return "dirop"; if(u.perfil==="diretoria"||u.sup==="DIRETORIA") return "dir"; return "dirsen"; }
-const AC_ABERTOS=new Set(); let AC_BUSCA="";
+const AC_ABERTOS=new Set(); let AC_BUSCA="", AC_TAB="lista";
 function acFiltrar(host){ const q=AC_BUSCA.trim().toLowerCase(); host.querySelectorAll(".acsec").forEach(sec=>{ let n=0; sec.querySelectorAll("[data-uid]").forEach(c=>{ const ok=!q||c.querySelector(".achead")?.textContent.toLowerCase().includes(q)||(c.dataset.busca||"").includes(q); c.hidden=!ok; if(ok) n++; }); sec.hidden=!!q&&!n; }); }
 function abrirAcessos(){
   if(!isGerente()) return;
@@ -1877,11 +1900,13 @@ function abrirAcessos(){
   const lista=Object.entries(acesso||{}).filter(([,u])=>pessoaNoEscopo(u)).sort((a,b)=>(ORD[a[1].perfil]-ORD[b[1].perfil])||(a[1].sup||"").localeCompare(b[1].sup||"")||a[1].nome.localeCompare(b[1].nome));
   host.innerHTML=`<div class="sheet" id="sh"><div class="panel" role="dialog" aria-label="Acessos">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:22px">Acessos</b><button type="button" class="btn sec" id="acClose" style="min-height:40px;padding:0 14px">Fechar</button></div>
+    ${canAdmin?`<div class="actabs" role="tablist"><button type="button" role="tab" data-actab="lista" aria-selected="${AC_TAB!=="novo"}">👥 Pessoas cadastradas <small>${lista.length}</small></button><button type="button" role="tab" data-actab="novo" aria-selected="${AC_TAB==="novo"}">➕ Cadastrar nova pessoa</button></div>`:""}
+    <div id="acTabL" style="display:grid;gap:12px"${canAdmin&&AC_TAB==="novo"?" hidden":""}>
     <input type="search" id="acBusca" placeholder="🔎 Procurar por nome, matrícula, turma ou perfil" value="${esc(AC_BUSCA)}" autocapitalize="none" style="min-height:46px">
     <details class="acinfo"><summary>Como funcionam os acessos</summary><p class="note" style="margin:6px 0 0">Cada pessoa entra com a <b>matrícula</b> (ex.: m859209) e uma senha de pelo menos 6 caracteres (letras e números). Só o <b>administrador</b> vê tudo, sem restrição. O <b>gerente DIRSEN</b> vê o PODA I e o PODA II; o <b>gerente DIROP</b> vê o PODA III e o PODA IV. Quem está lotado na <b>DIRSEN</b> (ou diretoria) vê só o PODA I e o PODA II; quem está lotado na <b>DIROP</b> vê só o PODA III e o PODA IV (a diretoria só consulta); supervisor e fiscal só a própria turma.</p></details><p class="note" style="margin:0">${canAdmin?"":" <b>Você não é dono nem editor deste app: pode ver, mas não alterar.</b>"}</p>
     ${AC_AREAS.filter(ar=>isAdm()||(escopoG()===ESC_DIROP?ar.k!=="dirsen":ar.k!=="dirop")).map(ar=>{ const it=lista.filter(([id,u])=>areaAcesso(u)===ar.k); if(!it.length&&(ar.k==="dir"||ar.k==="adm")) return ""; return `<div class="acsec"><div class="acsech"><b>${ar.t}</b><span>${ar.d} · ${it.length} ${it.length===1?"pessoa":"pessoas"}</span></div><div class="list">${it.length?"":`<p class="note" style="margin:0">Ninguém cadastrado ainda.</p>`}${it.map(([id,u])=>`<div class="prog accard" data-uid="${esc(id)}" data-busca="${esc([u.nome,matDe(u),PERF[u.perfil]||u.perfil,u.sup,u.equipe].filter(Boolean).join(" ").toLowerCase())}">
       <div class="achead" style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b style="font-size:16px">${esc(u.nome)}</b><span class="pill ${!u.ativo?"NÃO":(u.hash&&matDe(u))?"SIM":"ATRASADO"}">${!u.ativo?"Desativado":!matDe(u)?"Sem matrícula":u.hash?"Liberado":"Sem senha"}</span></div>
-      <div class="note">${u.perfil==="admin"?"Usuário":"Matrícula"} <b>${esc(matDe(u)||"—")}</b> · ${PERF[u.perfil]||u.perfil}${u.sup?" · "+esc(u.sup):""}${u.zap?` · 📱 ${esc(zapFmt(u.zap))}`:u.perfil==="supervisor"?` · <span style="color:var(--warn)">sem WhatsApp</span>`:""}${u.perfil==="fiscal"?` · <b>fiscal de turma – ${u.equipe?esc(u.equipe.toLowerCase()):"sem equipe fixa (todas as equipes)"}</b>`:""}${u.perfil==="gerencia"?` · <b style="color:var(--ok)">💬 cobra todas as podas</b>`:u.perfil==="gerencia_op"?` · <b style="color:var(--ok)">💬 cobra Poda III e IV</b>`:cobraFlag(u)?` · <b style="color:var(--ok)">💬 cobra Poda I e II</b>`:""}</div>
+      <div class="note">${u.perfil==="admin"?"Usuário":"Matrícula"} <b>${esc(matDe(u)||"—")}</b> · ${esc(cargoNome(u))}${u.sup?" · "+esc(u.sup):""}${u.zap?` · 📱 ${esc(zapFmt(u.zap))}`:u.perfil==="supervisor"?` · <span style="color:var(--warn)">sem WhatsApp</span>`:""}${u.perfil==="fiscal"?` · <b>fiscal de turma – ${u.equipe?esc(u.equipe.toLowerCase()):"sem equipe fixa (todas as equipes)"}</b>`:""}${u.perfil==="gerencia"?` · <b style="color:var(--ok)">💬 cobra todas as podas</b>`:u.perfil==="gerencia_op"?` · <b style="color:var(--ok)">💬 cobra Poda III e IV</b>`:cobraFlag(u)?` · <b style="color:var(--ok)">💬 cobra Poda I e II</b>`:""}</div>
       ${canAdmin?`<details class="acdet" data-acdet="${esc(id)}" ${AC_ABERTOS.has(id)?"open":""}><summary>⚙ Gerenciar: senha, assinatura e editar</summary><div class="acdetb">
       <div class="row2"><input type="password" placeholder="${u.hash?"Nova senha":"Definir senha"}" data-pin="${esc(id)}" aria-label="Senha de ${esc(u.nome)}">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><button type="button" class="btn pri" style="min-height:48px;font-size:14px" data-savepin="${esc(id)}">Salvar senha</button>
@@ -1897,7 +1922,7 @@ function abrirAcessos(){
         <label class="f">Nome<input data-ednome value="${esc(u.nome)}"></label></div>
         <label class="f">WhatsApp (com DDD)<input data-edzap inputmode="tel" value="${esc(zapFmt(u.zap))}" placeholder="(00) 00000-0000" maxlength="15"></label>
         <label class="ck"><input type="checkbox" data-edcobra ${cobraFlag(u)?"checked":""}><span>💬 Pode cobrar no WhatsApp as turmas da ${cobraTxt(u.sup)}</span></label>
-        <div class="row2"><label class="f">Perfil<select data-edperf>${Object.entries(PERF).filter(([k])=>k!=="admin"||podeCriarAdm()||u.perfil==="admin").map(([k,t])=>`<option value="${k}" ${k===u.perfil?"selected":""}>${PERF_DESC[k]}</option>`).join("")}</select></label>
+        <div class="row2"><label class="f">Perfil<select data-edperf>${cargoOpts(cargoK(u),podeCriarAdm())}</select></label>
         <label class="f" data-edsupw>${lotRot(u.perfil)}<select data-edsup>${lotOpts(u.perfil,u.sup)}</select></label></div>
         <details class="edturmas"${Array.isArray(u.turmas)&&u.turmas.length?" open":""}><summary><b>Vê só estas turmas</b> <span class="note">(deixe tudo desmarcado para ver todas da gerência)</span></summary>
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:2px 10px;margin-top:6px">${SUPS_ALL.filter(x=>pessoaNoEscopo({perfil:"supervisor",sup:x.id})||isAdm()).map(x=>`<label class="ck" style="min-height:36px"><input type="checkbox" data-edturma="${esc(x.id)}" ${(u.turmas||[]).includes(x.id)?"checked":""}><span>${esc(x.id)}</span></label>`).join("")}</div></details>
@@ -1907,28 +1932,31 @@ function abrirAcessos(){
       </div></div></details>`:""}
     </div>`).join("")}</div></div>`; }).join("")}
     ${podeFisPerm()?`<p class="note" style="margin:0">🔐 Para liberar ou bloquear abas de alguém (checklist, programação, painel…), abra <b>⚙ Gerenciar</b> na pessoa e use <b>Acessos desta pessoa</b>.</p>`:""}
-    ${canAdmin?`<section class="card" style="margin:0"><div class="step">Adicionar pessoa</div>
+    </div>
+    ${canAdmin?`<div id="acTabN" style="display:grid;gap:12px"${AC_TAB!=="novo"?" hidden":""}><section class="card" style="margin:0"><div class="step">Cadastrar nova pessoa</div>
       <p class="note" id="nuAdmNota" hidden style="margin:0;color:var(--brand)">Administrador: só o <b>usuário de acesso</b> e a <b>senha</b>. Não precisa de matrícula, nome, WhatsApp nem turma. No 1º acesso o app pede para trocar a senha.</p>
       <div class="row2"><label class="f"><span id="nuMatLbl">Matrícula</span><input id="nuMat" autocapitalize="none" placeholder="Ex.: m859209"></label>
       <label class="f" id="nuNomeW">Nome<input id="nuNome" placeholder="Ex.: JOÃO DA SILVA"></label></div>
       <label class="f" id="nuZapW">WhatsApp (com DDD)<input id="nuZap" inputmode="tel" placeholder="(00) 00000-0000" maxlength="15"></label>
       <label class="ck" id="nuCobraW"><input type="checkbox" id="nuCobra"><span id="nuCobraT">💬 Pode cobrar no WhatsApp as turmas da ${cobraTxt()}</span></label>
-      <div class="row2"><label class="f">Perfil<select id="nuPerf">${["supervisor","supervisor1","fiscal","coordenador","ger_equipe","gerencia","gerencia_op","diretoria","admin"].filter(k=>k!=="admin"||podeCriarAdm()).map(k=>`<option value="${k}">${PERF_DESC[k]}</option>`).join("")}</select></label>
+      <div class="row2"><label class="f">Perfil<select id="nuPerf">${cargoOpts("supervisor",podeCriarAdm())}</select></label>
       <label class="f">Senha<input id="nuPin" type="password" placeholder="Mínimo 6 caracteres"></label></div>
       <label class="f" id="nuSupW">Turma<select id="nuSup">${lotOpts("supervisor","")}</select></label>
       <label class="f" id="nuEqW" hidden>Equipe do fiscal (recebe a O.S do dia)<select id="nuEq"><option value="">Sem equipe (todas as equipes)</option><option value="1ª EQUIPE">Fiscal de turma – 1ª equipe</option><option value="2ª EQUIPE">Fiscal de turma – 2ª equipe</option><option value="3ª EQUIPE">Fiscal de turma – 3ª equipe</option></select></label>
-      <button type="button" class="btn pri" id="nuAdd">Adicionar</button></section>`:""}
+      <button type="button" class="btn pri" id="nuAdd">Cadastrar</button></section>
+      <p class="note" style="margin:0">Depois de cadastrar, a pessoa aparece em <b>👥 Pessoas cadastradas</b>. Lá você edita, troca a senha, libera os acessos e escolhe as turmas que ela vê.</p></div>`:""}
     <details class="card" style="margin:0"><summary style="cursor:pointer;font-weight:700">🔗 Links do app <span class="note">(só o gerente vê)</span></summary>
       <div style="display:grid;gap:10px;margin-top:8px">${LINKS_APP.map((l,i)=>`<div class="lkrow"><div><b>${esc(l.t)}</b><small>${esc(l.s)}</small><a href="${esc(l.u)}" target="_blank" rel="noopener">${esc(l.u)}</a></div><button type="button" class="btn sec" data-cplink="${i}">Copiar</button></div>`).join("")}</div></details>
   </div></div>`;
   const close=()=>host.innerHTML="";
   $("#sh").onclick=e=>{if(e.target.id==="sh")close()};
   $("#acClose").onclick=close;
+  host.querySelectorAll("[data-actab]").forEach(b=>b.onclick=()=>{ AC_TAB=b.dataset.actab; host.querySelectorAll("[data-actab]").forEach(x=>x.setAttribute("aria-selected",String(x===b))); const L=$("#acTabL"), N=$("#acTabN"); if(L) L.hidden=AC_TAB==="novo"; if(N) N.hidden=AC_TAB!=="novo"; if(AC_TAB==="novo") setTimeout(()=>$("#nuMat")?.focus(),50); });
   host.querySelectorAll("[data-acdet]").forEach(d=>d.addEventListener("toggle",()=>{ d.open?AC_ABERTOS.add(d.dataset.acdet):AC_ABERTOS.delete(d.dataset.acdet); }));
   const bq=$("#acBusca"); if(bq){ bq.oninput=()=>{ AC_BUSCA=bq.value; acFiltrar(host); }; acFiltrar(host); }
-  host.querySelectorAll("[data-edperf]").forEach(s=>s.onchange=()=>{const w=s.closest(".inline").querySelector("[data-edsupw]");lotSync(s,w.querySelector("[data-edsup]"),w); const q=s.closest(".inline").querySelector("[data-edeqw]"); if(q) q.hidden=s.value!=="fiscal";});
+  host.querySelectorAll("[data-edperf]").forEach(s=>s.onchange=()=>{const w=s.closest(".inline").querySelector("[data-edsupw]");lotSync(s,w.querySelector("[data-edsup]"),w); const q=s.closest(".inline").querySelector("[data-edeqw]"); if(q) q.hidden=cargoBase(s.value)!=="fiscal";});
   const nus=$("#nuSup"); if(nus) nus.addEventListener("change",()=>{ const t=$("#nuCobraT"); if(t) t.textContent="💬 Pode cobrar no WhatsApp as turmas da "+cobraTxt(nus.value); });
-  const perf=$("#nuPerf"); if(perf) perf.onchange=()=>{lotSync(perf,$("#nuSup"),$("#nuSupW")); $("#nuEqW").hidden=perf.value!=="fiscal";
+  const perf=$("#nuPerf"); if(perf) perf.onchange=()=>{lotSync(perf,$("#nuSup"),$("#nuSupW")); $("#nuEqW").hidden=cargoBase(perf.value)!=="fiscal";
     const adm=perf.value==="admin"; ["#nuNomeW","#nuZapW","#nuCobraW","#nuSupW"].forEach(q=>{ const x=$(q); if(x) x.hidden=adm; }); $("#nuAdmNota").hidden=!adm;
     $("#nuMatLbl").textContent=adm?"Usuário de acesso":"Matrícula"; $("#nuMat").placeholder=adm?"Ex.: admgpe":"Ex.: m859209"; };
   const salvar=async(id,dados,msg)=>{ try{ await dbUpdate(db.doc("cfg/acesso"),{usuarios:{[id]:dados}}); toast(msg); abrirAcessos(); }catch(e){ toast("Não foi possível salvar: "+acErro(e)); } };
@@ -1961,8 +1989,8 @@ const acErro=e=>{ const m=String(e?.message||e||""); return /gerente|acessos|per
     const ap=e.target.closest("[data-abapad]"); if(ap){ if(!podeFisPerm()) return; const id=ap.dataset.abapad;
       try{ const A=JSON.parse(JSON.stringify(acesso)); if(A[id].perfil==="coordenador") Object.values(A).forEach(x=>{ if(x.perfil==="coordenador") delete x.abas; }); else delete A[id].abas; await db.doc("cfg/acesso").set({usuarios:A}); toast(`${acesso[id].nome}: acessos voltaram ao padrão do perfil.`); abrirAcessos(); }catch(x){ toast("Não foi possível salvar agora."); } return; }
     const se=e.target.closest("[data-saveedit]"); if(se){const id=se.dataset.saveedit, box=host.querySelector(`[data-editbox="${id}"]`);
-      const nome=box.querySelector("[data-ednome]").value.trim().toUpperCase(), perfil=box.querySelector("[data-edperf]").value, geral=GERAL.has(perfil);
-      if(!podeCriarAdm()&&(perfil==="admin")!==(acesso[id]?.perfil==="admin")){toast("Só o Victor (gerente) dá ou tira o perfil de administrador.");return}
+      const nome=box.querySelector("[data-ednome]").value.trim().toUpperCase(), cargo=box.querySelector("[data-edperf]").value, perfil=cargoBase(cargo), geral=GERAL.has(perfil);
+      if(!podeCriarAdm()&&(perfil==="admin")!==(acesso[id]?.perfil==="admin")){toast("Só o administrador e o Victor dão ou tiram o perfil de administrador.");return}
       const sup=box.querySelector("[data-edsup]").value, matricula=matKey(box.querySelector("[data-edmat]").value);
       if(!nome){toast("Informe o nome.");return}
       if(!matricula){toast("Informe a matrícula.");return}
@@ -1972,7 +2000,7 @@ const acErro=e=>{ const m=String(e?.message||e||""); return /gerente|acessos|per
       const cobra=!!box.querySelector("[data-edcobra]")?.checked;
       const equipe=perfil==="fiscal"?(box.querySelector("[data-edeq]")?.value||""):"";
       const turmas=[...box.querySelectorAll("[data-edturma]:checked")].map(c=>c.dataset.edturma);
-      await salvar(id,{nome,matricula,perfil,sup,zap,cobra,equipe,turmas},nome+" atualizado.");
+      await salvar(id,{nome,matricula,perfil,cargo,sup,zap,cobra,equipe,turmas},nome+" atualizado.");
       if(id===sessao?.id){sessao={...sessao,nome};ls.set("gpe_sessao",sessao);applyPerms()}
       return;}
     const dl=e.target.closest("[data-del]"); if(dl){const id=dl.dataset.del, u=acesso[id];
@@ -1982,14 +2010,14 @@ const acErro=e=>{ const m=String(e?.message||e||""); return /gerente|acessos|per
       try{ await db.doc("cfg/acesso").set({usuarios}); toast(u.nome+" excluído."); abrirAcessos(); }catch(err){ toast("Não foi possível excluir: "+acErro(err)); }
       return;}
     if(e.target.id==="nuAdd"){
-      const matricula=matKey($("#nuMat").value), nome=$("#nuNome").value.trim().toUpperCase(), p=$("#nuPerf").value, pin=$("#nuPin").value, sup=$("#nuSup").value;
-      if(p==="admin"&&!podeCriarAdm()){toast("Só o Victor (gerente) cadastra administrador.");return}
+      const matricula=matKey($("#nuMat").value), nome=$("#nuNome").value.trim().toUpperCase(), cargo=$("#nuPerf").value, p=cargoBase(cargo), pin=$("#nuPin").value, sup=$("#nuSup").value;
+      if(p==="admin"&&!podeCriarAdm()){toast("Só o administrador e o Victor cadastram administrador.");return}
       const adm=p==="admin";
       if(!matricula){toast(adm?"Informe o usuário de acesso.":"Informe a matrícula.");return}
       const dupM=acharMat(matricula); if(dupM){toast((adm?"O usuário ":"A matrícula ")+matricula+" já está cadastrad"+(adm?"o":"a")+" para "+dupM[1].nome+".");return}
       if(!adm&&!nome){toast("Informe o nome.");return} if(!pinOk(pin)){toast(MSG_SENHA);return}
       const zr=adm?"":$("#nuZap").value, zap=zapNorm(zr); if(zr.trim()&&!zap){toast("WhatsApp inválido: use DDD + número, ex.: (62) 99999-1234.");return}
-      const salt=novoSal(); await salvar(uidNovo(),{nome:adm?(nome||"ADMINISTRADOR "+matricula.toUpperCase()):nome,matricula,perfil:p,sup:adm?"":sup,equipe:p==="fiscal"?$("#nuEq").value:"",zap,cobra:!adm&&!!$("#nuCobra")?.checked,salt,hash:await hashPin(salt,pin),ativo:true,criadoEm:new Date().toISOString(),senhaEm:new Date().toISOString()},nome+" adicionado.");
+      AC_TAB="lista"; AC_BUSCA=adm?matricula:nome; const salt=novoSal(); await salvar(uidNovo(),{nome:adm?(nome||"ADMINISTRADOR "+matricula.toUpperCase()):nome,matricula,perfil:p,cargo,sup:adm?"":sup,equipe:p==="fiscal"?$("#nuEq").value:"",zap,cobra:!adm&&!!$("#nuCobra")?.checked,salt,hash:await hashPin(salt,pin),ativo:true,criadoEm:new Date().toISOString(),senhaEm:new Date().toISOString()},nome+" adicionado.");
     }
   });
 }
@@ -2005,7 +2033,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.09f";
+const APP_VERSAO="2026.11.10a";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -2261,7 +2289,7 @@ const PERF_ABAIXO=["ger_equipe","coordenador","supervisor","supervisor1"];
 const PERM_ABAS=[{k:"pend",t:"Pendências",d:"Avisos e cobranças da turma."},{k:"form",t:"Programar",d:"Fazer a programação da semana."},{k:"campo",t:"Em aberto / dar baixa",d:"Ver os serviços e dar baixa."},{k:"chk",t:"Checklist e comunicar defeito",d:"Checklist do equipamento e comunicado de defeito."},{k:"oc",t:"Registro emergencial",d:"Galho ou árvore caída."},{k:"vist",t:"Vistoria de processo",d:"Rotas de vistoria, já executado / não executado e serviços enviados à turma."},{k:"lista",t:"Lista",d:"Lista de serviços e planilha."},{k:"resumo",t:"Painel",d:"Painel, acompanhamento e relatórios."},{k:"orc",t:"Orçamento",d:"Propostas orçamentárias."},{k:"escala",t:"Cadastrar / atualizar a escala de trabalho",d:"Cadastrar e mudar a escala da turma (dias de trabalho e folgas), para o app só cobrar nos dias de trabalho. Supervisor e supervisor 1 sempre têm."},{k:"busca",t:"Pesquisar serviço por endereço",d:"Procurar serviços pelo endereço (menu Mais)."}];
 const abaPadrao=(per,v)=>{ if(v==="pend") return true; if(v==="escala") return per==="supervisor"||per==="supervisor1"; if(v==="busca") return !["supervisor","supervisor1"].includes(per); if(v==="upd"||v==="orc") return false; return !((per==="supervisor"&&v==="resumo")||(per==="supervisor1"&&!SUP1_ABAS.has(v))); };
 const abaFixa=(per,v)=>v==="escala"&&(per==="supervisor"||per==="supervisor1");
-const abaOn=(per,v,uid=sessao?.id)=>{ if(abaFixa(per,v)) return true; const pa=acesso?.[uid]?.abas; if(pa&&PERM_ABAS.some(x=>x.k===v)&&(v in pa)) return !!pa[v]; const o=assins?.perm_perfis?.p?.[per]; if(o&&PERM_ABAS.some(x=>x.k===v)&&(v in o)) return !!o[v]; return abaPadrao(per,v); };
+const abaOn=(per,v,uid=sessao?.id)=>{ if(abaFixa(per,v)&&!cargoObj(acesso?.[uid]?.cargo)?.abas) return true; const pa=acesso?.[uid]?.abas; if(pa&&PERM_ABAS.some(x=>x.k===v)&&(v in pa)) return !!pa[v]; const cg=cargoObj(acesso?.[uid]?.cargo); if(cg?.abas&&cg.p===per&&PERM_ABAS.some(x=>x.k===v)) return v==="pend"?false:cg.abas.includes(v); const o=assins?.perm_perfis?.p?.[per]; if(o&&PERM_ABAS.some(x=>x.k===v)&&(v in o)) return !!o[v]; return abaPadrao(per,v); };
 function permPerfisHtml(){ const d=assins?.perm_perfis;
   return `<details class="card fpm" style="margin:0"><summary><span class="step" style="margin:0">Acessos dos demais perfis</span> <small>abaixo do gerente</small></summary>
     <p class="note" style="margin:6px 0 4px">Ative ou desative as abas de cada perfil. Vale na hora para todas as pessoas daquele perfil. O Início fica sempre ativo.${d?.por?` Última alteração: ${esc(d.por)} em ${fmtHora(d.em)}.`:""}</p>
@@ -4489,7 +4517,7 @@ const horaAgora=()=>{const d=new Date();return String(d.getHours()).padStart(2,"
 /* assinatura eletrônica com senha própria de assinatura (diferente da senha de entrar) */
 const ASS_COL="assinaturas"; let assins={}; // uid -> {salt,hash,nome,em}
 const dataBR=iso=>{const d=new Date(iso);return String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+d.getFullYear()};
-const cargoDe=u=>(PERF[u?.perfil]||"Supervisor")+(u?.sup?" – "+u.sup:"");
+const cargoDe=u=>(cargoNome(u)||"Supervisor")+(u?.sup?" – "+u.sup:"");
 const SELO=`<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="24" r="20" fill="none" stroke="#005f27" stroke-width="3"/><circle cx="32" cy="24" r="15" fill="#0d880b"/><path d="M25 24.5l5 5L40 19" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><rect x="44" y="31" width="14" height="11" rx="2" fill="#f37020"/><path d="M47.5 31v-3a3.5 3.5 0 0 1 7 0v3" fill="none" stroke="#f37020" stroke-width="2.4"/><text x="32" y="53" text-anchor="middle" font-size="8" font-weight="700" fill="#005f27" font-family="Arial,sans-serif">assinatura</text><text x="32" y="62" text-anchor="middle" font-size="8" font-weight="700" fill="#005f27" font-family="Arial,sans-serif">eletrônica</text></svg>`;
 const assinHtml=(t,a)=>a&&a.em?`<div class="sigsei">${t||a.teste?`<span class="sl">${esc(t||"")}${a.teste?`<span class="tagteste">🧪 ASSINATURA DE TESTE</span>`:""}</span>`:""}<div class="sgb"><div class="sgi">${SELO}</div><p>Documento assinado eletronicamente por <b>${esc(a.nome)}</b>, <b>${esc(a.cargo||(a.sup?"Supervisor – "+a.sup:"Supervisor"))}</b>, em ${dataBR(a.em)}, às ${new Date(a.em).toTimeString().slice(0,5)}, mediante senha pessoal de assinatura (matrícula ${esc(a.mat||"—")}) no sistema Programação GPE – COMURG.${a.cod?`<small>Código verificador: <b>${esc(a.cod)}</b>${a.como?" · "+esc(a.como):""}</small>`:""}</p></div></div>`:"";
 const opHtml=o=>o?`<div class="sigsei"><span class="sl">Operador que encerrou o turno</span><p class="note" style="margin:0"><b style="color:var(--ink)">${esc(o.nome)}</b> · matrícula ${esc(o.mat||"—")} · identificado pelo supervisor na entrega.</p></div>`:"";
@@ -7766,7 +7794,7 @@ function msgChkPend(grupos,so){
     L.push(`▫️ ${fmtDs(x.data)} ${diaDe(x.data).slice(0,3)} – checklist NÃO FEITO (${x.feitos.length} de ${x.meta} equipamento${x.meta===1?"":"s"})`);
     L.push(`      ✅ Feito: ${x.feitos.length?x.feitos.join(", "):"nenhum"}`);
     L.push(`      ❌ Falta: ${x.faltam?.length?x.faltam.join(", "):(x.meta-x.feitos.length)+" equipamento"+(x.meta-x.feitos.length===1?"":"s")}`); }); });
-  L.push("","Regularize *hoje* na aba *Checklist* do app *Programação GPE*:","https://gpe-dirsen.netlify.app","","Obrigado.",`${sessao?.nome||""} · ${PERF[sessao?.perfil]||""}`);
+  L.push("","Regularize *hoje* na aba *Checklist* do app *Programação GPE*:","https://gpe-dirsen.netlify.app","","Obrigado.",`${sessao?.nome||""} · ${cargoNome(acesso?.[sessao?.id]||sessao)||""}`);
   return L.join("\n");
 }
 function abrirCobrancaChk(){
@@ -7814,6 +7842,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-chkfazer]
 // ---------- ESCALA DE TRABALHO: cada supervisor cadastra a da sua turma (gerente, coordenador e gerente operacional cadastram para as turmas da sua área) ----------
 // escala: supervisor / supervisor 1 da própria turma, coordenador e gerência do escopo; nos perfis abaixo do gerente vale o botão "Cadastrar / atualizar a escala" em Acessos (ligado por padrão)
 const podeEditarEscala=sup=>{ if(!sessao||soLeitura()) return false; const per=sessao.perfil;
+  { const cg=cargoObj(acesso?.[sessao.id]?.cargo); if(cg?.abas&&!abaOn(per,"escala")) return false; }
   if(per==="fiscal") return !!fisPerm().escala&&sessao.sup===sup;
   if((per==="coordenador"||per==="ger_equipe")&&!abaOn(per,"escala")) return false; // coordenador e gerência: só se liberado em Acessos
   return ((ehSup()||per==="supervisor1")&&sessao.sup===sup)||(isGerente()&&noEscopo(sup))||((per==="coordenador"||per==="gerencia_op"||per==="ger_equipe")&&noEscopo(sup)); };
@@ -7948,7 +7977,7 @@ function msgSemBaixa(lista,so){
       :`Senhores supervisores, há *${n} ${n===1?"serviço programado":"serviços programados"} sem baixa* no app.`,
     `Informe *hoje* se cada um foi *executado*, *executado parcialmente* ou *não executado – remarcado*.`];
   lista.forEach(({s,rs})=>{ const nm=nomeSupDe(s.id); L.push("",`*${s.id}${nm&&nm!=="A DEFINIR"?" – "+nm:""}* (${rs.length})`); rs.forEach(r=>L.push(lin(r))); });
-  L.push("","Dê baixa na aba *Em aberto* do app *Programação GPE*:","https://gpe-dirsen.netlify.app","","Obrigado.",`${sessao?.nome||""} · ${PERF[sessao?.perfil]||""}`);
+  L.push("","Dê baixa na aba *Em aberto* do app *Programação GPE*:","https://gpe-dirsen.netlify.app","","Obrigado.",`${sessao?.nome||""} · ${cargoNome(acesso?.[sessao?.id]||sessao)||""}`);
   return L.join("\n");
 }
 function abrirCobrancaBaixa(){
@@ -7986,7 +8015,7 @@ function msgCobranca(so){
   GRUPOS.forEach(g=>{ const ts=pend.filter(s=>s.grupo===g); if(!ts.length) return; L.push("",`*${g}*`);
     ts.forEach(s=>{ const t=proxSemTurma(s.id,PX), nm=nomeSupDe(s.id), quem=nm&&nm!=="A DEFINIR"?" – "+nm:"";
       L.push(`🔴 ${s.id}${quem}: ${t.feitos.length?`${t.feitos.length} de ${t.dias.length} dias. Faltam: ${t.falta.map(dm).join(", ")}`:`nenhum dia lançado (${t.dias.length} dias)`}`); }); });
-  L.push("","Favor lançar no app *Programação GPE*, aba Programar:","https://gpe-dirsen.netlify.app","",`Obrigado.`,`${sessao?.nome||""} · ${PERF[sessao?.perfil]||""}`);
+  L.push("","Favor lançar no app *Programação GPE*, aba Programar:","https://gpe-dirsen.netlify.app","",`Obrigado.`,`${sessao?.nome||""} · ${cargoNome(acesso?.[sessao?.id]||sessao)||""}`);
   return L.join("\n");
 }
 function abrirCobranca(){
@@ -8425,7 +8454,7 @@ function orcDocHtml(o){
 }
 function abrirOrc(o0){
   if(!podeOrc()) return;
-  const novo=!o0, R=ls.get("gpe_orc_resp",{nome:sessao?.nome||"",cargo:PERF[sessao?.perfil]||"",reg:matDe(acesso?.[sessao?.id]||{})||""});
+  const novo=!o0, R=ls.get("gpe_orc_resp",{nome:sessao?.nome||"",cargo:cargoNome(acesso?.[sessao?.id]||sessao)||"",reg:matDe(acesso?.[sessao?.id]||{})||""});
   const o=o0?JSON.parse(JSON.stringify(o0)):{num:orcNum(),data:hoje(),validade:30,escopo:"Serviços de Poda e Extirpação de Árvores",solicitante:"",local:"",processo:"",itens:[{...ORC_CAT[0],q:1}],nota:"",resp:R,ger:escDirop()?"DIROP":"DIRSEN"};
   const host=$("#sheetHost");
   const catOpts=sel=>ORC_CAT.map(c=>`<option value="${c.c}"${c.c===sel?" selected":""}>${c.c} · ${esc(ITENS.find(i=>i.c===c.c).d)} · ${brl(c.p)}</option>`).join("")+`<option value="LIVRE"${sel==="LIVRE"?" selected":""}>Outro item (digitar)</option>`;
@@ -8577,7 +8606,7 @@ function abrirMais(){ if(sessao?.perfil==="gerencia_op"||(sessao?.perfil==="fisc
   itens.push({k:"a:ajuda",t:"Ajuda desta tela",i:svgI('<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17v.5"/>')},{k:"a:sair",t:"Sair",i:ICO.sair,c:"sair"});
   host.innerHTML=`<div class="sheet" id="sh"><div class="panel" role="dialog" aria-label="Mais opções">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:22px">Mais opções</b><button type="button" class="btn sec" id="maisFechar" style="min-height:44px;padding:0 14px">Fechar</button></div>
-    <p class="note" style="margin:0">${esc(sessao?.nome||"")} · ${esc(PERF[sessao?.perfil]||"")}${sessao?.sup?" · "+esc(sessao.sup):""} · <b>versão ${APP_VERSAO}</b></p>
+    <p class="note" style="margin:0">${esc(sessao?.nome||"")} · ${esc(cargoNome(acesso?.[sessao?.id]||sessao)||"")}${sessao?.sup?" · "+esc(sessao.sup):""} · <b>versão ${APP_VERSAO}</b></p>
     <div class="maislist">${itens.map(x=>`<button type="button" class="maisit ${x.c||""}" data-mk="${x.k}">${x.i}<span>${esc(x.t)}</span><b aria-hidden="true">›</b></button>`).join("")}</div>
   </div></div>`;
   const close=()=>host.innerHTML="";
@@ -8939,7 +8968,7 @@ function renderInicio(){
   try{ if(pode("vist")){ VIST.ouvir(vistInicioOuvinte); const ne=travado()&&sessao.sup&&!ehFiscal()?VIST.nTurma(sessao.sup):0; if(ne) av+=`<button type="button" class="inav warn" data-iv="vist">${ICO.vist}<span><b>${ne} ${ne===1?"serviço da vistoria":"serviços da vistoria"} para a sua turma executar</b><small>Enviado pela coordenação · repasse ao fiscal</small></span><em>Ver</em></button>`; const nfz=ehFiscal()?VIST.nFiscal(sessao.id):0; if(nfz) av+=`<button type="button" class="inav warn" data-iv="vist">${ICO.vist}<span><b>${nfz} ${nfz===1?"serviço da vistoria":"serviços da vistoria"} para você executar</b><small>Enviado pelo supervisor · anexe as fotos antes, durante e depois</small></span><em>Ver</em></button>`; const nv=VIST.nMeus(sessao.id); if(nv) av+=`<button type="button" class="inav warn" data-iv="vist">${ICO.vist}<span><b>${nv} ${nv===1?"processo indicado":"processos indicados"} para você vistoriar</b><small>Vistoria de processo · rota indicada pelo coordenador</small></span><em>Ver</em></button>`; } }catch(e){}
   if(!avLigado()&&!soLeitura()) av+=`<button type="button" class="inav warn" data-iv="pend">${ICO.pend}<span><b>Ligue o aviso sonoro</b><small>O celular toca e avisa quando aparecer pendência para você</small></span><em>Ligar</em></button>`;
   const tiles=[
-    {a:"osdia",t:"Iniciar O.S do dia",sub:(()=>{ const G=osDiaGrupos(), n=G.filter(g=>!g.os).length; return G.length?(n?`(${n} a iniciar)`:"(todas iniciadas)"):"(sem serviço hoje)"; })(),i:svgI('<path d="M7 3h10v18H7z"/><path d="M10 8l5 4-5 4z" fill="currentColor"/>'),c:"t-or",ok:!soLeitura()&&(SUPS.some(x=>osPodeIniciar(x.id))||sessao.perfil==="fiscal")},
+    {a:"osdia",t:"Iniciar O.S do dia",sub:(()=>{ const G=osDiaGrupos(), n=G.filter(g=>!g.os).length; return G.length?(n?`(${n} a iniciar)`:"(todas iniciadas)"):"(sem serviço hoje)"; })(),i:svgI('<path d="M7 3h10v18H7z"/><path d="M10 8l5 4-5 4z" fill="currentColor"/>'),c:"t-or",ok:(!cargoObj(acesso?.[sessao?.id]?.cargo)?.abas||cargoObj(acesso?.[sessao?.id]?.cargo).abas.includes("campo"))&&!soLeitura()&&(SUPS.some(x=>osPodeIniciar(x.id))||sessao.perfil==="fiscal")},
     {v:"campo",t:"Dar baixa no serviço",i:ICO.campo,c:"t-or",ok:pode("campo")&&lanca&&!ehFiscal()},
     {v:"campo",t:"Fotos das O.S / processos",sub:"(antes, durante, depois)",i:ICO.campo,c:"t-or",ok:pode("campo")&&ehFiscal()},
     {v:"form",t:"Programar a semana",i:ICO.form,c:"t-gr",ok:pode("form")},
