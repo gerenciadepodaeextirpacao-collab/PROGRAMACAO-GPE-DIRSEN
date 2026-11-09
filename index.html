@@ -2005,7 +2005,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.09d";
+const APP_VERSAO="2026.11.09e";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -3332,7 +3332,7 @@ function montar(root) {
   const usuario = () => (typeof sessao !== "undefined" && sessao && sessao.nome) || "";
   const meuId = () => (typeof sessao !== "undefined" && sessao && sessao.id) || "";
   const S = { proc: [], reg: {}, rotas: {}, sups: [], tela: "rotas", grp: LS("vp-grp") || "all", yr: LS("vp-yr") || "all", cur: LS("vp-reg") || "CENTRO OESTE",
-    start: LS("vp-start") || "", per: +(LS("vp-per2") || 0), q: "", hide: true, minhas: false, ver: LS("vp-ver") || "livres", f: {}, doc: {}, x: {}, lim: 40, supF: "", erro: "", carregando: true, busy: {} };
+    start: LS("vp-start") || "", per: +(LS("vp-per2") || 0), q: "", hide: true, minhas: false, ver: LS("vp-ver2") || "todas", f: {}, doc: {}, x: {}, lim: 40, supF: "", erro: "", carregando: true, busy: {} };
   const pode = { lancar: () => !soLeitura(), coord: () => vistCoord(), resumo: () => vistAlto(), sup: () => !!sessao && travado() && !!sessao.sup && sessao.perfil !== "fiscal", fis: () => !!sessao && sessao.perfil === "fiscal" };
   const minhaAlguma = () => Object.values(S.reg || {}).some((r) => r && r.rota && r.rota.uid === meuId() && !r.vistoriado);
 
@@ -3673,7 +3673,7 @@ function montar(root) {
     let h = "";
     if (!coord && !regs.length) return `<div class="vp-card" style="padding:16px"><b>Nenhuma rota indicada para você.</b><p class="vp-msg" style="margin-top:6px">O coordenador indica o vistoriador de cada rota. Quando ele indicar você, a rota aparece aqui.</p></div>`;
     h += `<div class="vp-row">${regs.map((r) => { const l = listaRotas(r), dd = l.filter((p) => R(p).vistoriado).length; return `<button class="vp-chip" data-reg="${r}" aria-pressed="${r === S.cur}">${cap(r)}<small>${dd ? dd + "/" : ""}${l.length}</small></button>`; }).join("")}</div>
-    <div class="vp-ctl">${coord ? `<label class="vp-f">Paradas por rota<input type="number" id="vp-per" min="1" inputmode="numeric" value="${S.per > 0 ? S.per : ""}" placeholder="sem limite" style="width:110px"></label><label class="vp-f">Mostrar<select id="vp-ver"><option value="livres"${S.ver === "livres" ? " selected" : ""}>Sem vistoriador e as minhas</option><option value="minhas"${S.ver === "minhas" ? " selected" : ""}>Só as indicadas para mim</option><option value="todas"${S.ver === "todas" ? " selected" : ""}>Todas (inclusive de outros)</option></select></label>` : ""}
+    <div class="vp-ctl">${coord ? `<label class="vp-f">Paradas por rota<input type="number" id="vp-per" min="1" inputmode="numeric" value="${S.per > 0 ? S.per : ""}" placeholder="sem limite" style="width:110px"></label><label class="vp-f">Mostrar<select id="vp-ver"><option value="todas"${S.ver === "todas" ? " selected" : ""}>Todas as paradas</option><option value="livres"${S.ver === "livres" ? " selected" : ""}>Só as sem vistoriador e as minhas</option><option value="minhas"${S.ver === "minhas" ? " selected" : ""}>Só as indicadas para mim</option></select></label>` : ""}
     <div class="vp-f vp-grow"><span>Ponto de partida</span><b style="font-size:14px;padding:10px 0">📍 Sempre a sua localização atual</b></div>
     <label class="vp-f vp-grow">Buscar<input type="search" id="vp-q" name="vp-busca-proc" autocomplete="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-form-type="other" value="${esc(S.q)}" placeholder="Processo, rua, setor, vistoriador"></label></div>
     <div class="vp-row"><label class="vp-row" style="font-size:14px"><input type="checkbox" id="vp-hide" ${S.hide ? "" : "checked"}> Mostrar os já vistoriados (para conferir ou alterar)</label></div>
@@ -4283,7 +4283,7 @@ function montar(root) {
   });
   root.addEventListener("change", async (e) => {
     const t = e.target, ds = t.dataset;
-    if (t.id === "vp-ver") { S.ver = t.value; LS("vp-ver", S.ver); render(); return; }
+    if (t.id === "vp-ver") { S.ver = t.value; LS("vp-ver2", S.ver); render(); return; }
       if (t.id === "vp-per") { S.per = Math.max(0, +t.value || 0); LS("vp-per2", S.per); render(); return; }
     if (t.id === "vp-start") { S.start = t.value; LS("vp-start", S.start); render(); return; }
     if (t.id === "vp-hide") { S.hide = !t.checked; render(); return; }
