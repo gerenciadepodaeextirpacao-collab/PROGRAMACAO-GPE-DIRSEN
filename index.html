@@ -2005,7 +2005,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.09e";
+const APP_VERSAO="2026.11.09f";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -3568,7 +3568,7 @@ function montar(root) {
     document.getElementById("vpMapa")?.remove();
     const ov = document.createElement("div"); ov.id = "vpMapa";
     ov.style.cssText = "position:fixed;inset:0;z-index:9999;background:#fff;display:flex;flex-direction:column;font-family:inherit;color:#18221b";
-    ov.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid #d9e0d8;background:#f3f5f1"><b style="flex:1;font-size:15px">🗺 ${esc(titulo || "Mapa")}${faltam ? ` <small style="color:#b42318;font-weight:600">· ${faltam} sem posição no mapa</small>` : ""}</b><button type="button" id="vpMapaX" style="font:inherit;font-weight:700;padding:8px 14px;border-radius:8px;border:1px solid #d9e0d8;background:#fff;cursor:pointer">✕ Fechar</button></div><div id="vpMapaC" style="flex:1;min-height:0"><p style="padding:16px">Carregando o mapa…</p></div>`;
+    ov.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid #d9e0d8;background:#f3f5f1"><b style="flex:1;font-size:15px">🗺 ${esc(titulo || "Mapa")}${faltam ? ` <small style="color:#b42318;font-weight:600">· ${faltam} sem posição no mapa</small>` : ""}</b><small id="vpMapaInfo" style="color:#5b6a5f"></small><button type="button" id="vpMapaX" style="font:inherit;font-weight:700;padding:8px 14px;border-radius:8px;border:1px solid #d9e0d8;background:#fff;cursor:pointer">✕ Fechar</button></div><div id="vpMapaC" style="flex:1;min-height:0"><p style="padding:16px">Carregando o mapa…</p></div>`;
     document.body.appendChild(ov); const fechar = () => { ov.remove(); document.removeEventListener("keydown", esq); }; const esq = (e) => { if (e.key === "Escape") fechar(); };
     ov.querySelector("#vpMapaX").onclick = fechar; document.addEventListener("keydown", esq);
     try { await carregarLeaflet(); } catch (e) { ov.querySelector("#vpMapaC").innerHTML = `<p style="padding:16px">Sem internet para carregar o mapa.</p>`; return; }
@@ -3583,7 +3583,17 @@ function montar(root) {
       const mk = L.marker([g.lat, g.lng], { icon: ic, zIndexOffset: foc ? 1000 : 0 }).addTo(m).bindPopup(pop);
       mk.bindTooltip(`${num ? num + " · " : ""}${esc(p.processo)}<br><span style="font-weight:400">${esc(String(p.endereco).slice(0, 40))}</span>`, { permanent: true, direction: "top", offset: [0, -16], opacity: 0.95 });
       bounds.push([g.lat, g.lng]); if (foc) setTimeout(() => mk.openPopup(), 300); });
-    if (S.pos) { L.circleMarker([S.pos.lat, S.pos.lng], { radius: 8, color: "#fff", weight: 3, fillColor: "#2a78d6", fillOpacity: 1 }).addTo(m).bindTooltip("Você está aqui"); if (!foco) bounds.push([S.pos.lat, S.pos.lng]); }
+    let eu = null; if (S.pos) { eu = L.circleMarker([S.pos.lat, S.pos.lng], { radius: 8, color: "#fff", weight: 3, fillColor: "#2a78d6", fillOpacity: 1 }).addTo(m).bindTooltip("Você está aqui"); if (!foco) bounds.push([S.pos.lat, S.pos.lng]); }
+    // caminho pelas ruas, na mesma ordem do GPS (1, 2, 3...), saindo de onde você está; sem internet para o traçado, liga os pontos em linha reta
+    if (!foco && ps.length > 1) { const pts = (S.pos ? [[S.pos.lat, S.pos.lng]] : []).concat(ps.map((p) => { const g = geoDe(p); return [g.lat, g.lng]; }));
+      const reta = () => L.polyline(pts, { color: "#2a78d6", weight: 4, opacity: 0.6, dashArray: "6 8" }).addTo(m);
+      try { const url = "https://router.project-osrm.org/route/v1/driving/" + pts.map((q) => q[1].toFixed(6) + "," + q[0].toFixed(6)).join(";") + "?overview=full&geometries=geojson";
+        fetch(url).then((r) => r.json()).then((j) => { const c = j && j.routes && j.routes[0] && j.routes[0].geometry && j.routes[0].geometry.coordinates; if (!c) return reta();
+          L.polyline(c.map((q) => [q[1], q[0]]), { color: "#2a78d6", weight: 5, opacity: 0.75 }).addTo(m);
+          const km = (j.routes[0].distance / 1000).toFixed(1), mi = Math.round(j.routes[0].duration / 60); const t = ov.querySelector("#vpMapaInfo"); if (t) t.textContent = `${ps.length} processos · ${km} km · cerca de ${mi} min`; }).catch(reta); } catch (e) { reta(); } }
+    // sua posição vai andando no mapa enquanto ele estiver aberto
+    try { if (navigator.geolocation) { const w = navigator.geolocation.watchPosition((q) => { const ll = [q.coords.latitude, q.coords.longitude]; if (eu) eu.setLatLng(ll); else eu = L.circleMarker(ll, { radius: 8, color: "#fff", weight: 3, fillColor: "#2a78d6", fillOpacity: 1 }).addTo(m).bindTooltip("Você está aqui"); }, () => {}, { enableHighAccuracy: true, maximumAge: 15000 });
+      const f0 = fechar; ov.querySelector("#vpMapaX").onclick = () => { try { navigator.geolocation.clearWatch(w); } catch (e) {} f0(); }; } } catch (e) {}
     const f = foco && ps.find((p) => p.id === foco); if (f) { const g = geoDe(f); m.setView([g.lat, g.lng], 17); } else m.fitBounds(bounds, { padding: [40, 40], maxZoom: 17 });
     setTimeout(() => m.invalidateSize(), 50);
   }
@@ -3700,8 +3710,8 @@ function montar(root) {
       h += `<section class="vp-card${!coord || (atual && atual === meuId()) ? " vp-mine" : ""}"><div class="vp-head"><div><b>Rota ${ro.n}</b> <small>${S.hide ? `${pendT.length} a vistoriar` : `${ch.length} paradas · ${feitos} vistoriados`} · ${po} poda · ${ex} extirpação</small>${filtrada ? `<div class="vp-need" style="margin-top:4px">🔎 Busca ativa: mostrando <b>${show.length} de ${ch.length}</b> paradas. ${coord ? `Indicar / tirar vale <b>só para ${pend.length === 1 ? "a parada mostrada" : "as " + pend.length + " paradas mostradas"}</b>.` : ""}</div>` : ""}</div>
       <div class="vp-sets">${[...new Set(ch.map((p) => p.setor))].map(esc).join(" · ")}</div>
       <div class="vp-resp">${resp}</div>
-      <div class="vp-row">${lnk.map((u, k) => `<a class="vp-btn vp-pri" href="${u}" target="_blank" rel="noopener" data-gpsa="${ci}" data-k="${k}">🧭 ${lnk.length > 1 ? "Trecho " + (k + 1) + " no GPS · paradas " + (k * 10 + 1) + " a " + Math.min(seqG.length, k * 10 + 10) : "Abrir a rota no GPS"}</a>`).join("")}${seqG.length ? `<button class="vp-btn" data-mapar="${ci}">🗺 Ver no mapa</button>` : ""}<button class="vp-btn" data-copy="${ci}">Copiar lista</button></div>
-      ${lnk.length ? `<span class="vp-msg">Parte da sua localização atual e passa pelas paradas na ordem da lista abaixo (a mais perto primeiro).${lnk.length > 1 ? " O Google Maps aceita até 10 paradas por vez: termine um trecho e abra o próximo." : ""}${S.pos ? "" : " Libere a localização do celular para a ordem sair da sua posição."}</span>` : ""}</div>
+      <div class="vp-row">${lnk.map((u, k) => `<a class="vp-btn vp-pri" href="${u}" target="_blank" rel="noopener" data-gpsa="${ci}" data-k="${k}">🧭 ${lnk.length > 1 ? "Trecho " + (k + 1) + " no GPS · paradas " + (k * 10 + 1) + " a " + Math.min(seqG.length, k * 10 + 10) : "Abrir a rota no GPS"}</a>`).join("")}${seqG.length ? `<button class="vp-btn" data-mapar="${ci}">🗺 Mapa com os processos</button>` : ""}<button class="vp-btn" data-copy="${ci}">Copiar lista</button></div>
+      ${lnk.length ? `<span class="vp-msg">Parte da sua localização atual e passa pelas paradas na ordem da lista abaixo (a mais perto primeiro). <b>No Google Maps cada bolinha é um processo, mas ele não mostra o número do processo</b>: abra o 🗺 Mapa com os processos para ver, na mesma ordem (1, 2, 3...), o processo e o endereço de cada ponto.${lnk.length > 1 ? " O Google Maps aceita até 10 paradas por vez: termine um trecho e abra o próximo." : ""}${S.pos ? "" : " Libere a localização do celular para a ordem sair da sua posição."}</span>` : ""}</div>
       <div class="vp-prog"><i style="width:${pct(feitos, ch.length)}%"></i></div><ol>`;
       h += show.map((p) => `<li class="vp-stop${R(p).vistoriado ? " vp-done" : ""}"><span class="vp-seq">${String(ro.base + ch.indexOf(p) + 1).padStart(3, "0")}</span>
         <div>${linhaProc(p)}${coord && R(p).geo && R(p).geo.falhou && !p.loc ? `<div class="vp-msg" style="color:var(--rd)">📍 Endereço não achado no mapa: use ✏️ Editar › Localização para o GPS</div>` : ""}${coord && dono(p) && !R(p).vistoriado ? `<div class="vp-msg" style="margin:2px 0">👤 Vistoriador: <b>${esc(dono(p).vistoriador || "")}</b> <button class="vp-btn" data-tiraum="${p.id}" style="padding:2px 8px;font-size:12px">tirar só desta parada</button></div>` : ""}${docHtml(p, true)}</div><div class="vp-q">${qtdPills(p)}</div>
