@@ -2071,7 +2071,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.10j";
+const APP_VERSAO="2026.11.10k";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -4211,6 +4211,11 @@ function montar(root) {
     } catch (e) { toast("Não foi possível salvar: " + (e && e.message || e)); }
     finally { delete S.busy["ex" + id]; render(); }
   }
+  // para "Relatórios prontos para baixar" (fora da aba Vistoria): relatórios dos processos da vistoria já executados
+  V.relLista = () => { try { if (!S.proc || !S.proc.length) S.proc = todosProc(); } catch (e) {}
+    return (S.proc || []).filter((p) => { const r = R(p); return (r.execucao && r.execucao.fotos) || (r.situacao === "ja_executado" && r.foto_path); }).map((p) => { const r = R(p), x = r.execucao, ass = x ? x.ass : r.ass;
+      return { vid: p.id, processo: p.processo || "", ged: p.ged || "", endereco: p.endereco || "", setor: p.setor || "", data: x ? x.data : r.data_vistoria, sup: (r.envio && r.envio.sup) || (x && x.sup) || "", ja: !x, assinado: !!(ass && ass.em) }; }); };
+  V.relGerar = (id, word, btn) => vRel(id, btn, word);
   async function vRel(id, btn, word) { const p = S.proc.find((q) => q.id === id); if (!p || !(R(p).execucao || (R(p).situacao === "ja_executado" && R(p).foto_path))) return; const rec = relRec(p); try { if (word) await relDocx(rec, btn); else await relPdf(rec, btn); } catch (e) { toast("Não foi possível gerar o relatório"); } }
   // baixa do processo no sistema (SEI / Intranet / GED): quem dá a baixa informa o sistema e a data
   function baixaHtml(p) {
@@ -8704,17 +8709,26 @@ function abrirRelatorios(){
   host.innerHTML=`<div class="sheet" id="rsh"><div class="panel" role="dialog" aria-label="Relatórios prontos">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:22px">Relatórios prontos para baixar</b><button type="button" class="btn sec" id="rshX" style="min-height:44px;padding:0 14px">Fechar</button></div>
     <p class="note" style="margin:0">Relatórios de serviço já preenchidos (com as fotos e assinados) dos serviços executados. Toque em PDF ou Word para baixar.</p>
-    <label class="f">Procurar<input type="search" id="rshQ" value="${esc(q0)}" placeholder="Processo, SEI, endereço, bairro ou turma" autocomplete="off" autocorrect="off" spellcheck="false" data-lpignore="true"></label>
+    <label class="f">Procurar<input type="search" id="rshQ" value="${esc(q0)}" placeholder="Nº do processo, SEI, GED, endereço, bairro ou turma" autocomplete="off" autocorrect="off" spellcheck="false" data-lpignore="true"></label>
     <p class="note" style="margin:0" id="rshInfo"></p><div id="rshRes" style="display:grid;gap:8px"></div></div></div>`;
   const qi=$("#rshQ"), res=$("#rshRes"), inf=$("#rshInfo");
-  const roda=()=>{ ls.set("gpe_relq",qi.value); const ps=nBusca(qi.value).split(" ").filter(Boolean);
-    const L=todos(true).filter(r=>!r.arquivado&&relLiberado(r)).filter(r=>{ if(!ps.length) return true; const t=" "+nBusca([r.bairro,r.logradouro,r.processo,r.ped,r.relat?.processo,r.relat?.ped,r.supervisao,supNome(r.supervisao)].join(" "))+" "; return ps.every(p=>t.includes(p)); })
-      .sort((a,b)=>(b.dataExec||b.data||"").localeCompare(a.dataExec||a.data||""));
+  // processos da vistoria também (o módulo da vistoria é carregado aqui se ainda não foi aberto)
+  try{ if(typeof vistUI==="undefined"||!vistUI) renderVist(); VIST.iniciar(); }catch(e){}
+  const dig=x=>String(x||"").replace(/\D/g,"");
+  const casa=(txt,nums,q)=>{ const ps=nBusca(q).split(" ").filter(Boolean); if(!ps.length) return true; const t=" "+nBusca(txt)+" ", dq=dig(q);
+    if(dq.length>=4&&nums.some(n=>dig(n).includes(dq))) return true; return ps.every(p=>t.includes(p)||(dig(p).length>=4&&nums.some(n=>dig(n).includes(dig(p))))); };
+  const roda=()=>{ ls.set("gpe_relq",qi.value);
+    const L0=todos(true).filter(r=>!r.arquivado&&relLiberado(r)).filter(r=>casa([r.bairro,r.logradouro,r.processo,r.ped,r.relat?.processo,r.relat?.ped,r.supervisao,supNome(r.supervisao)].join(" "),[r.processo,r.ped,r.relat?.processo,r.relat?.ped],qi.value)).map(r=>({k:"p",r,d:r.dataExec||r.data||""}));
+    let LV=[]; try{ LV=(VIST.relLista?VIST.relLista():[]).filter(v=>casa([v.processo,v.ged,v.endereco,v.setor,v.sup].join(" "),[v.processo,v.ged],qi.value)).map(v=>({k:"v",v,d:v.data||""})); }catch(e){}
+    const L=L0.concat(LV).sort((a,b)=>b.d.localeCompare(a.d));
     inf.textContent=L.length?`${L.length} relatório${L.length===1?"":"s"} pronto${L.length===1?"":"s"}${L.length>100?" (mostrando os 100 mais recentes)":""}.`:"Nenhum relatório pronto encontrado.";
-    res.innerHTML=L.slice(0,100).map(r=>`<div class="item" style="display:grid;gap:6px"><div><b>${fmtD(r.dataExec||r.data)}</b> · ${esc(r.bairro||"")} — ${esc(r.logradouro||"")}<div class="note">${esc(supNome(r.supervisao))}${r.equipe?" · "+esc(r.equipe):""} · ${esc(r.tipo||"")}${(r.relat?.processo||r.processo)?" · proc. "+esc(r.relat?.processo||r.processo):""}${r.relat?.sist?" ("+esc(r.relat.sist)+")":""}</div></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><button type="button" class="btn pri" style="min-height:44px;font-size:14px" data-relpdf="${esc(r.id)}">📄 PDF</button><button type="button" class="btn sec" style="min-height:44px;font-size:14px" data-reldocx="${esc(r.id)}">📝 Word</button></div></div>`).join(""); };
+    res.innerHTML=L.slice(0,100).map(it=>it.k==="v"?`<div class="item" style="display:grid;gap:6px"><div><b>${fmtD(it.v.data)}</b> · ${esc(it.v.setor||"")} — ${esc(it.v.endereco||"")}<div class="note">🔎 Vistoria de processo · proc. ${esc(it.v.processo)}${it.v.ged?" · GED "+esc(it.v.ged):""}${it.v.sup?" · "+esc(supNome(it.v.sup)):""} · ${it.v.ja?"já estava executado":"executado pela turma"}${it.v.assinado?" · ✍ assinado":` · <b style="color:var(--bad)">sem assinatura</b>`}</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><button type="button" class="btn pri" style="min-height:44px;font-size:14px" data-vrelg="${esc(it.v.vid)}">📄 PDF</button><button type="button" class="btn sec" style="min-height:44px;font-size:14px" data-vrelg="${esc(it.v.vid)}" data-word="1">📝 Word</button></div></div>`:(r=>`<div class="item" style="display:grid;gap:6px"><div><b>${fmtD(r.dataExec||r.data)}</b> · ${esc(r.bairro||"")} — ${esc(r.logradouro||"")}<div class="note">${esc(supNome(r.supervisao))}${r.equipe?" · "+esc(r.equipe):""} · ${esc(r.tipo||"")}${(r.relat?.processo||r.processo)?" · proc. "+esc(r.relat?.processo||r.processo):""}${r.relat?.sist?" ("+esc(r.relat.sist)+")":""}</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><button type="button" class="btn pri" style="min-height:44px;font-size:14px" data-relpdf="${esc(r.id)}">📄 PDF</button><button type="button" class="btn sec" style="min-height:44px;font-size:14px" data-reldocx="${esc(r.id)}">📝 Word</button></div></div>`)(it.r)).join(""); };
   let tm=null; qi.oninput=()=>{ clearTimeout(tm); tm=setTimeout(roda,180); }; roda();
-  $("#rsh").onclick=e=>{ if(e.target.id==="rsh"||e.target.closest("#rshX")) host.innerHTML=""; };
+  try{ if(window.__relOuv) VIST.ouvintes.delete(window.__relOuv); window.__relOuv=()=>{ if(document.getElementById("rshRes")) setTimeout(roda,0); }; VIST.ouvir(window.__relOuv); }catch(e){}
+  $("#rsh").onclick=e=>{ if(e.target.id==="rsh"||e.target.closest("#rshX")) return host.innerHTML="";
+    const vb=e.target.closest("[data-vrelg]"); if(vb){ try{ VIST.relGerar(vb.dataset.vrelg,!!vb.dataset.word,vb); }catch(x){ toast("Abra a Vistoria uma vez e tente de novo."); } } };
 }
 function abrirBuscaEnd(){
   const host=$("#sheetHost"); let q0=ls.get("gpe_buscaend","");
