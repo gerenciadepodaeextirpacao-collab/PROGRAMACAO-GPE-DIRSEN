@@ -2005,7 +2005,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.09c";
+const APP_VERSAO="2026.11.09d";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -5599,8 +5599,13 @@ function abrirEquip(){ if(!podeEquip()) return; const host=$("#sheetHost"), g=eq
       <label class="f">Supervisão<select id="eqSup"></select></label>
       <p class="err" id="eqErr" hidden></p><div style="display:grid;gap:8px"><button type="button" class="btn pri" id="eqAdd">Cadastrar</button><button type="button" class="btn sec" id="eqCanc" hidden>Cancelar edição</button></div></section></div></div>`;
   const close=()=>host.innerHTML="", erro=t=>{ const e=$("#eqErr"); e.textContent=t; e.hidden=!t; };
-  const supOpts=()=>{ const G=$("#eqGer").value==="DIROP"?ESC_DIROP:ESC_DIRSEN; $("#eqSup").innerHTML=`<option value="">Sem turma (reserva)</option>`+SUPS_ALL.filter(x=>G.includes(x.grupo)).map(x=>`<option value="${esc(x.id)}">${esc(x.id)}${x.enc?" – "+esc(x.enc):""}</option>`).join(""); };
-  supOpts(); $("#eqGer").onchange=supOpts;
+  // supervisão: o administrador vê as 16 turmas (PODA I a IV); o gerente só as da sua gerência. Escolher a turma acerta a gerência sozinho.
+  const supOpts=()=>{ const v0=$("#eqSup").value, op=x=>`<option value="${esc(x.id)}">${esc(x.id)}${x.enc?" – "+esc(x.enc):""}</option>`;
+    const grs=g?[g]:["DIRSEN","DIROP"]; $("#eqSup").innerHTML=`<option value="">Sem turma (reserva)</option>`+grs.map(G=>`<optgroup label="${esc(GER_EQ[G])}">${SUPS_ALL.filter(x=>(G==="DIROP"?ESC_DIROP:ESC_DIRSEN).includes(x.grupo)).map(op).join("")}</optgroup>`).join("");
+    if([...$("#eqSup").options].some(o=>o.value===v0)) $("#eqSup").value=v0; };
+  supOpts();
+  $("#eqSup").onchange=()=>{ const sp=$("#eqSup").value; if(sp&&!g) $("#eqGer").value=ESC_DIROP.includes(supOf(sp)?.grupo)?"DIROP":"DIRSEN"; };
+  $("#eqGer").onchange=()=>{ const sp=$("#eqSup").value; if(sp&&(ESC_DIROP.includes(supOf(sp)?.grupo)?"DIROP":"DIRSEN")!==$("#eqGer").value) $("#eqSup").value=""; };
   const grava=async(itens,msg)=>{ const doc={itens,por:sessao?.nome||"",em:new Date().toISOString()}; const ant=assins.equip_lista;
     try{ await db.collection(ASS_COL).doc("equip_lista").set(doc); assins.equip_lista=doc; equipAplicar(); toast(msg); abrirEquip(); }catch(e){ assins.equip_lista=ant; erro("Não foi possível salvar agora: "+(e?.message||"tente de novo")); } };
   $("#eqX").onclick=close; $("#sh").onclick=async e=>{ if(e.target.id==="sh") return close();
