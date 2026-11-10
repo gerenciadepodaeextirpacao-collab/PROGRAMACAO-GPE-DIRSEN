@@ -2321,7 +2321,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.11l";
+const APP_VERSAO="2026.11.11m";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -9268,14 +9268,17 @@ function eqcAbrirLista(g,onOk,editar,FN){ const box=document.createElement("div"
   const FISP=escFis?(FISC_BASE[g.sup]||[]).filter(n=>!FIS.some(f=>pn(f.nome)===pn(n))):[];
   let fisSel=escFis?((OS_FIS_ESC[g.k]||g.fis||fiscalDe(g.sup,g.eq))?.id||""):"";
   if(escFis&&fisSel&&!FIS.some(f=>f.id===fisSel)) fisSel="";
-  if(escFis&&!fisSel) fisSel=FISP.length?"p:"+FISP[0]:"__sup";
+  // sem titular da equipe: vem o primeiro fiscal da turma (nunca começa em "sem fiscal")
+  if(escFis&&!fisSel) fisSel=FIS[0]?.id||(FISP.length?"p:"+FISP[0]:"");
+  // fiscais de outras turmas, para substituir em caso de falta
+  const FISO=escFis?Object.entries(acesso||{}).filter(([id,u])=>u.perfil==="fiscal"&&u.ativo&&u.sup!==g.sup&&noEscopo?.(u.sup)!==false).map(([id,u])=>({id,nome:u.nome,sup:u.sup||""})).sort((a,b)=>(a.sup+a.nome).localeCompare(b.sup+b.nome,"pt")):[];
   const sel=(f,i)=>`<select data-elf="${i}" aria-label="Função"><option value="">Função…</option>${FUN.map(x=>`<option value="${x}"${x===f?" selected":""}>${FUN_T[x]||x}</option>`).join("")}${f&&!FUN.includes(f)?`<option selected>${esc(f)}</option>`:""}</select>`;
   const desenhar=()=>{ const n=R.filter(r=>r.on).length;
     box.querySelector("[data-ellist]").innerHTML=R.map((r,i)=>`<div class="elrow${r.on?" on":""}"><label class="elchk"><input type="checkbox" data-elc="${i}" ${r.on?"checked":""}><span>${r.lista?esc(r.nome):`<input data-eln="${i}" value="${esc(r.nome)}" placeholder="Nome" autocapitalize="characters">`}${r.cargo?`<small>${esc(r.cargo)}</small>`:""}</span></label>${sel(r.funcao,i)}</div>`).join("");
     box.querySelector("[data-eqok]").textContent=`${editar?"Salvar a equipe":"▶ Confirmar a equipe e enviar a O.S"} (${n+1})`; };
   box.innerHTML=`<div class="panel" role="dialog" aria-label="Equipe da O.S"><b style="font-family:var(--display);font-size:22px">Equipe do dia · ${esc(g.sup)} · ${esc(g.eq||"equipe")}</b>
     <p class="note" style="margin:0">Marque <b>quem veio trabalhar hoje</b>. A função já vem da planilha – troque se precisar.</p>
-    ${escFis?`<label class="f" style="margin:0"><b>Fiscal da turma hoje</b><select data-elfis style="min-height:48px;font-weight:700">${FIS.map(f=>`<option value="${esc(f.id)}"${f.id===fisSel?" selected":""}>${esc(f.nome)}${f.equipe?" · "+esc(f.equipe):""}</option>`).join("")}${FISP.map(n=>`<option value="p:${esc(n)}"${"p:"+n===fisSel?" selected":""}>${esc(n)} (sem acesso ao app)</option>`).join("")}<option value="__sup"${fisSel==="__sup"?" selected":""}>🧑‍💼 Sem fiscal hoje – o supervisor fica por conta da equipe</option></select><small class="note" data-elfisnota style="display:block;margin-top:4px">${fisSel==="__sup"?"A O.S não vai para nenhum fiscal: o supervisor acompanha a equipe e tira as fotos.":fisSel.startsWith("p:")?"Esse fiscal não tem acesso ao app: a O.S fica com o supervisor.":"Toque para trocar o fiscal (falta ou substituição)."}</small></label>`
+    ${escFis?`<label class="f" style="margin:0"><b>Fiscal da turma hoje</b><select data-elfis style="min-height:48px;font-weight:700">${fisSel?"":`<option value="" selected>Escolha o fiscal…</option>`}${FIS.length||FISP.length?`<optgroup label="Fiscais da ${esc(g.sup)}">${FIS.map(f=>`<option value="${esc(f.id)}"${f.id===fisSel?" selected":""}>${esc(f.nome)}${f.equipe?" · "+esc(f.equipe):""}</option>`).join("")}${FISP.map(n=>`<option value="p:${esc(n)}"${"p:"+n===fisSel?" selected":""}>${esc(n)} (sem acesso ao app)</option>`).join("")}</optgroup>`:""}${FISO.length?`<optgroup label="Substituto de outra turma">${FISO.map(f=>`<option value="${esc(f.id)}">${esc(f.nome)} · ${esc(f.sup)}</option>`).join("")}</optgroup>`:""}<optgroup label="Sem fiscal"><option value="__sup">🧑‍💼 Sem fiscal hoje – o supervisor fica por conta da equipe</option></optgroup></select><small class="note" data-elfisnota style="display:block;margin-top:4px">${!fisSel?"Nenhum fiscal cadastrado nesta turma em Acessos: escolha um substituto ou \"Sem fiscal hoje\".":fisSel.startsWith("p:")?"Esse fiscal não tem acesso ao app: a O.S fica com o supervisor.":"Fiscal titular. Toque para trocar em caso de falta."}</small></label>`
       :`<div class="elrow on fixo"><label class="elchk"><input type="checkbox" checked disabled><span>${esc(fisNome||"FISCAL DE TURMA")}<small>${EQ_FISCAL}</small></span></label><span></span></div>`}
     <div data-ellist class="ellist"></div>
     <button type="button" class="btn sec" data-eladd>＋ Pessoa que não está na lista</button>
@@ -9291,7 +9294,9 @@ function eqcAbrirLista(g,onOk,editar,FN){ const box=document.createElement("div"
     if(e.target.closest("[data-eladd]")){ R.push({nome:"",cargo:"",funcao:"",on:true,lista:0}); desenhar(); box.querySelector(`[data-eln="${R.length-1}"]`)?.focus(); return; }
     const ok=e.target.closest("[data-eqok]"); if(!ok) return; const er=box.querySelector("[data-eqerr]");
     let fN=fisNome; if(escFis){ const fv=box.querySelector("[data-elfis]")?.value||"", fo=FIS.find(f=>f.id===fv);
-      if(fo){ OS_FIS_ESC[g.k]={id:fo.id,nome:fo.nome}; fN=fo.nome.toUpperCase(); }
+      const fo2=fo||FISO.find(f=>f.id===fv);
+      if(!fv){ er.textContent="Falta: escolha o fiscal da turma (ou \"Sem fiscal hoje\")."; er.hidden=false; return; }
+      if(fo2){ OS_FIS_ESC[g.k]={id:fo2.id,nome:fo2.nome}; fN=fo2.nome.toUpperCase(); }
       else if(fv.startsWith("p:")){ OS_FIS_ESC[g.k]={sem:true,nome:fv.slice(2)}; fN=fv.slice(2); }
       else { OS_FIS_ESC[g.k]={sem:true,nome:""}; fN=""; } }
     const M=[...(fN?[{nome:fN,funcao:EQ_FISCAL}]:[]),...R.filter(r=>r.on).map(r=>({nome:r.nome.trim().toUpperCase(),funcao:r.funcao}))]; let msg="";
