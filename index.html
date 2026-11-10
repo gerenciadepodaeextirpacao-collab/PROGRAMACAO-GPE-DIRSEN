@@ -2296,7 +2296,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.10z4";
+const APP_VERSAO="2026.11.10z7";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -5659,7 +5659,7 @@ const manSlots=midia=>{ const ex=[]; for(let n=2;n<=MAN_VID_MAX;n++) if(midia?.[
   return [MAN_SLOTS[0],...ex,...MAN_SLOTS.slice(1)].concat(MAN_ANT.filter(s=>midia?.[s.k])); };
 /* ---------- fotos do serviço registradas pelo fiscal de turma (O.S / processo) ---------- */
 // o fiscal tira as 3 fotos (antes, durante, depois); elas entram sozinhas no relatório que o supervisor assina na baixa
-const fotosFisPode=r=>ehFiscal()&&fotosPede(r)&&!!r.osDia?.start&&!r.osDia?.fim&&!r.arquivado&&!r._fila&&!!db&&r.supervisao===sessao.sup&&osDoFiscal(r,acesso?.[sessao.id])&&!r.relat?.ass&&r.status!=="NÃO";
+const fotosFisPode=r=>ehFiscal()&&fotosPede(r)&&!!r.osDia?.start&&(!r.osDia.porServ||!!r.osDia.sv?.[r.id]?.start)&&!r.osDia?.fim&&!r.arquivado&&!r._fila&&!!db&&r.supervisao===sessao.sup&&osDoFiscal(r,acesso?.[sessao.id])&&!r.relat?.ass&&r.status!=="NÃO";
 function fotosFisHtml(r){ if(!fotosPede(r)) return ""; const ff=r.fotosFiscal||{}, n=REL_SLOTS.filter(x=>ff[x.k]).length;
   const info=n?`<p class="note" style="margin:4px 0 0">📷 Fotos do serviço registradas pelo fiscal: <b>${n} de 3</b>${ff.por?" · "+esc(ff.por):""}${ff.em?" · "+fmtHora(ff.em):""}${ehFiscal()?"":" – entram no relatório na baixa"}</p>`:"";
   return info+(fotosFisPode(r)?`<button type="button" class="btn pri" id="shFotFis" style="min-height:52px">📷 ${n?"Ver / completar as fotos do serviço":"Registrar fotos do serviço (antes, durante, depois)"}</button>`:""); }
@@ -5694,8 +5694,8 @@ function abrirFotosFiscal(r){
     const b=$("#ffOk"); b.disabled=true; b.textContent="Salvando…";
     const res=await saveDoc(r.id,upd); if(res!=="ok"&&res!=="fila"){ b.disabled=false; b.textContent="Salvar foto"; return erro("Não foi possível salvar agora. Tente de novo."); }
     close(); try{ renderInicio(); renderPend(); }catch(x){}
-    const fimB=n===3?document.querySelector("[data-fisfim]"):null; if(fimB) fimB.scrollIntoView({behavior:"smooth",block:"center"});
-    toast(n===3?(fimB?"Última foto salva. Agora toque em FINALIZAR A O.S.":"3 fotos salvas. Elas entram no relatório quando o supervisor der a baixa."):`Foto salva (${n} de 3). Volte na O.S para a foto ${n+1} – ${REL_SLOTS[n].curto}.`);
+    const fimB=n===3?(document.querySelector(`[data-svfim="${CSS.escape(r.id)}"]`)||document.querySelector("[data-fisfim]")):null; if(fimB) fimB.scrollIntoView({behavior:"smooth",block:"center"});
+    toast(n===3?(fimB?"Última foto salva. Agora toque em FINALIZAR ESTE SERVIÇO.":"3 fotos salvas. Elas entram no relatório quando o supervisor der a baixa."):`Foto salva (${n} de 3). Volte na O.S para a foto ${n+1} – ${REL_SLOTS[n].curto}.`);
   };
 }
 function midSecHtml(midia,edit,slots=MID_SLOTS,titulo="Fotos e vídeo do equipamento",nota){
@@ -9278,6 +9278,16 @@ document.addEventListener("click",async e=>{ const b=e.target.closest("[data-fis
   if(b.dataset.fisrec){ if(await fisOsAtualiza(g,{recebida:quem},`Fiscal confirmou o recebimento da O.S nº ${g.os.num}`)) toast(fisPode("equipe")?"O.S recebida. Agora cadastre a equipe de trabalho.":"O.S recebida. Toque em START quando começar."); else b.disabled=false; return; }
   if(fisPode("equipe")&&!g.os.membros?.length){ b.disabled=false; return toast("Cadastre a equipe de trabalho antes do start."); }
   if(await fisOsAtualiza(g,{start:quem},`Fiscal deu o START na O.S nº ${g.os.num} (começou a executar)`)) toast("Start registrado: O.S em execução."); else b.disabled=false; });
+// start e fim de cada serviço (endereço) da O.S, separadamente
+const svDe=(o,r)=>o?.sv?.[r.id]||{}, svIniciado=(o,r)=>!!(svDe(o,r).start||(o?.start&&!o?.porServ)), svFeito=(o,r)=>!!svDe(o,r).fim||r.status==="NÃO";
+document.addEventListener("click",async e=>{ const b=e.target.closest("[data-svstart],[data-svfim]"); if(!b||sessao?.perfil!=="fiscal") return;
+  const rid=b.dataset.svstart||b.dataset.svfim, g=fisOsGrupos(30).find(x=>x.rs.some(r=>r.id===rid)); if(!g) return toast("O.S não encontrada."); const r=g.rs.find(x=>x.id===rid);
+  const quem={por:sessao.nome,uid:sessao.id,em:new Date().toISOString()}, ant=svDe(g.os,r), end=`${r.bairro||""} — ${r.logradouro||""}`;
+  if(b.dataset.svstart){ if(fisPode("equipe")&&!g.os.membros?.length) return toast("Cadastre a equipe de trabalho antes do start.");
+    b.disabled=true; const patch={sv:{...(g.os.sv||{}),[rid]:{...ant,start:quem}}}; if(!g.os.start){ patch.start=quem; patch.porServ=true; }
+    if(await fisOsAtualiza(g,patch,`Fiscal deu o START no serviço ${end} (O.S nº ${g.os.num})`)) toast(fotosPede(r)?"Start registrado. Tire a 1ª foto (ANTES).":"Start registrado: serviço em execução."); else b.disabled=false; return; }
+  if(fotosPede(r)&&!REL_SLOTS.every(x=>r.fotosFiscal?.[x.k]||r.relat?.midia?.[x.k])) return toast("Tire as 3 fotos deste serviço antes de finalizar.");
+  b.disabled=true; if(await fisOsAtualiza(g,{sv:{...(g.os.sv||{}),[rid]:{...ant,fim:quem}}},`Fiscal finalizou o serviço ${end} (O.S nº ${g.os.num})`)) toast(g.rs.every(x=>x.id===rid||svFeito(g.os,x))?"Serviço finalizado. Todos os serviços prontos: assine e finalize a O.S.":"Serviço finalizado. Passe para o próximo endereço."); else b.disabled=false; });
 function renderInicioFiscal(h){
   const hr=new Date().getHours(), sau=hr<12?"Bom dia":hr<18?"Boa tarde":"Boa noite", me=acesso?.[sessao.id]||{}, G=fisOsGrupos(30), GA=G.filter(g=>!g.os.fim), GC=fisOsGrupos(90).filter(g=>g.os.fim);
   const card=g=>{ const o=g.os, d=g.rs[0]?.data||"", nF=g.rs.filter(r=>fotosPede(r)).length, ok=g.rs.filter(r=>fotosPede(r)&&REL_SLOTS.every(x=>r.fotosFiscal?.[x.k]||r.relat?.midia?.[x.k])).length;
@@ -9287,21 +9297,25 @@ function renderInicioFiscal(h){
       ${(()=>{ const ehHoje=!o.fim||(g.rs[0]?.data||"")>=iso(new Date(Date.now()-864e5)), K=esc(o.num||o.em); if(!ehHoje) return "";
         if(!o.recebida) return `<button type="button" class="btn pri" data-fisrec="${K}" style="min-height:54px">📥 Confirmar que recebi a O.S</button><small style="color:var(--muted)">O supervisor vê na hora que você recebeu. Depois cadastre a equipe e dê o start.</small>`;
         if(o.fim) return `<p class="fisrun">🏁 O.S finalizada às ${hm(o.fim.em)} por ${esc(o.fim.por||"")}${o.fim.ass?` · ✍ assinada (código ${esc(o.fim.ass.cod||"")})`:""}</p>`;
-        if(o.start){ const R=g.rs.filter(r=>fotosPede(r)&&r.status!=="NÃO"), falta=R.filter(r=>!REL_SLOTS.every(x=>r.fotosFiscal?.[x.k]||r.relat?.midia?.[x.k])).length;
-          return `<p class="fisrun">🟢 Em execução desde ${hm(o.start.em)}</p>${falta?`<small style="color:var(--muted)">📷 Faltam as fotos de ${falta} serviço${falta>1?"s":""} (O.S Intranet / processo SEI). Depois da última foto aparece o botão para finalizar a O.S.</small>`:`<button type="button" class="btn start" data-fisfim="${K}" style="min-height:60px;font-size:20px">✅ FINALIZAR A O.S</button><small style="color:var(--muted)">${R.length?"Todas as fotos anexadas. ":""}Toque quando a equipe terminar o serviço. O supervisor vê na hora e faz a baixa.</small>`}`; }
-        const precisaEq=fisPode("equipe")&&!o.membros?.length;
-        return `<button type="button" class="btn ${precisaEq?"sec":"start"}" data-fisstart="${K}" ${precisaEq?"disabled":""} style="min-height:60px;font-size:20px">▶ START · começar a executar a O.S</button>${precisaEq?`<small style="color:var(--bad);font-weight:600">Cadastre a equipe de trabalho para liberar o start.</small>`:""}`; })()}
+        const precisaEq=fisPode("equipe")&&!o.membros?.length, nOk=g.rs.filter(r=>svFeito(o,r)).length, nT=g.rs.length;
+        if(nOk===nT) return `<p class="fisrun">✅ Os ${nT} serviço${nT>1?"s":""} desta O.S foram finalizados</p><button type="button" class="btn start" data-fisfim="${K}" style="min-height:60px;font-size:20px">✍ ASSINAR E FINALIZAR A O.S</button><small style="color:var(--muted)">O supervisor vê na hora e faz a baixa.</small>`;
+        return `${o.start?`<p class="fisrun">🟢 Em execução · ${nOk} de ${nT} serviço${nT>1?"s":""} finalizado${nOk===1?"":"s"}</p>`:""}${precisaEq?`<small style="color:var(--bad);font-weight:600">Cadastre a equipe de trabalho para liberar o start dos serviços.</small>`:`<small style="color:var(--muted)">Cada endereço tem o seu <b>START</b> e o seu <b>FINALIZAR</b>, logo abaixo. Quando todos terminarem, assine e finalize a O.S.</small>`}`; })()}
       ${(()=>{ const ehHoje=!o.fim||(g.rs[0]?.data||"")>=iso(new Date(Date.now()-864e5)); return ehHoje&&fisPode("equipe")&&o.recebida&&!o.fim?`<button type="button" class="btn ${o.membros?.length?"sec":"pri"}" data-fiseq="${esc(o.num||o.em)}" style="min-height:48px">👷 ${o.membros?.length?`Equipe formada (${o.membros.length}) – editar`:"Formar a equipe (nome e função)"}</button>`:""; })()}
       <ol class="fosl">${g.rs.map(r=>{ const tem=fotosPede(r), n=REL_SLOTS.filter(x=>r.fotosFiscal?.[x.k]||r.relat?.midia?.[x.k]).length, k=stKey(r);
         return `<li><span class="fosst ${k==="SIM"?"ok":""}">${esc(ST_NOME[k]||k)}</span><b>${esc(r.bairro||"")} — ${esc(r.logradouro||"")}</b><small>${esc(tipoTxt(r)||r.tipo||"")}${r.processo?" · nº "+esc(procNum(r)):""}<br>${esc(qtdTxtPlano(prevQ(r))||"")}</small>
-          ${tem?(!o.start&&!r.relat?.ass?`<small>📷 Fotos: depois do <b>START</b> da O.S (1 antes · 2 durante · 3 depois)</small>`:fotosFisPode(r)?(()=>{ const nx=REL_SLOTS.find(x=>!(r.fotosFiscal?.[x.k]||r.relat?.midia?.[x.k])); return nx?`<button type="button" class="btn pri" data-fotfis="${esc(r.id)}" style="min-height:52px">📷 Foto ${REL_SLOTS.indexOf(nx)+1} de 3 · ${nx.curto} <small style="display:block;font:600 12px var(--body);opacity:.9">${nx.dica}</small></button>`:`<button type="button" class="btn sec" data-fotfis="${esc(r.id)}" style="min-height:48px">✅ 3 fotos registradas – ver</button>`; })():`<small>${r.relat?.ass?"✅ Relatório assinado pelo supervisor":n?`📷 Fotos ${n} de 3`:"Fotos: o supervisor anexa na baixa"}</small>`):(relTem(r)?`<small>Processo GED: sem fotos (o supervisor faz o relatório na baixa)</small>`:`<small>Sem fotos (não é O.S Intranet nem processo SEI)</small>`)}</li>`; }).join("")}</ol></section>`; };
+          ${(()=>{ if(!o.recebida||o.fim||r.status==="NÃO") return ""; const sv=svDe(o,r), ini=svIniciado(o,r), pe=fisPode("equipe")&&!o.membros?.length;
+            if(!ini) return `<button type="button" class="btn start" data-svstart="${esc(r.id)}" ${pe?"disabled":""} style="min-height:52px">▶ START neste endereço</button>`;
+            if(sv.fim) return `<small style="color:var(--ok);font-weight:700">🏁 Serviço finalizado às ${hm(sv.fim.em)}</small>`;
+            const fOk=!fotosPede(r)||REL_SLOTS.every(x=>r.fotosFiscal?.[x.k]||r.relat?.midia?.[x.k]);
+            return `<small style="color:var(--ok);font-weight:700">🟢 Em execução${(sv.start||o.start)?" desde "+hm((sv.start||o.start).em):""}</small>`+(fOk?`<button type="button" class="btn start" data-svfim="${esc(r.id)}" style="min-height:52px">✅ FINALIZAR ESTE SERVIÇO</button>`:""); })()}
+          ${tem?(!svIniciado(o,r)&&!r.relat?.ass?`<small>📷 Fotos: depois do <b>START</b> deste endereço (1 antes · 2 durante · 3 depois)</small>`:fotosFisPode(r)?(()=>{ const nx=REL_SLOTS.find(x=>!(r.fotosFiscal?.[x.k]||r.relat?.midia?.[x.k])); return nx?`<button type="button" class="btn pri" data-fotfis="${esc(r.id)}" style="min-height:52px">📷 Foto ${REL_SLOTS.indexOf(nx)+1} de 3 · ${nx.curto} <small style="display:block;font:600 12px var(--body);opacity:.9">${nx.dica}</small></button>`:`<button type="button" class="btn sec" data-fotfis="${esc(r.id)}" style="min-height:48px">✅ 3 fotos registradas – ver</button>`; })():`<small>${r.relat?.ass?"✅ Relatório assinado pelo supervisor":n?`📷 Fotos ${n} de 3`:"Fotos: o supervisor anexa na baixa"}</small>`):(relTem(r)?`<small>Processo GED: sem fotos (o supervisor faz o relatório na baixa)</small>`:``)}</li>`; }).join("")}</ol></section>`; };
   h.innerHTML=`<p class="note" style="margin:0 0 2px">${sau},</p><h2 style="margin:0 0 4px">${esc((sessao.nome||"").split(" ").slice(0,2).join(" "))}</h2>
     <p class="note" style="margin:0 0 12px">Fiscal de turma · ${esc(sessao.sup||"")} · ${me.equipe?esc(me.equipe):"todas as equipes"}</p>
     ${(()=>{ try{ if(!fisPode("vist")&&!fisPode("vrota")&&!vistTemFiscal()) return ""; VIST.ouvir(vistInicioOuvinte); const n=VIST.nFiscal(sessao.id), m=VIST.nMeus(sessao.id); return (m?`<button type="button" class="inav warn" data-iv="vist" style="margin:0 0 12px;width:100%">${ICO.vist}<span><b>${m} ${m===1?"processo":"processos"} na sua rota de vistoria</b><small>Rota indicada pela coordenação · abra no GPS e informe cada vistoria</small></span><em>Ver</em></button>`:"")+(n?`<button type="button" class="inav warn" data-iv="vist" style="margin:0 0 12px;width:100%">${ICO.vist}<span><b>${n} ${n===1?"serviço da vistoria":"serviços da vistoria"} para você executar</b><small>Enviado pelo supervisor · anexe as fotos antes, durante e depois</small></span><em>Ver</em></button>`:""); }catch(e){ return ""; } })()}
     <div class="fosseg" role="tablist"><button type="button" data-fosab="and" aria-pressed="${fosAba!=="ctl"}">📋 Em andamento <b>${G.filter(g=>!g.os.fim).length}</b></button><button type="button" data-fosab="ctl" aria-pressed="${fosAba==="ctl"}">📁 Controle de O.S <b>${GC.length}</b></button></div>
     ${fosAba==="ctl"?`<p class="note" style="margin:0 0 10px">O.S que você já <b>finalizou</b> (últimos 90 dias), para consulta sempre que precisar.</p>${GC.length?GC.map(card).join(""):`<div class="empty">Nenhuma O.S finalizada ainda.</div>`}`:`
     <div class="step" style="margin-bottom:6px">Ordens de serviço recebidas <b>em andamento</b></div>
-    <p class="note" style="margin:0 0 10px">Aqui aparecem as O.S que o supervisor iniciou e enviou para você. A O.S <b>fica aberta durante toda a execução</b>: volte nela a cada etapa para tirar a <b>1ª foto (antes)</b>, depois a <b>2ª (durante)</b> e por último a <b>3ª (depois)</b>. No fim, <b>assine e finalize a O.S</b>. As fotos vão direto para o relatório de serviço.</p>
+    <p class="note" style="margin:0 0 10px">Aqui aparecem as O.S que o supervisor iniciou e enviou para você. Cada <b>endereço</b> tem o seu <b>START</b> e o seu <b>FINALIZAR</b>: dê o start ao chegar no local e finalize quando terminar. Em O.S e processo SEI tire as 3 fotos (antes, durante e depois), que vão direto para o relatório. Quando todos os endereços estiverem finalizados, <b>assine e finalize a O.S</b>.</p>
     ${GA.length?GA.map(card).join(""):`<div class="empty">${GC.length?"Nenhuma O.S em andamento. As finalizadas ficam em <b>📁 Controle de O.S</b>.":"Nenhuma O.S recebida ainda. Quando o supervisor iniciar a O.S do dia e enviar para você, ela aparece aqui."}</div>`}`}`;
 }
 let fosAba="and";
