@@ -2328,7 +2328,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.11q";
+const APP_VERSAO="2026.11.11r";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -3034,10 +3034,10 @@ function mdUI(){ const on=mdPode(); $("#multiCard").hidden=!on; if(!on) return;
 $("#multiCard").addEventListener("click",e=>{ const b=e.target.closest("[data-md]"); if(!b) return; e.preventDefault(); $("#mdDias").value=Math.max(1,Math.min(15,(parseInt($("#mdDias").value)||1)+ +b.dataset.md)); mdUI(); });
 $("#mdDias").addEventListener("input",mdUI); $("#dataExec").addEventListener("change",()=>{ if(form.mode==="baixa") remUI(); }); $("#data").addEventListener("change",mdUI); $("#qtdMain").addEventListener("input",()=>{ if(form.mode==="prog") mdUI(); }); $("#qtdMain").addEventListener("click",()=>{ if(form.mode==="prog") setTimeout(mdUI,0); });
 // remarcação: na mesma semana ou na semana seguinte (até o sábado da próxima semana)
-function remLimite(ref){ const base=(ref&&ref>hoje())?ref:hoje(); const d=domDe(parseD(base)||new Date()); d.setDate(d.getDate()+13); return iso(d); }
+function remLimite(ref){ const base=(ref&&ref>hoje())?ref:hoje(); const d=domDe(parseD(base)||new Date()); d.setDate(d.getDate()+27); return iso(d); } // até 3 semanas para frente
 function remUI(){ const el=$("#proxData"); if(!el) return; const ref=form.st==="PARCIAL"?($("#dataExec").value||form.base?.data):form.base?.data; const lim=remLimite(ref);
   el.max=lim; const mn=new Date(); mn.setDate(mn.getDate()+(ref&&ref>=hoje()?0:0)); el.min=(ref&&ref>=hoje())?iso(new Date(parseD(ref).getTime()+864e5)):hoje();
-  const h=$("#remDica"); if(h) h.innerHTML=`Pode ser na <b>mesma semana</b> ou na <b>semana seguinte</b> (até ${diaDe(lim)} ${fmtD(lim)}).`; }
+  const h=$("#remDica"); if(h) h.innerHTML=`Pode ser na <b>mesma semana</b> ou em <b>até 3 semanas para frente</b> (até ${diaDe(lim)} ${fmtD(lim)}).`; }
 function modeUI(){
   const m=form.mode, nao=form.st==="NÃO"; try{ extraUI(); }catch(e){}
   const ex = m==="avulso" || (m==="baixa" && !nao);
@@ -3456,7 +3456,7 @@ $("#form").addEventListener("submit", async ev=>{
       const ref = form.st==="PARCIAL" ? ($("#dataExec").value||base.data) : base.data;
       const lim=remLimite(ref);
       if(!prox) e.push(form.st==="PARCIAL"?"informe a nova data para o que faltou":"informe a nova data (remarcação)"); else if(prox<=ref || prox<hoje()) e.push("a nova data precisa ser depois de "+fmtD(ref>hoje()?ref:hoje()));
-      else if(prox>lim) e.push("a remarcação tem que ser na mesma semana ou na semana seguinte (até "+fmtD(lim)+")");
+      else if(prox>lim) e.push("a remarcação pode ser no máximo 3 semanas para frente (até "+fmtD(lim)+")");
       if($("#motivo").value==="Outro"&&!mot) e.push("digite o motivo"); else if(!mot) e.push(form.st==="PARCIAL"?"informe o motivo de não ter terminado":"informe o motivo da não execução");
       Object.assign(body,{proxData:prox, motivo:mot, qtdRemarcada:remQ});
       if(!e.length){
