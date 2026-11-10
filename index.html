@@ -2321,7 +2321,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.11h";
+const APP_VERSAO="2026.11.11j";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -3220,6 +3220,15 @@ function erroEnd(s, onde){ const t=(s||"").trim(); if(!t) return "";
   return ""; }
 ["#logradouro","#s_logradouro"].forEach(sel=>{ const el=$(sel); if(!el) return; el.addEventListener("blur",()=>{ const v=abrevEnd(el.value); if(v!==el.value){ el.value=v; el.dispatchEvent(new Event("change")); } }); });
 /* ---------- endereço já programado ---------- */
+// ===== busca "inteligente": sem acento, abreviações (jd = jardim, st = setor, av = avenida…) e pequenos erros de digitação =====
+const BUSCA_ABR={jd:"jardim",jdm:"jardim",jar:"jardim",st:"setor",set:"setor",res:"residencial",resid:"residencial",rsd:"residencial",vl:"vila",v:"vila",pq:"parque",prq:"parque",r:"rua",av:"avenida",avn:"avenida",al:"alameda",qd:"quadra",qda:"quadra",lt:"lote",cj:"conjunto",conj:"conjunto",ch:"chacara",chac:"chacara",pc:"praca",pca:"praca",pr:"praca",rod:"rodovia",est:"estrada",sta:"santa",sto:"santo",sr:"senhor",sra:"senhora",ns:"nossa",nsa:"nossa",cond:"condominio",lot:"loteamento",dr:"doutor",prof:"professor",gov:"governador",pres:"presidente",cel:"coronel",eng:"engenheiro",univ:"universitario",ap:"aparecida",bl:"bloco",nº:"",n:"",no:""};
+function buscaNorm(t){ return String(t||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim().split(" ").filter(Boolean).map(w=>w in BUSCA_ABR?BUSCA_ABR[w]:w).filter(Boolean); }
+function buscaDist(a,b,max){ if(Math.abs(a.length-b.length)>max) return max+1; let v=Array.from({length:b.length+1},(_,i)=>i); for(let i=1;i<=a.length;i++){ let p=v[0],m=i; v[0]=i; for(let j=1;j<=b.length;j++){ const t=v[j]; v[j]=Math.min(v[j]+1,v[j-1]+1,p+(a[i-1]===b[j-1]?0:1)); p=t; if(v[j]<m) m=v[j]; } if(m>max) return max+1; } return v[b.length]; }
+const _bnCache=new Map();
+// true quando todas as palavras digitadas aparecem no texto (começo da palavra, sem acento, abreviação ou com até 1–2 letras erradas)
+function buscaOk(texto,q){ const Q=buscaNorm(q); if(!Q.length) return true; let H=_bnCache.get(texto); if(!H){ H=buscaNorm(texto); if(_bnCache.size>20000) _bnCache.clear(); _bnCache.set(texto,H); }
+  const junto=H.join(" "), cola=H.join("");
+  return Q.every(w=>{ if(/\d/.test(w)) return cola.includes(w.replace(/\D/g,"")||w)||junto.includes(w); if(H.some(h=>h.startsWith(w))) return true; if(w.length>=4){ const mx=w.length>=7?2:1; return H.some(h=>buscaDist(w,h.slice(0,Math.max(w.length,h.length)),mx)<=mx||buscaDist(w,h.slice(0,w.length),mx)<=mx); } return junto.includes(w); }); }
 const ABR={AVENIDA:"AV",AVN:"AV",RUA:"R",ALAMEDA:"AL",PRACA:"PC",PCA:"PC",QUADRA:"QD",Q:"QD",LOTE:"LT",L:"LT",SETOR:"ST",SET:"ST",JARDIM:"JD",JARD:"JD",RESIDENCIAL:"RES",RESID:"RES",PARQUE:"PQ",PRQ:"PQ",VILA:"VL",CONJUNTO:"CJ",CONJ:"CJ",BAIRRO:"",BRO:"",B:"",NUMERO:"N",NO:"N",NR:"N",ESQUINA:"ESQ",RODOVIA:"ROD"};
 const STOPW=new Set(["DE","DA","DO","DAS","DOS","E","C","COM","A","O"]);
 function chaveEnd(s){ return (s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z0-9]+/g," ").replace(/([A-Z])(\d)/g,"$1 $2").replace(/(\d)([A-Z])/g,"$1 $2").split(" ").map(w=>ABR[w]??w).filter(w=>w&&!STOPW.has(w)).join(" "); }
@@ -3990,7 +3999,7 @@ function montar(root) {
 
   // paradas que aparecem na tela (respeita a busca): indicar/tirar o vistoriador vale só para elas
   const termo = () => S.q.trim().toLowerCase();
-  const casa = (p, term) => !term || [p.processo, p.endereco, p.setor, p.ged, p.parecer, R(p).responsavel, dono(p) && dono(p).vistoriador].join(" ").toLowerCase().includes(term);
+  const casa = (p, term) => !term || buscaOk([p.processo, p.endereco, p.setor, p.ged, p.parecer, R(p).responsavel, dono(p) && dono(p).vistoriador].join(" "), term);
   const visiveis = (ro) => { const term = termo(); return ro.ps.filter((p) => S.f[p.id] || ((!S.hide || !R(p).vistoriado) && casa(p, term))); };
   function rotas() {
     if (!S.carregando) { vigiarPos(); if (!S._gfT) S._gfT = setTimeout(geoFundo, 2500); }
@@ -4086,7 +4095,7 @@ function montar(root) {
       <details class="vp-card" style="padding:10px 14px" ${S.pdfVerTodos ? "open" : ""}><summary><b>Ver a lista dos ${okL.length} arquivos ligados</b></summary><ol>${okL.map((x) => { const pr = procDe(x.id); return `<li class="vp-stop vp-pdfit"><span class="vp-seq"></span><div><div style="overflow-wrap:anywhere">📄 ${esc(x.file.name)} <span class="vp-msg">· ${(x.file.size / 1048576).toFixed(1)} MB</span></div><div class="vp-msg">→ <b>${esc(pr.processo)}</b> · ${esc(pr.endereco)}</div>${x.feito ? `<span class="vp-sp vp-s-ja_executado">✔ enviado</span>` : x.erro ? `<span class="vp-need">${esc(x.erro)}</span>` : x.ja && !S.pdfSobre ? `<span class="vp-msg">já tem PDF (não será enviado)</span>` : ""}</div></li>`; }).join("")}</ol></details>`;
     }
     const term = (S.pq || "").trim().toLowerCase();
-    const sem = S.proc.filter((p) => (S.pmostra === "com" ? docLinks(R(p)).length : !docLinks(R(p)).length) && (!S.preg || p.regional === S.preg) && (!term || [p.processo, p.endereco, p.setor, p.ged].join(" ").toLowerCase().includes(term)));
+    const sem = S.proc.filter((p) => (S.pmostra === "com" ? docLinks(R(p)).length : !docLinks(R(p)).length) && (!S.preg || p.regional === S.preg) && (!term || buscaOk([p.processo, p.endereco, p.setor, p.ged].join(" "), term)));
     h += `<h3>Um por um</h3><div class="vp-row">${[["sem", "Sem PDF", n - com], ["com", "Com PDF", com]].map(([k, t, q]) => `<button class="vp-chip" data-pmostra="${k}" aria-pressed="${(S.pmostra || "sem") === k}">${t}<small>${q}</small></button>`).join("")}</div>
     <div class="vp-ctl"><label class="vp-f">Regional<select id="vp-preg"><option value="">Todas</option>${REGS.map((r) => `<option value="${r}"${S.preg === r ? " selected" : ""}>${cap(r)}</option>`).join("")}</select></label>
     <label class="vp-f vp-grow">Buscar<input type="search" id="vp-pq" value="${esc(S.pq || "")}" placeholder="Nº do processo, rua, setor"></label></div>
@@ -4204,7 +4213,7 @@ function montar(root) {
   function listaResumo() {
     const term = (S.rq || "").trim().toLowerCase();
     return S.proc.filter((p) => R(p).vistoriado && (S.rsit === "all" || !S.rsit || (S.rsit === "urb" ? (R(p).urbantrim || {}).st === "pend" && vistEst(R(p)) === "nao_executado" : S.rsit === "semenv" ? R(p).situacao === "nao_executado" && !R(p).envio : S.rsit === "urbcad" ? faltaUrb(p) : S.rsit === "env" ? !!R(p).envio && !R(p).execucao : S.rsit === "exe" ? !!R(p).execucao : S.rsit === "semb" ? aguardaBx(p) : S.rsit === "bx" ? !!R(p).baixa : vistEst(R(p)) === S.rsit)) && (!S.rreg || p.regional === S.rreg)
-      && (!term || [p.processo, p.endereco, p.setor, p.ged, R(p).responsavel, R(p).equipamento, R(p).observacao].join(" ").toLowerCase().includes(term)))
+      && (!term || buscaOk([p.processo, p.endereco, p.setor, p.ged, R(p).responsavel, R(p).equipamento, R(p).observacao].join(" "), term)))
       .sort((a, b) => ((R(b).data_vistoria || "") + (R(b).atualizado_em || "")).localeCompare((R(a).data_vistoria || "") + (R(a).atualizado_em || "")));
   }
   // gráfico de colunas: o valor fica em cima de cada barra; nas barras empilhadas, cada parte mostra o seu número
@@ -6198,7 +6207,7 @@ const listaFonte=()=>todos();
 function listaFiltrar(all){
   const fs=selVals("fSem"), fp=selVals("fSup"), ft=selVals("fSt"), fpend=selVals("fPend"), q=$("#fTxt").value.trim().toUpperCase(), fd=$("#fDia")?.value||"", fe=$("#fEq")?.value||"";
   return all.filter(r=>(!fd||r.data===fd||r.dataExec===fd)&&(!fe||(r.equipe||"")===fe)&&(!fs.length||fs.includes(String(r.semana)))&&(!fp.length||fp.includes(r.supervisao))&&(!ft.length||ft.includes(stKey(r)))
-    &&(!q||[r.bairro,r.logradouro,r.processo,r.substituto?.bairro,r.substituto?.logradouro].join(" ").toUpperCase().includes(q))
+    &&(!q||buscaOk([r.bairro,r.logradouro,r.processo,r.substituto?.bairro,r.substituto?.logradouro,r.ped,r.servico,tipoTxt?.(r)].join(" "),q))
     &&(!fpend.length||fpend.some(fp1=>(fp1==="rem"&&r.remarcadaDe)||(fp1==="avulso"&&r.avulso&&!r.ocorrencia)||(fp1==="oc"&&r.ocorrencia)||(fp1==="hist"&&r.arquivado))));
 }
 const MS_NOME={fSem:["semana","semanas"],fSup:["turma","turmas"],fSt:["situação","situações"],fPend:["pendência","pendências"]};
@@ -9252,13 +9261,17 @@ function eqcAbrirLista(g,onOk,editar,FN){ const box=document.createElement("div"
   let R=FN.map(p=>{ const a=ant.find(m=>m.nome===p.nome); return {nome:p.nome,cargo:p.cargo,funcao:a?.funcao||p.funcao||"",on:!!a,lista:1}; })
     .concat(ant.filter(m=>m.nome&&!nomesFN.has(m.nome)).map(m=>({nome:m.nome,cargo:"",funcao:m.funcao||"",on:true,lista:0})));
   const FUN=EQ_FUNC.filter(f=>f!==EQ_FISCAL);
+  const escFis=!editar&&!g.os&&!ehFiscal(), FIS=escFis?fiscaisSup(g.sup):[];
+  let fisSel=escFis?((OS_FIS_ESC[g.k]||g.fis||fiscalDe(g.sup,g.eq))?.id||""):"";
+  if(escFis&&fisSel&&!FIS.some(f=>f.id===fisSel)) fisSel="";
   const sel=(f,i)=>`<select data-elf="${i}" aria-label="Função"><option value="">Função…</option>${FUN.map(x=>`<option value="${x}"${x===f?" selected":""}>${x.replace(/^OPERADOR DE /,"").replace(/ \(ARRASTADOR DE GALHOS\)/," – arrastador").replace(" / OPERACIONAL","")}</option>`).join("")}${f&&!FUN.includes(f)?`<option selected>${esc(f)}</option>`:""}</select>`;
   const desenhar=()=>{ const n=R.filter(r=>r.on).length;
     box.querySelector("[data-ellist]").innerHTML=R.map((r,i)=>`<div class="elrow${r.on?" on":""}"><label class="elchk"><input type="checkbox" data-elc="${i}" ${r.on?"checked":""}><span>${r.lista?esc(r.nome):`<input data-eln="${i}" value="${esc(r.nome)}" placeholder="Nome" autocapitalize="characters">`}${r.cargo?`<small>${esc(r.cargo)}</small>`:""}</span></label>${sel(r.funcao,i)}</div>`).join("");
     box.querySelector("[data-eqok]").textContent=`${editar?"Salvar a equipe":"▶ Confirmar a equipe e enviar a O.S"} (${n+1})`; };
   box.innerHTML=`<div class="panel" role="dialog" aria-label="Equipe da O.S"><b style="font-family:var(--display);font-size:22px">Equipe do dia · ${esc(g.sup)} · ${esc(g.eq||"equipe")}</b>
     <p class="note" style="margin:0">Marque <b>quem veio trabalhar hoje</b>. A função já vem da planilha – troque se precisar.</p>
-    <div class="elrow on fixo"><label class="elchk"><input type="checkbox" checked disabled><span>${esc(fisNome||"FISCAL DE TURMA")}<small>${EQ_FISCAL}</small></span></label><span></span></div>
+    ${escFis?`<label class="f" style="margin:0"><b>Fiscal da turma hoje</b><select data-elfis style="min-height:48px;font-weight:700">${FIS.length?"":`<option value="">Nenhum fiscal cadastrado nesta turma (Acessos)</option>`}${FIS.map(f=>`<option value="${esc(f.id)}"${f.id===fisSel?" selected":""}>${esc(f.nome)}${f.equipe?" · "+esc(f.equipe):""}</option>`).join("")}</select></label>`
+      :`<div class="elrow on fixo"><label class="elchk"><input type="checkbox" checked disabled><span>${esc(fisNome||"FISCAL DE TURMA")}<small>${EQ_FISCAL}</small></span></label><span></span></div>`}
     <div data-ellist class="ellist"></div>
     <button type="button" class="btn sec" data-eladd>＋ Pessoa que não está na lista</button>
     <p class="err" data-eqerr hidden></p>
@@ -9271,7 +9284,8 @@ function eqcAbrirLista(g,onOk,editar,FN){ const box=document.createElement("div"
   box.addEventListener("click",async e=>{ if(e.target===box||e.target.closest("[data-eqx]")) return box.remove();
     if(e.target.closest("[data-eladd]")){ R.push({nome:"",cargo:"",funcao:"",on:true,lista:0}); desenhar(); box.querySelector(`[data-eln="${R.length-1}"]`)?.focus(); return; }
     const ok=e.target.closest("[data-eqok]"); if(!ok) return; const er=box.querySelector("[data-eqerr]");
-    const M=[...(fisNome?[{nome:fisNome,funcao:EQ_FISCAL}]:[]),...R.filter(r=>r.on).map(r=>({nome:r.nome.trim().toUpperCase(),funcao:r.funcao}))]; let msg="";
+    let fN=fisNome; if(escFis){ const fv=box.querySelector("[data-elfis]")?.value||"", fo=FIS.find(f=>f.id===fv); if(fo){ OS_FIS_ESC[g.k]={id:fo.id,nome:fo.nome}; fN=fo.nome.toUpperCase(); } else fN=""; }
+    const M=[...(fN?[{nome:fN,funcao:EQ_FISCAL}]:[]),...R.filter(r=>r.on).map(r=>({nome:r.nome.trim().toUpperCase(),funcao:r.funcao}))]; let msg="";
     if(!R.some(r=>r.on)) msg="marque pelo menos uma pessoa da equipe"; else if(M.some(m=>!m.nome)) msg="falta o nome de alguém (ou desmarque a linha)"; else if(M.some(m=>!m.funcao)) msg="falta a função de "+M.find(m=>!m.funcao).nome;
     if(msg){ er.textContent="Falta: "+msg+"."; er.hidden=false; return; }
     try{ ls.set("gpe_eqc_"+g.k,JSON.stringify(M)); }catch(x){}
@@ -9307,7 +9321,7 @@ function eqcAbrir(g,onOk,editar){ { const FN0=funcDe(g.sup); if(FN0.length) retu
   const dropFechar=()=>box.querySelectorAll(".eqdrop").forEach(d=>d.remove());
   const dropAbrir=inp=>{ dropFechar(); const row=inp.closest(".eqcl"); if(!FN.length||!row||row.dataset.fixo) return;
     const q=inp.value.trim().toUpperCase(), usados=new Set(ler().map(m=>m.nome).filter((n,k)=>k!==+row.dataset.i));
-    const it=FN.map((p,i)=>[p,i]).filter(([p])=>!usados.has(p.nome)&&(!q||p.nome.includes(q)));
+    const it=FN.map((p,i)=>[p,i]).filter(([p])=>!usados.has(p.nome)&&(!q||buscaOk(p.nome,q)));
     const d=document.createElement("div"); d.className="eqdrop"; d.innerHTML=it.length?it.map(([p,i])=>`<button type="button" data-eqdpick="${i}"><span>${esc(p.nome)}</span>${p.cargo?`<small>${esc(p.cargo)}</small>`:""}</button>`).join(""):`<p>Nenhum nome da turma com "${esc(q)}". Pode digitar o nome.</p>`;
     row.after(d); };
   box.addEventListener("focusin",e=>{ const i=e.target.closest("[data-eqn]"); if(i&&!i.readOnly) dropAbrir(i); });
@@ -9357,7 +9371,7 @@ async function osIniciar(g,btn){ // o supervisor informa a equipe do dia antes d
   return new Promise(res=>eqcAbrir(g,async M=>{ const r=await osIniciarCom(g,btn,M); res(r); return r; },false)); }
 async function osIniciarCom(g,btn,M){
   btn.disabled=true; btn.textContent="Iniciando…";
-  const em=new Date().toISOString(), fis=OS_FIS_ESC[g.k]||g.fis, os={num:osNum(g.sup,g.eq,hoje()),em,por:sessao.nome||"",porId:sessao.id,fiscal:fis?{id:fis.id,nome:fis.nome}:null,membros:M};
+  const em=new Date().toISOString(), fis=OS_FIS_ESC[g.k]||g.fis, os={num:osNum(g.sup,g.eq,hoje()),em,por:sessao.nome||"",porId:sessao.id,fiscal:fis?{id:fis.id,nome:fis.nome}:null,membros:M,...((()=>{ const tit=g.fis||fiscalDe(g.sup,g.eq); return fis&&tit&&tit.id!==fis.id?{fiscalTroca:{de:tit.nome||"",deId:tit.id||"",em,por:sessao.nome||""}}:{}; })())};
   let ok=true; for(const r of g.rs){ const upd={...r}; delete upd.id; delete upd._fila; upd.osDia=os; upd._acao=`Iniciou a O.S nº ${os.num}${fis?" e enviou ao fiscal "+fis.nome:""}`; const res=await saveDoc(r.id,upd); if(res!=="ok"&&res!=="fila") ok=false; else r.osDia=os; }
   if(!ok){ toast("Não foi possível iniciar a O.S agora. Tente de novo."); btn.disabled=false; btn.textContent="▶ Iniciar O.S e enviar ao fiscal"; btn.dataset.armed=""; return false; }
   delete OS_FIS_ESC[g.k];
