@@ -2139,10 +2139,10 @@ const AC_DEP_ORD=["PRESIDÊNCIA","DIRSEN/DIROP","DIRETORIA","DIRSEN","GPE - DIRS
 function acGrupos(lista){ const G={};
   lista.forEach(([id,u])=>{ let k,t,d; const so=SUPS_ALL.find(x=>x.id===u.sup);
     if(u.perfil==="admin"){ k="z:adm"; t="Administradores"; d="veem tudo no app, sem restrição"; }
-    else if(so){ const tn=/NOTURNO/i.test(so.id)?"NOTURNO":"DIURNO"; k="p:"+so.grupo+"|"+(tn==="DIURNO"?0:1); t=so.grupo+" "+tn; d=(ESC_DIROP.includes(so.grupo)?"Gerência de Poda e Extirpação – DIROP":"Gerência de Poda e Extirpação – DIRSEN")+" · turmas (A) e (B)"; }
+    else if(so){ const tn=/NOTURNO/i.test(so.id)?"NOTURNO":"DIURNO"; const le=(/\(([A-Z])\)\s*$/.exec(so.id)||[])[1]||""; k="p:"+so.grupo+"|"+((tn==="DIURNO"?0:2)+(le==="B"?1:0)); t=so.grupo+" "+tn+(le?" ("+le+")":""); d=(ESC_DIROP.includes(so.grupo)?"Gerência de Poda e Extirpação – DIROP":"Gerência de Poda e Extirpação – DIRSEN")+(le?" · turma ("+le+")":""); }
     else { const nm=u.sup?lotNome(u.sup):"Sem lotação"; k="d:"+nm; t=nm; d="Departamento / lotação"; }
     (G[k]=G[k]||{k,t,d,it:[]}).it.push([id,u]); });
-  const ordK=k=>k.startsWith("d:")?(()=>{ const i=AC_DEP_ORD.indexOf(k.slice(2)); return i<0?50:i; })():k.startsWith("p:")?100+["PODA I","PODA II","PODA III","PODA IV"].indexOf(k.slice(2).split("|")[0])*2+(+k.split("|")[1]||0):999;
+  const ordK=k=>k.startsWith("d:")?(()=>{ const i=AC_DEP_ORD.indexOf(k.slice(2)); return i<0?50:i; })():k.startsWith("p:")?100+["PODA I","PODA II","PODA III","PODA IV"].indexOf(k.slice(2).split("|")[0])*4+(+k.split("|")[1]||0):999;
   return Object.values(G).sort((a,b)=>ordK(a.k)-ordK(b.k)||a.t.localeCompare(b.t)).map(g=>{ if(g.k.startsWith("p:")) g.it.sort((a,b)=>(a[1].sup||"").localeCompare(b[1].sup||"")||(ORD[a[1].perfil]-ORD[b[1].perfil])||a[1].nome.localeCompare(b[1].nome)); return g; }); }
 const AC_AREAS=[{k:"dirsen",t:"PODA I e PODA II",d:"Gerência de Poda e Extirpação – DIRSEN"},{k:"dirop",t:"PODA III e PODA IV",d:"Gerência de Poda e Extirpação – DIROP"},{k:"dir",t:"Diretoria",d:"consulta geral"},{k:"adm",t:"Administradores",d:"veem tudo no app, sem restrição"}];
 function areaAcesso(u){ if(u.perfil==="admin") return "adm"; if(u.perfil==="gerencia_op"||u.sup===LOT_DIROP) return "dirop"; const g=supOf(u.sup)?.grupo; if(g==="PODA III"||g==="PODA IV") return "dirop"; if(u.perfil==="diretoria"||u.sup==="DIRETORIA") return "dir"; return "dirsen"; }
@@ -2296,7 +2296,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.10z";
+const APP_VERSAO="2026.11.10z1";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
