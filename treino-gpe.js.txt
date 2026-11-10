@@ -117,12 +117,17 @@
   }
   const pronto = semear();
 
+  let REAL = null; try { REAL = JSON.parse(localStorage.getItem("gpe_sessao_real") || "null"); } catch (e) {}
+  const nomeReal = REAL && REAL.nome ? String(REAL.nome) : "";
+  const escH = (t) => String(t).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   /* ---------- entrada automática (ligada pelo ADM em Acessos) ---------- */
   try {
     const a = JSON.parse(localStorage.getItem("gpe_treino_auto") || "null");
     if (a && !localStorage.getItem("gpe_sessao")) {
       const e = P.find(x => x[3] === a.perfil && x[4] === a.sup) || P.find(x => x[3] === a.perfil) || P.find(x => x[0] === "s1");
-      localStorage.setItem("gpe_sessao", JSON.stringify({ id: e[0], nome: e[1], perfil: e[3], sup: e[4] }));
+      const nm = nomeReal ? nomeReal + " (TREINO)" : e[1];
+      localStorage.setItem("gpe_sessao", JSON.stringify({ id: e[0], nome: nm, perfil: e[3], sup: e[4] }));
+      if (nomeReal) pronto.then(() => { const u = banco.cfg && banco.cfg.acesso && banco.cfg.acesso.usuarios && banco.cfg.acesso.usuarios[e[0]]; if (u) { u.nome = nm; gravar(); notificar("cfg"); } });
     }
     localStorage.removeItem("gpe_treino_auto");
   } catch (e) {}
@@ -151,11 +156,27 @@
   /* ---------- faixa de aviso + zerar ---------- */
   function faixa() {
     if (document.getElementById("gpeLocalBar")) return;
+    document.body.classList.add("modo-treino");
+    const stT = document.createElement("style"); stT.id = "gpeTreinoCss";
+    stT.textContent = 'body.modo-treino header.top{border-bottom:3px solid #ea580c}'
+      + 'body.modo-treino nav.tabs{background:#9a3412!important;border-top:3px solid #ea580c}'
+      + 'body.modo-treino::after{content:"TREINAMENTO";position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-28deg);font:900 64px/1 Arial,sans-serif;letter-spacing:6px;color:rgba(234,88,12,.10);pointer-events:none;z-index:60;white-space:nowrap}';
+    document.head.appendChild(stT);
     const b = document.createElement("div"); b.id = "gpeLocalBar";
     b.setAttribute("style", "position:sticky;top:0;z-index:70;background:#b45309;color:#fff;font:700 13px/1.3 Arial,sans-serif;padding:7px 10px;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;text-align:center");
     const bt = "font:700 12px Arial;padding:5px 10px;border-radius:6px;cursor:pointer;";
-    b.innerHTML = '<span>🎓 MODO TREINAMENTO · nada vai para o app de verdade</span><button type="button" id="gpeTreinoUs" style="' + bt + 'border:0;background:#fff;color:#b45309">Usuários do treino</button><button type="button" id="gpeTreinoZerar" style="' + bt + 'border:0;background:#fff;color:#b45309">Recomeçar</button><button type="button" id="gpeTreinoSair" style="' + bt + 'border:2px solid #fff;background:transparent;color:#fff">Sair do treinamento</button>';
+    b.innerHTML = '<span>🎓 MODO TREINAMENTO' + (nomeReal ? ' · <u>' + escH(nomeReal) + '</u> está treinando' : '') + ' · nada vai para o app de verdade</span><button type="button" id="gpeTreinoUs" style="' + bt + 'border:0;background:#fff;color:#b45309">Usuários do treino</button><button type="button" id="gpeTreinoZerar" style="' + bt + 'border:0;background:#fff;color:#b45309">Recomeçar</button><button type="button" id="gpeTreinoSair" style="' + bt + 'border:2px solid #fff;background:transparent;color:#fff">Sair do treinamento</button>';
     document.body.prepend(b);
+    document.body.classList.add("gpeTreino");
+    const st = document.createElement("style");
+    st.textContent = 'body.gpeTreino header.top{background:#fff1e0!important}'
+      + 'body.gpeTreino .userbar{background:#fde3c4!important;border-radius:10px;padding:4px 8px}'
+      + 'body.gpeTreino #whoNome::before{content:"🎓 TREINO · ";color:#b45309}'
+      + '#gpeTreinoMoldura{position:fixed;inset:0;border:5px solid #f97316;pointer-events:none;z-index:2147483000}'
+      + '#gpeTreinoSelo{position:fixed;right:8px;bottom:84px;z-index:2147483001;background:#b45309;color:#fff;font:800 12px Arial,sans-serif;padding:6px 10px;border-radius:999px;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.3);opacity:.92}';
+    document.head.appendChild(st);
+    const m = document.createElement("div"); m.id = "gpeTreinoMoldura"; document.body.appendChild(m);
+    const sl = document.createElement("div"); sl.id = "gpeTreinoSelo"; sl.textContent = "🎓 TREINAMENTO"; document.body.appendChild(sl);
     document.getElementById("gpeTreinoUs").onclick = () => alert("Usuários do treinamento (senha de todos: treino123)\n\n• treino.supervisor – Supervisor PODA I DIURNO (A)\n• treino.supervisor2 / 3 / 4 / 5 – outras turmas\n• treino.fiscal – Fiscal da PODA I DIURNO (A)\n• treino.coordenador – Coordenador\n• treino.gerente – Gerente DIRSEN\n• treino.gerente2 – Gerente DIROP\n• treino.cadastrador – Cadastrador(a)\n• treino.vistoriador – Vistoriador(a)\n• treino.adm – Administrador\n\nPrimeira assinatura: 654321 (depois o app pede para cadastrar a própria).");
     document.getElementById("gpeTreinoZerar").onclick = () => {
       if (!confirm("Apagar tudo o que foi feito no treinamento e voltar aos dados de exemplo?")) return;
