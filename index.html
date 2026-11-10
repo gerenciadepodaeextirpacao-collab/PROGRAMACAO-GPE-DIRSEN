@@ -6,7 +6,8 @@
 <meta name="author" content="Victor Ricardo Porto Alcântara">
 <meta name="description" content="Programação GPE — programação, baixa da execução, quedas e painel da Gerência de Poda e Extirpação (DIRSEN/COMURG).">
 <!-- fora do Claude (Netlify): camada que liga o app às funções do Netlify; dentro do Claude ela não é usada -->
-<script src="camada-gpe.js"></script>
+<!-- Modo treinamento (Mais › Modo treinamento): usa dados de exemplo só neste aparelho, sem tocar no app de verdade -->
+<script>try{document.write(localStorage.getItem("gpe_treino")==="1"?'<script src="treino-gpe.js"><\/script>':'<script src="camada-gpe.js"><\/script>')}catch(e){document.write('<script src="camada-gpe.js"><\/script>')}</script>
 <title>Programação GPE</title>
 <meta name="color-scheme" content="light">
 <script>/* sempre tema claro (o escuro fica ruim de ler no celular) */try{const H=document.documentElement,L=()=>{ if(H.getAttribute("data-theme")!=="light") H.setAttribute("data-theme","light"); };L();new MutationObserver(L).observe(H,{attributes:true,attributeFilter:["data-theme"]});}catch(e){}</script>
@@ -1966,6 +1967,7 @@ function abrirAcessos(){
         <label class="ck"><input type="checkbox" data-edcobra ${cobraFlag(u)?"checked":""}><span>💬 Pode cobrar no WhatsApp as turmas da ${cobraTxt(u.sup)}</span></label>
         <div class="row2"><label class="f">Perfil<select data-edperf>${cargoOpts(cargoK(u),podeCriarAdm())}</select></label>
         <label class="f" data-edsupw>${lotRot(u.perfil)}<select data-edsup>${lotOpts(u.perfil,u.sup)}</select></label></div>
+        ${isAdm()?`<label class="ck"><input type="checkbox" data-edtreino ${u.treino?"checked":""}><span>🎓 Pode usar o <b>Modo treinamento</b> (só o administrador liga e desliga)</span></label>`:""}
         <details class="edturmas"${Array.isArray(u.turmas)&&u.turmas.length?" open":""}><summary><b>Vê só estas turmas</b> <span class="note">(deixe tudo desmarcado para ver todas da gerência)</span></summary>
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:2px 10px;margin-top:6px">${SUPS_ALL.filter(x=>pessoaNoEscopo({perfil:"supervisor",sup:x.id})||isAdm()).map(x=>`<label class="ck" style="min-height:36px"><input type="checkbox" data-edturma="${esc(x.id)}" ${(u.turmas||[]).includes(x.id)?"checked":""}><span>${esc(x.id)}</span></label>`).join("")}</div></details>
         <label class="f" data-edeqw ${u.perfil==="fiscal"?"":"hidden"}>Equipe do fiscal (recebe a O.S do dia)<select data-edeq><option value="" ${!u.equipe?"selected":""}>Sem equipe (todas as equipes)</option>${["1ª EQUIPE","2ª EQUIPE","3ª EQUIPE"].map(q=>`<option value="${q}" ${u.equipe===q?"selected":""}>Fiscal de turma – ${q.toLowerCase()}</option>`).join("")}</select></label>
@@ -2046,7 +2048,7 @@ const acErro=e=>{ const m=String(e?.message||e||""); return /gerente|acessos|per
       const cobra=!!box.querySelector("[data-edcobra]")?.checked;
       const equipe=perfil==="fiscal"?(box.querySelector("[data-edeq]")?.value||""):"";
       const turmas=[...box.querySelectorAll("[data-edturma]:checked")].map(c=>c.dataset.edturma);
-      await salvar(id,{nome,matricula,perfil,cargo,sup,zap,cobra,equipe,turmas},nome+" atualizado.");
+      const extraT=isAdm()?{treino:!!box.querySelector("[data-edtreino]")?.checked}:{}; await salvar(id,{...extraT,nome,matricula,perfil,cargo,sup,zap,cobra,equipe,turmas},nome+" atualizado.");
       if(id===sessao?.id){sessao={...sessao,nome};ls.set("gpe_sessao",sessao);applyPerms()}
       return;}
     const dl=e.target.closest("[data-del]"); if(dl){const id=dl.dataset.del, u=acesso[id];
@@ -2081,7 +2083,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.10n";
+const APP_VERSAO="2026.11.10p";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -8694,6 +8696,7 @@ function abrirMais(){ if(sessao?.perfil==="gerencia_op"||(sessao?.perfil==="fisc
   const itens=NAV_MAIS.map(v=>({k:"v:"+v,t:VIEW_NOME[v],i:ICO[v]}));
   if(isGerente()&&!sessao?.porGerente) itens.push({k:"a:zerar",t:"Zerar dados de teste",i:ICO.alerta});
   if(isGerente()) itens.push({k:"a:acessos",t:"Acessos",i:ICO.acessos},{k:"a:teste",t:modoTeste()?"Desligar modo teste":"Modo teste",i:ICO.teste});
+  if(emTreino()||(window.GPE_NETLIFY&&(isAdm()||acesso?.[sessao?.id]?.treino===true))) itens.push(emTreino()?{k:"a:treinosair",t:"Sair do treinamento (voltar ao app de verdade)",i:svgI('<path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 2 9 2 12 0v-5"/>')}:{k:"a:treino",t:"Modo treinamento (ensinar sem mexer nos dados reais)",i:svgI('<path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 2 9 2 12 0v-5"/>')});
   itens.push({k:"a:rels",t:"Relatórios prontos para baixar",i:svgI('<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M12 12v6m-3-3 3 3 3-3"/>')});
   if(podeEquip()) itens.push({k:"a:equip",t:"Equipamentos (cadastrar)",i:svgI('<rect x="2" y="9" width="13" height="8" rx="1"/><path d="M15 12h4l3 3v2h-7"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/>')});
   if(!PERF_ABAIXO.includes(sessao?.perfil)||abaOn(sessao.perfil,"busca")) itens.push({k:"a:busca",t:"Pesquisar serviço por endereço",i:svgI('<circle cx="11" cy="11" r="7"/><path d="m20 20-4.2-4.2"/>')});
@@ -8707,12 +8710,29 @@ function abrirMais(){ if(sessao?.perfil==="gerencia_op"||(sessao?.perfil==="fisc
   const close=()=>host.innerHTML="";
   $("#sh").onclick=e=>{ if(e.target.id==="sh") close(); const b=e.target.closest("[data-mk]"); if(!b) return; const [t,k]=b.dataset.mk.split(":"); close();
     if(t==="v") irPara(k);
-    else if(k==="acessos") abrirAcessos(); else if(k==="teste") $("#testeBtn").click(); else if(k==="sair") $("#sairBtn").click(); else if(k==="ajuda") abrirAjuda(curView); else if(k==="escala") abrirEscala(travado()?sessao.sup:""); else if(k==="busca") abrirBuscaEnd(); else if(k==="equip") abrirEquip(); else if(k==="rels") abrirRelatorios(); else if(k==="zerar") abrirZerar(); };
+    else if(k==="acessos") abrirAcessos(); else if(k==="teste") $("#testeBtn").click(); else if(k==="sair") $("#sairBtn").click(); else if(k==="ajuda") abrirAjuda(curView); else if(k==="escala") abrirEscala(travado()?sessao.sup:""); else if(k==="busca") abrirBuscaEnd(); else if(k==="equip") abrirEquip(); else if(k==="rels") abrirRelatorios(); else if(k==="treino") entrarTreino(); else if(k==="treinosair") window.GPE_SAIR_TREINO(); else if(k==="zerar") abrirZerar(); };
   $("#maisFechar").onclick=close;
 }
 // aba Pendências: junta os avisos do Painel, o checklist obrigatório e as pendências do checklist; o número aparece no ícone do sino
 // pesquisar serviço por endereço (bairro, rua, quadra/lote, processo) em toda a programação que a pessoa pode ver
 const nBusca=t=>String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/\b(RUA|R|AVENIDA|AV|ALAMEDA|AL|SETOR|ST|S|JARDIM|JD|VILA|VL|QUADRA|QD|Q|LOTE|LT)\b\.?/g," ").replace(/[^A-Z0-9]+/g," ").replace(/\b0+(\d)/g,"$1").trim();
+// ---------- Modo treinamento: troca o banco do app por dados de exemplo guardados só neste aparelho ----------
+const emTreino=()=>!!window.GPE_TREINO;
+function entrarTreino(){
+  if(!(isAdm()||acesso?.[sessao?.id]?.treino===true)) return toast("O Modo treinamento não está liberado para você. Fale com o administrador.");
+  try{ const f=JSON.parse(localStorage.getItem("gpe_fila")||"[]"); if(Array.isArray(f)&&f.length) return toast("Há lançamentos esperando internet para ir ao app. Espere enviar antes de entrar no treinamento."); }catch(e){}
+  const box=document.createElement("div"); box.className="sheet"; box.style.zIndex=30;
+  box.innerHTML=`<div class="panel" role="dialog" aria-label="Modo treinamento"><b style="font-family:var(--display);font-size:22px">🎓 Modo treinamento</b>
+    <p class="note" style="margin:0">O app abre com <b>dados de exemplo</b> para ensinar os usuários: programar, dar baixa, O.S, fotos, checklist, vistoria, assinatura… <b>Nada do que for feito vai para o app de verdade</b> e nada do app de verdade é alterado. Tudo fica guardado só neste aparelho.</p>
+    <p class="note" style="margin:0">Para entrar no treino use um destes usuários, todos com a senha <b>treino123</b>: <b>treino.supervisor</b>, <b>treino.fiscal</b>, <b>treino.coordenador</b>, <b>treino.gerente</b>, <b>treino.cadastrador</b>, <b>treino.vistoriador</b> ou <b>treino.adm</b>. A primeira assinatura é com <b>654321</b>.</p>
+    <p class="note" style="margin:0">Uma faixa laranja <b>MODO TREINAMENTO</b> fica sempre no topo. Para voltar ao app de verdade, toque em <b>Sair do treinamento</b> na faixa: você volta logado como estava.</p>
+    <div class="actions" style="grid-template-columns:1fr 1fr;margin:0"><button type="button" class="btn sec" data-trno>Voltar</button><button type="button" class="btn pri" data-trok>🎓 Entrar no treinamento</button></div></div>`;
+  document.body.appendChild(box);
+  box.onclick=e=>{ if(e.target===box||e.target.closest("[data-trno]")) return box.remove(); if(!e.target.closest("[data-trok]")) return;
+    try{ const s0=localStorage.getItem("gpe_sessao"); if(s0) localStorage.setItem("gpe_sessao_real",s0); localStorage.removeItem("gpe_sessao"); localStorage.setItem("gpe_treino","1"); }catch(x){ return toast("Este aparelho não deixou guardar o modo treinamento."); }
+    location.reload(); };
+}
+window.GPE_SAIR_TREINO=()=>{ try{ localStorage.removeItem("gpe_treino"); localStorage.removeItem("gpe_sessao"); const s0=localStorage.getItem("gpe_sessao_real"); if(s0) localStorage.setItem("gpe_sessao",s0); localStorage.removeItem("gpe_sessao_real"); }catch(e){} location.reload(); };
 // Mais › Relatórios prontos: só os relatórios de serviço já preenchidos e assinados, para baixar em PDF ou Word
 function abrirRelatorios(){
   const host=$("#sheetHost"); let q0=ls.get("gpe_relq","");
