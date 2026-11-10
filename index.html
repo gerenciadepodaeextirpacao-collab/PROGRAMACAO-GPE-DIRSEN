@@ -461,6 +461,9 @@ div.inav{cursor:default}.inbts{display:flex;flex-direction:column;gap:6px}
 .acsec{display:grid;gap:8px}
 .escbadge{display:inline-block;margin-left:6px;background:#e7f3ea;color:#005f27;border:1px solid #b9dcc3;border-radius:999px;padding:1px 8px;font-size:11.5px;font-weight:700;white-space:nowrap}
 .acsech{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 10px;background:var(--cm-green,#005f27);color:#fff;border-radius:12px;padding:10px 14px;margin-top:6px}
+summary.acsech{cursor:pointer;list-style:none}summary.acsech::-webkit-details-marker{display:none}
+summary.acsech b::before{content:"▸ ";display:inline-block;transition:transform .15s}details[open]>summary.acsech b::before{content:"▾ "}
+details.acsec>.list{margin-top:8px}
 .acsech b{font-family:var(--display);font-size:19px;letter-spacing:.3px}.acsech span{font-size:12.5px;opacity:.9}
 #testeBtn[aria-pressed="true"]{background:#f59e0b;color:#1a1a1a;border-color:#b45309;font-weight:700}
 .testebar{position:sticky;top:0;z-index:60;background:repeating-linear-gradient(45deg,#fbbf24,#fbbf24 12px,#f59e0b 12px,#f59e0b 24px);color:#1a1a1a;font:700 13px/1.3 Arial,sans-serif;text-align:center;padding:7px 10px;border-bottom:2px solid #b45309}
@@ -2177,7 +2180,9 @@ function acGrupos(lista){ const G={};
 const AC_AREAS=[{k:"dirsen",t:"PODA I e PODA II",d:"Gerência de Poda e Extirpação – DIRSEN"},{k:"dirop",t:"PODA III e PODA IV",d:"Gerência de Poda e Extirpação – DIROP"},{k:"dir",t:"Diretoria",d:"consulta geral"},{k:"adm",t:"Administradores",d:"veem tudo no app, sem restrição"}];
 function areaAcesso(u){ if(u.perfil==="admin") return "adm"; if(u.perfil==="gerencia_op"||u.sup===LOT_DIROP) return "dirop"; const g=supOf(u.sup)?.grupo; if(g==="PODA III"||g==="PODA IV") return "dirop"; if(u.perfil==="diretoria"||u.sup==="DIRETORIA") return "dir"; return "dirsen"; }
 const AC_ABERTOS=new Set(); let AC_BUSCA="", AC_TAB="lista";
-function acFiltrar(host){ const q=AC_BUSCA.trim().toLowerCase(); host.querySelectorAll(".acsec").forEach(sec=>{ let n=0; sec.querySelectorAll("[data-uid]").forEach(c=>{ const ok=!q||c.querySelector(".achead")?.textContent.toLowerCase().includes(q)||(c.dataset.busca||"").includes(q); c.hidden=!ok; if(ok) n++; }); sec.hidden=!!q&&!n; }); }
+function acFiltrar(host){ const q=AC_BUSCA.trim().toLowerCase(); host.querySelectorAll(".acsec").forEach(sec=>{ let n=0; sec.querySelectorAll("[data-uid]").forEach(c=>{ const ok=!q||c.querySelector(".achead")?.textContent.toLowerCase().includes(q)||(c.dataset.busca||"").includes(q); c.hidden=!ok; if(ok) n++; }); sec.hidden=!!q&&!n; if(q) sec.open=n>0; else sec.open=AC_ABERTOS.has(sec.dataset.sec); }); }
+// grupos de Acessos minimizados: abre só o que tocar (lembra quais estão abertos)
+document.addEventListener("toggle",e=>{ const d=e.target; if(!d?.matches?.("details.acsec")||AC_BUSCA.trim()) return; if(d.open) AC_ABERTOS.add(d.dataset.sec); else AC_ABERTOS.delete(d.dataset.sec); },true);
 function abrirAcessos(){
   if(!isGerente()) return;
   const host=$("#sheetHost");
@@ -2188,7 +2193,7 @@ function abrirAcessos(){
     <div id="acTabL" style="display:grid;gap:12px"${canAdmin&&AC_TAB==="novo"?" hidden":""}>
     <input type="search" id="acBusca" placeholder="🔎 Procurar por nome, matrícula, turma ou perfil" value="${esc(AC_BUSCA)}" autocapitalize="none" style="min-height:46px">
     <details class="acinfo"><summary>Como funcionam os acessos</summary><p class="note" style="margin:6px 0 0">Cada pessoa entra com a <b>matrícula</b> (ex.: m859209) e uma senha de pelo menos 6 caracteres (letras e números). Só o <b>administrador</b> vê tudo, sem restrição. O <b>gerente DIRSEN</b> vê o PODA I e o PODA II; o <b>gerente DIROP</b> vê o PODA III e o PODA IV. Quem está lotado na <b>DIRSEN</b> (ou diretoria) vê só o PODA I e o PODA II; quem está lotado na <b>DIROP</b> vê só o PODA III e o PODA IV (a diretoria só consulta); supervisor e fiscal só a própria turma.</p></details><p class="note" style="margin:0">${canAdmin?"":" <b>Você não é dono nem editor deste app: pode ver, mas não alterar.</b>"}</p>
-    ${acGrupos(lista).map(ar=>{ const it=ar.it; return `<div class="acsec"><div class="acsech"><b>${ar.t}</b><span>${ar.d} · ${it.length} ${it.length===1?"pessoa":"pessoas"}</span></div><div class="list">${it.length?"":`<p class="note" style="margin:0">Ninguém cadastrado ainda.</p>`}${it.map(([id,u])=>`<div class="prog accard" data-uid="${esc(id)}" data-busca="${esc([u.nome,matDe(u),PERF[u.perfil]||u.perfil,u.sup,u.equipe].filter(Boolean).join(" ").toLowerCase())}">
+    ${acGrupos(lista).map(ar=>{ const it=ar.it; return `<details class="acsec" data-sec="${esc(ar.t)}"${AC_ABERTOS.has(ar.t)?" open":""}><summary class="acsech"><b>${ar.t}</b><span>${ar.d} · ${it.length} ${it.length===1?"pessoa":"pessoas"}</span></summary><div class="list">${it.length?"":`<p class="note" style="margin:0">Ninguém cadastrado ainda.</p>`}${it.map(([id,u])=>`<div class="prog accard" data-uid="${esc(id)}" data-busca="${esc([u.nome,matDe(u),PERF[u.perfil]||u.perfil,u.sup,u.equipe].filter(Boolean).join(" ").toLowerCase())}">
       <div class="achead" style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b style="font-size:16px">${esc(u.nome)}</b><span class="pill ${!u.ativo?"NÃO":(u.hash&&matDe(u))?"SIM":"ATRASADO"}">${!u.ativo?"Desativado":!matDe(u)?"Sem matrícula":u.hash?"Liberado":"Sem senha"}</span></div>
       <div class="note">${u.perfil==="admin"||u.semMat?"Usuário":"Matrícula"} <b>${esc(matDe(u)||"—")}</b> · ${esc(cargoNome(u))}${u.sup?" · "+esc(u.sup):""}${u.zap?` · 📱 ${esc(zapFmt(u.zap))}`:u.perfil==="supervisor"?` · <span style="color:var(--warn)">sem WhatsApp</span>`:""}${u.perfil==="fiscal"?` · <b>fiscal de turma – ${u.equipe?esc(u.equipe.toLowerCase()):"sem equipe fixa (todas as equipes)"}</b>`:""}${u.perfil==="gerencia"?` · <b style="color:var(--ok)">💬 cobra todas as podas</b>`:u.perfil==="gerencia_op"?` · <b style="color:var(--ok)">💬 cobra Poda III e IV</b>`:cobraFlag(u)?` · <b style="color:var(--ok)">💬 cobra Poda I e II</b>`:""}</div>
       ${isAdm()&&u.perfil!=="admin"?`<button type="button" class="trtog${u.treino?" on":""}" data-trtog="${esc(id)}" aria-pressed="${!!u.treino}">🎓 Modo treinamento: <b>${u.treino?"LIGADO":"desligado"}</b> <span>${u.treino?"toque para desligar":"toque para ligar"}</span></button>`:""}
@@ -2216,7 +2221,7 @@ function abrirAcessos(){
         <button type="button" class="btn pri" data-saveedit="${esc(id)}">Salvar alterações</button>
         ${abasPessoaHtml(id,u)}
       </div></div></details>`:""}
-    </div>`).join("")}</div></div>`; }).join("")}
+    </div>`).join("")}</div></details>`; }).join("")}
     ${podeFisPerm()?`<p class="note" style="margin:0">🔐 Para liberar ou bloquear abas de alguém (checklist, programação, painel…), abra <b>⚙ Gerenciar</b> na pessoa e use <b>Acessos desta pessoa</b>.</p>`:""}
     </div>
     ${canAdmin?`<div id="acTabN" style="display:grid;gap:12px"${AC_TAB!=="novo"?" hidden":""}><section class="card" style="margin:0"><div class="step">Cadastrar nova pessoa</div>
@@ -2328,7 +2333,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.11w";
+const APP_VERSAO="2026.11.11y";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -6034,20 +6039,24 @@ function equipAplicar(){ try{ const sel=$("#viatura"), v0=sel.value, L=equipVis(
   if(v0&&[...sel.options].some(o=>o.value===v0)) sel.value=v0;
   const kg=$("#kgVt"); if(kg){ const k0=kg.value; kg.innerHTML='<option value="">Todos os equipamentos</option>'+L.map(x=>`<option value="${esc(x.v)}">${esc(x.v)}${x.reserva?" (reserva)":""}</option>`).join(""); kg.value=k0; } }catch(e){} }
 const podeEquip=()=>isAdm()||isGerente();
+let EQ_TAB="lista";
 function abrirEquip(){ if(!podeEquip()) return; const host=$("#sheetHost"), g=equipGerVis();
   const L=equipLista().map((x,i)=>({...x,i})).filter(x=>!g||x.ger===g);
   host.innerHTML=`<div class="sheet" id="sh"><div class="panel" role="dialog" aria-label="Equipamentos">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:22px">Equipamentos</b><button type="button" class="btn sec" id="eqX" style="min-height:44px;padding:0 14px">Fechar</button></div>
     <p class="note" style="margin:0">Equipamentos que aparecem na programação, na O.S, no checklist e no comunicado de defeito. ${g?`Você vê os equipamentos da <b>${g}</b>.`:"Os da <b>DIRSEN</b> aparecem só para o gerente Victor e as turmas PODA I e II; os da <b>DIROP</b>, só para o gerente Pedro e as turmas PODA III e IV."}</p>
-    <div class="list">${L.length?L.map(x=>`<div class="item" style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><div><b>${esc(x.v)}</b>${x.reserva?` <span class="pill PROGRAMADO">reserva</span>`:""}<div class="note">${esc(GER_EQ[x.ger]||x.ger)}${x.sup?" · "+esc(x.sup):x.pod?" · "+esc(x.pod)+" (diurno e noturno)":x.reserva?(x.grp?" · reserva da "+esc(x.grp):` · <b style="color:var(--warn)">reserva sem poda definida (editar)</b>`):" · sem turma definida"}${x.ativo===false?` · <b style="color:var(--bad)">desativado</b>`:""}</div></div>
+    <div class="actabs" role="tablist"><button type="button" role="tab" data-eqtab="lista" aria-selected="${EQ_TAB!=="novo"}">🚚 Equipamentos cadastrados <small>${L.length}</small></button><button type="button" role="tab" data-eqtab="novo" aria-selected="${EQ_TAB==="novo"}">➕ Cadastrar equipamento</button></div>
+    <div class="list" id="eqTabL" ${EQ_TAB==="novo"?"hidden":""}>${L.length?L.map(x=>`<div class="item" style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><div><b>${esc(x.v)}</b>${x.reserva?` <span class="pill PROGRAMADO">reserva</span>`:""}<div class="note">${esc(GER_EQ[x.ger]||x.ger)}${x.sup?" · "+esc(x.sup):x.pod?" · "+esc(x.pod)+" (diurno e noturno)":x.reserva?(x.grp?" · reserva da "+esc(x.grp):` · <b style="color:var(--warn)">reserva sem poda definida (editar)</b>`):" · sem turma definida"}${x.ativo===false?` · <b style="color:var(--bad)">desativado</b>`:""}</div></div>
       <div style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn sec" style="min-height:40px;font-size:13px" data-eqed="${x.i}">Editar</button><button type="button" class="btn sec" style="min-height:40px;font-size:13px" data-eqat="${x.i}">${x.ativo===false?"Reativar":"Desativar"}</button><button type="button" class="btn danger" style="min-height:40px;font-size:13px" data-eqdel="${x.i}">Excluir</button></div></div>`).join(""):`<p class="note">Nenhum equipamento cadastrado.</p>`}</div>
-    <section class="card" style="margin:0" id="eqForm"><div class="step" id="eqTit">Cadastrar equipamento</div>
+    <section class="card" style="margin:0" id="eqForm" ${EQ_TAB==="novo"?"":"hidden"}><div class="step" id="eqTit">Cadastrar equipamento</div>
       <div class="row2"><label class="f">Tipo<select id="eqTipo">${[["SPLINTER","SPLINTER – cesto aéreo 10 m"],["SKY","SKY – cesto aéreo 17 m"],["CAMINHÃO TRITURADOR","CAMINHÃO TRITURADOR"],["VAN","VAN"],["MUNCK","MUNCK"],["TRATOR","TRATOR"],["OUTRO","OUTRO"]].map(([v,t])=>`<option value="${v}">${t}</option>`).join("")}</select></label>
       <label class="f">Prefixo / placa<input id="eqPref" placeholder="Ex.: 5080.0" autocapitalize="characters"></label></div>
       <label class="f">Gerência<select id="eqGer" ${g?"disabled":""}>${["DIRSEN","DIROP"].map(x=>`<option value="${x}" ${x===(g||"DIRSEN")?"selected":""}>${GER_EQ[x]}</option>`).join("")}</select></label>
       <label class="f">Supervisão<select id="eqSup"></select></label>
       <p class="err" id="eqErr" hidden></p><div style="display:grid;gap:8px"><button type="button" class="btn pri" id="eqAdd">Cadastrar</button><button type="button" class="btn sec" id="eqCanc" hidden>Cancelar edição</button></div></section></div></div>`;
   const close=()=>host.innerHTML="", erro=t=>{ const e=$("#eqErr"); e.textContent=t; e.hidden=!t; };
+  const eqTab=t=>{ EQ_TAB=t; host.querySelectorAll("[data-eqtab]").forEach(x=>x.setAttribute("aria-selected",String(x.dataset.eqtab===t))); $("#eqTabL").hidden=t==="novo"; $("#eqForm").hidden=t!=="novo"; };
+  host.querySelectorAll("[data-eqtab]").forEach(b=>b.onclick=()=>{ if(b.dataset.eqtab==="novo"&&eqEdit>=0){ EQ_TAB="novo"; return abrirEquip(); } eqTab(b.dataset.eqtab); });
   // supervisão: o administrador vê as 16 turmas (PODA I a IV); o gerente só as da sua gerência. Escolher a turma acerta a gerência sozinho.
   const supOpts=()=>{ const v0=$("#eqSup").value, op=x=>`<option value="${esc(x.id)}">${esc(x.id)}${x.enc?" – "+esc(x.enc):""}</option>`;
     const grs=g?[g]:["DIRSEN","DIROP"]; $("#eqSup").innerHTML=`<option value="">Selecione a supervisão…</option>`+grs.map(G=>{ const P=G==="DIROP"?ESC_DIROP:ESC_DIRSEN; return `<optgroup label="${esc(GER_EQ[G])} – poda inteira (diurno e noturno)">${P.map(gr=>`<option value="pod:${esc(gr)}">${esc(gr)} – diurno e noturno</option>`).join("")}</optgroup><optgroup label="${esc(GER_EQ[G])} – reserva">${P.map(gr=>`<option value="res:${esc(gr)}">Reserva da ${esc(gr)}</option>`).join("")}</optgroup><optgroup label="${esc(GER_EQ[G])} – turmas">${SUPS_ALL.filter(x=>P.includes(x.grupo)).map(op).join("")}</optgroup>`; }).join("");
@@ -6057,18 +6066,18 @@ function abrirEquip(){ if(!podeEquip()) return; const host=$("#sheetHost"), g=eq
   $("#eqSup").onchange=()=>{ const sp=$("#eqSup").value; if(sp&&!g) $("#eqGer").value=ESC_DIROP.includes(grDe(sp))?"DIROP":"DIRSEN"; };
   $("#eqGer").onchange=()=>{ const sp=$("#eqSup").value; if(sp&&(ESC_DIROP.includes(grDe(sp))?"DIROP":"DIRSEN")!==$("#eqGer").value) $("#eqSup").value=""; };
   const grava=async(itens,msg)=>{ const doc={itens,dirop1:true,por:sessao?.nome||"",em:new Date().toISOString()}; const ant=assins.equip_lista;
-    try{ await db.collection(ASS_COL).doc("equip_lista").set(doc); assins.equip_lista=doc; equipAplicar(); toast(msg); abrirEquip(); }catch(e){ assins.equip_lista=ant; erro("Não foi possível salvar agora: "+(e?.message||"tente de novo")); } };
+    try{ await db.collection(ASS_COL).doc("equip_lista").set(doc); assins.equip_lista=doc; equipAplicar(); toast(msg); EQ_TAB="lista"; abrirEquip(); }catch(e){ assins.equip_lista=ant; erro("Não foi possível salvar agora: "+(e?.message||"tente de novo")); } };
   $("#eqX").onclick=close; $("#sh").onclick=async e=>{ if(e.target.id==="sh") return close();
     const at=e.target.closest("[data-eqat]"), dl=e.target.closest("[data-eqdel]"), I=JSON.parse(JSON.stringify(equipLista()));
     const ed=e.target.closest("[data-eqed]");
     if(ed){ const x=I[+ed.dataset.eqed], tipos=[...$("#eqTipo").options].map(o=>o.value); eqEdit=+ed.dataset.eqed;
       const t=tipos.includes(x.tipo)&&x.v.startsWith(x.tipo+" ")?x.tipo:"OUTRO"; $("#eqTipo").value=t; $("#eqPref").value=t==="OUTRO"?x.v:x.v.slice(t.length+1);
       if(!g) $("#eqGer").value=x.ger||"DIRSEN"; supOpts(); $("#eqSup").value=x.sup||(x.pod?"pod:"+x.pod:x.grp?"res:"+x.grp:"");
-      $("#eqTit").textContent="Editar "+x.v; $("#eqAdd").textContent="Salvar alterações"; $("#eqCanc").hidden=false; erro(""); $("#eqForm").scrollIntoView({behavior:"smooth",block:"start"}); return; }
+      $("#eqTit").textContent="Editar "+x.v; $("#eqAdd").textContent="Salvar alterações"; $("#eqCanc").hidden=false; erro(""); eqTab("novo"); $("#eqForm").scrollIntoView({behavior:"smooth",block:"start"}); return; }
     if(at){ const x=I[+at.dataset.eqat]; x.ativo=x.ativo===false; return grava(I,`${x.v} ${x.ativo?"reativado":"desativado"}.`); }
     if(dl){ if(dl.dataset.armed!=="1"){ dl.dataset.armed="1"; dl.textContent="Confirmar"; return; } const x=I.splice(+dl.dataset.eqdel,1)[0]; return grava(I,`${x.v} excluído.`); } };
   let eqEdit=-1;
-  $("#eqCanc").onclick=()=>abrirEquip();
+  $("#eqCanc").onclick=()=>{ EQ_TAB="lista"; abrirEquip(); };
   $("#eqAdd").onclick=()=>{ const t=$("#eqTipo").value, p=$("#eqPref").value.trim().toUpperCase(); if(!p) return erro("Informe o prefixo ou a placa.");
     const v=(t==="OUTRO"?p:t+" "+p).replace(/\s+/g," "), I=JSON.parse(JSON.stringify(equipLista()));
     if(I.some((x,k)=>x.v===v&&k!==eqEdit)) return erro("Esse equipamento já está cadastrado.");
