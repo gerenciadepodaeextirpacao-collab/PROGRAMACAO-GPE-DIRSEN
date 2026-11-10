@@ -1804,7 +1804,9 @@ const acharMat=(m,exceto)=>Object.entries(acesso||{}).find(([id,u])=>id!==exceto
 function lgShow(which){["lgMain","lgSetup","lgWait","lgTroca"].forEach(k=>$("#"+k).hidden=k!==which)}
 function treinoAuto(){
   if(!window.GPE_NETLIFY||window.GPE_TREINO||!sessao||!acessoLoaded||treinoAuto._f) return;
-  const u=acesso?.[sessao.id]; if(!u||u.treino!==true||u.perfil==="admin"||!u.ativo) return;
+  const u=acesso?.[sessao.id];
+  try{ if(localStorage.getItem("gpe_treino_saiu")===sessao.id){ if(u&&u.treino===true) return; localStorage.removeItem("gpe_treino_saiu"); } }catch(e){}
+  if(!u||u.treino!==true||u.perfil==="admin"||!u.ativo) return;
   try{ if(sessionStorage.getItem("gpe_treino_falhou")) return; const f=JSON.parse(localStorage.getItem("gpe_fila")||"[]"); if(Array.isArray(f)&&f.length) return; }catch(e){}
   treinoAuto._f=1;
   try{ localStorage.setItem("gpe_sessao_real",JSON.stringify(sessao)); localStorage.removeItem("gpe_sessao"); localStorage.setItem("gpe_treino_auto",JSON.stringify({perfil:u.perfil,sup:u.sup||""})); localStorage.setItem("gpe_treino","1"); }catch(e){ return; }
@@ -1877,7 +1879,7 @@ $("#trocaForm").addEventListener("submit",async ev=>{ ev.preventDefault(); const
   trocaPend=null; $("#lgPin").value=""; toast("Senha nova salva."); concluirEntrada(t.id,t.u,t.mat); });
 $("#recarregarBtn").onclick=async()=>{ const b=$("#recarregarBtn"); b.classList.add("gira"); try{ const r=await navigator.serviceWorker?.getRegistration?.(); await r?.update?.(); }catch(e){} setTimeout(()=>location.reload(),250); };
 (()=>{ const b=$("#recarregarBtn"), casa=b.parentNode; const pos=()=>{ const l=document.body.classList.contains("locked"); if(l&&b.parentNode!==document.body) document.body.appendChild(b); else if(!l&&b.parentNode!==casa) casa.appendChild(b); }; new MutationObserver(pos).observe(document.body,{attributes:true,attributeFilter:["class"]}); pos(); })();
-$("#sairBtn").onclick=e=>{ const b=$("#sairBtn"); if(e&&e.isTrusted&&e.currentTarget===b&&!b.classList.contains("conf")){ b.classList.add("conf"); b.querySelector("span").textContent="Confirmar saída"; clearTimeout(b._t); b._t=setTimeout(()=>{ b.classList.remove("conf"); b.querySelector("span").textContent="Sair"; },4000); return; } b.classList.remove("conf"); b.querySelector("span").textContent="Sair"; ls.set("gpe_teste",false); sessao=null; ls.set("gpe_sessao",null); if(!isGer()) ls.set("gpe_sup",""); limpar("prog"); renderLogin(); };
+$("#sairBtn").onclick=e=>{ const b=$("#sairBtn"); if(e&&e.isTrusted&&e.currentTarget===b&&!b.classList.contains("conf")){ b.classList.add("conf"); b.querySelector("span").textContent="Confirmar saída"; clearTimeout(b._t); b._t=setTimeout(()=>{ b.classList.remove("conf"); b.querySelector("span").textContent="Sair"; },4000); return; } b.classList.remove("conf"); b.querySelector("span").textContent="Sair"; if(window.GPE_TREINO&&window.GPE_SAIR_TREINO) return window.GPE_SAIR_TREINO(); ls.set("gpe_teste",false); sessao=null; ls.set("gpe_sessao",null); if(!isGer()) ls.set("gpe_sup",""); limpar("prog"); renderLogin(); };
 
 $("#setupForm").addEventListener("submit",async ev=>{
   ev.preventDefault();
@@ -2099,7 +2101,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.10v";
+const APP_VERSAO="2026.11.10w";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -8749,7 +8751,7 @@ function entrarTreino(){
     try{ const s0=localStorage.getItem("gpe_sessao"); if(s0) localStorage.setItem("gpe_sessao_real",s0); localStorage.removeItem("gpe_sessao"); localStorage.setItem("gpe_treino","1"); }catch(x){ return toast("Este aparelho não deixou guardar o modo treinamento."); }
     location.reload(); };
 }
-window.GPE_SAIR_TREINO=(forcar)=>{ try{ const r=JSON.parse(localStorage.getItem("gpe_sessao_real")||"null"); if(forcar!==true && r && r.perfil!=="admin") return alert("Quem desliga o Modo treinamento é o administrador. Quando ele desligar, o app volta sozinho ao modo de trabalho."); }catch(e){}
+window.GPE_SAIR_TREINO=(forcar)=>{ try{ const r=JSON.parse(localStorage.getItem("gpe_sessao_real")||"null"); if(forcar!==true && r && r.id) localStorage.setItem("gpe_treino_saiu",r.id); else localStorage.removeItem("gpe_treino_saiu"); }catch(e){}
   try{ localStorage.removeItem("gpe_treino"); localStorage.removeItem("gpe_sessao"); const s0=localStorage.getItem("gpe_sessao_real"); if(s0) localStorage.setItem("gpe_sessao",s0); localStorage.removeItem("gpe_sessao_real"); }catch(e){} location.reload(); };
 // Mais › Relatórios prontos: só os relatórios de serviço já preenchidos e assinados, para baixar em PDF ou Word
 function abrirRelatorios(){
