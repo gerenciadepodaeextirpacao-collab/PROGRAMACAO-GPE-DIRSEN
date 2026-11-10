@@ -2333,7 +2333,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.11y";
+const APP_VERSAO="2026.11.11z";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -6046,20 +6046,20 @@ function abrirEquip(){ if(!podeEquip()) return; const host=$("#sheetHost"), g=eq
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:22px">Equipamentos</b><button type="button" class="btn sec" id="eqX" style="min-height:44px;padding:0 14px">Fechar</button></div>
     <p class="note" style="margin:0">Equipamentos que aparecem na programação, na O.S, no checklist e no comunicado de defeito. ${g?`Você vê os equipamentos da <b>${g}</b>.`:"Os da <b>DIRSEN</b> aparecem só para o gerente Victor e as turmas PODA I e II; os da <b>DIROP</b>, só para o gerente Pedro e as turmas PODA III e IV."}</p>
     <div class="actabs" role="tablist"><button type="button" role="tab" data-eqtab="lista" aria-selected="${EQ_TAB!=="novo"}">🚚 Equipamentos cadastrados <small>${L.length}</small></button><button type="button" role="tab" data-eqtab="novo" aria-selected="${EQ_TAB==="novo"}">➕ Cadastrar equipamento</button></div>
-    <div class="list" id="eqTabL" ${EQ_TAB==="novo"?"hidden":""}>${L.length?L.map(x=>`<div class="item" style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><div><b>${esc(x.v)}</b>${x.reserva?` <span class="pill PROGRAMADO">reserva</span>`:""}<div class="note">${esc(GER_EQ[x.ger]||x.ger)}${x.sup?" · "+esc(x.sup):x.pod?" · "+esc(x.pod)+" (diurno e noturno)":x.reserva?(x.grp?" · reserva da "+esc(x.grp):` · <b style="color:var(--warn)">reserva sem poda definida (editar)</b>`):" · sem turma definida"}${x.ativo===false?` · <b style="color:var(--bad)">desativado</b>`:""}</div></div>
+    <div class="list" id="eqTabL" ${EQ_TAB==="novo"?"hidden":""}>${L.length?L.map(x=>`<div class="item" style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><div><b>${esc(x.v)}</b>${x.reserva?` <span class="pill PROGRAMADO">reserva</span>`:""}<div class="note">${esc(GER_EQ[x.ger]||x.ger)}${x.sup?" · "+esc(x.sup):x.pod?" · "+esc(x.pod):x.reserva?(x.grp?" · reserva da "+esc(x.grp):` · <b style="color:var(--warn)">reserva sem poda definida (editar)</b>`):" · sem turma definida"}${x.ativo===false?` · <b style="color:var(--bad)">desativado</b>`:""}</div></div>
       <div style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn sec" style="min-height:40px;font-size:13px" data-eqed="${x.i}">Editar</button><button type="button" class="btn sec" style="min-height:40px;font-size:13px" data-eqat="${x.i}">${x.ativo===false?"Reativar":"Desativar"}</button><button type="button" class="btn danger" style="min-height:40px;font-size:13px" data-eqdel="${x.i}">Excluir</button></div></div>`).join(""):`<p class="note">Nenhum equipamento cadastrado.</p>`}</div>
     <section class="card" style="margin:0" id="eqForm" ${EQ_TAB==="novo"?"":"hidden"}><div class="step" id="eqTit">Cadastrar equipamento</div>
       <div class="row2"><label class="f">Tipo<select id="eqTipo">${[["SPLINTER","SPLINTER – cesto aéreo 10 m"],["SKY","SKY – cesto aéreo 17 m"],["CAMINHÃO TRITURADOR","CAMINHÃO TRITURADOR"],["VAN","VAN"],["MUNCK","MUNCK"],["TRATOR","TRATOR"],["OUTRO","OUTRO"]].map(([v,t])=>`<option value="${v}">${t}</option>`).join("")}</select></label>
       <label class="f">Prefixo / placa<input id="eqPref" placeholder="Ex.: 5080.0" autocapitalize="characters"></label></div>
       <label class="f">Gerência<select id="eqGer" ${g?"disabled":""}>${["DIRSEN","DIROP"].map(x=>`<option value="${x}" ${x===(g||"DIRSEN")?"selected":""}>${GER_EQ[x]}</option>`).join("")}</select></label>
-      <label class="f">Supervisão<select id="eqSup"></select></label>
+      <label class="f">Poda<select id="eqSup"></select></label>
       <p class="err" id="eqErr" hidden></p><div style="display:grid;gap:8px"><button type="button" class="btn pri" id="eqAdd">Cadastrar</button><button type="button" class="btn sec" id="eqCanc" hidden>Cancelar edição</button></div></section></div></div>`;
   const close=()=>host.innerHTML="", erro=t=>{ const e=$("#eqErr"); e.textContent=t; e.hidden=!t; };
   const eqTab=t=>{ EQ_TAB=t; host.querySelectorAll("[data-eqtab]").forEach(x=>x.setAttribute("aria-selected",String(x.dataset.eqtab===t))); $("#eqTabL").hidden=t==="novo"; $("#eqForm").hidden=t!=="novo"; };
   host.querySelectorAll("[data-eqtab]").forEach(b=>b.onclick=()=>{ if(b.dataset.eqtab==="novo"&&eqEdit>=0){ EQ_TAB="novo"; return abrirEquip(); } eqTab(b.dataset.eqtab); });
   // supervisão: o administrador vê as 16 turmas (PODA I a IV); o gerente só as da sua gerência. Escolher a turma acerta a gerência sozinho.
   const supOpts=()=>{ const v0=$("#eqSup").value, op=x=>`<option value="${esc(x.id)}">${esc(x.id)}${x.enc?" – "+esc(x.enc):""}</option>`;
-    const grs=g?[g]:["DIRSEN","DIROP"]; $("#eqSup").innerHTML=`<option value="">Selecione a supervisão…</option>`+grs.map(G=>{ const P=G==="DIROP"?ESC_DIROP:ESC_DIRSEN; return `<optgroup label="${esc(GER_EQ[G])} – poda inteira (diurno e noturno)">${P.map(gr=>`<option value="pod:${esc(gr)}">${esc(gr)} – diurno e noturno</option>`).join("")}</optgroup><optgroup label="${esc(GER_EQ[G])} – reserva">${P.map(gr=>`<option value="res:${esc(gr)}">Reserva da ${esc(gr)}</option>`).join("")}</optgroup><optgroup label="${esc(GER_EQ[G])} – turmas">${SUPS_ALL.filter(x=>P.includes(x.grupo)).map(op).join("")}</optgroup>`; }).join("");
+    const grs=g?[g]:["DIRSEN","DIROP"]; $("#eqSup").innerHTML=`<option value="">Selecione a poda…</option>`+grs.map(G=>{ const P=G==="DIROP"?ESC_DIROP:ESC_DIRSEN; return `<optgroup label="${esc(GER_EQ[G])}">${P.map(gr=>`<option value="pod:${esc(gr)}">${esc(gr)}</option>`).join("")}</optgroup>`; }).join(""); // equipamento é compartilhado: só a referência da poda
     if([...$("#eqSup").options].some(o=>o.value===v0)) $("#eqSup").value=v0; };
   supOpts();
   const grDe=sp=>/^(res|pod):/.test(sp)?sp.slice(4):supOf(sp)?.grupo;
@@ -6072,7 +6072,7 @@ function abrirEquip(){ if(!podeEquip()) return; const host=$("#sheetHost"), g=eq
     const ed=e.target.closest("[data-eqed]");
     if(ed){ const x=I[+ed.dataset.eqed], tipos=[...$("#eqTipo").options].map(o=>o.value); eqEdit=+ed.dataset.eqed;
       const t=tipos.includes(x.tipo)&&x.v.startsWith(x.tipo+" ")?x.tipo:"OUTRO"; $("#eqTipo").value=t; $("#eqPref").value=t==="OUTRO"?x.v:x.v.slice(t.length+1);
-      if(!g) $("#eqGer").value=x.ger||"DIRSEN"; supOpts(); $("#eqSup").value=x.sup||(x.pod?"pod:"+x.pod:x.grp?"res:"+x.grp:"");
+      if(!g) $("#eqGer").value=x.ger||"DIRSEN"; supOpts(); $("#eqSup").value=x.pod?"pod:"+x.pod:x.grp?"pod:"+x.grp:x.sup&&supOf(x.sup)?.grupo?"pod:"+supOf(x.sup).grupo:"";
       $("#eqTit").textContent="Editar "+x.v; $("#eqAdd").textContent="Salvar alterações"; $("#eqCanc").hidden=false; erro(""); eqTab("novo"); $("#eqForm").scrollIntoView({behavior:"smooth",block:"start"}); return; }
     if(at){ const x=I[+at.dataset.eqat]; x.ativo=x.ativo===false; return grava(I,`${x.v} ${x.ativo?"reativado":"desativado"}.`); }
     if(dl){ if(dl.dataset.armed!=="1"){ dl.dataset.armed="1"; dl.textContent="Confirmar"; return; } const x=I.splice(+dl.dataset.eqdel,1)[0]; return grava(I,`${x.v} excluído.`); } };
@@ -6081,7 +6081,7 @@ function abrirEquip(){ if(!podeEquip()) return; const host=$("#sheetHost"), g=eq
   $("#eqAdd").onclick=()=>{ const t=$("#eqTipo").value, p=$("#eqPref").value.trim().toUpperCase(); if(!p) return erro("Informe o prefixo ou a placa.");
     const v=(t==="OUTRO"?p:t+" "+p).replace(/\s+/g," "), I=JSON.parse(JSON.stringify(equipLista()));
     if(I.some((x,k)=>x.v===v&&k!==eqEdit)) return erro("Esse equipamento já está cadastrado.");
-    const sv=$("#eqSup").value; if(!sv) return erro("Escolha a supervisão: a turma, a poda inteira (diurno e noturno) ou a reserva da PODA I, II, III ou IV.");
+    const sv=$("#eqSup").value; if(!sv) return erro("Escolha a poda: PODA I, II, III ou IV.");
     const res=sv.startsWith("res:"), pd=sv.startsWith("pod:"), sp=res||pd?"":sv, grp=res?sv.slice(4):"", pod=pd?sv.slice(4):"";
     if(eqEdit>=0){ const x=I[eqEdit]; Object.assign(x,{v,tipo:t,ger:g||$("#eqGer").value,sup:sp,grp,pod,reserva:res}); return grava(I,`${v} atualizado.`); }
     I.push({v,tipo:t,ger:g||$("#eqGer").value,sup:sp,grp,pod,reserva:res,ativo:true}); grava(I,`${v} cadastrado.`); }; }
