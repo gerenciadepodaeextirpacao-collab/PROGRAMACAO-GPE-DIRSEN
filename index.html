@@ -2328,7 +2328,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.11r";
+const APP_VERSAO="2026.11.11t";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -9235,7 +9235,7 @@ const osDoFiscal=(r,me)=>{ const o=r.osDia; if(o?.semFiscal) return false; if(o?
 const fiscalDe=(sup,eq)=>{ const L=Object.entries(acesso||{}).filter(([,u])=>u.perfil==="fiscal"&&u.ativo&&u.sup===sup); const f=L.find(([,u])=>u.equipe===eq)||L.find(([,u])=>!u.equipe); return f?{id:f[0],nome:f[1].nome,zap:f[1].zap||""}:null; };
 const osPodeIniciar=sup=>!!sessao&&!soLeitura()&&((["supervisor","supervisor1"].includes(sessao.perfil)&&sessao.sup===sup)||(isGerente()&&noEscopo(sup))||(sessao.perfil==="coordenador"&&noEscopo(sup))||(sessao.perfil==="gerencia_op"&&noEscopo(sup)));
 function osDiaGrupos(){ if(!sessao) return []; const d=hoje(), G=[];
-  todos().filter(r=>r.data===d&&!r.avulso&&!r.ocorrencia&&!r.arquivado&&r.status!=="VALIDAR"&&r.supervisao&&noEscopo(r.supervisao)&&(!travado()||r.supervisao===sessao.sup)).forEach(r=>{
+  todos().filter(r=>r.data===d&&!r.avulso&&!r.ocorrencia&&!r.arquivado&&r.status!=="VALIDAR"&&r.osCanc?.data!==d&&r.supervisao&&noEscopo(r.supervisao)&&(!travado()||r.supervisao===sessao.sup)).forEach(r=>{
     const k=r.supervisao+"|"+(r.equipe||""); let g=G.find(x=>x.k===k); if(!g){ g={k,sup:r.supervisao,eq:r.equipe||"",rs:[]}; G.push(g); } g.rs.push(r); });
   let L=G.sort((a,b)=>(SUPS.findIndex(s=>s.id===a.sup)-SUPS.findIndex(s=>s.id===b.sup))||a.eq.localeCompare(b.eq));
   L=L.map(g=>({...g,os:g.rs.find(r=>r.osDia)?.osDia||null,fis:OS_FIS_ESC[g.k]||fiscalDe(g.sup,g.eq)}));
@@ -9276,6 +9276,16 @@ function detOsHtml(r){ if(!r||r.ocorrencia||r.avulso||r.arquivado||!r.supervisao
   if(r.data!==hoje()) return `<div class="detos"><button type="button" class="btn sec" disabled>▶ Iniciar O.S e enviar ao fiscal</button><small>Disponível só no dia da execução: ${diaDe(r.data)} ${fmtD(r.data)}.</small></div>`;
   const f=fiscalDe(r.supervisao,r.equipe);
   return `<div class="detos"><button type="button" class="btn pri" data-osini="${k}">▶ Iniciar O.S da ${esc(r.equipe||"equipe")} e enviar ao fiscal</button><small>${f?`Fiscal: ${esc(f.nome)}`:"Sem fiscal cadastrado para esta equipe em Acessos."} A O.S vale para todos os serviços da equipe hoje.</small></div>`; }
+// gerente cancela a O.S do dia que não foi enviada ao fiscal: ela só sai da fila de envio de hoje.
+// Não mexe em mais nada: os serviços continuam na programação, com o mesmo status, para dar baixa ou remarcar normalmente.
+const osPodeCancelar=()=>!!sessao&&["admin","gerencia","gerencia_op"].includes(sessao.perfil);
+document.addEventListener("click",async e=>{ const b=e.target.closest("[data-oscanc]"); if(!b||!osPodeCancelar()) return; e.preventDefault();
+  const g=osDiaGrupos().find(x=>x.k===b.dataset.oscanc); if(!g) return; if(g.os) return toast("Esta O.S já foi enviada: não pode ser cancelada aqui.");
+  if(b.dataset.armed!=="1"){ b.dataset.armed="1"; b.textContent="Toque de novo para cancelar esta O.S"; setTimeout(()=>{ if(b.isConnected){ b.dataset.armed=""; b.textContent="🗑 Cancelar esta O.S"; } },4000); return; }
+  b.disabled=true; const now=new Date().toISOString(); let n=0;
+  for(const r of g.rs){ try{ const u={...r}; delete u.id; delete u._fila; u.osCanc={data:hoje(),em:now,por:sessao.nome||"",uid:sessao.id}; u._acao=`O.S do dia cancelada por ${sessao.nome} (saiu da fila de envio ao fiscal)`; const res=await saveDoc(r.id,u); if(res==="ok"||res==="fila") n++; }catch(x){} }
+  toast(`O.S cancelada: saiu da fila de envio ao fiscal. Os ${n} serviço${n===1?"":"s"} continua${n===1?"":"m"} na programação sem nenhuma mudança.`,6000);
+  const aberto=!!document.querySelector("#sheetHost [data-osdx]"); try{ renderAll(); }catch(x){} if(aberto) setTimeout(abrirOsDia,50); });
 // tela "Iniciar O.S do dia": os serviços de hoje de cada equipe, prontos para iniciar e enviar ao fiscal
 function abrirOsDia(){ const host=$("#sheetHost"), G=osDiaGrupos(), d=hoje();
   const card=g=>{ const k=esc(g.k), n=g.rs.length, pv=g.rs.reduce((a,r)=>a+receitaDe(prevQ(r)),0), fis=g.os?.fiscal||g.fis;
@@ -9284,7 +9294,7 @@ function abrirOsDia(){ const host=$("#sheetHost"), G=osDiaGrupos(), d=hoje();
       <span>${g.os?.semFiscal?`🧑‍💼 <b>Sem fiscal hoje</b> – o supervisor faz o papel de fiscal (a O.S não foi enviada a ninguém)`:fis?`Fiscal: <b>${esc(fis.nome)}</b>`:`<em style="color:var(--bad);font-style:normal">Sem fiscal cadastrado para esta equipe (Acessos)</em>`}${g.os?.fiscalTroca&&!g.os?.semFiscal?` <small style="color:var(--muted)">(no lugar de ${esc(g.os.fiscalTroca.de||"titular")})</small>`:""}${osPodeIniciar(g.sup)&&!g.os?.fim?` <button type="button" class="btn sec" data-osfis="${k}" style="min-height:32px;padding:0 10px;font-size:12px;margin-left:4px">🔄 ${g.os?(g.os.semFiscal?"Enviar a um fiscal":"Trocar o fiscal"):fis?"Outro fiscal / sem fiscal":"Sem fiscal: supervisor acompanha"}</button>`:""}</span>
       ${g.os?`<span style="color:var(--ok)">O.S nº <b>${esc(g.os.num)}</b> ${g.os.semFiscal?"registrada":"enviada"} às ${new Date(g.os.em).toTimeString().slice(0,5)} por ${esc(g.os.por||"—")}</span>${osEtapaHtml(g.os)}`:""}
       ${g.os?.membros?.length?`<span>👷 Equipe: ${g.os.membros.map(m=>`<b>${esc(m.nome)}</b> (${esc(m.funcao.toLowerCase())})`).join(" · ")}</span>`:""}</div>${lista}
-      <div class="osb">${g.os?`<button type="button" class="btn sec" data-osenv="${k}">👁 Ver a O.S</button>${osPodeIniciar(g.sup)&&!g.os.fim?`<button type="button" class="btn sec" data-oseqsup="${k}">👷 ${g.os.membros?.length?"Alterar":"Informar"} a equipe</button>`:g.os.membros?.length?"":`<small style="color:var(--muted);align-self:center">👷 Aguardando o fiscal formar a equipe</small>`}`:osPodeIniciar(g.sup)?`<button type="button" class="btn pri" data-osini="${k}">👷 Informar a equipe e enviar a O.S</button>`:`<small>Aguardando o supervisor iniciar.</small>`}
+      <div class="osb">${g.os?`<button type="button" class="btn sec" data-osenv="${k}">👁 Ver a O.S</button>${osPodeIniciar(g.sup)&&!g.os.fim?`<button type="button" class="btn sec" data-oseqsup="${k}">👷 ${g.os.membros?.length?"Alterar":"Informar"} a equipe</button>`:g.os.membros?.length?"":`<small style="color:var(--muted);align-self:center">👷 Aguardando o fiscal formar a equipe</small>`}`:osPodeIniciar(g.sup)?`<button type="button" class="btn pri" data-osini="${k}">👷 Informar a equipe e enviar a O.S</button>`:`<small>Aguardando o supervisor iniciar.</small>`}${!g.os&&osPodeCancelar()?`<button type="button" class="btn danger" data-oscanc="${k}">🗑 Cancelar esta O.S</button>`:""}
       <button type="button" class="btn sec" data-ospdf="${k}">📄 PDF</button></div></div>`; };
   host.innerHTML=`<div class="sheet" id="sh"><div class="panel" role="dialog" aria-label="Iniciar O.S do dia">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:22px">O.S do dia · ${diaDe(d)} ${fmtDs(d)}</b><button type="button" class="btn sec" data-osdx style="min-height:44px;padding:0 14px">Fechar</button></div>
