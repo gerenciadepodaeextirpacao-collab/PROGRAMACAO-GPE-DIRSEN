@@ -7,7 +7,7 @@
 <meta name="description" content="Programação GPE — programação, baixa da execução, quedas e painel da Gerência de Poda e Extirpação (DIRSEN/COMURG).">
 <!-- fora do Claude (Netlify): camada que liga o app às funções do Netlify; dentro do Claude ela não é usada -->
 <!-- Modo treinamento (Mais › Modo treinamento): usa dados de exemplo só neste aparelho, sem tocar no app de verdade -->
-<script>try{document.write(localStorage.getItem("gpe_treino")==="1"?'<script src="treino-gpe.js"><\/script>':'<script src="camada-gpe.js"><\/script>')}catch(e){document.write('<script src="camada-gpe.js"><\/script>')}</script>
+<script>window.GPE_TREINO_FALHOU=function(){try{sessionStorage.setItem("gpe_treino_falhou","1");localStorage.removeItem("gpe_treino_auto");localStorage.removeItem("gpe_treino");localStorage.removeItem("gpe_sessao");var s0=localStorage.getItem("gpe_sessao_real");if(s0)localStorage.setItem("gpe_sessao",s0);localStorage.removeItem("gpe_sessao_real");}catch(e){}location.reload();};try{document.write(localStorage.getItem("gpe_treino")==="1"?'<script src="treino-gpe.js" onerror="GPE_TREINO_FALHOU()"><\/script>':'<script src="camada-gpe.js"><\/script>')}catch(e){document.write('<script src="camada-gpe.js"><\/script>')}</script>
 <title>Programação GPE</title>
 <meta name="color-scheme" content="light">
 <script>/* sempre tema claro (o escuro fica ruim de ler no celular) */try{const H=document.documentElement,L=()=>{ if(H.getAttribute("data-theme")!=="light") H.setAttribute("data-theme","light"); };L();new MutationObserver(L).observe(H,{attributes:true,attributeFilter:["data-theme"]});}catch(e){}</script>
@@ -1799,8 +1799,16 @@ const matDe=u=>matKey(u.matricula || (/^m\d+$/i.test((u.nome||"").trim())?u.nome
 const acharMat=(m,exceto)=>Object.entries(acesso||{}).find(([id,u])=>id!==exceto && matDe(u) && matDe(u)===matKey(m));
 
 function lgShow(which){["lgMain","lgSetup","lgWait","lgTroca"].forEach(k=>$("#"+k).hidden=k!==which)}
+function treinoAuto(){
+  if(!window.GPE_NETLIFY||window.GPE_TREINO||!sessao||!acessoLoaded||treinoAuto._f) return;
+  const u=acesso?.[sessao.id]; if(!u||u.treino!==true||u.perfil==="admin"||!u.ativo) return;
+  try{ if(sessionStorage.getItem("gpe_treino_falhou")) return; const f=JSON.parse(localStorage.getItem("gpe_fila")||"[]"); if(Array.isArray(f)&&f.length) return; }catch(e){}
+  treinoAuto._f=1;
+  try{ localStorage.setItem("gpe_sessao_real",JSON.stringify(sessao)); localStorage.removeItem("gpe_sessao"); localStorage.setItem("gpe_treino_auto",JSON.stringify({perfil:u.perfil,sup:u.sup||""})); localStorage.setItem("gpe_treino","1"); }catch(e){ return; }
+  toast("🎓 O administrador ligou o Modo treinamento para você. Abrindo…"); setTimeout(()=>location.reload(),900);
+}
 function renderLogin(){
-  const box=$("#login");
+  const box=$("#login"); treinoAuto();
   if(sessao && acessoLoaded && !(acesso?.[sessao.id]?.ativo)){ sessao=null; ls.set("gpe_sessao",null); toast("Seu acesso foi alterado pela gerência. Entre novamente."); }
   if(sessao && acessoLoaded && acesso?.[sessao.id]){ const u=acesso[sessao.id]; if(u.nome!==sessao.nome||u.perfil!==sessao.perfil||(u.sup||"")!==sessao.sup){ sessao={...sessao,nome:u.nome,perfil:u.perfil,sup:u.sup||""}; ls.set("gpe_sessao",sessao); if(travado()) ls.set("gpe_sup",sessao.sup); setTimeout(()=>{limpar("prog");renderAll()},0); } }
   if(sessao){ box.hidden=true; document.body.classList.remove("locked"); applyPerms(); return; }
@@ -2033,7 +2041,7 @@ const acErro=e=>{ const m=String(e?.message||e||""); return /gerente|acessos|per
       await salvar(id,{ativo:!u.ativo},u.ativo?u.nome+" desativado.":u.nome+" reativado."); return;}
     const ed=e.target.closest("[data-edit]"); if(ed){const box=host.querySelector(`[data-editbox="${ed.dataset.edit}"]`); box.hidden=!box.hidden; return;}
     const ab=e.target.closest("[data-abasalv]"); if(ab){ if(!podeFisPerm()) return; const id=ab.dataset.abasalv, u=acesso[id], o={};
-      host.querySelectorAll(`[data-pabas="${CSS.escape(id)}"]`).forEach(c=>o[c.dataset.pk]=c.checked); if(u.perfil==="fiscal"&&o.baixa) o.campo=true;
+      host.querySelectorAll(`[data-pabas="${CSS.escape(id)}"]`).forEach(c=>o[c.dataset.pk]=c.checked); if(u.perfil==="fiscal"&&o.baixa) o.campo=true; if(u.perfil==="fiscal") o._chk2=true;
       if(u.perfil==="coordenador"){ try{ const A=JSON.parse(JSON.stringify(acesso)); let n=0; Object.values(A).forEach(x=>{ if(x.perfil==="coordenador"){ x.abas={...o}; n++; } }); await db.doc("cfg/acesso").set({usuarios:A}); toast(`Acessos salvos para os ${n} coordenadores.`); abrirAcessos(); }catch(x){ toast("Não foi possível salvar: "+(x?.message||"tente de novo")); } return; }
       await salvar(id,{abas:o},`Acessos de ${u.nome} atualizados.`); return; }
     const ap=e.target.closest("[data-abapad]"); if(ap){ if(!podeFisPerm()) return; const id=ap.dataset.abapad;
@@ -2086,7 +2094,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.10q";
+const APP_VERSAO="2026.11.10t";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -2309,7 +2317,7 @@ const FIS_PERMS=[
   {k:"campo",t:"Ver a programação (Em aberto)",d:"Consultar os serviços programados da turma, sem dar baixa."},
   {k:"baixa",t:"Dar baixa nos serviços",d:"Registrar executado / parcial / não executado (O.S e processo continuam com o supervisor)."},
   {k:"pend",t:"Pendências",d:"Ver a aba de pendências da turma."},
-  {k:"chk",t:"Checklist e comunicar defeito",d:"Preencher o checklist do equipamento (quem assina é o supervisor) e comunicar defeito."},
+  {k:"chk",t:"Checklist e comunicar defeito",d:"Preencher o checklist do equipamento (quem assina é o supervisor) e comunicar defeito.",pad:1},
   {k:"oc",t:"Registro emergencial",d:"Registrar galho ou árvore caída."},
   {k:"lista",t:"Lista",d:"Consultar a lista de serviços e baixar a planilha."},
   {k:"form",t:"Programar a semana",d:"Fazer a programação da semana da turma."},
@@ -2318,7 +2326,7 @@ const FIS_PERMS=[
   {k:"escala",t:"Cadastrar / atualizar a escala de trabalho",d:"Cadastrar e mudar a escala da turma."},
   {k:"vrota",t:"Receber rota de vistoria",d:"Aparece na lista de vistoriadores: a coordenação pode indicar rotas de vistoria de processo para ele fazer.",pad:1},
   {k:"vist",t:"Vistoria de processo e serviços da vistoria",d:"Ver a aba Vistoria e receber do supervisor os serviços da vistoria para executar com as fotos antes, durante e depois. Sem isso, a aba só aparece quando houver rota ou serviço indicado para ele."}];
-const fisPerm=(uid=sessao?.id)=>{ const o={}; FIS_PERMS.forEach(x=>o[x.k]=!!(x.fixo||x.pad)); const sv={...(assins?.perm_fiscal?.p||{}),...(acesso?.[uid]?.abas||{})}; Object.keys(sv).forEach(k=>{ if(k in o&&!FIS_PERMS.find(x=>x.k===k).fixo) o[k]=!!sv[k]; }); return o; };
+const fisPerm=(uid=sessao?.id)=>{ const o={}; FIS_PERMS.forEach(x=>o[x.k]=!!(x.fixo||x.pad)); const g={...(assins?.perm_fiscal?.p||{})}, a={...(acesso?.[uid]?.abas||{})}; if(!assins?.perm_fiscal?.chkLib) delete g.chk; if(!a._chk2) delete a.chk; const sv={...g,...a}; Object.keys(sv).forEach(k=>{ if(k in o&&!FIS_PERMS.find(x=>x.k===k).fixo) o[k]=!!sv[k]; }); return o; };
 // liberação de acessos por pessoa (Acessos → ⚙ Gerenciar → Acessos desta pessoa), feita pelo administrador / Victor
 const abasPessoaLista=u=>u.perfil==="fiscal"?[...FIS_PERMS.filter(x=>!x.fixo),...ASS_PERMS]:PERF_ABAIXO.includes(u.perfil)?[...PERM_ABAS,...ASS_PERMS]:[];
 const abaPessoaOn=(id,u,k)=>k==="baixa_sis"?!!(u.abas&&u.abas.baixa_sis):k.startsWith("ass_")?podeAssinar(id,k.slice(4)):u.perfil==="fiscal"?!!fisPerm(id)[k]:abaOn(u.perfil,k,id);
@@ -8731,11 +8739,13 @@ function entrarTreino(){
     <p class="note" style="margin:0">Uma faixa laranja <b>MODO TREINAMENTO</b> fica sempre no topo. Para voltar ao app de verdade, toque em <b>Sair do treinamento</b> na faixa: você volta logado como estava.</p>
     <div class="actions" style="grid-template-columns:1fr 1fr;margin:0"><button type="button" class="btn sec" data-trno>Voltar</button><button type="button" class="btn pri" data-trok>🎓 Entrar no treinamento</button></div></div>`;
   document.body.appendChild(box);
-  box.onclick=e=>{ if(e.target===box||e.target.closest("[data-trno]")) return box.remove(); if(!e.target.closest("[data-trok]")) return;
+  box.onclick=async e=>{ if(e.target===box||e.target.closest("[data-trno]")) return box.remove(); if(!e.target.closest("[data-trok]")) return;
+    if(window.GPE_NETLIFY){ let ok=false; try{ const r=await fetch("treino-gpe.js",{cache:"no-store"}); ok=r.ok && !/<html/i.test((await r.text()).slice(0,300)); }catch(x){} if(!ok) return toast("Falta subir o arquivo treino-gpe.js no GitHub (mesma pasta do index.html)."); }
     try{ const s0=localStorage.getItem("gpe_sessao"); if(s0) localStorage.setItem("gpe_sessao_real",s0); localStorage.removeItem("gpe_sessao"); localStorage.setItem("gpe_treino","1"); }catch(x){ return toast("Este aparelho não deixou guardar o modo treinamento."); }
     location.reload(); };
 }
-window.GPE_SAIR_TREINO=()=>{ try{ localStorage.removeItem("gpe_treino"); localStorage.removeItem("gpe_sessao"); const s0=localStorage.getItem("gpe_sessao_real"); if(s0) localStorage.setItem("gpe_sessao",s0); localStorage.removeItem("gpe_sessao_real"); }catch(e){} location.reload(); };
+window.GPE_SAIR_TREINO=(forcar)=>{ try{ const r=JSON.parse(localStorage.getItem("gpe_sessao_real")||"null"); if(forcar!==true && r && r.perfil!=="admin") return alert("Quem desliga o Modo treinamento é o administrador. Quando ele desligar, o app volta sozinho ao modo de trabalho."); }catch(e){}
+  try{ localStorage.removeItem("gpe_treino"); localStorage.removeItem("gpe_sessao"); const s0=localStorage.getItem("gpe_sessao_real"); if(s0) localStorage.setItem("gpe_sessao",s0); localStorage.removeItem("gpe_sessao_real"); }catch(e){} location.reload(); };
 // Mais › Relatórios prontos: só os relatórios de serviço já preenchidos e assinados, para baixar em PDF ou Word
 function abrirRelatorios(){
   const host=$("#sheetHost"); let q0=ls.get("gpe_relq","");
@@ -9026,7 +9036,7 @@ function fisPermHtml(){ const P=fisPerm(), d=assins?.perm_fiscal;
   </details>`; }
 document.addEventListener("change",async e=>{ const c=e.target.closest("[data-fperm]"); if(!c||!podeFisPerm()) return;
   const P=fisPerm(); P[c.dataset.fperm]=c.checked; if(c.dataset.fperm==="baixa"&&c.checked) P.campo=true;
-  const doc={p:P,por:sessao.nome,em:new Date().toISOString()}; assins.perm_fiscal=doc;
+  const doc={p:P,chkLib:1,por:sessao.nome,em:new Date().toISOString()}; assins.perm_fiscal=doc;
   try{ await db.collection(ASS_COL).doc("perm_fiscal").set(doc); toast((c.checked?"Ativado":"Desativado")+" para os fiscais: "+FIS_PERMS.find(x=>x.k===c.dataset.fperm).t); }
   catch(err){ c.checked=!c.checked; toast("Não foi possível salvar agora. Tente de novo."); }
   const det=c.closest("details"); const sm=det?.querySelector("summary small"); if(sm) sm.textContent=`${FIS_PERMS.filter(x=>fisPerm()[x.k]).length} de ${FIS_PERMS.length} ativos`;

@@ -78,10 +78,7 @@
   const SENHA = "treino123";
   const hash = async (salt, pin) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(salt + ":" + pin)))].map(x => x.toString(16).padStart(2, "0")).join("");
   const dia = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
-  async function semear() {
-    if (banco.cfg && banco.cfg.acesso) return;
-    const agora = new Date().toISOString();
-    const P = [
+  const P = [
       ["g1", "GERENTE DIRSEN (TREINO)", "treino.gerente", "gerencia", "GERÊNCIA DE PODA E EXTIRPAÇÃO - DIRSEN"],
       ["g2", "GERENTE DIROP (TREINO)", "treino.gerente2", "gerencia_op", "GERÊNCIA DE PODA E EXTIRPAÇÃO - DIROP"],
       ["a1", "ADMINISTRADOR (TREINO)", "treino.adm", "admin", ""],
@@ -95,6 +92,10 @@
       ["k1", "CADASTRADOR (TREINO)", "treino.cadastrador", "cadastrador", "GERÊNCIA DE PODA E EXTIRPAÇÃO - DIRSEN"],
       ["v1", "VISTORIADOR (TREINO)", "treino.vistoriador", "vistoriador", "GERÊNCIA DE PODA E EXTIRPAÇÃO - DIRSEN"]
     ];
+  async function semear() {
+    if (banco.cfg && banco.cfg.acesso) return;
+    const agora = new Date().toISOString();
+
     const usuarios = {}; banco.assinaturas = {};
     for (const [id, nome, matricula, perfil, sup] of P) {
       const salt = "t" + id; usuarios[id] = { nome, matricula, perfil, sup, salt, hash: await hash(salt, SENHA), ativo: true, criadoEm: agora, semMat: true, ...(perfil === "fiscal" ? { equipe: "1ª EQUIPE" } : {}) };
@@ -115,6 +116,37 @@
     gravar();
   }
   const pronto = semear();
+
+  /* ---------- entrada automática (ligada pelo ADM em Acessos) ---------- */
+  try {
+    const a = JSON.parse(localStorage.getItem("gpe_treino_auto") || "null");
+    if (a && !localStorage.getItem("gpe_sessao")) {
+      const e = P.find(x => x[3] === a.perfil && x[4] === a.sup) || P.find(x => x[3] === a.perfil) || P.find(x => x[0] === "s1");
+      localStorage.setItem("gpe_sessao", JSON.stringify({ id: e[0], nome: e[1], perfil: e[3], sup: e[4] }));
+    }
+    localStorage.removeItem("gpe_treino_auto");
+  } catch (e) {}
+
+  /* ---------- quando o ADM desligar, volta sozinho ao app de verdade ---------- */
+  const SUPA = "https://eyqbihvatzcjismsszvs.supabase.co", CHAVE_PUB = "sb_publishable_ekN-TZqBKMwRs6aGHPPejg_rLkBgjgv";
+  let saindo = false;
+  async function conferirReal() {
+    if (saindo) return; let r; try { r = JSON.parse(localStorage.getItem("gpe_sessao_real") || "null"); } catch (e) {}
+    if (!r || !r.id || r.perfil === "admin") return;
+    try {
+      const resp = await fetch(SUPA + "/rest/v1/documentos?colecao=eq.cfg&id=eq.acesso&select=dados", { headers: { apikey: CHAVE_PUB }, cache: "no-store" });
+      if (!resp.ok) return;
+      const j = await resp.json(); const u = j && j[0] && j[0].dados && j[0].dados.usuarios && j[0].dados.usuarios[r.id];
+      if (!j || !j[0]) return;
+      if (!u || u.ativo === false || u.treino !== true) {
+        if (saindo) return; saindo = true;
+        alert("O administrador desligou o Modo treinamento. O app vai voltar ao modo de trabalho.");
+        window.GPE_SAIR_TREINO ? window.GPE_SAIR_TREINO(true) : (localStorage.removeItem("gpe_treino"), location.reload());
+      }
+    } catch (e) {}
+  }
+  setTimeout(conferirReal, 4000); setInterval(conferirReal, 60000);
+  addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") conferirReal(); });
 
   /* ---------- faixa de aviso + zerar ---------- */
   function faixa() {
