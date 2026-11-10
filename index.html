@@ -2328,7 +2328,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.11t";
+const APP_VERSAO="2026.11.11u";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -4132,7 +4132,7 @@ function montar(root) {
     <div class="vp-card" style="padding:14px;display:flex;flex-direction:column;gap:8px"><b style="font-size:18px">Enviar vários PDFs de uma vez</b>
     <p class="vp-msg">Escolha os PDFs (pode selecionar vários). O app liga cada arquivo ao processo pelo <b>número no nome do arquivo</b> (SEI, GED, O.S, PED ou nº do processo). Ex.: <code>24.17.000002489-7.pdf</code>, <code>GED 0004957-2024.pdf</code>, <code>OS 1787257.pdf</code>.</p>
     <label class="vp-btn vp-filebtn vp-pri">📂 Escolher os PDFs<input type="file" accept="application/pdf,.pdf" multiple data-pdflote="1"></label></div>
-    ${S.novo ? novoHtml() : `<button class="vp-btn" data-nvabrir="1" style="align-self:flex-start">➕ Cadastrar processo manualmente (com PDF ou link)</button>`}`;
+    ${S.novo ? novoHtml() : `<button class="vp-btn" data-nvabrir="1" style="align-self:flex-start">➕ Cadastrar processo manualmente (com PDF ou link)</button>`}${resumoManualHtml()}`;
     if (fila.length) {
       const lim = window.GPE_NETLIFY ? 50 : 15;
       const okL = fila.filter((x) => x.st === "ok"), aEnviar = okL.filter((x) => !x.feito && !x.erro && (S.pdfSobre || !x.ja) && x.file.size <= lim * 1048576);
@@ -4156,6 +4156,22 @@ function montar(root) {
     <section class="vp-card"><ol>${sem.slice(0, S.lim).map((p) => `<li class="vp-stop"><span class="vp-seq">${cap(p.regional).slice(0, 3)}</span><div>${linhaProc(p)}${docHtml(p, true)}${p.manual && !R(p).vistoriado ? `<button class="vp-btn" data-nvexcluir="${p.id}" style="margin-top:4px">Excluir este processo cadastrado</button>` : ""}</div><div class="vp-q">${qtdPills(p)}</div></li>`).join("") || `<li class="vp-stop"><span></span><span class="vp-msg">Nenhum processo.</span></li>`}</ol></section>
     ${sem.length > S.lim ? `<button class="vp-btn" data-mais="1">Mostrar mais (${sem.length - S.lim})</button>` : ""}`;
     return h;
+  }
+  // ----- resumo dos cadastros manuais: quantidade por dia e por quem lançou -----
+  function resumoManualHtml() {
+    const L = Object.entries(VIST.regs || {}).filter(([k, r]) => k.startsWith("m_") && r && r.manual && !r.manual.removido && r.manual.em).map(([k, r]) => ({ dia: String(r.manual.em).slice(0, 10), por: (r.manual.por || "—").toUpperCase() }));
+    if (!L.length) return "";
+    const dias = {}, pessoas = {};
+    L.forEach((x) => { const d = (dias[x.dia] = dias[x.dia] || {}); d[x.por] = (d[x.por] || 0) + 1; pessoas[x.por] = (pessoas[x.por] || 0) + 1; });
+    const fd = (d) => d.slice(8, 10) + "/" + d.slice(5, 7) + "/" + d.slice(0, 4), dw = (d) => ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"][new Date(d + "T12:00").getDay()];
+    const linhas = Object.keys(dias).sort().reverse().map((d) => { const P = Object.entries(dias[d]).sort((a, b) => b[1] - a[1]), tot = P.reduce((a, x) => a + x[1], 0);
+      return P.map(([nm, q], i) => `<tr${i === 0 ? ' style="border-top:2px solid var(--line,#ddd)"' : ""}>${i === 0 ? `<td rowspan="${P.length}" style="white-space:nowrap;vertical-align:top"><b>${fd(d)}</b> <small>${dw(d)}</small><br><small>${tot} no dia</small></td>` : ""}<td>${esc(nm)}</td><td style="text-align:right"><b>${q}</b></td></tr>`).join(""); }).join("");
+    const tp = Object.entries(pessoas).sort((a, b) => b[1] - a[1]);
+    return `<details class="vp-card" style="padding:10px 14px"${S.resManAberto ? " open" : ""} data-resman="1"><summary><b>📊 Resumo dos cadastros manuais</b> <span class="vp-msg">${L.length} processos · ${Object.keys(dias).length} dias · ${tp.length} ${tp.length === 1 ? "pessoa" : "pessoas"}</span></summary>
+      <p class="vp-msg" style="margin:8px 0 4px"><b>Total por pessoa:</b> ${tp.map(([nm, q]) => `${esc(nm)} <b>${q}</b>`).join(" · ")}</p>
+      <div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:14px"><thead><tr><th style="text-align:left">Dia</th><th style="text-align:left">Quem lançou</th><th style="text-align:right">Qtd.</th></tr></thead><tbody>${linhas}</tbody>
+      <tfoot><tr style="border-top:2px solid var(--line,#ddd)"><td colspan="2"><b>Total</b></td><td style="text-align:right"><b>${L.length}</b></td></tr></tfoot></table></div>
+      <div class="vp-row" style="margin-top:8px"><button class="vp-btn" data-resmanxls="1">⬇ Baixar em Excel (CSV)</button></div></details>`;
   }
   // ----- cadastrar processo manualmente (com PDF ou link) -----
   function novoForm(pref) { const nome = pref && pref.file ? pref.file.name.replace(/\.pdf$/i, "") : "";
@@ -4621,6 +4637,7 @@ function montar(root) {
     const a = e.target.closest("a[data-gpsa]"); if (!a || !root.contains(a)) return;
     try { const ro = rotasDe(S.cur)[+a.dataset.gpsa]; if (!ro) return; const pend = visiveis(ro).filter((p) => !R(p).vistoriado); const L = linksGps(ordemGps(pend)); const u = L[+a.dataset.k || 0]; if (u) a.href = u; } catch (x) {}
   });
+  root.addEventListener("toggle", (e) => { if (e.target && e.target.matches && e.target.matches("[data-resman]")) S.resManAberto = e.target.open; }, true);
   root.addEventListener("click", async (e) => {
     const t = e.target.closest("button"); if (!t || !root.contains(t)) return;
     const ds = t.dataset;
@@ -4663,6 +4680,9 @@ function montar(root) {
     if (ds.pdflimpar) { S.pdfFila = []; render(); return; }
     if (ds.nvabrir) { novoForm(null); render(); return; }
     if (ds.nvfila) { const i = +ds.nvfila; novoForm({ file: S.pdfFila[i].file, idx: i }); S.pdfNaoAberto = 1; render(); root.querySelector("#vp-nv-endereco")?.scrollIntoView({ block: "center" }); return; }
+    if (ds.resmanxls) { const L = Object.entries(VIST.regs || {}).filter(([k, r]) => k.startsWith("m_") && r && r.manual && !r.manual.removido && r.manual.em).map(([k, r]) => r.manual).sort((a, b) => String(a.em).localeCompare(String(b.em)));
+      const q = (v) => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"', lin = [["Data", "Hora", "Quem lançou", "Processo", "GED", "Endereço", "Setor", "Regional", "Urbantrim"].map(q).join(";")].concat(L.map((m) => { const d = new Date(m.em); return [d.toLocaleDateString("pt-BR"), d.toTimeString().slice(0, 5), (m.por || "").toUpperCase(), m.processo, m.ged, m.endereco, m.setor, m.regional, m.urbantrim === "sim" ? "SIM" : m.urbantrim === "nao" ? "NÃO" : ""].map(q).join(";"); }));
+      const blob = new Blob(["\ufeff" + lin.join("\r\n")], { type: "text/csv;charset=utf-8" }), a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "cadastros-manuais-" + new Date().toISOString().slice(0, 10) + ".csv"; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); return; }
     if (ds.nvexcluir) { if (t.dataset.arm !== "1") { t.dataset.arm = "1"; t.textContent = "Toque de novo para excluir"; setTimeout(() => { if (t.isConnected) { t.dataset.arm = ""; render(); } }, 4000); return; } const r0 = R({ id: ds.nvexcluir }); if (await gravar([ds.nvexcluir], { manual: Object.assign({}, r0.manual, { removido: true, removido_por: usuario() }) })) { S.proc = todosProc(); _idx = null; render(); toast("Processo excluído"); } return; }
     if (ds.nvcancel) { S.novo = null; render(); return; }
     if (ds.nvsalvar) { novoSalvar(); return; }
