@@ -2328,7 +2328,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.11u";
+const APP_VERSAO="2026.11.11w";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -6042,7 +6042,7 @@ function abrirEquip(){ if(!podeEquip()) return; const host=$("#sheetHost"), g=eq
     <div class="list">${L.length?L.map(x=>`<div class="item" style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><div><b>${esc(x.v)}</b>${x.reserva?` <span class="pill PROGRAMADO">reserva</span>`:""}<div class="note">${esc(GER_EQ[x.ger]||x.ger)}${x.sup?" · "+esc(x.sup):x.pod?" · "+esc(x.pod)+" (diurno e noturno)":x.reserva?(x.grp?" · reserva da "+esc(x.grp):` · <b style="color:var(--warn)">reserva sem poda definida (editar)</b>`):" · sem turma definida"}${x.ativo===false?` · <b style="color:var(--bad)">desativado</b>`:""}</div></div>
       <div style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn sec" style="min-height:40px;font-size:13px" data-eqed="${x.i}">Editar</button><button type="button" class="btn sec" style="min-height:40px;font-size:13px" data-eqat="${x.i}">${x.ativo===false?"Reativar":"Desativar"}</button><button type="button" class="btn danger" style="min-height:40px;font-size:13px" data-eqdel="${x.i}">Excluir</button></div></div>`).join(""):`<p class="note">Nenhum equipamento cadastrado.</p>`}</div>
     <section class="card" style="margin:0" id="eqForm"><div class="step" id="eqTit">Cadastrar equipamento</div>
-      <div class="row2"><label class="f">Tipo<select id="eqTipo">${["SPLINTER","SKY","VAN","CESTO AÉREO","CAMINHÃO","MUNCK","TRATOR","OUTRO"].map(t=>`<option>${t}</option>`).join("")}</select></label>
+      <div class="row2"><label class="f">Tipo<select id="eqTipo">${[["SPLINTER","SPLINTER – cesto aéreo 10 m"],["SKY","SKY – cesto aéreo 17 m"],["CAMINHÃO TRITURADOR","CAMINHÃO TRITURADOR"],["VAN","VAN"],["MUNCK","MUNCK"],["TRATOR","TRATOR"],["OUTRO","OUTRO"]].map(([v,t])=>`<option value="${v}">${t}</option>`).join("")}</select></label>
       <label class="f">Prefixo / placa<input id="eqPref" placeholder="Ex.: 5080.0" autocapitalize="characters"></label></div>
       <label class="f">Gerência<select id="eqGer" ${g?"disabled":""}>${["DIRSEN","DIROP"].map(x=>`<option value="${x}" ${x===(g||"DIRSEN")?"selected":""}>${GER_EQ[x]}</option>`).join("")}</select></label>
       <label class="f">Supervisão<select id="eqSup"></select></label>
