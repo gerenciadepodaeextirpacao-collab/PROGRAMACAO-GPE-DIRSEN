@@ -1072,6 +1072,7 @@ body.sofiscal nav.tabs{display:none!important}
 }
 .lg-frase{margin:6px 0 4px;text-align:center;font:italic 500 21px/1.3 Lora,Georgia,"Times New Roman",serif;color:#1f4d2e;letter-spacing:0}
 .actabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--sunk);padding:4px;border-radius:12px}.actabs button{font:inherit;font-weight:700;font-size:15px;min-height:46px;border:0;border-radius:9px;background:transparent;color:var(--muted);cursor:pointer;padding:6px 10px}.actabs button small{font-weight:600;opacity:.8}.actabs button[aria-selected="true"]{background:var(--surface,#fff);color:var(--brand);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.trtog{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;width:100%;margin:8px 0 0;padding:8px 12px;min-height:44px;border-radius:10px;border:1.5px dashed var(--line);background:var(--sunk);color:var(--muted);font:inherit;font-size:14px;text-align:left;cursor:pointer}.trtog span{font-size:12px;opacity:.8;margin-left:auto}.trtog.on{border:1.5px solid #b45309;background:#fff4e6;color:#8a3d06}.trtog.on b{color:#b45309}
 </style>
 
 <div id="login" class="login" hidden>
@@ -1950,6 +1951,7 @@ function abrirAcessos(){
     ${acGrupos(lista).map(ar=>{ const it=ar.it; return `<div class="acsec"><div class="acsech"><b>${ar.t}</b><span>${ar.d} · ${it.length} ${it.length===1?"pessoa":"pessoas"}</span></div><div class="list">${it.length?"":`<p class="note" style="margin:0">Ninguém cadastrado ainda.</p>`}${it.map(([id,u])=>`<div class="prog accard" data-uid="${esc(id)}" data-busca="${esc([u.nome,matDe(u),PERF[u.perfil]||u.perfil,u.sup,u.equipe].filter(Boolean).join(" ").toLowerCase())}">
       <div class="achead" style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b style="font-size:16px">${esc(u.nome)}</b><span class="pill ${!u.ativo?"NÃO":(u.hash&&matDe(u))?"SIM":"ATRASADO"}">${!u.ativo?"Desativado":!matDe(u)?"Sem matrícula":u.hash?"Liberado":"Sem senha"}</span></div>
       <div class="note">${u.perfil==="admin"||u.semMat?"Usuário":"Matrícula"} <b>${esc(matDe(u)||"—")}</b> · ${esc(cargoNome(u))}${u.sup?" · "+esc(u.sup):""}${u.zap?` · 📱 ${esc(zapFmt(u.zap))}`:u.perfil==="supervisor"?` · <span style="color:var(--warn)">sem WhatsApp</span>`:""}${u.perfil==="fiscal"?` · <b>fiscal de turma – ${u.equipe?esc(u.equipe.toLowerCase()):"sem equipe fixa (todas as equipes)"}</b>`:""}${u.perfil==="gerencia"?` · <b style="color:var(--ok)">💬 cobra todas as podas</b>`:u.perfil==="gerencia_op"?` · <b style="color:var(--ok)">💬 cobra Poda III e IV</b>`:cobraFlag(u)?` · <b style="color:var(--ok)">💬 cobra Poda I e II</b>`:""}</div>
+      ${isAdm()&&u.perfil!=="admin"?`<button type="button" class="trtog${u.treino?" on":""}" data-trtog="${esc(id)}" aria-pressed="${!!u.treino}">🎓 Modo treinamento: <b>${u.treino?"LIGADO":"desligado"}</b> <span>${u.treino?"toque para desligar":"toque para ligar"}</span></button>`:""}
       ${canAdmin?`<details class="acdet" data-acdet="${esc(id)}" ${AC_ABERTOS.has(id)?"open":""}><summary>⚙ Gerenciar: senha, assinatura e editar</summary><div class="acdetb">
       <div class="row2"><input type="password" placeholder="${u.hash?"Nova senha":"Definir senha"}" data-pin="${esc(id)}" aria-label="Senha de ${esc(u.nome)}">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><button type="button" class="btn pri" style="min-height:48px;font-size:14px" data-savepin="${esc(id)}">Salvar senha</button>
@@ -2036,6 +2038,7 @@ const acErro=e=>{ const m=String(e?.message||e||""); return /gerente|acessos|per
       await salvar(id,{abas:o},`Acessos de ${u.nome} atualizados.`); return; }
     const ap=e.target.closest("[data-abapad]"); if(ap){ if(!podeFisPerm()) return; const id=ap.dataset.abapad;
       try{ const A=JSON.parse(JSON.stringify(acesso)); if(A[id].perfil==="coordenador") Object.values(A).forEach(x=>{ if(x.perfil==="coordenador") delete x.abas; }); else delete A[id].abas; await db.doc("cfg/acesso").set({usuarios:A}); toast(`${acesso[id].nome}: acessos voltaram ao padrão do perfil.`); abrirAcessos(); }catch(x){ toast("Não foi possível salvar agora."); } return; }
+    const tt=e.target.closest("[data-trtog]"); if(tt){ if(!isAdm()) return; const id=tt.dataset.trtog, u=acesso[id]; if(!u) return; tt.disabled=true; await salvar(id,{treino:!u.treino},`Modo treinamento ${!u.treino?"ligado":"desligado"} para ${u.nome}.`); return; }
     const se=e.target.closest("[data-saveedit]"); if(se){const id=se.dataset.saveedit, box=host.querySelector(`[data-editbox="${id}"]`);
       const nome=box.querySelector("[data-ednome]").value.trim().toUpperCase(), cargo=box.querySelector("[data-edperf]").value, perfil=cargoBase(cargo), geral=GERAL.has(perfil);
       if(!podeCriarAdm()&&(perfil==="admin")!==(acesso[id]?.perfil==="admin")){toast("Só o administrador e o Victor dão ou tiram o perfil de administrador.");return}
@@ -2083,7 +2086,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.10p";
+const APP_VERSAO="2026.11.10q";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
