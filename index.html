@@ -2321,7 +2321,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.11j";
+const APP_VERSAO="2026.11.11k";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -6010,7 +6010,7 @@ const funcDe=sup=>(funcLista()[sup]||[]).slice().sort((a,b)=>a.nome.localeCompar
 function loadXLSX(){ if(window.XLSX) return Promise.resolve(); return new Promise((ok,f)=>{ const sc=document.createElement("script"); sc.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"; sc.onload=()=>ok(); sc.onerror=()=>f(new Error("não carregou o leitor de planilha")); document.head.appendChild(sc); }); }
 // lê a planilha de posição de pessoal: uma aba por poda e turno (ex.: "PODA 1 JOÃO BRAZ DIURNO"), coluna GRU = turma A / B
 // função no P.A. / cargo da planilha → função da equipe no app
-const funcMapa=t=>{ t=String(t||""); return /m[aá]q/i.test(t)?"OPERADOR DE MOTOSSERRA":/motosserra/i.test(t)?"OPERADOR DE MOTOSSERRA":/motopoda/i.test(t)?"OPERADOR DE MOTOPODA":/soprador/i.test(t)?"OPERADOR DE SOPRADOR / OPERACIONAL":/^\s*operacional/i.test(t)?"OPERACIONAL (ARRASTADOR DE GALHOS)":""; };
+const funcMapa=t=>{ t=String(t||""); return /m[aá]q/i.test(t)?"OPERADOR DE MOTOSSERRA":/motosserra/i.test(t)?"OPERADOR DE MOTOSSERRA":/motopoda/i.test(t)?"OPERADOR DE MOTOSSERRA":/soprador/i.test(t)?"OPERADOR DE SOPRADOR / OPERACIONAL":/^\s*operacional/i.test(t)?"OPERACIONAL (ARRASTADOR DE GALHOS)":""; };
 function funcLerPlanilha(wb){ const T={}, ROM={1:"PODA I",2:"PODA II",3:"PODA III",4:"PODA IV"}; let n=0;
   const por=(id,p)=>{ (T[id]=T[id]||[]); if(!T[id].some(x=>x.nome===p.nome)){ T[id].push(p); n++; } };
   // formato "P.P TURMA A 3 DIURNO" (PODA III e IV): colunas pelo cabeçalho; supervisores e fiscais ficam de fora
@@ -9246,9 +9246,9 @@ function osEnviar(g){ const txt=osDiaTxt(g), f=g.os?.fiscal||g.fis, fisV=sessao.
   box.addEventListener("click",e=>{ if(e.target===box||e.target.closest("[data-osx]")) box.remove(); }); }
 // composição da equipe na O.S: nome e função de cada um (fica salva para o próximo dia)
 const EQ_FISCAL="FISCAL DE TURMA", EQ_OPC="OPERADOR DE MOTOPODA";
-const EQ_FUNC=[EQ_FISCAL,"OPERADOR DE MOTOSSERRA",EQ_OPC,"OPERADOR DE SOPRADOR / OPERACIONAL","OPERACIONAL (ARRASTADOR DE GALHOS)","MOTORISTA","OPERADOR DE CESTO AÉREO","ENCARREGADO","PODADOR","AUXILIAR DE PODA","SINALEIRO / APOIO"];
+const EQ_FUNC=[EQ_FISCAL,"OPERADOR DE MOTOSSERRA","OPERADOR DE SOPRADOR / OPERACIONAL","OPERACIONAL (ARRASTADOR DE GALHOS)"];
 // equipe padrão: o fiscal (já preenchido), operador de motosserra, operador de motopoda (se houver), operador de soprador / operacional e operacional arrastador de galhos
-const EQ_PADRAO=()=>[{nome:"",funcao:"OPERADOR DE MOTOSSERRA"},{nome:"",funcao:EQ_OPC},{nome:"",funcao:"OPERADOR DE SOPRADOR / OPERACIONAL"},{nome:"",funcao:"OPERACIONAL (ARRASTADOR DE GALHOS)"}];
+const EQ_PADRAO=()=>[{nome:"",funcao:"OPERADOR DE MOTOSSERRA"},{nome:"",funcao:"OPERADOR DE SOPRADOR / OPERACIONAL"},{nome:"",funcao:"OPERACIONAL (ARRASTADOR DE GALHOS)"}];
 function eqcUltima(g){ try{ const v=JSON.parse(ls.get("gpe_eqc_"+g.k,"null")||"null"); if(v?.length) return v; }catch(e){}
   const L=todosGlobal().filter(r=>r.supervisao===g.sup&&(r.equipe||"")===g.eq&&r.osDia?.membros?.length).sort((a,b)=>(b.osDia.em||"").localeCompare(a.osDia.em||""));
   return L[0]?L[0].osDia.membros:null; }
@@ -9260,11 +9260,11 @@ function eqcAbrirLista(g,onOk,editar,FN){ const box=document.createElement("div"
   // linhas: todos da turma + quem estava na equipe e não está na lista
   let R=FN.map(p=>{ const a=ant.find(m=>m.nome===p.nome); return {nome:p.nome,cargo:p.cargo,funcao:a?.funcao||p.funcao||"",on:!!a,lista:1}; })
     .concat(ant.filter(m=>m.nome&&!nomesFN.has(m.nome)).map(m=>({nome:m.nome,cargo:"",funcao:m.funcao||"",on:true,lista:0})));
-  const FUN=EQ_FUNC.filter(f=>f!==EQ_FISCAL);
+  const FUN=EQ_FUNC, FUN_T={"FISCAL DE TURMA":"Fiscal de turma","OPERADOR DE MOTOSSERRA":"Operador de motosserra","OPERADOR DE SOPRADOR / OPERACIONAL":"Operador de soprador/operacional","OPERACIONAL (ARRASTADOR DE GALHOS)":"Operacional (arrastador de galho)"};
   const escFis=!editar&&!g.os&&!ehFiscal(), FIS=escFis?fiscaisSup(g.sup):[];
   let fisSel=escFis?((OS_FIS_ESC[g.k]||g.fis||fiscalDe(g.sup,g.eq))?.id||""):"";
   if(escFis&&fisSel&&!FIS.some(f=>f.id===fisSel)) fisSel="";
-  const sel=(f,i)=>`<select data-elf="${i}" aria-label="Função"><option value="">Função…</option>${FUN.map(x=>`<option value="${x}"${x===f?" selected":""}>${x.replace(/^OPERADOR DE /,"").replace(/ \(ARRASTADOR DE GALHOS\)/," – arrastador").replace(" / OPERACIONAL","")}</option>`).join("")}${f&&!FUN.includes(f)?`<option selected>${esc(f)}</option>`:""}</select>`;
+  const sel=(f,i)=>`<select data-elf="${i}" aria-label="Função"><option value="">Função…</option>${FUN.map(x=>`<option value="${x}"${x===f?" selected":""}>${FUN_T[x]||x}</option>`).join("")}${f&&!FUN.includes(f)?`<option selected>${esc(f)}</option>`:""}</select>`;
   const desenhar=()=>{ const n=R.filter(r=>r.on).length;
     box.querySelector("[data-ellist]").innerHTML=R.map((r,i)=>`<div class="elrow${r.on?" on":""}"><label class="elchk"><input type="checkbox" data-elc="${i}" ${r.on?"checked":""}><span>${r.lista?esc(r.nome):`<input data-eln="${i}" value="${esc(r.nome)}" placeholder="Nome" autocapitalize="characters">`}${r.cargo?`<small>${esc(r.cargo)}</small>`:""}</span></label>${sel(r.funcao,i)}</div>`).join("");
     box.querySelector("[data-eqok]").textContent=`${editar?"Salvar a equipe":"▶ Confirmar a equipe e enviar a O.S"} (${n+1})`; };
@@ -9309,7 +9309,7 @@ function eqcAbrir(g,onOk,editar){ { const FN0=funcDe(g.sup); if(FN0.length) retu
     c.innerHTML=FN.map((p,i)=>`<button type="button" class="fnchip" data-fnpick="${i}" ${usados.has(p.nome)?"disabled":""}><span>${esc(p.nome)}</span>${p.cargo?`<small>${esc(p.cargo)}</small>`:""}</button>`).join(""); };
   const desenhar=()=>{ box.querySelector("[data-eqlist]").innerHTML=L.map(linha).join(""); chips(); };
   box.innerHTML=`<div class="panel" role="dialog" aria-label="Equipe da O.S"><b style="font-family:var(--display);font-size:22px">Equipe da O.S · ${esc(g.sup)} · ${esc(g.eq||"equipe")}</b>
-    <p class="note" style="margin:0">O <b>fiscal de turma</b> já vem preenchido. Toque nos nomes da turma (a função já vem da planilha) ou digite. Funções: <b>operador de motosserra</b> (op. máquina leve), <b>operador de motopoda</b> (se houver – deixe em branco se não tiver), <b>operador de soprador / operacional</b> e <b>operacional (arrastador de galhos)</b>. A equipe fica registrada na O.S (o supervisor vê) e salva para o próximo dia (é só conferir).</p>
+    <p class="note" style="margin:0">O <b>fiscal de turma</b> já vem preenchido. Toque nos nomes da turma (a função já vem da planilha) ou digite. Funções: <b>operador de motosserra</b>, <b>operador de soprador/operacional</b> e <b>operacional (arrastador de galho)</b>. A equipe fica registrada na O.S (o supervisor vê) e salva para o próximo dia (é só conferir).</p>
     ${funcDe(g.sup).length?`<div style="display:grid;gap:6px"><b style="font-size:14px">Funcionários da ${esc(g.sup)} – toque para pôr na equipe</b><div class="fnchips" data-fnchips></div></div>`:""}
     <div data-eqlist class="eqclist"></div>
     <button type="button" class="btn sec" data-eqadd>＋ Adicionar pessoa</button>
