@@ -135,10 +135,25 @@
   try {
     const a = JSON.parse(localStorage.getItem("gpe_treino_auto") || "null");
     if (a && !localStorage.getItem("gpe_sessao")) {
-      const e = P.find(x => x[3] === a.perfil && x[4] === a.sup) || P.find(x => x[3] === a.perfil) || P.find(x => x[0] === "s1");
+      const e0 = P.find(x => x[3] === a.perfil && x[4] === a.sup) || P.find(x => x[3] === a.perfil) || P.find(x => x[0] === "s1");
+      // usa a MESMA supervisão do usuário real (ex.: fiscal da PODA IV NOTURNO (B) treina na PODA IV NOTURNO (B))
+      const supR = a.sup || e0[4], proprio = !!a.sup && supR !== e0[4];
+      const e = proprio ? ["r_" + a.perfil, e0[1], "treino.real", a.perfil, supR] : e0;
       const nm = nomeReal ? nomeReal + " (TREINO)" : e[1];
       localStorage.setItem("gpe_sessao", JSON.stringify({ id: e[0], nome: nm, perfil: e[3], sup: e[4] }));
-      if (nomeReal) pronto.then(() => { const u = banco.cfg && banco.cfg.acesso && banco.cfg.acesso.usuarios && banco.cfg.acesso.usuarios[e[0]]; if (u) { u.nome = nm; gravar(); notificar("cfg"); } });
+      pronto.then(async () => { const U = banco.cfg && banco.cfg.acesso && banco.cfg.acesso.usuarios; if (!U) return;
+        if (proprio) {
+          const base = U[e0[0]] || {}; U[e[0]] = { ...base, ...(a.equipe ? { equipe: a.equipe } : {}), nome: nm, perfil: e[3], sup: supR, matricula: "treino.real", salt: "t" + e[0], hash: await hash("t" + e[0], SENHA) };
+          banco.assinaturas = banco.assinaturas || {}; if (!banco.assinaturas["login_" + e[0]]) banco.assinaturas["login_" + e[0]] = { salt: "l" + e[0], hash: await hash("l" + e[0], SENHA), em: new Date().toISOString() };
+          const L = banco.lancamentos = banco.lancamentos || {};
+          if (!Object.values(L).some(r => r.supervisao === supR)) {
+            const g = (supR.match(/PODA\s+(IV|III|II|I)\b/) || [])[0] || "PODA I", noite = /NOT/.test(supR), enc = "SUPERVISOR " + supR.replace(/[()]/g, "") + " (TREINO)", agora = new Date().toISOString();
+            [[-1, "SETOR BUENO", "R. T-25", "CALÇADA", "", { "30.1.1": 5 }], [0, "CENTRO", "AV. GOIÁS", "ENTRE-PISTA", "PODA DE LIMPEZA", { "30.1.1": 8, "30.2.1": 2 }], [0, "SETOR OESTE", "PRAÇA TAMANDARÉ", "PRAÇA", "PODA DE MANUTENÇÃO", { "30.2.1": 3 }]].forEach(([d, bairro, logradouro, tipo, servico, qtdPrevista]) => {
+              L[novoId()] = { supervisao: supR, encarregado: enc, grupo: g, turno: noite ? "NOTURNO" : "DIURNO", equipe: a.equipe || base.equipe || "1ª EQUIPE", viatura: "SKY 5073.0", data: dia(d), bairro, logradouro, tipo, servico, processo: "", status: "PROGRAMADO", qtdPrevista, qtd: {}, dataExec: "", historico: [], log: [{ em: agora, por: "DADOS DE TESTE", acao: "Programou" }] }; });
+            notificar("lancamentos");
+          }
+        } else if (nomeReal && U[e[0]]) U[e[0]].nome = nm;
+        gravar(); notificar("cfg"); });
     }
     localStorage.removeItem("gpe_treino_auto");
   } catch (e) {}
@@ -1364,6 +1379,31 @@ body.sofiscal nav.tabs{display:none!important}
 #v-dash .dmi b{display:block;font-size:22px;color:var(--ac);font-variant-numeric:tabular-nums;text-shadow:0 0 12px color-mix(in srgb,var(--ac) 50%,transparent)}
 #v-dash .dmi span{display:block;font-size:12px;color:var(--dtx);margin-top:2px}
 #v-dash .dmi small{display:block;font-size:11.5px;color:var(--dmu)}
+/* Horímetro (área separada) */
+.hz-busca{width:100%;margin:4px 0}.hz-aviso{display:block;width:100%;margin:8px 0;padding:10px;border:0;border-radius:10px;background:#fff4d6;color:#7a4a00;font-weight:700;text-align:left}.hz-ab{background:#fffbeb}.hz-abl{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px;padding:6px 0;border-top:1px solid #eee}.hz-abl small{display:block;color:#667}.hz-f0{background:#e5e7eb;color:#374151}.hz-fotos{display:flex;gap:6px;margin:6px 0}.hz-fotos img{width:72px;height:72px;object-fit:cover;border-radius:8px;background:#eee}.hz-msgc.enc{opacity:.7}.hz-cf{padding:6px 0;border-top:1px solid #eee;font-size:13px}.hz-h{margin:14px 0 6px}
+#v-hori .hz-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:linear-gradient(135deg,#18241c,#24402c);color:#e9f3ea;border-radius:14px;padding:14px 16px;margin:4px 0 10px}
+#v-hori .hz-top b{display:block;font-size:17px;letter-spacing:.04em}#v-hori .hz-top small{opacity:.8}
+#v-hori .hz-st{display:flex;gap:6px;flex-wrap:wrap}#v-hori .hz-st span{background:rgba(255,255,255,.12);padding:4px 10px;border-radius:999px;font-size:12.5px}
+#v-hori .hz-st .hz-r{background:#b42318}#v-hori .hz-st .hz-a{background:#b45309}
+#v-hori .hz-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+#v-hori .hz-tabs button{font:inherit;font-size:13.5px;padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:inherit;width:auto;min-height:40px}
+#v-hori .hz-tabs button.on{background:#24402c;color:#fff;border-color:#24402c;font-weight:700}
+#v-hori .hz-f{display:grid;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+#v-hori .hz-f h3{margin:0}#v-hori .hz-f label{display:grid;gap:4px;font-size:13px;font-weight:600}
+#v-hori .hz-g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px}
+#v-hori label.hz-ck{display:flex;align-items:center;gap:8px;font-weight:500}#v-hori label.hz-ck input{width:auto;min-height:0}
+#v-hori .hz-fs{border:1px solid var(--line);border-radius:10px;padding:8px 12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:4px 12px}
+#v-hori .hz-err{color:#b42318;font-weight:600;margin:0}#v-hori .hz-msg{color:var(--muted);margin:4px 0}
+#v-hori .hz-row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}#v-hori .hz-row .btn,#v-hori .hz-row select{width:auto}
+#v-hori .hz-eqs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:10px;margin-top:10px}
+#v-hori .hz-eq{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--c);border-radius:12px;padding:10px 12px}
+#v-hori .hz-eh{display:flex;justify-content:space-between;gap:8px}#v-hori .hz-eh b{font-size:16px}
+#v-hori .hz-bar{height:8px;border-radius:6px;background:var(--sunk);overflow:hidden;margin:8px 0 4px}#v-hori .hz-bar i{display:block;height:100%;background:var(--c)}
+#v-hori .hz-en{display:flex;justify-content:space-between;font-size:12.5px}#v-hori .hz-sit{color:var(--c);font-weight:700;font-size:13px;margin-top:2px}
+#v-hori .hz-eq .hz-row .btn{padding:6px 10px;min-height:36px;font-size:13px}
+#v-hori .hz-kp{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,120px),1fr));gap:8px;margin:8px 0}
+#v-hori .hz-kp div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px}#v-hori .hz-kp b{display:block;font-size:20px}#v-hori .hz-kp span{font-size:12px;color:var(--muted)}
+#v-hori .hz-tb{overflow:auto}#v-hori table{width:100%;border-collapse:collapse;font-size:13px}#v-hori th,#v-hori td{padding:6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
 </style>
 
 <div id="login" class="login" hidden>
@@ -1768,6 +1808,9 @@ body.sofiscal nav.tabs{display:none!important}
 </div>
 
 <!-- ============ RESUMO ============ -->
+<div id="v-hori" hidden>
+  <div id="horiBody"></div>
+</div>
 <div id="v-dash" hidden>
   <h2>Dashboard</h2>
   <p class="lead">Resumo dos números da gerência: valor x meta, execução, baixas e O.S do dia.</p>
@@ -1814,6 +1857,7 @@ body.sofiscal nav.tabs{display:none!important}
   <button type="button" data-v="lista">Lista</button>
   <button type="button" data-v="resumo">Painel</button>
   <button type="button" data-v="dash">Dashboard</button>
+  <button type="button" data-v="hori">Horímetro</button>
   <button type="button" data-v="chk">Checklist</button>
   <button type="button" data-v="orc" hidden>Orçamento</button>
   <button type="button" data-v="upd" hidden>Atualizar</button>
@@ -2111,7 +2155,7 @@ function treinoAuto(){
   try{ sessionStorage.removeItem("gpe_treino_falhou");
     const f=JSON.parse(localStorage.getItem("gpe_fila")||"[]"); if(Array.isArray(f)&&f.length){ if(!treinoAuto._av){ treinoAuto._av=1; toast("Modo treinamento ligado: vai abrir assim que os lançamentos pendentes forem enviados."); } return; } }catch(e){}
   treinoAuto._f=1;
-  try{ localStorage.setItem("gpe_sessao_real",JSON.stringify({...sessao,treinoEm:u.treinoEm||""})); localStorage.removeItem("gpe_sessao"); localStorage.setItem("gpe_treino_auto",JSON.stringify({perfil:u.perfil,sup:u.sup||""})); localStorage.setItem("gpe_treino","1"); }catch(e){ return; }
+  try{ localStorage.setItem("gpe_sessao_real",JSON.stringify({...sessao,treinoEm:u.treinoEm||""})); localStorage.removeItem("gpe_sessao"); localStorage.setItem("gpe_treino_auto",JSON.stringify({perfil:u.perfil,sup:u.sup||"",equipe:u.equipe||""})); localStorage.setItem("gpe_treino","1"); }catch(e){ return; }
   toast("🎓 O administrador ligou o Modo treinamento para você. Abrindo…"); setTimeout(()=>location.reload(),900);
 }
 function renderLogin(){
@@ -2454,6 +2498,257 @@ const mini=(t,v,c,s)=>`<div class="dmi" style="--ac:${c}"><b>${v}</b><span>${t}<
   requestAnimationFrame(desenha);
 }
 window.addEventListener("resize",()=>{ if(window.__dW===innerWidth) return; window.__dW=innerWidth; clearTimeout(window.__dRs); window.__dRs=setTimeout(()=>{ try{ if(curView==="dash") renderDash(); }catch(e){} },250); });
+/* ================= HORÍMETRO GPE (área separada dentro do app: mesmo login, mesmos acessos) =================
+   coleção própria "horimetro" (não mistura com a programação): t = "eq" máquina | "uso" horas | "ab" abastecimento | "man" manutenção | "msg" mensagem aos fiscais */
+const HORI_COL="horimetro";
+let horis=[], horiOk=false;
+const HORI={aba:"lancar",f:{per:"30",eq:"",tipo:"",div:""},edit:null,busca:""};
+const HORI_TIPOS=["Motosserra","Motopoda","Soprador","Roçadeira","Podador de altura","Outro"];
+const HORI_ITENS=["Corrente","Sabre (espada)","Filtro de ar","Vela de ignição","Pinhão / tambor de embreagem","Corda de partida retrátil","Filtro de combustível","Carburador","Limpeza e regulagem geral","Óleo do motor","Outro item"];
+const HORI_DEF=["Corda / partida retrátil","Embreagem / pinhão","Vazamento de combustível / óleo","Trava do acelerador","Reparo elétrico","Reparo mecânico","Outro defeito mecânico"];
+const HORI_RESP=["✓ Entendido e atendido!","✓ Em deslocamento com o maquinário.","✓ Operação em andamento normal.","✓ Abastecimento e manutenção checados.","✓ Solicito apoio da coordenação."];
+const horiPodeCad=()=>!!sessao&&((ORD[sessao.perfil]??99)<=ORD.coordenador||ehVictor());
+const horiPodeMan=()=>!!sessao&&((ORD[sessao.perfil]??99)<=ORD.supervisor||ehVictor());
+const hNum=v=>{ const n=parseFloat(String(v??"").replace(",",".")); return isFinite(n)?n:null; };
+const hFmt=(n,d=1)=>n==null||!isFinite(n)?"—":Number(n).toLocaleString("pt-BR",{minimumFractionDigits:d,maximumFractionDigits:d});
+const hHora=iso=>{ try{ return new Date(iso).toTimeString().slice(0,5); }catch(e){ return ""; } };
+const horiGrupos=()=>{ try{ return [...new Set(supsVis().map(s=>s.grupo))]; }catch(e){ return []; } };
+const horiMeuGrupo=()=>{ try{ return supOf(sessao?.sup)?.grupo||""; }catch(e){ return ""; } };
+const horiEqs=(comExc)=>{ const G=horiGrupos(), todos=!escopoG(); return horis.filter(x=>x.t==="eq"&&(comExc||!x.excluido)&&(todos||!x.divisao||G.includes(x.divisao))).sort((a,b)=>(a.divisao||"").localeCompare(b.divisao||"")||(a.prefixo||"").localeCompare(b.prefixo||"",undefined,{numeric:true})); };
+const horiEq=id=>horis.find(x=>x.t==="eq"&&x.id===id);
+const horiDe=(id,t)=>horis.filter(x=>x.t===t&&x.eq===id&&!x.excluido).sort((a,b)=>(a.em||"").localeCompare(b.em||""));
+const horiBuscaOk=(e,q)=>!q||[e.patrimonio,e.serie,e.prefixo,e.modelo,e.tipo].some(v=>semAcento(String(v||"")).toUpperCase().includes(semAcento(q).toUpperCase()));
+function semAcento(t){ return String(t||"").normalize("NFD").replace(/[̀-ͯ]/g,""); }
+// horímetro atual, horas desde a manutenção que reiniciou a contagem, total acumulado e situação
+function horiEstado(e,d0,d1){
+  const usos=horiDe(e.id,"uso"), mans=horiDe(e.id,"man").filter(m=>m.zerar), ult=mans[mans.length-1];
+  const desde=ult?ult.em:(e.ultManutEm||""), base=ult?null:hNum(e.ultManut);
+  const leit=[...usos.filter(u=>u.final!=null).map(u=>({em:u.fimEm||u.em,h:u.final})),...usos.filter(u=>u.final==null&&u.inicial!=null).map(u=>({em:u.em,h:u.inicial})),...horiDe(e.id,"ab").filter(a=>a.horimetro!=null).map(a=>({em:a.em,h:a.horimetro})),...horiDe(e.id,"man").filter(m=>m.horimetro!=null).map(m=>({em:m.em,h:m.horimetro}))].sort((a,b)=>(a.em||"").localeCompare(b.em||""));
+  const atual=leit.length?leit[leit.length-1].h:hNum(e.horInicial)??hNum(e.ultManut);
+  let horas=usos.filter(u=>!desde||(u.em||"")>desde).reduce((a,u)=>a+Math.max(0,u.horas||0),0);
+  if(!ult&&base!=null&&hNum(e.horInicial)!=null) horas+=Math.max(0,hNum(e.horInicial)-base);
+  const acum=usos.reduce((a,u)=>a+Math.max(0,u.horas||0),0), noPer=usos.filter(u=>(!d0||(u.data||"")>=d0)&&(!d1||(u.data||"")<=d1)).reduce((a,u)=>a+Math.max(0,u.horas||0),0);
+  const iv=hNum(e.intervalo)||50, av=hNum(e.aviso)??5, falta=iv-horas, aberto=usos.find(u=>u.final==null);
+  const sit=e.foraOp?{k:"fora",t:"Fora de operação",c:"#6b7280"}:falta<=0?{k:"venc",t:"Manutenção vencida",c:"#b42318"}:falta<=av?{k:"aten",t:"Em alerta",c:"#b45309"}:{k:"ok",t:"Em dia",c:"#1f6b3a"};
+  return {atual,horas,falta,iv,av,sit,acum,noPer,prox:(atual!=null?atual:0)+Math.max(0,falta),ultMan:ult||null,aberto};
+}
+function horiOperadores(eq){
+  const L=funcLista(), sups=supsVis().filter(s=>!eq||!eq.divisao||s.grupo===eq.divisao), nomes=new Set();
+  sups.forEach(s=>(L[s.id]||[]).forEach(f=>{ const fn=String(f[2]||f[1]||""); if(!/FISCAL/i.test(fn)) nomes.add(String(f[0]).toUpperCase()); }));
+  return [...nomes].sort();
+}
+const horiSelEq=(id,sel)=>{ const L=horiEqs().filter(e=>e.id===sel||horiBuscaOk(e,HORI.busca));
+  return `<input type="search" class="hz-busca" data-hbusca="1" value="${esc(HORI.busca)}" placeholder="Buscar por 1º plaqueta, 2º série ou 3º prefixo…"><select id="${id}" required><option value="">${L.length?"Escolha a máquina…":"Nenhuma máquina com essa busca"}</option>${L.map(e=>`<option value="${e.id}"${sel===e.id?" selected":""}>${e.foraOp?"🔴 ":""}${esc(e.prefixo||"—")} · ${esc(e.tipo||"")} ${esc(e.modelo||"")} · plaq. ${esc(e.patrimonio||"—")}${e.divisao?" · "+esc(e.divisao):""}</option>`).join("")}</select>`; };
+const horiOpDl=(eq)=>`<datalist id="hOpL">${horiOperadores(eq).map(n=>`<option value="${esc(n)}">`).join("")}</datalist>`;
+const horiRef=id=>id?db.collection(HORI_COL).doc(id):db.collection(HORI_COL).doc();
+async function horiSalvar(doc,id){ if(!db) throw new Error("sem banco"); const ref=horiRef(id); await ref.set(doc); return ref.id; }
+const horiMsgs=()=>{ const G=horiGrupos(); return horis.filter(x=>x.t==="msg"&&!x.excluido&&(!x.para||x.para==="todos"||!escopoG()||G.includes(x.para))).sort((a,b)=>(b.enviadaEm||"").localeCompare(a.enviadaEm||"")); };
+const horiNaoLidas=()=>sessao?horiMsgs().filter(m=>!m.encerrada&&!(m.resp||{})[sessao.id]&&m.porId!==sessao.id).length:0;
+const horiSitUso=u=>u.final==null?"Em aberto":u.zerou?"Bateria trocada (zerou)":(u.horas||0)>14?"Verificar leitura":"OK";
+
+function renderHori(){
+  const host=$("#horiBody"); if(!host) return;
+  if(!horiOk&&db){ horiOk=true; db.collection(HORI_COL).limit(5000).onSnapshot(s=>{ horis=s.docs.map(d=>({...d.data(),id:d.id})); try{ if(curView==="hori") renderHori(); }catch(e){} },()=>{}); }
+  const nMsg=horiNaoLidas();
+  const abas=[["lancar","⏱ Lançar horas"],["abast","⛽ Abastecer"],["manut","🔧 Manutenção"],["equip","🪚 Máquinas"],["lanc","📋 Lançamentos"],["msg","📣 Mensagens"+(nMsg?` (${nMsg})`:"")]];
+  const eqs=horiEqs(), est=eqs.map(e=>({e,s:horiEstado(e)}));
+  const nV=est.filter(x=>x.s.sit.k==="venc").length, nA=est.filter(x=>x.s.sit.k==="aten").length, nF=est.filter(x=>x.s.sit.k==="fora").length;
+  let h=`<div class="hz-top"><div><b>⏱ HORÍMETRO GPE</b><small>Horas, abastecimento e manutenção das máquinas</small></div><div class="hz-st"><span>${eqs.length-nF} ativas</span>${nF?`<span class="hz-f0">${nF} fora de operação</span>`:""}${nV?`<span class="hz-r">${nV} vencida${nV>1?"s":""}</span>`:""}${nA?`<span class="hz-a">${nA} em alerta</span>`:""}</div></div>
+    ${nMsg&&HORI.aba!=="msg"?`<button type="button" class="hz-aviso" data-hab="msg">📣 Você tem ${nMsg} mensagem${nMsg>1?"s":""} da gestão para confirmar</button>`:""}
+    <div class="hz-tabs">${abas.map(([k,t])=>`<button type="button" data-hab="${k}" class="${HORI.aba===k?"on":""}">${t}</button>`).join("")}</div><div class="hz-in">`;
+  if(!eqs.length&&!["equip","msg"].includes(HORI.aba)) h+=`<p class="hz-msg">Nenhuma máquina cadastrada${horiPodeCad()?". Cadastre em <b>🪚 Máquinas</b>.":" para a sua turma. Peça para a coordenação cadastrar."}</p>`;
+  const eqF=HORI.edit?.eq||"";
+  if(HORI.aba==="lancar"&&eqs.length){
+    const e=horiEq(eqF), s=e?horiEstado(e):null, abertos=horis.filter(x=>x.t==="uso"&&!x.excluido&&x.final==null&&eqs.some(q=>q.id===x.eq)).sort((a,b)=>(a.em||"").localeCompare(b.em||""));
+    if(abertos.length) h+=`<div class="hz-f hz-ab"><h3>🟡 Em aberto (falta o horímetro final)</h3>${abertos.map(u=>{ const q=horiEq(u.eq)||{}; return `<div class="hz-abl"><div><b>${esc(q.prefixo||"—")}</b> · ${fmtD(u.data)} · início ${hFmt(u.inicial)} h · ${esc(u.operador||"")}<small>lançado por ${esc(u.por||"")} às ${hHora(u.em)}</small></div><div class="hz-row"><input inputmode="decimal" placeholder="Final (h)" data-hfimv="${u.id}" style="max-width:120px"><button class="btn pri" type="button" data-hfim="${u.id}">Fechar</button></div></div>`; }).join("")}</div>`;
+    h+=`<form id="hFUso" class="hz-f"><h3>Lançar horas trabalhadas</h3>
+      <label>Máquina${horiSelEq("hUEq",eqF)}</label>
+      ${e?.foraOp?`<p class="hz-err">🔴 Esta máquina está FORA DE OPERAÇÃO${e.foraMotivo?": "+esc(e.foraMotivo):""}.</p>`:""}
+      ${s?`<p class="hz-msg">${s.atual==null?"Primeiro registro desta máquina: informe o horímetro inicial do painel.":`Último horímetro: <b>${hFmt(s.atual)} h</b> · <span style="color:${s.sit.c}">${s.sit.t}</span> (faltam ${hFmt(Math.max(0,s.falta))} h para a manutenção)`}${e.turno||e.equipe?` · ${esc([e.turno,e.equipe?"Turma "+e.equipe:""].filter(Boolean).join(" · "))}`:""}</p>`:""}
+      <div class="hz-g2"><label>Data<input type="date" id="hUData" value="${hoje()}" max="${hoje()}" required></label><label>Operador<input id="hUOp" list="hOpL" placeholder="Nome do operador de motosserra / motopoda…" required autocomplete="off"></label></div>${horiOpDl(e)}
+      <div class="hz-g2"><label>Matrícula do operador<input id="hUOpM" inputmode="numeric" placeholder="opcional"></label><label>Fiscal da turma<input id="hUFis" value="${esc(nomeAutor()||"")}" required></label></div>
+      <div class="hz-g2"><label>Horímetro inicial (h)<input id="hUIni" inputmode="decimal" value="${s&&s.atual!=null?String(s.atual).replace(".",","):""}"></label><label>Horímetro final (h)<input id="hUFim" inputmode="decimal" placeholder="deixe em branco para fechar depois"></label></div>
+      <label class="hz-ck"><input type="checkbox" id="hUZer"> O horímetro zerou (bateria trocada) — conta só o final</label>
+      <label>Observação<input id="hUObs" placeholder="Ex.: poda de galhos em praça, remoção de árvore…"></label>
+      <label>Foto do painel do horímetro (opcional)<input type="file" id="hUFoto" accept="image/*" capture="environment"></label>
+      <p class="hz-err" id="hUErr" hidden></p><button class="btn pri" type="submit">Salvar lançamento</button></form>`;
+  }
+  if(HORI.aba==="abast"&&eqs.length){
+    const e=horiEq(eqF);
+    h+=`<form id="hFAb" class="hz-f"><h3>Abastecimento</h3><label>Máquina${horiSelEq("hAEq",eqF)}</label>
+      <div class="hz-g2"><label>Data<input type="date" id="hAData" value="${hoje()}" max="${hoje()}" required></label><label>Tipo<select id="hATipo"><option>Combustível e óleo</option><option>Combustível</option><option>Óleo lubrificante</option></select></label></div>
+      <div class="hz-g2"><label>Combustível (ml)<input id="hAComb" inputmode="numeric" placeholder="0"></label><label>Óleo lubrificante (ml)<input id="hAOleo" inputmode="numeric" placeholder="0"></label></div>
+      <div class="hz-g2"><label>Horímetro (h)<input id="hAHor" inputmode="decimal"></label><label class="hz-ck" style="align-self:end"><input type="checkbox" id="hASem"> Sem horímetro</label></div>
+      <div class="hz-g2"><label>Operador<input id="hAOp" list="hOpL" placeholder="Nome do operador" autocomplete="off"></label><label>Fiscal da turma<input id="hAFis" value="${esc(nomeAutor()||"")}"></label></div>${horiOpDl(e)}
+      <label>Observação<input id="hAObs" placeholder="Ex.: tanque cheio no início do turno · mistura 1:50"></label>
+      <p class="hz-err" id="hAErr" hidden></p><button class="btn pri" type="submit">Salvar abastecimento</button></form>`;
+  }
+  if(HORI.aba==="manut"&&eqs.length){
+    if(!horiPodeMan()) h+=`<p class="hz-msg">A manutenção é lançada pelo supervisor, coordenação ou gerência.</p>`;
+    else { const e=horiEq(eqF), s=e?horiEstado(e):null;
+      h+=`<form id="hFMan" class="hz-f"><h3>Registrar manutenção</h3><label>Máquina${horiSelEq("hMEq",eqF)}</label>
+      ${s?`<p class="hz-msg">Horímetro da última manutenção: <b>${s.ultMan?hFmt(s.ultMan.horimetro)+" h · "+fmtD(s.ultMan.data):e.ultManut!=null?hFmt(hNum(e.ultManut))+" h (cadastro)":"—"}</b> · horas desde então: <b>${hFmt(s.horas)} h</b></p>`:""}
+      <div class="hz-g2"><label>Data<input type="date" id="hMData" value="${hoje()}" max="${hoje()}" required></label><label>Tipo<select id="hMTipo"><option>Preventiva</option><option>Corretiva</option></select></label></div>
+      <div class="hz-g2"><label>Horímetro (h)<input id="hMHor" inputmode="decimal"></label><label class="hz-ck" style="align-self:end"><input type="checkbox" id="hMSem"> Sem horímetro</label></div>
+      <fieldset class="hz-fs"><legend>Itens / peças trocadas</legend>${HORI_ITENS.map(t=>`<label class="hz-ck"><input type="checkbox" name="hMIt" value="${esc(t)}"> ${esc(t)}</label>`).join("")}</fieldset>
+      <fieldset class="hz-fs" id="hMDefBox" hidden><legend>Informações do defeito</legend>${HORI_DEF.map(t=>`<label class="hz-ck"><input type="checkbox" name="hMDef" value="${esc(t)}"> ${esc(t)}</label>`).join("")}</fieldset>
+      <label>Descrição do serviço<input id="hMDesc" placeholder="Ex.: revisão de 50 h e troca de corrente" required></label>
+      <label>Responsável<input id="hMResp" value="Equipe de manutenção COMURG"></label>
+      <label class="hz-ck"><input type="checkbox" id="hMZer" checked> Reiniciar a contagem do prazo a partir deste horímetro</label>
+      <label class="hz-ck"><input type="checkbox" id="hMFora"${e?.foraOp?" checked":""}> Máquina continua FORA DE OPERAÇÃO (aguardando peça / conserto)</label>
+      <label>Fotos (até 2)<input type="file" id="hMFoto" accept="image/*" capture="environment" multiple></label>
+      <p class="hz-err" id="hMErr" hidden></p><button class="btn pri" type="submit">Salvar manutenção</button></form>`; }
+  }
+  if(HORI.aba==="equip"){
+    const ed=HORI.edit?.cad?horiEq(HORI.edit.cad)||{}:null;
+    if(horiPodeCad()) h+= ed?`<form id="hFEq" class="hz-f"><h3>${ed.id?"Editar máquina":"Cadastrar novo equipamento"}</h3>
+      <p class="hz-msg"><b>Referências de identificação:</b> 1º plaqueta / nº patrimônio · 2º nº de série · 3º prefixo</p>
+      <div class="hz-g2"><label>1º Plaqueta / nº patrimônio *<input id="hEPat" value="${esc(ed.patrimonio||"")}" placeholder="Ex.: 540192" required></label><label>2º Nº de série *<input id="hESer" value="${esc(ed.serie||"")}" required></label></div>
+      <div class="hz-g2"><label>3º Prefixo<input id="hEPre" value="${esc(ed.prefixo||"")}" placeholder="Ex.: MT-01" required></label><label>Tipo<select id="hETipo">${HORI_TIPOS.map(t=>`<option${ed.tipo===t?" selected":""}>${t}</option>`).join("")}</select></label></div>
+      <div class="hz-g2"><label>Modelo<input id="hEMod" value="${esc(ed.modelo||"")}" placeholder="Ex.: MS 382"></label><label>Poda<select id="hEDiv">${["PODA I","PODA II","PODA III","PODA IV"].filter(g=>!escopoG()||horiGrupos().includes(g)).map(g=>`<option${ed.divisao===g?" selected":""}>${g}</option>`).join("")}</select></label></div>
+      <div class="hz-g2"><label>Turno<select id="hETur">${["","Diurno","Noturno"].map(t=>`<option value="${t}"${(ed.turno||"")===t?" selected":""}>${t||"—"}</option>`).join("")}</select></label><label>Turma<select id="hEEqp">${["","A","B"].map(t=>`<option value="${t}"${(ed.equipe||"")===t?" selected":""}>${t?"Turma "+t:"—"}</option>`).join("")}</select></label></div>
+      <div class="hz-g2"><label>Manutenção a cada (h)<input id="hEInt" inputmode="numeric" value="${esc(ed.intervalo??50)}"></label><label>Avisar antes (h)<input id="hEAv" inputmode="numeric" value="${esc(ed.aviso??5)}"></label></div>
+      ${ed.id?"":`<div class="hz-g2"><label>Horímetro atual (h)<input id="hEHor" inputmode="decimal"></label><label>Horímetro da última manutenção (h)<input id="hEUlt" inputmode="decimal"></label></div>`}
+      <label>Fotos da máquina (até 2)${(ed.fotos||[]).length?` <small>· já tem ${(ed.fotos||[]).length}; escolher novas substitui</small>`:""}<input type="file" id="hEFoto" accept="image/*" capture="environment" multiple></label>
+      <p class="hz-err" id="hEErr" hidden></p><div class="hz-row"><button class="btn pri" type="submit">Salvar cadastro</button><button class="btn sec" type="button" data-hcanc="1">Cancelar</button>${ed.id?`<button class="btn sec" type="button" data-hexc="${ed.id}" style="color:#b42318">Excluir</button>`:""}</div></form>`
+      :`<div class="hz-row"><button class="btn pri" type="button" data-hnovo="1">+ Cadastrar novo equipamento</button><button class="btn sec" type="button" data-himp="1">⬆ Importar backup do app antigo</button><input type="file" id="hImpF" accept=".json,application/json" hidden></div>`;
+    h+=`<input type="search" class="hz-busca" data-hbusca="1" value="${esc(HORI.busca)}" placeholder="Buscar por 1º plaqueta, 2º série ou 3º prefixo…">`;
+    h+=`<p class="hz-msg">${nF?`🔴 ${nF} fora de operação`:"✅ Nenhum equipamento quebrado"}${nV+nA?` · ⚠ ${nV+nA} em alerta / vencida${nV+nA>1?"s":""}`:""}</p>`;
+    h+=`<div class="hz-eqs">${est.filter(({e})=>horiBuscaOk(e,HORI.busca)).map(({e,s})=>`<div class="hz-eq" style="--c:${s.sit.c}"><div class="hz-eh"><b>${esc(e.prefixo||"—")}</b><span>${esc(e.tipo||"")} ${esc(e.modelo||"")}</span></div>
+      <small>Plaq. ${esc(e.patrimonio||"—")}${e.serie?" · série "+esc(e.serie):""}${e.divisao?" · "+esc(e.divisao):""}${e.turno?" · "+esc(e.turno):""}${e.equipe?" · Turma "+esc(e.equipe):""}</small>
+      ${(e.fotos||[]).length?`<div class="hz-fotos">${e.fotos.map(f=>`<img data-hfoto="${esc(f.id||f.db||"")}" alt="foto da máquina">`).join("")}</div>`:""}
+      <div class="hz-bar"><i style="width:${Math.min(100,s.horas/s.iv*100).toFixed(0)}%"></i></div>
+      <div class="hz-en"><span>Horímetro <b>${hFmt(s.atual)} h</b></span><span>${hFmt(s.horas)} de ${hFmt(s.iv,0)} h</span></div>
+      <div class="hz-sit">${s.sit.k==="fora"?"🔴 FORA DE OPERAÇÃO"+(e.foraMotivo?" · "+esc(e.foraMotivo):""):s.sit.t+(s.sit.k!=="venc"?` · próxima em ${hFmt(s.prox)} h (faltam ${hFmt(Math.max(0,s.falta))} h)`:` · passou ${hFmt(-s.falta)} h`)}</div>
+      <div class="hz-row">${[["lancar","⏱ Horas"],["abast","⛽"],["manut","🔧"]].map(([k,t])=>`<button class="btn sec" type="button" data-hgo="${k}" data-heq="${e.id}">${t}</button>`).join("")}${horiPodeMan()?`<button class="btn sec" type="button" data-hfora="${e.id}">${e.foraOp?"✅ Voltou a operar":"🔴 Fora de operação"}</button>`:""}${horiPodeCad()?`<button class="btn sec" type="button" data-hed="${e.id}">✏ Editar</button>`:""}</div></div>`).join("")||`<p class="hz-msg">Nenhuma máquina.</p>`}</div>`;
+  }
+  if(HORI.aba==="lanc"){
+    const F=HORI.f, d0=F.per==="tudo"?"":(()=>{ const d=new Date(); d.setDate(d.getDate()-(+F.per-1)); return d.toISOString().slice(0,10); })(), d1=hoje();
+    const eqsF=eqs.filter(e=>!F.div||e.divisao===F.div), ids=new Set(eqsF.map(e=>e.id)), L=horis.filter(x=>["uso","ab","man"].includes(x.t)&&!x.excluido&&ids.has(x.eq)&&(!F.eq||x.eq===F.eq)&&(!F.tipo||x.t===F.tipo)&&(!d0||(x.data||"")>=d0)).sort((a,b)=>(b.data||"").localeCompare(a.data||"")||(b.em||"").localeCompare(a.em||""));
+    const tH=L.filter(x=>x.t==="uso").reduce((a,x)=>a+(x.horas||0),0), tC=L.filter(x=>x.t==="ab").reduce((a,x)=>a+(x.comb||0),0), tO=L.filter(x=>x.t==="ab").reduce((a,x)=>a+(x.oleo||0),0), tM=L.filter(x=>x.t==="man").length;
+    const porEq=eqsF.filter(e=>!F.eq||e.id===F.eq).map(e=>({e,s:horiEstado(e,d0,d1)}));
+    HORI._lista=L; HORI._porEq=porEq; HORI._per=[d0,d1];
+    h+=`<div class="hz-row"><select id="hLPer">${[["7","7 dias"],["30","30 dias"],["90","90 dias"],["tudo","Tudo"]].map(([v,t])=>`<option value="${v}"${F.per===v?" selected":""}>${t}</option>`).join("")}</select>
+      ${horiGrupos().length>1?`<select id="hLDiv"><option value="">Todas as podas</option>${horiGrupos().map(g=>`<option${F.div===g?" selected":""}>${g}</option>`).join("")}</select>`:""}
+      <select id="hLEq"><option value="">Todas as máquinas</option>${eqsF.map(e=>`<option value="${e.id}"${F.eq===e.id?" selected":""}>${esc(e.prefixo)} · ${esc(e.tipo||"")}</option>`).join("")}</select>
+      <select id="hLTp"><option value="">Tudo</option><option value="uso"${F.tipo==="uso"?" selected":""}>Horas</option><option value="ab"${F.tipo==="ab"?" selected":""}>Abastecimento</option><option value="man"${F.tipo==="man"?" selected":""}>Manutenção</option></select></div>
+      <p class="hz-msg">Período: ${d0?fmtD(d0):"início"} até ${fmtD(d1)}</p>
+      <div class="hz-kp"><div><b>${hFmt(tH)}</b><span>total de horas</span></div><div><b>${eqsF.filter(e=>!e.foraOp).length}</b><span>máquinas ativas</span></div><div><b>${hFmt(tC/1000,1)} L</b><span>combustível</span></div><div><b>${hFmt(tO/1000,2)} L</b><span>óleo</span></div><div><b>${tM}</b><span>manutenções</span></div></div>
+      <div class="hz-row"><button class="btn sec" type="button" data-hcsv="1">⬇ Excel (CSV)</button><button class="btn sec" type="button" data-hpdf="1">📄 PDF</button></div>
+      <h3 class="hz-h">Por máquina</h3><div class="hz-tb"><table><thead><tr><th>Prefixo</th><th>Plaqueta</th><th>Nº série</th><th>Horas no período</th><th>Horímetro acumulado (h)</th><th>Situação manutenção</th><th>Próxima manutenção (h)</th></tr></thead><tbody>${porEq.map(({e,s})=>`<tr><td><b>${esc(e.prefixo)}</b><br><small>${esc(e.tipo||"")} ${esc(e.modelo||"")}</small></td><td>${esc(e.patrimonio||"")}</td><td>${esc(e.serie||"")}</td><td>${hFmt(s.noPer)}</td><td>${hFmt(s.atual)}</td><td style="color:${s.sit.c};font-weight:700">${s.sit.k==="venc"||s.sit.k==="aten"?"EM ALERTA / VENCIDA":s.sit.k==="fora"?"FORA DE OPERAÇÃO":"OK (faltam "+hFmt(Math.max(0,s.falta))+" h)"}</td><td>${hFmt(s.prox)}</td></tr>`).join("")||`<tr><td colspan="7">Nenhuma máquina.</td></tr>`}</tbody></table></div>
+      <h3 class="hz-h">Todos os lançamentos registrados (${L.length})</h3><div class="hz-tb"><table><thead><tr><th>Data / hora</th><th>Máquina</th><th>Tipo</th><th>Detalhe</th><th>Operador / fiscal</th><th>Situação</th></tr></thead><tbody>${L.slice(0,500).map(x=>{ const e=horiEq(x.eq)||{};
+        const det=x.t==="uso"?`${hFmt(x.inicial)} → ${x.final==null?"…":hFmt(x.final)} h · <b>${x.final==null?"—":hFmt(x.horas)+" h"}</b>`:x.t==="ab"?`${x.comb?hFmt(x.comb,0)+" ml comb.":""}${x.comb&&x.oleo?" · ":""}${x.oleo?hFmt(x.oleo,0)+" ml óleo":""}${x.horimetro!=null?" · "+hFmt(x.horimetro)+" h":" · sem horímetro"}`:`${esc(x.tipo||"")} · ${esc((x.itens||[]).join(", ")||x.desc||"")}${x.horimetro!=null?" · "+hFmt(x.horimetro)+" h":""}`;
+        return `<tr><td>${fmtD(x.data)}<br><small>${hHora(x.em)}</small></td><td><b>${esc(e.prefixo||"—")}</b><br><small>${esc(e.divisao||"")}</small></td><td>${x.t==="uso"?"⏱ Horas":x.t==="ab"?"⛽ Abast.":"🔧 Manut."}</td><td>${det}${x.obs?`<br><small>${esc(x.obs)}</small>`:""}</td><td><small>${esc(x.operador||"")}${x.opMat?" · "+esc(x.opMat):""}${x.operador?"<br>":""}${esc(x.fiscal||x.por||"")}</small></td><td><small>${x.t==="uso"?horiSitUso(x):x.t==="man"?(x.zerar?"Contagem reiniciada":"—"):"—"}</small></td></tr>`; }).join("")||`<tr><td colspan="6">Nenhum lançamento de horímetro encontrado para o período ou filtros selecionados.</td></tr>`}</tbody></table></div>`;
+  }
+  if(HORI.aba==="msg"){
+    const M=horiMsgs();
+    if(horiPodeMan()) h+=`<form id="hFMsg" class="hz-f"><h3>Enviar mensagem aos fiscais</h3><label>Mensagem<textarea id="hMsgT" rows="3" placeholder="Ex.: verificar afiação das correntes antes do início do turno" required></textarea></label>
+      <label>Para<select id="hMsgP"><option value="todos">Todos os fiscais</option>${horiGrupos().map(g=>`<option value="${g}">Fiscais da ${g}</option>`).join("")}</select></label><p class="hz-err" id="hMsgE" hidden></p><button class="btn pri" type="submit">Enviar</button></form>`;
+    h+=M.map(m=>{ const R=Object.entries(m.resp||{}).map(([uid,r])=>({uid,...r})).sort((a,b)=>(a.em||"").localeCompare(b.em||"")), meu=sessao&&(m.resp||{})[sessao.id], dono=horiPodeMan();
+      return `<div class="hz-f hz-msgc${m.encerrada?" enc":""}"><div class="hz-eh"><b>📣 ${m.encerrada?"Encerrada":"Ativa no campo"}</b><small>${fmtD((m.enviadaEm||"").slice(0,10))} ${hHora(m.enviadaEm)}${m.reenviadaEm?` (reenviada em ${fmtD(m.reenviadaEm.slice(0,10))} ${hHora(m.reenviadaEm)})`:""} · ${m.para&&m.para!=="todos"?"para "+esc(m.para):"para todos"} · ${esc(m.por||"")}</small></div>
+        <p style="margin:6px 0;font-size:15px">${esc(m.texto||"")}</p>
+        ${!m.encerrada&&!dono?(meu?`<p class="hz-msg">✅ Você respondeu: <b>${esc(meu.txt||"Ciente")}</b> às ${hHora(meu.em)}</p>`:`<div class="hz-row"><button class="btn pri" type="button" data-hcie="${m.id}">Ciente</button>${HORI_RESP.map((t,i)=>`<button class="btn sec" type="button" data-hrsp="${m.id}" data-ht="${i}">${esc(t)}</button>`).join("")}</div><div class="hz-row"><input placeholder="Digite uma resposta…" data-hrtv="${m.id}"><button class="btn sec" type="button" data-hrtx="${m.id}">💬 Responder</button></div>`):""}
+        ${dono?`<details${R.length?" open":""}><summary>Confirmações de leitura ("Ciente") · ${R.length}</summary>${R.map(r=>`<div class="hz-cf"><b>${esc(r.nome||"")}</b> · ${fmtD((r.em||"").slice(0,10))} ${hHora(r.em)}<br>${esc(r.txt||"Ciente")}</div>`).join("")||`<p class="hz-msg">Ninguém confirmou ainda.</p>`}</details>
+          <div class="hz-row">${m.encerrada?"":`<button class="btn sec" type="button" data-hmre="${m.id}">↻ Reenviar</button><button class="btn sec" type="button" data-hmen="${m.id}">Encerrar mensagem</button>`}<button class="btn sec" type="button" data-hmex="${m.id}" style="color:#b42318">Excluir mensagem</button></div>`:""}</div>`; }).join("")||`<p class="hz-msg">Nenhuma mensagem.</p>`;
+  }
+  h+=`</div>`;
+  const foco=document.activeElement&&document.activeElement.dataset&&document.activeElement.dataset.hbusca;
+  host.innerHTML=h;
+  if(foco){ const b=host.querySelector("[data-hbusca]"); if(b){ b.focus(); b.setSelectionRange(b.value.length,b.value.length); } }
+  // fotos das máquinas
+  host.querySelectorAll("img[data-hfoto]").forEach(async im=>{ const e=horis.find(x=>(x.fotos||[]).some(f=>(f.id||f.db)===im.dataset.hfoto)); const f=e&&(e.fotos||[]).find(f=>(f.id||f.db)===im.dataset.hfoto); if(!f) return; try{ await midCarregar(f); im.src=midUrl(f); }catch(x){} });
+  // eventos
+  const n=b=>host.querySelector(b), erro=(id,t)=>{ const p=n("#"+id); if(p){ p.textContent=t; p.hidden=false; } };
+  const base=()=>({em:new Date().toISOString(),por:nomeAutor()||"",porId:sessao?.id||""});
+  host.querySelectorAll("[data-hab]").forEach(b=>b.onclick=()=>{ HORI.aba=b.dataset.hab; HORI.edit=null; renderHori(); });
+  host.querySelectorAll("[data-hgo]").forEach(b=>b.onclick=()=>{ HORI.aba=b.dataset.hgo; HORI.edit={eq:b.dataset.heq}; renderHori(); scrollTo(0,0); });
+  host.querySelectorAll("[data-hbusca]").forEach(b=>b.oninput=()=>{ HORI.busca=b.value; clearTimeout(HORI._tb); HORI._tb=setTimeout(renderHori,250); });
+  ["hUEq","hAEq","hMEq"].forEach(id=>{ const s=n("#"+id); if(s) s.onchange=()=>{ HORI.edit={eq:s.value}; renderHori(); }; });
+  if(n("[data-hnovo]")) n("[data-hnovo]").onclick=()=>{ HORI.edit={cad:"__novo"}; renderHori(); };
+  host.querySelectorAll("[data-hed]").forEach(b=>b.onclick=()=>{ HORI.edit={cad:b.dataset.hed}; renderHori(); scrollTo(0,0); });
+  if(n("[data-hcanc]")) n("[data-hcanc]").onclick=()=>{ HORI.edit=null; renderHori(); };
+  const mt=n("#hMTipo"); if(mt) mt.onchange=()=>{ n("#hMDefBox").hidden=mt.value!=="Corretiva"; n("#hMZer").checked=mt.value==="Preventiva"; };
+  [["hLPer","per"],["hLEq","eq"],["hLTp","tipo"],["hLDiv","div"]].forEach(([id,k])=>{ const s=n("#"+id); if(s) s.onchange=()=>{ HORI.f[k]=s.value; if(k==="div") HORI.f.eq=""; renderHori(); }; });
+  const fotosDe=async(inp,max)=>{ const out=[]; for(const f of [...(inp?.files||[])].slice(0,max)) out.push(await midEnviar({tipo:"foto",janelaH:72},f)); return out; };
+  // horas
+  if(n("#hFUso")) n("#hFUso").onsubmit=async ev=>{ ev.preventDefault(); const eq=n("#hUEq").value, ini=hNum(n("#hUIni").value), fim=hNum(n("#hUFim").value), zer=n("#hUZer").checked;
+    if(!eq) return erro("hUErr","Selecione ou informe o equipamento."); if(!n("#hUOp").value.trim()) return erro("hUErr","Informe o operador."); if(!n("#hUFis").value.trim()) return erro("hUErr","Informe o nome do fiscal de turma.");
+    if(zer&&fim==null) return erro("hUErr","Com o horímetro zerado, informe o horímetro final."); if(!zer&&ini==null) return erro("hUErr","Informe o horímetro inicial.");
+    if(!zer&&fim!=null&&fim<ini) return erro("hUErr","O final não pode ser menor que o inicial. Se a bateria foi trocada, marque “o horímetro zerou”.");
+    const horas=fim==null?null:+(zer?fim:fim-ini).toFixed(1); if(horas!=null&&horas>24) return erro("hUErr",`São ${hFmt(horas)} h em um dia. Confira os números.`);
+    const b=n("#hFUso button[type=submit]"); b.disabled=true; b.textContent="Salvando…";
+    try{ let fotos=[]; try{ fotos=await fotosDe(n("#hUFoto"),1); }catch(x){ b.disabled=false; b.textContent="Salvar lançamento"; return erro("hUErr",x?.msg||"Não foi possível enviar a foto."); }
+      const q=horiEq(eq)||{}; await horiSalvar({t:"uso",eq,data:n("#hUData").value,divisao:q.divisao||"",turno:q.turno||"",equipe:q.equipe||"",operador:n("#hUOp").value.trim().toUpperCase(),opMat:n("#hUOpM").value.trim(),fiscal:n("#hUFis").value.trim().toUpperCase(),inicial:zer?null:ini,final:fim,zerou:zer,horas,obs:n("#hUObs").value.trim(),fotos,...base(),fimEm:fim==null?null:new Date().toISOString()});
+      toast(fim==null?"Início lançado. Feche com o horímetro final no fim do turno.":`Lançado: ${hFmt(horas)} h.`); HORI.edit={eq}; renderHori(); }catch(e){ b.disabled=false; b.textContent="Salvar lançamento"; erro("hUErr","Não foi possível salvar. Confira a internet e tente de novo."); } };
+  host.querySelectorAll("[data-hfim]").forEach(b=>b.onclick=async()=>{ const u=horis.find(x=>x.id===b.dataset.hfim), v=hNum(host.querySelector(`[data-hfimv="${b.dataset.hfim}"]`).value); if(!u) return;
+    if(v==null) return toast("Informe o horímetro final."); if(v<u.inicial) return toast("O final não pode ser menor que o inicial ("+hFmt(u.inicial)+" h)."); const hr=+(v-u.inicial).toFixed(1); if(hr>24) return toast(`São ${hFmt(hr)} h. Confira o número.`);
+    b.disabled=true; try{ await dbUpdate(horiRef(u.id),{final:v,horas:hr,fimEm:new Date().toISOString(),fimPor:nomeAutor()}); toast(`Fechado: ${hFmt(hr)} h.`); }catch(e){ b.disabled=false; toast("Não foi possível salvar agora."); } });
+  // abastecimento
+  if(n("#hFAb")) n("#hFAb").onsubmit=async ev=>{ ev.preventDefault(); const eq=n("#hAEq").value, c=hNum(n("#hAComb").value)||0, o=hNum(n("#hAOleo").value)||0, sem=n("#hASem").checked, hor=hNum(n("#hAHor").value);
+    if(!eq) return erro("hAErr","Selecione ou informe o equipamento."); if(!c&&!o) return erro("hAErr","Informe o volume de combustível (ml) ou óleo lubrificante (ml)."); if(!sem&&hor==null) return erro("hAErr","Informe o horímetro ou marque “sem horímetro”.");
+    try{ const q=horiEq(eq)||{}; await horiSalvar({t:"ab",eq,data:n("#hAData").value,divisao:q.divisao||"",tipoAb:n("#hATipo").value,operador:n("#hAOp").value.trim().toUpperCase(),fiscal:n("#hAFis").value.trim().toUpperCase(),comb:c,oleo:o,horimetro:sem?null:hor,obs:n("#hAObs").value.trim(),...base()}); toast("Abastecimento salvo."); HORI.edit={eq}; renderHori(); }catch(e){ erro("hAErr","Não foi possível salvar agora."); } };
+  // manutenção
+  if(n("#hFMan")) n("#hFMan").onsubmit=async ev=>{ ev.preventDefault(); const eq=n("#hMEq").value, sem=n("#hMSem").checked, hor=hNum(n("#hMHor").value);
+    if(!eq) return erro("hMErr","Selecione ou informe o equipamento."); if(!sem&&hor==null) return erro("hMErr","Informe o horímetro da manutenção ou marque “sem horímetro”."); if(!n("#hMDesc").value.trim()) return erro("hMErr","Descreva o serviço.");
+    const b=n("#hFMan button[type=submit]"); b.disabled=true; b.textContent="Salvando…";
+    try{ let fotos=[]; try{ fotos=await fotosDe(n("#hMFoto"),2); }catch(x){ b.disabled=false; b.textContent="Salvar manutenção"; return erro("hMErr",x?.msg||"Não foi possível enviar a foto."); }
+      const q=horiEq(eq)||{}, fora=n("#hMFora").checked;
+      await horiSalvar({t:"man",eq,data:n("#hMData").value,divisao:q.divisao||"",tipo:n("#hMTipo").value,horimetro:sem?null:hor,itens:[...host.querySelectorAll("[name=hMIt]:checked")].map(x=>x.value),defeitos:[...host.querySelectorAll("[name=hMDef]:checked")].map(x=>x.value),desc:n("#hMDesc").value.trim(),resp:n("#hMResp").value.trim(),zerar:n("#hMZer").checked,foraOp:fora,fotos,...base()});
+      if(!!q.foraOp!==fora) await dbUpdate(horiRef(eq),{foraOp:fora,foraMotivo:fora?(n("#hMDesc").value.trim()):"",foraEm:new Date().toISOString(),foraPor:nomeAutor()});
+      toast("Manutenção salva."+(n("#hMZer").checked?" A contagem recomeçou.":"")); HORI.edit={eq}; renderHori(); }catch(e){ b.disabled=false; b.textContent="Salvar manutenção"; erro("hMErr","Não foi possível salvar agora."); } };
+  // fora de operação
+  host.querySelectorAll("[data-hfora]").forEach(b=>b.onclick=async()=>{ const e=horiEq(b.dataset.hfora); if(!e) return; let mot="";
+    if(!e.foraOp){ mot=window.prompt(`Por que a ${e.prefixo} está fora de operação?`,"Aguardando conserto"); if(mot===null) return; }
+    try{ await dbUpdate(horiRef(e.id),{foraOp:!e.foraOp,foraMotivo:mot,foraEm:new Date().toISOString(),foraPor:nomeAutor()}); toast(e.foraOp?`${e.prefixo} voltou a operar.`:`${e.prefixo} marcada como fora de operação.`); }catch(x){ toast("Não foi possível salvar agora."); } });
+  // cadastro de máquina
+  if(n("#hFEq")) n("#hFEq").onsubmit=async ev=>{ ev.preventDefault(); const id=HORI.edit.cad==="__novo"?null:HORI.edit.cad, ant=id?horiEq(id):{};
+    const pre=n("#hEPre").value.trim().toUpperCase(), pat=n("#hEPat").value.trim(), ser=n("#hESer").value.trim();
+    if(!pat) return erro("hEErr","1º plaqueta / nº patrimônio é obrigatório."); if(!ser) return erro("hEErr","2º nº de série é obrigatório."); if(!pre) return erro("hEErr","Informe o prefixo.");
+    if(horiEqs().some(e=>e.id!==id&&(e.prefixo||"").toUpperCase()===pre)) return erro("hEErr","Já existe uma máquina com esse prefixo.");
+    if(horiEqs().some(e=>e.id!==id&&String(e.patrimonio||"")===pat)) return erro("hEErr","Já existe uma máquina com essa plaqueta.");
+    const b=n("#hFEq button[type=submit]"); b.disabled=true; b.textContent="Salvando…";
+    let fotos=ant.fotos||[]; try{ const nv=await fotosDe(n("#hEFoto"),2); if(nv.length) fotos=nv; }catch(x){ b.disabled=false; b.textContent="Salvar cadastro"; return erro("hEErr",x?.msg||"Não foi possível enviar a foto."); }
+    const doc={...ant,t:"eq",prefixo:pre,tipo:n("#hETipo").value,modelo:n("#hEMod").value.trim().toUpperCase(),patrimonio:pat,serie:ser,divisao:n("#hEDiv").value,turno:n("#hETur").value,equipe:n("#hEEqp").value,intervalo:hNum(n("#hEInt").value)||50,aviso:hNum(n("#hEAv").value)??5,fotos,alteradoEm:new Date().toISOString(),alteradoPor:nomeAutor()};
+    if(!id){ doc.horInicial=hNum(n("#hEHor").value); doc.ultManut=hNum(n("#hEUlt").value); doc.ultManutEm=new Date().toISOString(); doc.em=new Date().toISOString(); doc.por=nomeAutor(); }
+    delete doc.id; try{ await horiSalvar(doc,id); toast("Máquina salva."); HORI.edit=null; renderHori(); }catch(e){ b.disabled=false; b.textContent="Salvar cadastro"; erro("hEErr","Não foi possível salvar. Se for o primeiro uso, falta liberar o horímetro no banco (arquivo GPE-HORIMETRO.sql)."); } };
+  if(n("[data-hexc]")) n("[data-hexc]").onclick=async()=>{ const id=n("[data-hexc]").dataset.hexc, e=horiEq(id); if(!e) return; if(!window.confirm(`Excluir a máquina ${e.prefixo}? Os lançamentos dela ficam guardados.`)) return;
+    try{ await dbUpdate(horiRef(id),{excluido:true,excluidoEm:new Date().toISOString(),excluidoPor:nomeAutor()}); HORI.edit=null; renderHori(); }catch(x){ toast("Não foi possível excluir agora."); } };
+  // mensagens
+  if(n("#hFMsg")) n("#hFMsg").onsubmit=async ev=>{ ev.preventDefault(); const t=n("#hMsgT").value.trim(); if(!t) return erro("hMsgE","Digite a mensagem.");
+    try{ await horiSalvar({t:"msg",texto:t,para:n("#hMsgP").value,enviadaEm:new Date().toISOString(),encerrada:false,resp:{},...base()}); toast("Mensagem enviada aos fiscais."); renderHori(); }catch(e){ erro("hMsgE","Não foi possível enviar agora."); } };
+  const responder=async(id,txt)=>{ try{ const ref=horiRef(id), cur=((await ref.get()).data()||{}).resp||{}; await dbUpdate(ref,{resp:{...cur,[sessao.id]:{nome:nomeAutor(),em:new Date().toISOString(),txt}}}); toast("Resposta enviada com sucesso para a gestão!"); }catch(e){ toast("Não foi possível enviar agora."); } };
+  host.querySelectorAll("[data-hcie]").forEach(b=>b.onclick=()=>responder(b.dataset.hcie,"Ciente"));
+  host.querySelectorAll("[data-hrsp]").forEach(b=>b.onclick=()=>responder(b.dataset.hrsp,HORI_RESP[+b.dataset.ht]));
+  host.querySelectorAll("[data-hrtx]").forEach(b=>b.onclick=()=>{ const v=(host.querySelector(`[data-hrtv="${b.dataset.hrtx}"]`).value||"").trim(); if(!v) return toast("Digite uma resposta antes de enviar."); responder(b.dataset.hrtx,v); });
+  host.querySelectorAll("[data-hmre]").forEach(b=>b.onclick=async()=>{ try{ await dbUpdate(horiRef(b.dataset.hmre),{reenviadaEm:new Date().toISOString(),enviadaEm:new Date().toISOString()}); toast("Mensagem reenviada."); }catch(e){ toast("Não foi possível agora."); } });
+  host.querySelectorAll("[data-hmen]").forEach(b=>b.onclick=async()=>{ try{ await dbUpdate(horiRef(b.dataset.hmen),{encerrada:true,encerradaEm:new Date().toISOString()}); }catch(e){ toast("Não foi possível agora."); } });
+  host.querySelectorAll("[data-hmex]").forEach(b=>b.onclick=async()=>{ if(!window.confirm("Excluir esta mensagem?")) return; try{ await dbUpdate(horiRef(b.dataset.hmex),{excluido:true}); }catch(e){ toast("Não foi possível agora."); } });
+  // importar o backup (JSON) do app antigo do horímetro
+  if(n("[data-himp]")) n("[data-himp]").onclick=()=>n("#hImpF").click();
+  if(n("#hImpF")) n("#hImpF").onchange=async ev=>{ const f=ev.target.files[0]; if(!f) return; try{ const j=JSON.parse(await f.text()), B=j.equipamentos?j:(j.db||j.data||j);
+      if(!Array.isArray(B.equipamentos)) throw new Error("formato"); const mapa={}; let n1=0,n2=0;
+      const divMap=d=>{ const m=String(d||"").toUpperCase().match(/PODA\s*(IV|III|II|I)\b/); return m?"PODA "+m[1]:""; };
+      for(const e of B.equipamentos){ const ja=horiEqs(true).find(x=>(x.prefixo||"").toUpperCase()===String(e.prefixo||e.id||"").toUpperCase()); const id=ja?ja.id:await horiSalvar({t:"eq",prefixo:String(e.prefixo||e.id||"").toUpperCase(),tipo:e.tipo||"Motosserra",modelo:String(e.modelo||"").toUpperCase(),patrimonio:e.patrimonio||"",serie:e.serie||"",divisao:divMap(e.divisao),turno:e.turno||"",equipe:e.equipe||"",intervalo:e.intervalo||50,aviso:e.aviso??5,ultManut:e.ultManut??null,ultManutEm:"",em:new Date().toISOString(),por:nomeAutor(),importado:true}); [e.prefixo,e.id,e.patrimonio].forEach(k=>{ if(k) mapa[k]=id; }); if(!ja) n1++; }
+      const ref=x=>mapa[x.patrimonio]||mapa[x.prefixo]; const em=x=>x.lancadoEm||x.registradoEm||(x.data?x.data+"T12:00:00":new Date().toISOString());
+      for(const r of B.registros||[]){ const eq=ref(r); if(!eq) continue; const hr=r.final==null?null:r.zerou?+r.final:+(r.final-r.inicial); await horiSalvar({t:"uso",eq,data:r.data,divisao:divMap(r.divisao),turno:r.turno||"",equipe:r.equipe||"",operador:String(r.operador||"").toUpperCase(),opMat:r.operadorMatricula||"",fiscal:String(r.fiscal||"").toUpperCase(),inicial:r.inicial??null,final:r.final??null,zerou:!!r.zerou,horas:hr==null?null:+hr.toFixed(1),obs:r.obs||"",em:em(r),por:r.fiscal||"",importado:true}); n2++; }
+      for(const a of B.abastecimentos||[]){ const eq=ref(a); if(!eq) continue; await horiSalvar({t:"ab",eq,data:a.data,tipoAb:a.tipoAbast||"",operador:String(a.operador||"").toUpperCase(),fiscal:String(a.fiscal||"").toUpperCase(),comb:+a.combustivel||0,oleo:+a.oleo||0,horimetro:a.semHorimetro?null:(a.horimetro??null),obs:a.obs||"",em:em(a),por:a.fiscal||"",importado:true}); n2++; }
+      for(const m of B.manutencoes||[]){ const eq=ref(m); if(!eq) continue; await horiSalvar({t:"man",eq,data:m.data,tipo:m.tipo||"Preventiva",horimetro:m.semHorimetro?null:(m.horimetro??null),itens:m.itens||[],defeitos:m.defeitos||[],desc:m.descricao||"",resp:m.responsavel||"",zerar:!!m.zerar,fotos:[],em:em(m),por:m.fiscal||"",importado:true}); n2++; }
+      toast(`Importado: ${n1} máquinas novas e ${n2} lançamentos.`,6000); renderHori();
+    }catch(x){ toast("Arquivo não reconhecido. Use o backup (.json) exportado pelo app antigo do horímetro.",6000); } ev.target.value=""; };
+  // relatórios
+  const linhasRel=()=>(HORI._lista||[]).map(x=>{ const e=horiEq(x.eq)||{}; return [fmtD(x.data),hHora(x.em),e.divisao||x.divisao||"",e.prefixo||"",e.tipo||"",e.modelo||"",e.patrimonio||"",x.t==="uso"?"Horas":x.t==="ab"?"Abastecimento":"Manutenção",x.operador||"",x.opMat||"",x.fiscal||x.por||"",x.t==="uso"?hFmt(x.inicial):"",x.t==="uso"?(x.final==null?"":hFmt(x.final)):x.horimetro!=null?hFmt(x.horimetro):"",x.t==="uso"?(x.horas==null?"":hFmt(x.horas)):"",x.t==="ab"?x.comb||0:"",x.t==="ab"?x.oleo||0:"",x.t==="man"?[x.tipo,(x.itens||[]).join(", "),x.desc].filter(Boolean).join(" · "):"",x.t==="uso"?horiSitUso(x):"",x.obs||""]; });
+  const CAB=["Data","Hora lançamento","Divisão","Prefixo","Tipo","Modelo","Plaqueta","Lançamento","Operador","Matrícula operador","Fiscal","Horímetro inicial","Horímetro final","Horas trabalhadas","Combustível (ml)","Óleo (ml)","Manutenção","Situação","Observações"];
+  if(n("[data-hcsv]")) n("[data-hcsv]").onclick=()=>{ const q=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+    const eqL=(HORI._porEq||[]).map(({e,s})=>[e.prefixo,e.tipo,e.modelo,e.patrimonio,e.serie,e.divisao,hFmt(s.noPer),hFmt(s.atual),s.sit.t,hFmt(s.prox)]);
+    const blob=new Blob(["﻿"+[["POR MÁQUINA"],["Prefixo","Tipo","Modelo","Plaqueta","Nº série","Poda","Horas no período","Horímetro acumulado (h)","Situação manutenção","Próxima manutenção (h)"],...eqL,[],["LANÇAMENTOS"],CAB,...linhasRel()].map(r=>r.map(q).join(";")).join("\r\n")],{type:"text/csv;charset=utf-8"}), a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="horimetro-"+hoje()+".csv"; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000); };
+  if(n("[data-hpdf]")) n("[data-hpdf]").onclick=ev=>{ const td="padding:4px 6px;border:1px solid #d5dbd3;font-size:10px", th=td+";background:#1f6b3a;color:#fff;text-align:left", [p0,p1]=HORI._per||["",""];
+    const html=`<div class="fdoc lx"><style>${typeof FDOC_CSS!=="undefined"?FDOC_CSS:""}</style><div class="r-body">${fhead("HORÍMETRO GPE","LANÇAMENTOS DE HORÍMETRO · ABASTECIMENTO · MANUTENÇÃO")}
+      <p style="font-size:12px;margin:8px 0">Período: ${p0?fmtD(p0):"início"} até ${fmtD(p1)}</p>
+      <h4 style="margin:10px 0 4px">Por máquina</h4><table style="width:100%;border-collapse:collapse"><thead><tr>${["Prefixo","Tipo / modelo","Plaqueta","Nº série","Horas no período","Horímetro acumulado (h)","Situação manutenção","Próxima manutenção (h)"].map(t=>`<th style="${th}">${t}</th>`).join("")}</tr></thead><tbody>${(HORI._porEq||[]).map(({e,s})=>`<tr><td style="${td}"><b>${esc(e.prefixo)}</b></td><td style="${td}">${esc(e.tipo||"")} ${esc(e.modelo||"")}</td><td style="${td}">${esc(e.patrimonio||"")}</td><td style="${td}">${esc(e.serie||"")}</td><td style="${td}">${hFmt(s.noPer)}</td><td style="${td}">${hFmt(s.atual)}</td><td style="${td};color:${s.sit.c}"><b>${s.sit.k==="venc"||s.sit.k==="aten"?"EM ALERTA / VENCIDA":s.sit.t}</b></td><td style="${td}">${hFmt(s.prox)}</td></tr>`).join("")}</tbody></table>
+      <h4 style="margin:12px 0 4px">Todos os lançamentos registrados</h4><table style="width:100%;border-collapse:collapse"><thead><tr>${["Data","Hora","Prefixo","Lançamento","Operador","Fiscal","Hor. inicial","Hor. final","Horas","Comb./óleo (ml)","Manutenção","Situação"].map(t=>`<th style="${th}">${t}</th>`).join("")}</tr></thead><tbody>${linhasRel().slice(0,700).map(r=>`<tr>${[r[0],r[1],"<b>"+esc(r[3])+"</b>",r[7],esc(r[8]),esc(r[10]),r[11],r[12],r[13],r[14]!==""?r[14]+" / "+r[15]:"",esc(r[16]),r[17]].map(c=>`<td style="${td}">${c}</td>`).join("")}</tr>`).join("")}</tbody></table></div></div>`;
+    baixarFormPdf(ev.currentTarget,html,"horimetro-"+hoje()+".pdf","Horímetro GPE"); };
+}
+
 function nomeAutor(){ return sessao?.nome||""; }
 function refazTurmas(){ const keep=(sel,html)=>{ const el=$(sel); if(!el) return; const v=el.value; el.innerHTML=html; el.value=[...el.options].some(o=>o.value===v)?v:""; };
   ["#cSup","#oSup","#kSup","#kgSup"].forEach(x=>keep(x,optTurmas()));
@@ -2636,7 +2931,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.12w";
+const APP_VERSAO="2026.11.13";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -2884,12 +3179,12 @@ const assPadrao=u=>u?.perfil==="supervisor"||u?.perfil==="supervisor1";
 const podeAssinar=(uid,tipo)=>{ const u=acesso?.[uid]; if(!u||u.ativo===false) return false; if(ehGerPerf(u.perfil)||u.perfil==="admin") return true; const k="ass_"+tipo, pa=u.abas; if(pa&&(k in pa)) return !!pa[k]; return assPadrao(u); };
 const travadoU=u=>!!u&&!GERAL.has(u.perfil)&&!lotGeral(u);
 const fisPode=k=>!ehFiscal()||!!fisPerm()[k];
-const fisAbas=()=>{ const P=fisPerm(), A=new Set(["inicio"]); if(P.campo||P.baixa) A.add("campo"); if(P.pend) A.add("pend"); if(P.chk) A.add("chk"); if(P.oc) A.add("oc"); if(P.lista) A.add("lista"); if(P.form) A.add("form"); if(P.resumo) A.add("resumo"); if(P.orc) A.add("orc"); if(P.vist||vistTemFiscal()) A.add("vist"); return A; };
+const fisAbas=()=>{ const P=fisPerm(), A=new Set(["inicio"]); if(P.campo||P.baixa) A.add("campo"); if(P.pend) A.add("pend"); if(P.chk) A.add("chk"); if(P.oc) A.add("oc"); if(P.lista) A.add("lista"); if(P.form) A.add("form"); if(P.resumo) A.add("resumo"); if(P.orc) A.add("orc"); if(P.vist||vistTemFiscal()) A.add("vist"); A.add("hori"); return A; };
 const vistTemFiscal=()=>{ try{ return !!sessao&&(VIST.nMeus(sessao.id)>0||VIST.nFiscal(sessao.id)>0); }catch(e){ return false; } };
 const podeFisPerm=()=>isAdm()||((sessao?.perfil==="gerencia"||sessao?.perfil==="gerencia_op")&&!sessao?.porGerente);
 // acessos dos demais perfis abaixo do gerente: o administrador ativa / desativa cada aba por perfil (documento "perm_perfis")
 const PERF_ABAIXO=["ger_equipe","coordenador","supervisor","supervisor1"];
-const PERM_ABAS=[{k:"pend",t:"Pendências",d:"Avisos e cobranças da turma."},{k:"form",t:"Programar",d:"Fazer a programação da semana."},{k:"campo",t:"Em aberto / dar baixa",d:"Ver os serviços e dar baixa."},{k:"chk",t:"Checklist e comunicar defeito",d:"Checklist do equipamento e comunicado de defeito."},{k:"oc",t:"Registro emergencial",d:"Galho ou árvore caída."},{k:"vist",t:"Vistoria de processo",d:"Rotas de vistoria, já executado / não executado e serviços enviados à turma."},{k:"lista",t:"Lista",d:"Lista de serviços e planilha."},{k:"resumo",t:"Painel",d:"Painel, acompanhamento e relatórios."},{k:"orc",t:"Orçamento",d:"Propostas orçamentárias."},{k:"escala",t:"Cadastrar / atualizar a escala de trabalho",d:"Cadastrar e mudar a escala da turma (dias de trabalho e folgas), para o app só cobrar nos dias de trabalho. Supervisor e supervisor 1 sempre têm."},{k:"busca",t:"Pesquisar serviço por endereço",d:"Procurar serviços pelo endereço (menu Mais)."}];
+const PERM_ABAS=[{k:"pend",t:"Pendências",d:"Avisos e cobranças da turma."},{k:"form",t:"Programar",d:"Fazer a programação da semana."},{k:"campo",t:"Em aberto / dar baixa",d:"Ver os serviços e dar baixa."},{k:"chk",t:"Checklist e comunicar defeito",d:"Checklist do equipamento e comunicado de defeito."},{k:"oc",t:"Registro emergencial",d:"Galho ou árvore caída."},{k:"vist",t:"Vistoria de processo",d:"Rotas de vistoria, já executado / não executado e serviços enviados à turma."},{k:"lista",t:"Lista",d:"Lista de serviços e planilha."},{k:"resumo",t:"Painel",d:"Painel, acompanhamento e relatórios."},{k:"orc",t:"Orçamento",d:"Propostas orçamentárias."},{k:"escala",t:"Cadastrar / atualizar a escala de trabalho",d:"Cadastrar e mudar a escala da turma (dias de trabalho e folgas), para o app só cobrar nos dias de trabalho. Supervisor e supervisor 1 sempre têm."},{k:"busca",t:"Pesquisar serviço por endereço",d:"Procurar serviços pelo endereço (menu Mais)."},{k:"hori",t:"Horímetro",d:"Horas, abastecimento e manutenção das máquinas (motosserra, motopoda, soprador)."}];
 const abaPadrao=(per,v)=>{ if(v==="pend") return true; if(v==="escala") return per==="supervisor"||per==="supervisor1"; if(v==="busca") return !["supervisor","supervisor1"].includes(per); if(v==="upd"||v==="orc") return false; return !((per==="supervisor"&&v==="resumo")||(per==="supervisor1"&&!SUP1_ABAS.has(v))); };
 const abaFixa=(per,v)=>v==="escala"&&(per==="supervisor"||per==="supervisor1");
 const abaOn=(per,v,uid=sessao?.id)=>{ if(abaFixa(per,v)&&!cargoObj(acesso?.[uid]?.cargo)?.abas) return true; const pa=acesso?.[uid]?.abas; if(pa&&PERM_ABAS.some(x=>x.k===v)&&(v in pa)) return !!pa[v]; const cg=cargoObj(acesso?.[uid]?.cargo); if(cg?.abas&&cg.p===per&&PERM_ABAS.some(x=>x.k===v)) return v==="pend"?false:cg.abas.includes(v); const o=assins?.perm_perfis?.p?.[per]; if(o&&PERM_ABAS.some(x=>x.k===v)&&(v in o)) return !!o[v]; return abaPadrao(per,v); };
@@ -3865,7 +4160,8 @@ function show(v, keepForm=false, tabHint){
   if(sessao?.perfil==="fiscal"&&!fisAbas().has(v)) v="inicio";
   if(PERF_ABAIXO.includes(sessao?.perfil)&&PERM_ABAS.some(x=>x.k===v)&&!abaOn(sessao.perfil,v)) v="inicio"; // aba desativada pelo administrador // fiscal: só o que o administrador liberou
   curView=v;
-  ["inicio","pend","form","campo","oc","vist","lista","resumo","dash","chk","orc","upd"].forEach(k=>$("#v-"+k).hidden=k!==v);
+  ["inicio","pend","form","campo","oc","vist","lista","resumo","dash","hori","chk","orc","upd"].forEach(k=>$("#v-"+k).hidden=k!==v);
+  if(v==="hori") try{renderHori()}catch(e){console.error(e)}
   if(v==="dash") try{renderDash()}catch(e){console.error(e)}
   if(v==="vist") try{renderVist()}catch(e){console.error(e)}
   if(v==="pend") try{renderPend()}catch(e){console.error(e)}
@@ -5345,7 +5641,8 @@ const nomeSupDe=sup=>{ if(!sup) return ""; const u=Object.values(acesso||{}).fin
 // modo teste do gerente: preenche qualquer parte e assina por qualquer supervisão (assinatura marcada como TESTE)
 const modoTeste=()=>isGerente()&&!!ls.get("gpe_teste",false);
 const tipoAss=px=>px==="rS"?"rel":"chk";
-const supAssinaProprio=(sup,tipo="chk")=>modoTeste()||(!!sessao&&podeAssinar(sessao.id,tipo)&&(travado()?sessao.sup===sup:(!sup||noEscopo(sup))));
+// checklist: quem está liberado assina pelo próprio acesso, só com a senha de assinatura (sem matrícula)
+const supAssinaProprio=(sup,tipo="chk")=>modoTeste()||(!!sessao&&podeAssinar(sessao.id,tipo)&&(tipo==="chk"||(travado()?sessao.sup===sup:(!sup||noEscopo(sup)))));
 const assTeste=sup=>({uid:sessao.id,nome:sessao.nome,sup:sup||"",cargo:"Gerente – ASSINATURA DE TESTE"+(sup?" pela "+sup:""),mat:matDe(acesso?.[sessao.id]||{}),como:"MODO TESTE do gerente – sem validade",teste:true});
 // matrícula + senha de assinatura; se a pessoa ainda não tem senha de assinatura, cria ali mesmo (confirmando a senha de entrar dela)
 const sigMatHtml=(idMat,idPin,rot)=>`<div class="row2"><label class="f">${rot}<input id="${idMat}" class="sigmat" data-pin="${idPin}" autocomplete="off" placeholder="ex.: m859209"></label><label class="f" id="${idPin}W">Senha de assinatura <small class="note">(1ª vez: 654321)</small><input id="${idPin}" type="password" autocomplete="off"></label></div>
@@ -5366,8 +5663,8 @@ async function senhaPorMat(idPin,a){
 }
 const gerAssina=()=>isGerente()&&!modoTeste();
 const assGerente=sup=>({uid:sessao.id,nome:sessao.nome,sup:sup||"",cargo:"Gerente"+(sup?" – assinando pela "+sup:""),mat:matDe(acesso?.[sessao.id]||{}),como:"pelo próprio acesso (gerente)",gerente:true});
-const sigGerHtml=(px,sup,matIds,rot)=>`<p class="note" style="margin:6px 0 0"><b>Assinatura do gerente</b> · assina como <b>${esc(sessao.nome)}</b>, Gerente${sup?`, pela <b>${esc(sup)}</b>`:""}, com a sua senha de assinatura.</p>${sigFormHtml(px,sessao.id)}
-  <details class="sigoutro"><summary>Outro supervisor vai assinar neste aparelho</summary><p class="note" style="margin:6px 0">Preenchendo a matrícula abaixo, vale a assinatura do supervisor (e não a do gerente).</p>${sigMatHtml(matIds[0],matIds[1],rot)}</details>`;
+const sigGerHtml=(px,sup,matIds,rot)=>`<p class="note" style="margin:6px 0 0"><b>Assinatura do gerente</b> · assina como <b>${esc(sessao.nome)}</b>, Gerente${sup?`, pela <b>${esc(sup)}</b>`:""}, com a sua senha de assinatura.</p>${sigFormHtml(px,sessao.id)}${["kE","kR"].includes(px)?"":`
+  <details class="sigoutro"><summary>Outro supervisor vai assinar neste aparelho</summary><p class="note" style="margin:6px 0">Preenchendo a matrícula abaixo, vale a assinatura do supervisor (e não a do gerente).</p>${sigMatHtml(matIds[0],matIds[1],rot)}</details>`}`;
 const sigBlocoHtml=(px,sup)=>modoTeste()
   ? `<p class="note" style="margin:6px 0 0"><span class="tagteste">🧪 TESTE</span> <b>Assinatura de teste do gerente</b>${sup?` pela <b>${esc(sup)}</b>`:""} · use a sua senha de assinatura. Fica marcada como TESTE.</p>${sigFormHtml(px,sessao.id)}`
   : gerAssina()
@@ -9546,6 +9843,7 @@ const ICO={
   chk:svgI('<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/>'),
   man:svgI('<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/>'),
   resumo:svgI('<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'),
+  hori:svgI('<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/>'),
   dash:svgI('<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>'),
   oc:svgI('<path d="M12 3v7M6 8l3 3M18 8l-3 3"/><path d="M4 21h16l-4-8H8z"/>'),
   lista:svgI('<path d="M8 6h13M8 12h13M8 18h13M3 6h.5M3 12h.5M3 18h.5"/>'),
@@ -9560,8 +9858,8 @@ const ICO={
   pend:svgI('<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/>'),
   vist:svgI('<path d="M6 3h8l4 4v6"/><path d="M6 3v18h6"/><circle cx="16.5" cy="16.5" r="3.5"/><path d="M19 19l2.5 2.5"/>')
 };
-const VIEW_NOME={inicio:"Início",pend:"Pendências",form:"Programar",campo:"Em aberto",oc:"Registro emergencial",vist:"Vistoria de processo",lista:"Lista",resumo:"Painel",dash:"Dashboard",chk:"Checklist",orc:"Orçamento",upd:"Atualizar"};
-const NAV_PRIO=["form","campo","chk","resumo","dash","oc","vist","lista","orc","upd"];
+const VIEW_NOME={inicio:"Início",pend:"Pendências",form:"Programar",campo:"Em aberto",oc:"Registro emergencial",vist:"Vistoria de processo",lista:"Lista",resumo:"Painel",dash:"Dashboard",hori:"Horímetro",chk:"Checklist",orc:"Orçamento",upd:"Atualizar"};
+const NAV_PRIO=["form","campo","chk","resumo","dash","oc","vist","lista","hori","orc","upd"];
 let NAV_PERM=new Set(), NAV_MAIS=[];
 function navMontar(){
   const w=document.querySelector("nav.tabs .wrap"); if(!w||w.dataset.ui) return; w.dataset.ui="1";
