@@ -2636,7 +2636,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.12n";
+const APP_VERSAO="2026.11.12o";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -3896,7 +3896,7 @@ const VIST_PROC=()=>{ const RG=["CENTRO OESTE","SUL","LESTE","NORTE","OESTE"]; r
 // Resumo das vistorias, baixa no sistema, indicar vistoriador e PDFs: só de coordenador para cima
 // (coordenador, gerência, gerentes, administrador; a diretoria só consulta)
 // coordenação e gerência só veem os processos da própria gerência (DIRSEN ou DIROP); administrador vê todos
-const vistGerVis=()=>{ try{ if(!sessao||!["gerencia","gerencia_op"].includes(sessao.perfil)) return null; const e=escopoG(); return !e?null:e===ESC_DIROP?"DIROP":"DIRSEN"; }catch(e){ return null; } };
+const vistGerVis=()=>null; // vistoria de processos: gerentes e coordenadores veem tudo (DIRSEN + DIROP), igual para todos
 const vistAlto=()=>!!sessao&&(ORD[sessao.perfil]??99)<=ORD.coordenador;
 const vistCoord=()=>vistAlto()&&!soLeitura();
 const vistBaixaSis=(uid=sessao?.id)=>{ const u=acesso?.[uid]; if(!u||u.ativo===false) return false; if(ehGerPerf(u.perfil)||u.perfil==="admin") return true; return !!(u.abas&&u.abas.baixa_sis); };
