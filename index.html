@@ -2336,7 +2336,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.12e";
+const APP_VERSAO="2026.11.12f";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -8029,7 +8029,10 @@ function renderAlertas(hostEl,opt){
   const am=(()=>{const d=new Date();d.setDate(d.getDate()+1);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")})();
   const falta=r=>{const pv=prevQ(r);return ITENS.some(i=>(+pv[i.c]||0)>(+r.qtd?.[i.c]||0))};
   const semBaixa=all.filter(r=>isProg(r)&&!r.ocorrencia&&(r.data||"")<=d2&&!cancBx(r));
-  const remarc=all.filter(r=>isProg(r)&&(r.historico||[]).length>=2);
+  // remarcados 2x ou mais: some depois de "dar ciência" (volta se for remarcado de novo)
+  const remKey=r=>"rem:"+r.id+":"+(r.historico||[]).length;
+  const remarc=all.filter(r=>isProg(r)&&(r.historico||[]).length>=2&&!notifCanc[remKey(r)]);
+  window.__REMCIE=remarc.map(r=>({key:remKey(r),txt:`${r.bairro||""} — ${r.logradouro||""} (remarcado ${(r.historico||[]).length}x)`,sup:r.supervisao||""}));
   const ocAg=all.filter(r=>r.ocorrencia&&isProg(r));
   const parc=all.filter(r=>r.status==="PARCIAL"&&!r.proxData&&!r.remarcadaPara&&falta(r));
   const PX=proxSemInfo(), semAm=(!PX.cobra?[]:travado()?SUPS.filter(x=>x.id===sessao.sup):SUPS).filter(s=>!proxSemTurma(s.id,PX).ok&&!cancProg(s.id,PX));
@@ -8049,7 +8052,7 @@ function renderAlertas(hostEl,opt){
   if(opt?.sem3){ cobrar=""; semBaixa.length=0; semAm.length=0; itens.splice(0,itens.length,...itens.filter(x=>x[0]&&x[3]!=="ATRASADO"&&x[4]!=="progsem")); }
   const chkA=opt?.sem3?"":chkObrigAlerta("painel");
   const nTot=itens.reduce((a,x)=>a+x[0],0)+(travado()?chkObrigMeu().length:(podeCobrarChk()?chkObrigPend().length:0)); host.dataset.n=nTot;
-  host.innerHTML = chkA + (itens.length ? `<section class="alert"><h3>Atenção</h3>${itens.map(([n,t,d,st,pd,urg])=>`<button type="button" class="${urg?"urg":""}" data-st="${st}" data-pd="${pd}"><b>${urg?"⚠ ":""}${n}</b><span>${t}<small>${esc(d)}</small></span></button>`).join("")}${cobrar}</section>`
+  host.innerHTML = chkA + (itens.length ? `<section class="alert"><h3>Atenção</h3>${itens.map(([n,t,d,st,pd,urg])=>`<button type="button" class="${urg?"urg":""}" data-st="${st}" data-pd="${pd}"><b>${urg?"⚠ ":""}${n}</b><span>${t}<small>${esc(d)}</small></span></button>${pd==="rem"&&!soLeitura()?`<button type="button" class="btn sec" data-remcie="1" style="min-height:42px;font-size:14px;margin:-2px 0 4px">✔ Dar ciência e finalizar</button>`:""}`).join("")}${cobrar}</section>`
     : chkA ? "" : `<section class="alert ok"><h3>Tudo em dia</h3><p class="note" style="margin:0">Nenhuma pendência de baixa, ocorrência ou remarcação.</p></section>`);
   host.querySelectorAll("button[data-st]").forEach(b=>b.onclick=()=>{ if(b.dataset.pd==="oc"&&!soLeitura()){ show("oc"); scrollTo(0,0); return; }
     if(b.dataset.pd==="chkrec"){ show("chk"); scrollTo(0,0); return; }
@@ -8262,6 +8265,11 @@ function abrirCancelar(key,txt){
       novo[key]={por:sessao.id,nome:sessao.nome,em,motivo:mot,txt,sup};
       if(await salvarCanc(novo)){ box.remove(); toast("Aviso cancelado para todos."); } } };
 }
+// "Dar ciência e finalizar" o aviso de serviços remarcados 2 vezes ou mais (fica registrado quem deu ciência e quando)
+document.addEventListener("click",async e=>{ const b=e.target.closest("[data-remcie]"); if(!b) return; const L=window.__REMCIE||[]; if(!L.length) return;
+  if(b.dataset.armed!=="1"){ b.dataset.armed="1"; b.textContent=`Toque de novo para confirmar a ciência (${L.length})`; setTimeout(()=>{ if(b.isConnected){ b.dataset.armed=""; b.textContent="✔ Dar ciência e finalizar"; } },4000); return; }
+  b.disabled=true; const em=new Date().toISOString(), novo={...notifCanc}; L.forEach(x=>{ novo[x.key]={por:sessao.id,nome:sessao.nome,em,motivo:"Ciência dada",txt:x.sup+" · "+x.txt,sup:x.sup}; });
+  if(await salvarCanc(novo)){ toast("Ciência registrada: o aviso foi finalizado."); try{ renderAll(); }catch(x){} } else b.disabled=false; });
 document.addEventListener("click",async e=>{ const c=e.target.closest("[data-canc]"); if(c){ abrirCancelar(c.dataset.canc,c.dataset.canctxt); return; }
   const cl=e.target.closest("[data-canclote]"); if(cl){ const k=cl.dataset.canclote, L=(window.__PCL||[]).filter(x=>k==="*"||x.sup===k).map(x=>({key:x.key,txt:x.txt,sup:x.sup})); if(L.length) abrirCancelar(L); return; }
   const d=e.target.closest("[data-descanc]"); if(d){ const novo={...notifCanc}; delete novo[d.dataset.descanc]; if(await salvarCanc(novo)) toast("Aviso reativado."); } });
