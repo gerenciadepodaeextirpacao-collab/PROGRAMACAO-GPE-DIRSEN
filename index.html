@@ -1302,6 +1302,68 @@ body.sofiscal nav.tabs{display:none!important}
 .lg-frase{margin:6px 0 4px;text-align:center;font:italic 500 21px/1.3 Lora,Georgia,"Times New Roman",serif;color:#1f4d2e;letter-spacing:0}
 .actabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--sunk);padding:4px;border-radius:12px}.actabs button{font:inherit;font-weight:700;font-size:15px;min-height:46px;border:0;border-radius:9px;background:transparent;color:var(--muted);cursor:pointer;padding:6px 10px}.actabs button small{font-weight:600;opacity:.8}.actabs button[aria-selected="true"]{background:var(--surface,#fff);color:var(--brand);box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .trtog{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;width:100%;margin:8px 0 0;padding:8px 12px;min-height:44px;border-radius:10px;border:1.5px dashed var(--line);background:var(--sunk);color:var(--muted);font:inherit;font-size:14px;text-align:left;cursor:pointer}.trtog span{font-size:12px;opacity:.8;margin-left:auto}.trtog.on{border:1.5px solid #b45309;background:#fff4e6;color:#8a3d06}.trtog.on b{color:#b45309}
+/* Dashboard (aba própria) · painel escuro estilo "control room" */
+#v-dash{--dbg:#0b1126;--dcd:#131b38;--dln:#243058;--dtx:#e6ecff;--dmu:#8b97c3}
+#v-dash #dashBody{background:radial-gradient(1200px 500px at 10% -10%,#1b2a66 0%,transparent 60%),radial-gradient(900px 500px at 110% 10%,#3b1d5e 0%,transparent 55%),var(--dbg);color:var(--dtx);border-radius:18px;padding:14px;margin:6px -4px 0;box-shadow:0 10px 30px rgba(5,10,30,.35)}
+#v-dash .dbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 10px}
+#v-dash .dbar button,#v-dash .dbar select,#v-dash .dbar input{font:inherit;font-size:14px;padding:8px 12px;border-radius:10px;border:1px solid var(--dln);background:#18214a;color:var(--dtx);min-height:40px;width:auto}
+#v-dash .dbar button.on{background:linear-gradient(135deg,#22d3ee,#6366f1);color:#05102a;border-color:transparent;font-weight:700;box-shadow:0 0 14px rgba(34,211,238,.45)}
+#v-dash .dbar .sp{flex:1}
+#v-dash .dper{color:var(--dmu);font-size:12.5px;margin:0 0 12px}
+#v-dash .dshk{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:10px;margin-bottom:12px}
+#v-dash .dkp{position:relative;overflow:hidden;background:linear-gradient(160deg,#18224a,#111836);border:1px solid var(--dln);border-radius:14px;padding:12px 14px 10px;border-top:3px solid var(--ac);box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+#v-dash .dkp span{font-size:11.5px;color:var(--dmu);text-transform:uppercase;letter-spacing:.05em}
+#v-dash .dkp b{display:block;font-size:26px;line-height:1.15;font-variant-numeric:tabular-nums;margin-top:4px;color:var(--ac);text-shadow:0 0 14px color-mix(in srgb,var(--ac) 55%,transparent)}
+#v-dash .dkp small{display:block;color:var(--dmu);font-size:12px;margin-top:3px}
+#v-dash .dkp svg{display:block;width:100%;height:28px;margin-top:6px}
+#v-dash .dbox{background:linear-gradient(160deg,rgba(24,34,74,.92),rgba(17,24,54,.92));border:1px solid var(--dln);border-radius:16px;padding:14px;margin-bottom:12px;min-width:0}
+#v-dash .dbox h3{margin:0 0 10px;font-size:15px;color:var(--dtx);letter-spacing:.01em}
+#v-dash .dbox h3 small{font-weight:400;color:var(--dmu);font-size:11.5px;margin-left:6px}
+#v-dash .dg2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:12px;margin-bottom:12px}
+#v-dash .dg3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:12px;margin-bottom:12px}
+#v-dash .dg2 .dbox,#v-dash .dg3 .dbox{margin:0}
+#v-dash canvas{display:block;max-width:100%;touch-action:none}
+#v-dash #dAre,#v-dash #dRingM,#v-dash #dRingE,#v-dash #dDon{touch-action:auto}
+#v-dash .d3w{position:relative}
+#v-dash .d3w canvas{cursor:grab}
+#v-dash .d3tip{position:absolute;z-index:3;min-width:150px;background:rgba(6,12,32,.95);border:1px solid #22d3ee;border-radius:10px;padding:7px 10px;font-size:13px;color:var(--dtx);box-shadow:0 0 16px rgba(34,211,238,.35);pointer-events:none}
+#v-dash .d3tip b{display:block;font-size:12px;color:#22d3ee}
+#v-dash .d3tip small{display:block;color:var(--dmu)}
+#v-dash .dsc{overflow-x:auto}
+#v-dash table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:14px;color:var(--dtx);background:transparent}
+#v-dash th,#v-dash td{padding:8px 6px;border-bottom:1px solid var(--dln);text-align:right;white-space:nowrap;background:transparent;color:inherit}
+#v-dash th:first-child,#v-dash td:first-child{text-align:left}
+#v-dash .dsb td:first-child{white-space:normal}
+#v-dash th{font-size:11px;color:var(--dmu);text-transform:uppercase;font-weight:600;letter-spacing:.04em}
+#v-dash tbody tr:hover td{background:rgba(34,211,238,.05)}
+#v-dash tr.tot td{font-weight:700;border-bottom:0;color:#22d3ee}
+#v-dash .pc{display:inline-block;min-width:46px;padding:2px 7px;border-radius:8px;font-weight:700;font-size:12.5px;text-align:center}
+#v-dash .pc.ok{background:rgba(52,211,153,.16);color:#34d399}#v-dash .pc.warn{background:rgba(251,191,36,.16);color:#fbbf24}#v-dash .pc.bad{background:rgba(248,113,113,.16);color:#f87171}
+#v-dash .dos{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:8px}
+#v-dash .dos>div{border:1px solid var(--dln);background:rgba(10,16,40,.55);border-radius:12px;padding:10px 12px}
+#v-dash .dos b{display:block;font-size:14px}#v-dash .dos small{color:var(--dmu);display:block}
+#v-dash .tg{display:inline-block;margin-top:6px;padding:2px 8px;border-radius:8px;font-size:12.5px;font-weight:600}
+#v-dash .t0{background:rgba(139,151,195,.14);color:var(--dmu)}#v-dash .t1{background:rgba(251,191,36,.16);color:#fbbf24}#v-dash .t2{background:rgba(34,211,238,.16);color:#22d3ee}#v-dash .t3{background:rgba(52,211,153,.18);color:#34d399}
+#v-dash .dlg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--dmu);margin-top:8px}
+#v-dash .dlg i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px;box-shadow:0 0 6px currentColor}
+#v-dash .dnt{color:var(--dmu);font-size:12px;margin:8px 0 0}
+#v-dash .drk{display:grid;gap:9px}
+#v-dash .drk>div{display:grid;grid-template-columns:minmax(92px,130px) 1fr 46px;grid-template-rows:auto auto;column-gap:10px;align-items:center;font-size:13px}
+#v-dash .drk span{grid-row:span 2}
+#v-dash .drk i{display:block;height:12px;border-radius:8px;background:rgba(139,151,195,.14);overflow:hidden}
+#v-dash .drk em{display:block;height:100%;border-radius:8px}
+#v-dash .drk b{text-align:right;font-variant-numeric:tabular-nums}
+#v-dash .drk small{grid-column:2/4;color:var(--dmu);font-size:11.5px}
+#v-dash .dnav{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;margin:0 0 4px;scrollbar-width:none}
+#v-dash .dnav button{flex:0 0 auto;font:inherit;font-size:12.5px;padding:6px 11px;border-radius:999px;border:1px solid var(--dln);background:rgba(99,102,241,.12);color:var(--dtx);min-height:34px;width:auto}
+#v-dash .dsec{font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:#a5b4fc;margin:18px 2px 10px;display:flex;align-items:center;gap:8px}
+#v-dash .dsec::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(165,180,252,.45),transparent)}
+#v-dash .dmini{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr));gap:10px;margin-bottom:12px}
+#v-dash .dmini.in{margin:0}
+#v-dash .dmi{background:linear-gradient(160deg,#18224a,#111836);border:1px solid var(--dln);border-left:3px solid var(--ac);border-radius:12px;padding:10px 12px}
+#v-dash .dmi b{display:block;font-size:22px;color:var(--ac);font-variant-numeric:tabular-nums;text-shadow:0 0 12px color-mix(in srgb,var(--ac) 50%,transparent)}
+#v-dash .dmi span{display:block;font-size:12px;color:var(--dtx);margin-top:2px}
+#v-dash .dmi small{display:block;font-size:11.5px;color:var(--dmu)}
 </style>
 
 <div id="login" class="login" hidden>
@@ -1706,6 +1768,11 @@ body.sofiscal nav.tabs{display:none!important}
 </div>
 
 <!-- ============ RESUMO ============ -->
+<div id="v-dash" hidden>
+  <h2>Dashboard</h2>
+  <p class="lead">Resumo dos números da gerência: valor x meta, execução, baixas e O.S do dia.</p>
+  <div id="dashBody"></div>
+</div>
 <div id="v-resumo" hidden>
   <h2>Painel</h2>
   <p class="lead">Programado × executado em tempo real, direto dos lançamentos. Use os filtros para ver uma semana, um grupo ou uma turma.</p>
@@ -1746,6 +1813,7 @@ body.sofiscal nav.tabs{display:none!important}
   <button type="button" data-v="vist">Vistoria</button>
   <button type="button" data-v="lista">Lista</button>
   <button type="button" data-v="resumo">Painel</button>
+  <button type="button" data-v="dash">Dashboard</button>
   <button type="button" data-v="chk">Checklist</button>
   <button type="button" data-v="orc" hidden>Orçamento</button>
   <button type="button" data-v="upd" hidden>Atualizar</button>
@@ -2143,6 +2211,7 @@ function applyPerms(){ try{ equipAplicar(); }catch(e){}
   $("#testeBtn").hidden=!isGerente(); $("#testeBtn").setAttribute("aria-pressed",String(modoTeste())); barTeste();
   const tabs=[...document.querySelectorAll("nav.tabs button")];
   tabs.forEach(b=>b.hidden = ehVictor() ? false : PERF_ABAIXO.includes(per) ? !abaOn(per,b.dataset.v) : abaPadraoOculta(per,b.dataset.v));
+  { const rb=tabs.find(b=>b.dataset.v==="resumo"), db_=tabs.find(b=>b.dataset.v==="dash"); window.__dashOk=!!rb&&!rb.hidden&&per!=="fiscal"; if(db_) db_.hidden=!window.__dashOk; if(curView==="dash"&&!window.__dashOk) show("inicio"); } // Dashboard: mesmo acesso do Painel
   function abaPadraoOculta(per,v){ const b={dataset:{v}}; return (b.dataset.v==="upd" && !ehGerPerf(per)) || (b.dataset.v==="orc" && !["admin","gerencia","gerencia_op","fiscal"].includes(per)) || (per==="fiscal" && b.dataset.v!=="inicio" && b.dataset.v!=="mais" && !fisAbas().has(b.dataset.v)) || (per==="diretoria" && (b.dataset.v==="form"||b.dataset.v==="campo"||b.dataset.v==="oc")) || (per==="supervisor" && b.dataset.v==="resumo") || (per==="supervisor1" && !SUP1_ABAS.has(b.dataset.v)); }
   if(PERF_ABAIXO.includes(per)&&PERM_ABAS.some(x=>x.k===curView)&&!abaOn(per,curView)) show("inicio");
   document.body.classList.toggle("sofiscal",per==="fiscal"&&[...fisAbas()].filter(k=>k!=="vist").length<=1); if(per==="fiscal"&&!fisAbas().has(curView)) show("inicio");
@@ -2157,6 +2226,234 @@ function applyPerms(){ try{ equipAplicar(); }catch(e){}
   if(curView==="orc" && !podeOrc()) show("inicio");
   if(curView==="upd" && !ehGerPerf(per)) show(per==="diretoria"?"resumo":per==="fiscal"?"campo":"form");
 }
+
+/* ---------- Dashboard (aba própria; mesmo acesso e escopo do Painel) · visual escuro com gráficos 3D ---------- */
+const DASH={per:"7",de:"",ate:"",grp:"",tur:""}; try{ Object.assign(DASH,JSON.parse(localStorage.getItem("gpe_dash_f")||"{}")); }catch(e){}
+const D3V={}; // ângulo de cada gráfico 3D (fica igual ao atualizar os dados)
+const DC={cy:"#22d3ee",vi:"#a78bfa",pk:"#f472b6",gr:"#34d399",am:"#fbbf24",rd:"#f87171",bl:"#60a5fa",tx:"#e6ecff",mu:"#8b97c3",gd:"rgba(139,151,195,.16)"};
+function d3Hex(h,f){ h=h.replace("#",""); const n=parseInt(h,16); let r=n>>16&255,g=n>>8&255,b=n&255; const c=x=>Math.max(0,Math.min(255,Math.round(f>1?x+(255-x)*(f-1):x*f))); return `rgb(${c(r)},${c(g)},${c(b)})`; }
+function d3Canvas(cv,hgt){ const w=cv.parentElement.clientWidth||320, dpr=Math.min(2,window.devicePixelRatio||1); cv.width=w*dpr; cv.height=hgt*dpr; cv.style.width=w+"px"; cv.style.height=hgt+"px"; const x=cv.getContext("2d"); x.setTransform(dpr,0,0,dpr,0,0); x.clearRect(0,0,w,hgt); return [x,w,hgt]; }
+// barras 3D giráveis (arraste para girar, toque na barra para ver o valor)
+function d3Bars(cv,o){
+  const key=o.key, st=D3V[key]=D3V[key]||{yaw:o.yaw??-0.62,pitch:o.pitch??0.5};
+  const R=o.rows.length, C=o.cols.length; let mx=Math.max(o.plane||0,...o.vals.flat(),1);
+  const Hw=Math.max(2.2,Math.min(4.5,Math.max(R,C)*0.42)), bs=o.bs||0.62, hits=[];
+  function draw(){
+    const w0=cv.parentElement.clientWidth||320, cy_=Math.cos(st.yaw), sy_=Math.sin(st.yaw), cp=Math.cos(st.pitch), sp=Math.sin(st.pitch);
+    const P=(X,Y,Z)=>{ X-=C/2; Z-=R/2; const xr=X*cy_-Z*sy_, zr=X*sy_+Z*cy_; return [xr, -(Y*cp - zr*sp), zr]; };
+    const corners=[[0,0,0],[C,0,0],[0,0,R],[C,0,R],[0,Hw,0],[C,Hw,0],[0,Hw,R],[C,Hw,R]].map(p=>P(...p));
+    const xs=corners.map(p=>p[0]), ys=corners.map(p=>p[1]), padL=o.padL??46, padB=26, padT=22, Hmax=o.h||320;
+    const s=Math.min((w0-padL-14)/(Math.max(...xs)-Math.min(...xs)), (Hmax-padB-padT)/(Math.max(...ys)-Math.min(...ys)));
+    const [x,w,h]=d3Canvas(cv,Math.max(150,Math.round((Math.max(...ys)-Math.min(...ys))*s+padB+padT)));
+    const ox=padL+((w-padL-14)-(Math.max(...xs)-Math.min(...xs))*s)/2-Math.min(...xs)*s, oy=padT-Math.min(...ys)*s;
+    const S=(X,Y,Z)=>{ const p=P(X,Y,Z); return [ox+p[0]*s, oy+p[1]*s, p[2]]; };
+    const area=pts=>{ let a=0; for(let i=0;i<pts.length;i++){ const p=pts[i], q=pts[(i+1)%pts.length]; a+=p[0]*q[1]-q[0]*p[1]; } return a; };
+    const ref=Math.sign(area([[0,1,0],[0,1,1],[1,1,1],[1,1,0]].map(p=>S(...p))))||1;
+    const poly=(pts,fill,stroke)=>{ x.beginPath(); pts.forEach((p,i)=>i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1])); x.closePath(); x.fillStyle=fill; x.fill(); if(stroke){ x.strokeStyle=stroke; x.lineWidth=1; x.stroke(); } };
+    // chão com grade
+    poly([S(0,0,0),S(C,0,0),S(C,0,R),S(0,0,R)],"rgba(96,165,250,.06)","rgba(139,151,195,.25)");
+    x.strokeStyle=DC.gd; x.lineWidth=1;
+    for(let c=1;c<C;c++){ const a=S(c,0,0), b=S(c,0,R); x.beginPath(); x.moveTo(a[0],a[1]); x.lineTo(b[0],b[1]); x.stroke(); }
+    for(let r=1;r<R;r++){ const a=S(0,0,r), b=S(C,0,r); x.beginPath(); x.moveTo(a[0],a[1]); x.lineTo(b[0],b[1]); x.stroke(); }
+    // parede de trás com escala
+    const back=st.yaw<0?0:0; for(let k=1;k<=4;k++){ const y=Hw*k/4, a=S(0,y,0), b=S(C,y,0); x.strokeStyle=DC.gd; x.beginPath(); x.moveTo(a[0],a[1]); x.lineTo(b[0],b[1]); x.stroke(); x.fillStyle=DC.mu; x.font="10px system-ui"; x.textAlign="right"; x.fillText(o.fmtAx?o.fmtAx(mx*k/4):Math.round(mx*k/4),a[0]-4,a[1]+3); }
+    const bars=[]; for(let r=0;r<R;r++) for(let c=0;c<C;c++){ const v=+o.vals[r][c]||0; bars.push({r,c,v,d:P(c+.5,0,r+.5)[2]}); }
+    bars.sort((a,b)=>b.d-a.d); hits.length=0;
+    for(const b of bars){ const x0=b.c+(1-bs)/2, x1=x0+bs, z0=b.r+(1-bs)/2, z1=z0+bs, hh=Math.max(.02,b.v/mx*Hw), col=o.color(b.r,b.c,b.v);
+      const F=[[[x0,hh,z0],[x0,hh,z1],[x1,hh,z1],[x1,hh,z0]],[[x0,0,z1],[x1,0,z1],[x1,hh,z1],[x0,hh,z1]],[[x1,0,z0],[x0,0,z0],[x0,hh,z0],[x1,hh,z0]],[[x1,0,z1],[x1,0,z0],[x1,hh,z0],[x1,hh,z1]],[[x0,0,z0],[x0,0,z1],[x0,hh,z1],[x0,hh,z0]]];
+      const L=[1.25,.85,.55,.68,.68]; const vis=[];
+      F.forEach((f,i)=>{ const pts=f.map(p=>S(...p)); if(Math.sign(area(pts))===ref){ vis.push(pts); const g=i===0?d3Hex(col,1.25):d3Hex(col,L[i]); if(i===0){ poly(pts,g,d3Hex(col,1.45)); } else { const gr=x.createLinearGradient(0,Math.min(...pts.map(p=>p[1])),0,Math.max(...pts.map(p=>p[1]))); gr.addColorStop(0,g); gr.addColorStop(1,d3Hex(col,L[i]*.55)); poly(pts,gr,"rgba(0,0,0,.18)"); } } });
+      if(b.v>0){ x.save(); x.shadowColor=col; x.shadowBlur=10; const t=S(x0+bs/2,hh,z0+bs/2); x.fillStyle=d3Hex(col,1.5); x.beginPath(); x.arc(t[0],t[1],1.6,0,7); x.fill(); x.restore(); }
+      hits.push({vis,b}); }
+    if(o.plane){ const y=o.plane/mx*Hw, pts=[S(0,y,0),S(C,y,0),S(C,y,R),S(0,y,R)]; poly(pts,"rgba(251,191,36,.13)","rgba(251,191,36,.85)"); const t=S(C,y,0); x.fillStyle=DC.am; x.font="bold 11px system-ui"; x.textAlign="left"; const tw=x.measureText(o.planeTxt||"meta").width; x.fillText(o.planeTxt||"meta",Math.max(4,Math.min(w-tw-4,t[0]+4)),t[1]-4); }
+    // rótulos
+    x.fillStyle=DC.mu; x.font="10.5px system-ui"; x.textAlign="center";
+    const step=Math.max(1,Math.ceil(C/Math.max(3,(w-60)/48)));
+    for(let c=0;c<C;c+=step){ const p=S(c+.5,0,R); x.fillText(o.cols[c],p[0],p[1]+14); }
+    if(R>1){ x.textAlign="right"; for(let r=0;r<R;r++){ const p=S(0,0,r+.5); x.fillText(o.rows[r],p[0]-6,p[1]+3); } }
+  }
+  draw();
+  const tip=cv.parentElement.querySelector(".d3tip");
+  let drag=null;
+  cv.onpointerdown=e=>{ drag={x:e.clientX,y:e.clientY,mv:false,yaw:st.yaw,pitch:st.pitch}; cv.setPointerCapture(e.pointerId); };
+  cv.onpointermove=e=>{ if(!drag) return; const dx=e.clientX-drag.x, dy=e.clientY-drag.y; if(Math.abs(dx)+Math.abs(dy)>5) drag.mv=true; if(!drag.mv) return; st.yaw=drag.yaw+dx*0.01; st.pitch=Math.max(.12,Math.min(1.25,drag.pitch+dy*0.006)); draw(); if(tip) tip.hidden=true; };
+  cv.onpointerup=e=>{ const d=drag; drag=null; if(!d||d.mv||!tip) return; const rc=cv.getBoundingClientRect(), px=e.clientX-rc.left, py=e.clientY-rc.top;
+    const inP=(pts)=>{ let c=false; for(let i=0,j=pts.length-1;i<pts.length;j=i++){ const a=pts[i],b=pts[j]; if((a[1]>py)!==(b[1]>py)&&px<(b[0]-a[0])*(py-a[1])/(b[1]-a[1])+a[0]) c=!c; } return c; };
+    for(let i=hits.length-1;i>=0;i--){ if(hits[i].vis.some(inP)){ const b=hits[i].b; tip.innerHTML=o.tip(b.r,b.c,b.v); tip.style.left=Math.min(rc.width-170,Math.max(0,px-80))+"px"; tip.style.top=Math.max(0,py-58)+"px"; tip.hidden=false; return; } } tip.hidden=true; };
+}
+// rosca 3D
+function d3Donut(cv,sl,centro,sub){
+  const [x,w,h]=d3Canvas(cv,230), tot=sl.reduce((a,s)=>a+s.v,0)||1, cx=w/2, rx=Math.min(w*0.42,120), ry=rx*0.52, dep=Math.max(10,rx*0.16), ir=0.56, cy=h/2-dep/2-6;
+  const ring=(yy,a0,a1,col)=>{ x.beginPath(); x.ellipse(cx,yy,rx,ry,0,a0,a1); x.ellipse(cx,yy,rx*ir,ry*ir,0,a1,a0,true); x.closePath(); x.fillStyle=col; x.fill(); };
+  for(let i=dep;i>=0;i--){ let a=-Math.PI/2; for(const s of sl){ const da=s.v/tot*Math.PI*2; if(da>0) ring(cy+i,a,a+da,i===0?d3Hex(s.c,1.08):d3Hex(s.c,.42+.25*(1-i/dep))); a+=da; } }
+  let a=-Math.PI/2; x.strokeStyle="rgba(10,15,35,.55)"; x.lineWidth=1.2; for(const s of sl){ const da=s.v/tot*Math.PI*2; if(da>0&&sl.length>1){ x.beginPath(); x.moveTo(cx+Math.cos(a)*rx*ir,cy+Math.sin(a)*ry*ir); x.lineTo(cx+Math.cos(a)*rx,cy+Math.sin(a)*ry); x.stroke(); } a+=da; }
+  const gl=x.createRadialGradient(cx,cy-ry*.3,2,cx,cy,rx); gl.addColorStop(0,"rgba(255,255,255,.14)"); gl.addColorStop(1,"rgba(255,255,255,0)"); x.beginPath(); x.ellipse(cx,cy,rx,ry,0,0,7); x.ellipse(cx,cy,rx*ir,ry*ir,0,7,0,true); x.fillStyle=gl; x.fill();
+  x.fillStyle=DC.tx; x.font="bold 22px system-ui"; x.textAlign="center"; x.fillText(centro,cx,cy+6); x.fillStyle=DC.mu; x.font="11px system-ui"; x.fillText(sub,cx,cy+21);
+}
+// anel de progresso (velocímetro)
+function d3Ring(cv,pct,col,lbl){
+  const [x,w,h]=d3Canvas(cv,190), cx=w/2, cy=h/2-4, r=Math.min(w*0.4,h*0.36), a0=Math.PI*0.75, a1=Math.PI*2.25, p=Math.max(0,Math.min(1,pct/100));
+  x.lineCap="round"; x.lineWidth=r*0.2; x.strokeStyle="rgba(139,151,195,.16)"; x.beginPath(); x.arc(cx,cy,r,a0,a1); x.stroke();
+  if(p>0){ const g=x.createLinearGradient(cx-r,0,cx+r,0); g.addColorStop(0,d3Hex(col,.7)); g.addColorStop(1,d3Hex(col,1.35)); x.save(); x.shadowColor=col; x.shadowBlur=14; x.strokeStyle=g; x.beginPath(); x.arc(cx,cy,r,a0,a0+(a1-a0)*p); x.stroke(); x.restore(); }
+  for(let k=0;k<=10;k++){ const a=a0+(a1-a0)*k/10, r1=r*1.2, r2=r*(k%5?1.15:1.1); x.strokeStyle="rgba(139,151,195,.35)"; x.lineWidth=1; x.lineCap="butt"; x.beginPath(); x.moveTo(cx+Math.cos(a)*r1,cy+Math.sin(a)*r1); x.lineTo(cx+Math.cos(a)*r2,cy+Math.sin(a)*r2); x.stroke(); }
+  x.fillStyle=DC.tx; x.font="bold 28px system-ui"; x.textAlign="center"; x.fillText(Math.round(pct)+"%",cx,cy+10); x.fillStyle=DC.mu; x.font="11.5px system-ui"; x.fillText(lbl,cx,cy+r*1.02+12);
+}
+// área neon (acumulado x meta acumulada)
+function d3Area(cv,lbl,A,B){
+  const [x,w,h]=d3Canvas(cv,210), pl=48, pr=10, pt=14, pb=24, n=A.length, mx=Math.max(1,...A,...B)*1.08, X=i=>pl+(n<2?0:(w-pl-pr)*i/(n-1)), Y=v=>pt+(h-pt-pb)*(1-v/mx);
+  x.font="10px system-ui"; for(let k=0;k<=4;k++){ const y=Y(mx*k/4); x.strokeStyle=DC.gd; x.beginPath(); x.moveTo(pl,y); x.lineTo(w-pr,y); x.stroke(); x.fillStyle=DC.mu; x.textAlign="right"; x.fillText(d3K(mx*k/4),pl-5,y+3); }
+  const line=(V,col,fill,dash)=>{ x.beginPath(); V.forEach((v,i)=>i?x.lineTo(X(i),Y(v)):x.moveTo(X(i),Y(v))); if(fill){ x.save(); x.lineTo(X(n-1),Y(0)); x.lineTo(X(0),Y(0)); x.closePath(); const g=x.createLinearGradient(0,pt,0,h-pb); g.addColorStop(0,col.replace("rgb","rgba").replace(")",",.45)")); g.addColorStop(1,col.replace("rgb","rgba").replace(")",",0)")); x.fillStyle=g; x.fill(); x.restore(); x.beginPath(); V.forEach((v,i)=>i?x.lineTo(X(i),Y(v)):x.moveTo(X(i),Y(v))); }
+    x.save(); x.setLineDash(dash||[]); x.shadowColor=col; x.shadowBlur=dash?0:10; x.strokeStyle=col; x.lineWidth=2.4; x.stroke(); x.restore(); };
+  line(B,d3Hex(DC.am,1),false,[6,5]); line(A,d3Hex(DC.cy,1),true);
+  if(n) { x.fillStyle=d3Hex(DC.cy,1.3); x.beginPath(); x.arc(X(n-1),Y(A[n-1]),4,0,7); x.fill(); }
+  x.fillStyle=DC.mu; x.textAlign="center"; const step=Math.max(1,Math.ceil(n/Math.max(3,(w-pl)/48))); for(let i=0;i<n;i+=step) x.fillText(lbl[i],X(i),h-7);
+}
+const d3K=v=>v>=1e6?(v/1e6).toLocaleString("pt-BR",{maximumFractionDigits:1})+" mi":v>=1e3?Math.round(v/1e3).toLocaleString("pt-BR")+" mil":Math.round(v).toLocaleString("pt-BR");
+function renderDash(){
+  const host=$("#dashBody"); if(!host) return;
+  const sv=()=>{ try{ localStorage.setItem("gpe_dash_f",JSON.stringify(DASH)); }catch(e){} };
+  const isoD=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  const addD=(x,n)=>{ const d=new Date(x+"T12:00"); d.setDate(d.getDate()+n); return isoD(d); }, dm=x=>x?x.slice(8,10)+"/"+x.slice(5,7):"";
+  const kk=v=>"R$ "+d3K(v);
+  const rs=v=>Math.round(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL",maximumFractionDigits:0});
+  const hj=hoje(); let de,ate;
+  if(DASH.per==="1"){de=ate=hj;} else if(DASH.per==="ontem"){de=ate=addD(hj,-1);} else if(DASH.per==="30"){de=addD(hj,-29);ate=hj;} else if(DASH.per==="mes"){de=hj.slice(0,8)+"01";ate=hj;} else if(DASH.per==="x"){de=DASH.de||addD(hj,-6);ate=DASH.ate||hj; if(de>ate){const t=de;de=ate;ate=t;}} else {de=addD(hj,-6);ate=hj;}
+  const dias=[]; for(let d=de;d<=ate&&dias.length<120;d=addD(d,1)) dias.push(d);
+  const GR=[...new Set(supsVis().map(x=>x.grupo))];
+  if(DASH.grp&&!GR.includes(DASH.grp)) DASH.grp="";
+  const sups=supsVis().filter(x=>(!DASH.grp||x.grupo===DASH.grp)&&(!DASH.tur||x.turno===DASH.tur)), ids=new Set(sups.map(x=>x.id));
+  const R=todos().filter(r=>ids.has(r.supervisao)&&!r.ocorrencia&&!r.arquivado);
+  const noP=d=>d>=de&&d<=ate, dE=r=>r.dataExec||r.data||"";
+  const nova=()=>({prog:0,sim:0,parc:0,nao:0,sem:0,fut:0,val:0,poda:0,ext:0,dia:{}});
+  const por={}; sups.forEach(x=>por[x.id]=nova()); const tot=nova(), pd={}; dias.forEach(d=>pd[d]=0);
+  const arv=(q,g)=>Object.entries(q||{}).reduce((a,[c,n])=>a+(c.startsWith(g)?(+n||0):0),0);
+  R.forEach(r=>{ const b=por[r.supervisao];
+    if(!r.avulso&&noP(r.data||"")){ b.prog++; tot.prog++;
+      if(r.status==="SIM"){b.sim++;tot.sim++;} else if(r.status==="PARCIAL"){b.parc++;tot.parc++;} else if(r.status==="NÃO"){b.nao++;tot.nao++;}
+      else if(isProg(r)){ if(isCobra(r)){b.sem++;tot.sem++;} else {b.fut++;tot.fut++;} } }
+    if((r.status==="SIM"||r.status==="PARCIAL")&&noP(dE(r))){ const q=r.qtd||{}, v=receitaDe(q); b.val+=v; tot.val+=v; const p=arv(q,"30"), e=arv(q,"31"); b.poda+=p; tot.poda+=p; b.ext+=e; tot.ext+=e; if(pd[dE(r)]!==undefined) pd[dE(r)]+=v; b.dia[dE(r)]=(b.dia[dE(r)]||0)+v; } });
+  const util=d=>new Date(d+"T12:00").getDay()!==0, du=dias.filter(d=>d<=hj&&util(d)).length;
+  sups.forEach(x=>por[x.id].meta=metaDe(x.id)*du); tot.meta=sups.reduce((a,x)=>a+por[x.id].meta,0);
+  const mDia=sups.reduce((a,x)=>a+metaDe(x.id),0);
+  const ven=b=>b.sim+b.parc+b.nao+b.sem;
+  const pE=ven(tot)?Math.round((tot.sim+tot.parc)/ven(tot)*100):0, pM=tot.meta?Math.round(tot.val/tot.meta*100):0;
+  const cor=p=>p>=90?DC.gr:p>=60?DC.am:DC.rd, cl=p=>p>=90?"ok":p>=60?"warn":"bad";
+  // agrupa por semana quando o período é longo
+  const sem=dias.length>16; const grp=[]; dias.forEach(d=>{ const k=sem?(()=>{ const x=new Date(d+"T12:00"); x.setDate(x.getDate()-x.getDay()); return isoD(x); })():d; let g=grp[grp.length-1]; if(!g||g.k!==k) grp.push(g={k,ds:[]}); g.ds.push(d); });
+  const gLbl=g=>sem?"sem "+dm(g.ds[0]):dm(g.k), gMeta=g=>mDia*g.ds.filter(d=>d<=hj&&util(d)).length;
+  const spark=(V,col)=>{ const n=V.length, m=Math.max(1,...V); if(n<2) return ""; const pts=V.map((v,i)=>`${(i/(n-1)*100).toFixed(1)},${(28-v/m*24).toFixed(1)}`).join(" "); return `<svg viewBox="0 0 100 30" preserveAspectRatio="none"><polyline points="0,30 ${pts} 100,30" fill="${col}22" stroke="none"/><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`; };
+  const vDia=dias.map(d=>pd[d]);
+  // itens do contrato, bairros, extras, remarcações
+  const itQ={}, bai={}; R.forEach(r=>{ if((r.status==="SIM"||r.status==="PARCIAL")&&noP(dE(r))){ Object.entries(r.qtd||{}).forEach(([c,n])=>itQ[c]=(itQ[c]||0)+(+n||0)); const k=(r.bairro||"—").trim(); bai[k]=(bai[k]||0)+receitaDe(r.qtd||{}); } });
+  const AV=R.filter(r=>r.avulso&&(r.status==="SIM"||r.status==="PARCIAL")&&noP(dE(r))), avV=AV.reduce((a,r)=>a+receitaDe(r.qtd||{}),0);
+  const VAL=todos().filter(r=>ids.has(r.supervisao)&&r.status==="VALIDAR").length;
+  const REM=R.filter(r=>!r.avulso&&noP(r.data||"")&&(r.remarcadaDe||(r.status==="NÃO"&&r.proxData)||(r.status==="PARCIAL"&&r.proxData))).length;
+  // emergências (galho / árvore caída)
+  const OCR=todos().filter(r=>r.ocorrencia&&ids.has(r.supervisao)&&noP(r.data||"")), ocQ=t=>OCR.filter(r=>r.ocorrencia.tipo===t).reduce((a,r)=>a+(+r.ocorrencia.qtd||1),0);
+  // checklist
+  const CK=(typeof chks!=="undefined"?chks:[]).filter(c=>ids.has(c.supervisao)&&noP(chkDia(c)||c.data||"")), ckAv=CK.filter(c=>Object.values(c.itens||{}).includes("NÃO")).length, ckCt=CK.filter(c=>c.recusa).length, ckRb=CK.filter(c=>c.recebe?.em||c.recebe?.ass).length;
+  let ckPend=0; try{ ckPend=chkObrigPend().length; }catch(e){}
+  // manutenção
+  const MN=(typeof mans!=="undefined"?mans:[]).filter(m=>(!m.supervisao||ids.has(m.supervisao))&&noP(m.data||"")), mnAb=MN.filter(m=>!m.retorno).length, mnT={}; MN.forEach(m=>{ const t=m.tipo||"OUTRO"; mnT[t]=(mnT[t]||0)+1; });
+  // vistoria de processos
+  try{ V.iniciar(); if(!V.__dash){ V.__dash=1; V.ouvir(()=>{ try{ if(curView==="dash") renderDash(); }catch(e){} }); } }catch(e){}
+  const VR=Object.values((typeof V!=="undefined"&&V.regs)||{}), vTot=new Set([...(typeof VIST_RAW!=="undefined"?VIST_RAW.map(a=>a[0]):[]),...Object.keys((typeof V!=="undefined"&&V.regs)||{})]).size;
+  const vVis=VR.filter(r=>r.vistoriado).length, vPer=VR.filter(r=>noP((r.data_vistoria||"").slice(0,10))), vJa=VR.filter(r=>r.situacao==="ja_executado").length, vNao=VR.filter(r=>r.situacao==="nao_executado").length;
+  const vEnv=VR.filter(r=>r.envio).length, vUrb=VR.filter(r=>r.situacao==="nao_executado"&&!r.urbantrim&&!r.urb_cad).length;
+  // orçamentos
+  const OR=(typeof orcs!=="undefined"?orcs:[]).filter(o=>noP(o.data||"")), orV=OR.reduce((a,o)=>a+(typeof orcTotal==="function"?orcTotal(o):0),0);
+const mini=(t,v,c,s)=>`<div class="dmi" style="--ac:${c}"><b>${v}</b><span>${t}</span>${s?`<small>${s}</small>`:""}</div>`;
+  const kpi=(t,v,s,c,sp)=>`<div class="dkp" style="--ac:${c}"><span>${t}</span><b>${v}</b><small>${s}</small>${sp||""}</div>`;
+  let h=`<div class="dbar">${[["1","Hoje"],["ontem","Ontem"],["7","7 dias"],["30","30 dias"],["mes","Este mês"],["x","Escolher"]].map(([v,t])=>`<button type="button" data-dper="${v}" class="${DASH.per===v?"on":""}">${t}</button>`).join("")}
+    ${DASH.per==="x"?`<input type="date" id="dDe" value="${de}"> até <input type="date" id="dAte" value="${ate}">`:""}<span class="sp"></span>
+    ${GR.length>1?`<select id="dGrp"><option value="">Todas as podas</option>${GR.map(g=>`<option ${DASH.grp===g?"selected":""}>${esc(g)}</option>`).join("")}</select>`:""}
+    <select id="dTur"><option value="">Diurno e noturno</option><option ${DASH.tur==="DIURNO"?"selected":""}>DIURNO</option><option ${DASH.tur==="NOTURNO"?"selected":""}>NOTURNO</option></select></div>
+    <div class="dnav">${[["prod","📈 Produção"],["os","🧾 O.S do dia"],["chk","✅ Checklist"],["man","🔧 Manutenção"],["vis","📍 Vistoria"],["emg","🌳 Emergências"],["ext","➕ Extras"],["tab","📋 Tabelas"]].map(([k,t])=>`<button type="button" data-djump="ds-${k}">${t}</button>`).join("")}</div>
+    <p class="dper">${de===ate?"Dia "+dm(de):"De "+dm(de)+" a "+dm(ate)} · ${sups.length} turma${sups.length===1?"":"s"} · atualizado ${new Date().toTimeString().slice(0,5)}</p>
+    <h2 class="dsec" id="ds-prod">📈 Produção</h2>
+    <div class="dshk">
+      ${kpi("Valor executado",kk(tot.val),`${pM}% da meta de ${kk(tot.meta)}`,cor(pM),spark(vDia,cor(pM)))}
+      ${kpi("Programados",int(tot.prog),`${int(tot.fut)} ainda no prazo`,DC.bl)}
+      ${kpi("Executados",int(tot.sim+tot.parc),`${pE}% dos vencidos · ${int(tot.parc)} parciais`,cor(pE))}
+      ${kpi("Não executados",int(tot.nao),"remarcados ou com motivo",tot.nao?DC.am:DC.vi)}
+      ${kpi("Sem baixa",int(tot.sem),"já deveriam ter baixa",tot.sem?DC.rd:DC.gr)}
+      ${kpi("Árvores",int(tot.poda+tot.ext),`${int(tot.poda)} podas · ${int(tot.ext)} extirpações`,DC.pk)}
+    </div>
+    <div class="dg3">
+      <div class="dbox"><h3>Meta do período</h3><canvas id="dRingM"></canvas></div>
+      <div class="dbox"><h3>Situação dos serviços</h3><canvas id="dDon"></canvas><div class="dlg" id="dDonL"></div></div>
+      <div class="dbox"><h3>Execução</h3><canvas id="dRingE"></canvas></div>
+    </div>
+    <div class="dbox"><h3>Valor executado por ${sem?"semana":"dia"} <small>3D · arraste para girar · toque na barra</small></h3><div class="d3w"><canvas id="d3Dia"></canvas><div class="d3tip" hidden></div></div>
+      <div class="dlg"><span><i style="background:${DC.cy}"></i>Executado</span><span><i style="background:${DC.am}"></i>Meta (${kk(sem?mDia*6:mDia)} por ${sem?"semana":"dia"})</span></div></div>
+    <div class="dbox"><h3>Valor por turma e ${sem?"semana":"dia"} <small>3D · arraste para girar</small></h3><div class="d3w"><canvas id="d3Mat"></canvas><div class="d3tip" hidden></div></div>
+      <div class="dlg"><span><i style="background:${DC.gr}"></i>bateu a meta</span><span><i style="background:${DC.am}"></i>60% a 89%</span><span><i style="background:${DC.rd}"></i>abaixo de 60%</span></div></div>
+    <div class="dg2">
+      <div class="dbox"><h3>Acumulado no período</h3><canvas id="dAre"></canvas><div class="dlg"><span><i style="background:${DC.cy}"></i>Executado acumulado</span><span><i style="background:${DC.am}"></i>Meta acumulada</span></div></div>
+      <div class="dbox"><h3>Programado × executado por turma <small>3D</small></h3><div class="d3w"><canvas id="d3Tur"></canvas><div class="d3tip" hidden></div></div>
+        <div class="dlg"><span><i style="background:${DC.bl}"></i>Programados</span><span><i style="background:${DC.gr}"></i>Executados</span><span><i style="background:${DC.rd}"></i>Sem baixa</span></div></div>
+    </div>
+    <div class="dg2">
+      <div class="dbox"><h3>Itens do contrato executados <small>3D · quantidade por código</small></h3><div class="d3w"><canvas id="d3It"></canvas><div class="d3tip" hidden></div></div>
+        <div class="dlg"><span><i style="background:${DC.gr}"></i>Poda (30.x)</span><span><i style="background:${DC.pk}"></i>Extirpação (31.x)</span></div></div>
+      <div class="dbox"><h3>Bairros com mais valor executado</h3><div class="drk">${Object.entries(bai).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([b,v],i,A)=>`<div><span>${esc(b)}</span><i><em style="width:${(v/(A[0][1]||1)*100).toFixed(1)}%;background:linear-gradient(90deg,#6366f1,${DC.cy});box-shadow:0 0 10px ${DC.cy}66"></em></i><b style="color:${DC.cy}">${i+1}º</b><small>${kk(v)}</small></div>`).join("")||`<p class="dnt">Sem execução no período.</p>`}</div></div>
+    </div>
+    <div class="dbox"><h3>Ranking · % da meta por turma</h3><div class="drk">${sups.map(x=>({x,b:por[x.id],p:por[x.id].meta?por[x.id].val/por[x.id].meta*100:0})).sort((a,b)=>b.p-a.p).map(({x,b,p})=>`<div><span>${esc(x.id.replace("PODA ",""))}</span><i><em style="width:${Math.min(100,p).toFixed(1)}%;background:linear-gradient(90deg,${d3Hex(cor(p),.6)},${cor(p)});box-shadow:0 0 10px ${cor(p)}88"></em></i><b style="color:${cor(p)}">${Math.round(p)}%</b><small>${kk(b.val)}</small></div>`).join("")}</div></div>`;
+  // equipe e O.S de hoje (resumo)
+  const hjOS=todos().filter(r=>ids.has(r.supervisao)&&!r.avulso&&!r.ocorrencia&&r.data===hj&&!r.osCanc), osM={}; hjOS.forEach(r=>{ const k=r.supervisao+"|"+(r.equipe||""); osM[k]=osM[k]||r.osDia||null; if(r.osDia) osM[k]=r.osDia; });
+  const osL=Object.values(osM), osEnv=osL.filter(Boolean).length, osIni=osL.filter(o=>o&&o.start).length, osFim=osL.filter(o=>o&&o.fim).length, osPes=osL.reduce((a,o)=>a+((o&&o.membros)||[]).length,0), osSF=osL.filter(o=>o&&o.semFiscal).length;
+  h+=`<h2 class="dsec" id="ds-os">🧾 O.S do dia</h2><div class="dmini">${mini("Equipes com serviço hoje",int(osL.length),DC.bl)}${mini("O.S enviadas",int(osEnv),DC.cy,osL.length?Math.round(osEnv/osL.length*100)+"%":"")}${mini("Em execução",int(osIni-osFim),DC.vi)}${mini("Finalizadas",int(osFim),DC.gr)}${mini("Pessoas em campo",int(osPes),DC.pk,"informadas nas O.S")}${mini("Sem fiscal",int(osSF),osSF?DC.am:DC.gr,"supervisor responde")}</div>
+    <h2 class="dsec" id="ds-chk">✅ Checklist</h2><div class="dmini">${mini("Checklists no período",int(CK.length),DC.cy)}${mini("Pendentes agora",int(ckPend),ckPend?DC.rd:DC.gr,"cobrança do checklist")}${mini("Com item NÃO",int(ckAv),ckAv?DC.am:DC.gr,"avaria apontada")}${mini("Recebidos pelo turno",int(ckRb),DC.gr)}${mini("Contestados",int(ckCt),ckCt?DC.rd:DC.vi)}</div>
+    <h2 class="dsec" id="ds-man">🔧 Manutenção</h2><div class="dg2"><div class="dbox"><div class="dmini in">${mini("Comunicados no período",int(MN.length),DC.cy)}${mini("Em aberto",int(mnAb),mnAb?DC.am:DC.gr,"sem retorno")}${mini("Resolvidos",int(MN.length-mnAb),DC.gr)}</div></div>
+      <div class="dbox"><h3>Por tipo de defeito</h3><canvas id="dDonM"></canvas><div class="dlg" id="dDonML"></div></div></div>
+    <h2 class="dsec" id="ds-vis">📍 Vistoria de processos</h2><div class="dg2"><div class="dbox"><div class="dmini in">${mini("Processos cadastrados",int(vTot),DC.bl)}${mini("Vistoriados",int(vVis),DC.cy,vTot?Math.round(vVis/vTot*100)+"% do total":"")}${mini("Vistoriados no período",int(vPer.length),DC.vi)}${mini("Falta vistoriar",int(Math.max(0,vTot-vVis)),DC.am)}${mini("Enviados à turma",int(vEnv),DC.gr)}${mini("Cadastrar no Urbantrim",int(vUrb),vUrb?DC.rd:DC.gr)}</div></div>
+      <div class="dbox"><h3>Situação na vistoria</h3><canvas id="dDonV"></canvas><div class="dlg" id="dDonVL"></div></div></div>
+    <h2 class="dsec" id="ds-emg">🌳 Registro emergencial</h2><div class="dg2"><div class="dbox"><div class="dmini in">${mini("Atendimentos",int(OCR.length),DC.pk)}${mini("Galhos caídos",int(ocQ("GALHO")),DC.am)}${mini("Árvores caídas",int(ocQ("ARVORE")),DC.rd)}</div></div>
+      <div class="dbox"><h3>Atendimentos por turma</h3><div class="drk">${sups.map(x=>({x,n:OCR.filter(r=>r.supervisao===x.id).length})).filter(o=>o.n).sort((a,b)=>b.n-a.n).map((o,i,A)=>`<div><span>${esc(o.x.id.replace("PODA ",""))}</span><i><em style="width:${(o.n/A[0].n*100).toFixed(1)}%;background:linear-gradient(90deg,#be185d,${DC.pk});box-shadow:0 0 10px ${DC.pk}66"></em></i><b style="color:${DC.pk}">${o.n}</b></div>`).join("")||`<p class="dnt">Nenhum atendimento emergencial no período.</p>`}</div></div></div>
+    <h2 class="dsec" id="ds-ext">➕ Fora da programação, remarcações e orçamentos</h2><div class="dmini">${mini("Serviços extras",int(AV.length),DC.vi,kk(avV))}${mini("Aguardando validação",int(VAL),VAL?DC.am:DC.gr,"gerente ou coordenador")}${mini("Remarcados",int(REM),REM?DC.am:DC.gr,"no período")}${mini("Orçamentos",int(OR.length),DC.cy,kk(orV))}</div>
+    <h2 class="dsec" id="ds-tab">📋 Tabelas</h2>`;
+  const tr=(n,b,c)=>{ const v=ven(b), pe=v?Math.round((b.sim+b.parc)/v*100):null, pm=b.meta?Math.round(b.val/b.meta*100):0;
+    return `<tr class="${c||""}"><td>${n}</td><td>${int(b.prog)}</td><td>${int(b.sim)}</td><td>${int(b.parc)}</td><td>${int(b.nao)}</td><td>${b.sem?`<b style="color:${DC.rd}">${int(b.sem)}</b>`:"0"}</td><td>${pe===null?"—":`<span class="pc ${cl(pe)}">${pe}%</span>`}</td><td>${rs(b.val)}</td><td><span class="pc ${cl(pm)}">${pm}%</span></td></tr>`; };
+  h+=`<div class="dbox"><h3>Por turma</h3><div class="dsc"><table><thead><tr><th>Turma</th><th>Prog.</th><th>Exec.</th><th>Parcial</th><th>Não</th><th>Sem baixa</th><th>% exec.</th><th>Valor</th><th>% meta</th></tr></thead><tbody>
+    ${sups.map(x=>tr(esc(x.id.replace("PODA ","")),por[x.id])).join("")}${sups.length>1?tr("Total",tot,"tot"):""}</tbody></table></div>
+    <p class="dnt">% exec. = executados ÷ (executados + não executados + sem baixa). Meta = meta diária da turma × dias de segunda a sábado do período. Sem baixa: diurno conta após 17h; noturno no dia seguinte após 5h.</p></div>`;
+  const oT={}; R.filter(r=>!r.avulso&&r.data===hj&&!r.osCanc).forEach(r=>{ const k=r.supervisao+"|"+(r.equipe||""); (oT[k]=oT[k]||{sup:r.supervisao,eq:r.equipe||"",n:0,os:null}).n++; if(r.osDia) oT[k].os=r.osDia; });
+  const OS=Object.values(oT).sort((a,b)=>a.sup.localeCompare(b.sup)||a.eq.localeCompare(b.eq)), hm_=x=>x?new Date(x).toTimeString().slice(0,5):"";
+  const et=o=>!o?["t0","⏳ Não enviada"]:o.fim?["t3","✅ Finalizada "+hm_(o.fim.em)]:o.start?["t2","▶ Em execução desde "+hm_(o.start.em)]:["t1","📨 Enviada "+hm_(o.em)+" · aguardando start"];
+  const sL=R.filter(r=>!r.avulso&&isProg(r)&&isCobra(r)&&!(typeof cancBx==="function"&&cancBx(r))).sort((a,b)=>(a.data||"").localeCompare(b.data||""));
+  h+=`<div class="dg2"><div class="dbox"><h3>O.S de hoje (${dm(hj)})</h3>${OS.length?`<div class="dos">${OS.map(g=>{ const [c,t]=et(g.os); return `<div><b>${esc(g.sup)}</b><small>${esc(g.eq||"equipe")} · ${g.n} serviço${g.n===1?"":"s"}${g.os?.fiscal?.nome?" · fiscal "+esc(g.os.fiscal.nome):""}</small><span class="tg ${c}">${t}</span></div>`; }).join("")}</div>`:`<p class="dnt">Nenhum serviço programado para hoje nas turmas escolhidas.</p>`}</div>
+    <div class="dbox"><h3>Sem baixa · todos os atrasados (${sL.length})</h3>${sL.length?`<div class="dsc dsb" style="max-height:360px;overflow-y:auto"><table><thead><tr><th>Endereço</th><th>Turma</th><th>Data</th></tr></thead><tbody>${sL.slice(0,300).map(r=>`<tr><td>${esc(r.bairro||"")} – ${esc(r.logradouro||"")}</td><td style="text-align:left">${esc((r.supervisao||"").replace("PODA ",""))}</td><td>${dm(r.data)}</td></tr>`).join("")}</tbody></table></div>`:`<p class="dnt">✅ Nenhum serviço atrasado sem baixa.</p>`}</div></div>`;
+  host.innerHTML=h;
+  host.querySelectorAll("[data-dper]").forEach(b=>b.onclick=()=>{ DASH.per=b.dataset.dper; sv(); renderDash(); });
+  const on=(id,k)=>{ const el=$("#"+id); if(el) el.onchange=e=>{ DASH[k]=e.target.value; sv(); renderDash(); }; };
+  on("dGrp","grp"); on("dTur","tur"); on("dDe","de"); on("dAte","ate");
+  host.querySelectorAll("[data-djump]").forEach(b=>b.onclick=()=>{ const el=document.getElementById(b.dataset.djump); if(el) scrollTo({top:el.getBoundingClientRect().top+scrollY-12,behavior:"smooth"}); });
+  // gráficos
+  const desenha=()=>{ try{
+    d3Ring($("#dRingM"),pM,cor(pM),kk(tot.val)+" de "+kk(tot.meta));
+    d3Ring($("#dRingE"),pE,cor(pE),int(tot.sim+tot.parc)+" de "+int(ven(tot))+" vencidos");
+    const SL=[{t:"Executados",v:tot.sim,c:DC.gr},{t:"Parciais",v:tot.parc,c:DC.cy},{t:"Não executados",v:tot.nao,c:DC.am},{t:"Sem baixa",v:tot.sem,c:DC.rd},{t:"No prazo",v:tot.fut,c:DC.vi}].filter(s=>s.v>0);
+    d3Donut($("#dDon"),SL.length?SL:[{t:"—",v:1,c:"#3a4470"}],int(tot.prog),"programados");
+    $("#dDonL").innerHTML=SL.map(s=>`<span><i style="background:${s.c}"></i>${s.t} ${int(s.v)}</span>`).join("")||`<span>Sem serviços no período</span>`;
+    const gv=grp.map(g=>g.ds.reduce((a,d)=>a+pd[d],0)), gm=sem?mDia*6:mDia;
+    d3Bars($("#d3Dia"),{key:"dia",rows:[""],cols:grp.map(gLbl),vals:[gv],plane:gm,planeTxt:"meta "+kk(gm),color:(r,c,v)=>v>=gm?DC.gr:DC.cy,fmtAx:d3K,h:300,padL:50,pitch:.42,yaw:-.35,bs:.6,
+      tip:(r,c,v)=>`<b>${gLbl(grp[c])}</b>${rs(v)}<small>${gm?Math.round(v/gm*100):0}% da meta</small>`});
+    const MS=sups; d3Bars($("#d3Mat"),{key:"mat",rows:MS.map(x=>x.id.replace("PODA ","").replace("DIURNO","D").replace("NOTURNO","N")),cols:grp.map(gLbl),vals:MS.map(x=>grp.map(g=>g.ds.reduce((a,d)=>a+(por[x.id].dia[d]||0),0))),
+      color:(r,c,v)=>{ const m=metaDe(MS[r].id)*(sem?6:1), p=m?v/m*100:0; return v<=0?"#3a4470":cor(p); },fmtAx:d3K,h:Math.max(300,MS.length*26+120),padL:70,pitch:.62,yaw:-.55,
+      tip:(r,c,v)=>{ const m=metaDe(MS[r].id)*(sem?6:1); return `<b>${esc(MS[r].id)}</b>${gLbl(grp[c])}: ${rs(v)}<small>${m?Math.round(v/m*100):0}% da meta</small>`; }});
+    const TS=sups; d3Bars($("#d3Tur"),{key:"tur",rows:["Prog.","Exec.","Sem baixa"],cols:TS.map(x=>x.id.replace("PODA ","").replace("DIURNO","D").replace("NOTURNO","N")),vals:[TS.map(x=>por[x.id].prog),TS.map(x=>por[x.id].sim+por[x.id].parc),TS.map(x=>por[x.id].sem)],
+      color:r=>[DC.bl,DC.gr,DC.rd][r],h:300,padL:62,pitch:.55,yaw:-.5,bs:.55,tip:(r,c,v)=>`<b>${esc(TS[c].id)}</b>${["Programados","Executados","Sem baixa"][r]}: ${int(v)}`});
+    const IT=ITENS.filter(i=>itQ[i.c]); d3Bars($("#d3It"),{key:"it",rows:[""],cols:(IT.length?IT:ITENS.slice(0,1)).map(i=>i.c),vals:[(IT.length?IT:ITENS.slice(0,1)).map(i=>itQ[i.c]||0)],color:(r,c)=>((IT.length?IT:ITENS)[c].g==="E"?DC.pk:DC.gr),fmtAx:v=>Math.round(v).toLocaleString("pt-BR"),h:280,pitch:.45,yaw:-.4,bs:.58,
+      tip:(r,c,v)=>{ const i=(IT.length?IT:ITENS)[c]; return `<b>${i.c}</b>${esc(i.d)}<small>${int(v)} un · ${rs(v*i.p)}</small>`; }});
+    const pal=[DC.cy,DC.am,DC.pk,DC.gr,DC.vi,DC.bl], MT=Object.entries(mnT).sort((a,b)=>b[1]-a[1]).map(([t,v],i)=>({t,v,c:pal[i%pal.length]}));
+    d3Donut($("#dDonM"),MT.length?MT:[{t:"—",v:1,c:"#3a4470"}],int(MN.length),"comunicados"); $("#dDonML").innerHTML=MT.map(s=>`<span><i style="background:${s.c}"></i>${esc(s.t)} ${s.v}</span>`).join("")||"<span>Nenhum comunicado no período</span>";
+    const VS=[{t:"Já executado",v:vJa,c:DC.gr},{t:"Não executado",v:vNao,c:DC.am},{t:"Falta vistoriar",v:Math.max(0,vTot-vVis),c:DC.vi}].filter(x=>x.v>0);
+    d3Donut($("#dDonV"),VS.length?VS:[{t:"—",v:1,c:"#3a4470"}],int(vTot),"processos"); $("#dDonVL").innerHTML=VS.map(s=>`<span><i style="background:${s.c}"></i>${s.t} ${int(s.v)}</span>`).join("")||"<span>Sem processos</span>";
+    let ac=0, am=0; const A=[], B=[]; dias.forEach(d=>{ ac+=pd[d]; if(d<=hj&&util(d)) am+=mDia; A.push(ac); B.push(am); }); d3Area($("#dAre"),dias.map(dm),A,B);
+  }catch(e){ console.error(e); } };
+  requestAnimationFrame(desenha);
+}
+window.addEventListener("resize",()=>{ if(window.__dW===innerWidth) return; window.__dW=innerWidth; clearTimeout(window.__dRs); window.__dRs=setTimeout(()=>{ try{ if(curView==="dash") renderDash(); }catch(e){} },250); });
 function nomeAutor(){ return sessao?.nome||""; }
 function refazTurmas(){ const keep=(sel,html)=>{ const el=$(sel); if(!el) return; const v=el.value; el.innerHTML=html; el.value=[...el.options].some(o=>o.value===v)?v:""; };
   ["#cSup","#oSup","#kSup","#kgSup"].forEach(x=>keep(x,optTurmas()));
@@ -2339,7 +2636,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.12j";
+const APP_VERSAO="2026.11.12n";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -3564,10 +3861,12 @@ $("#form").addEventListener("submit", async ev=>{
 /* ---------- navegação ---------- */
 let curView="form";
 function show(v, keepForm=false, tabHint){
+  if(v==="dash"&&window.__dashOk===false) v="inicio";
   if(sessao?.perfil==="fiscal"&&!fisAbas().has(v)) v="inicio";
   if(PERF_ABAIXO.includes(sessao?.perfil)&&PERM_ABAS.some(x=>x.k===v)&&!abaOn(sessao.perfil,v)) v="inicio"; // aba desativada pelo administrador // fiscal: só o que o administrador liberou
   curView=v;
-  ["inicio","pend","form","campo","oc","vist","lista","resumo","chk","orc","upd"].forEach(k=>$("#v-"+k).hidden=k!==v);
+  ["inicio","pend","form","campo","oc","vist","lista","resumo","dash","chk","orc","upd"].forEach(k=>$("#v-"+k).hidden=k!==v);
+  if(v==="dash") try{renderDash()}catch(e){console.error(e)}
   if(v==="vist") try{renderVist()}catch(e){console.error(e)}
   if(v==="pend") try{renderPend()}catch(e){console.error(e)}
   if(v==="orc") try{renderOrc()}catch(e){console.error(e)}
@@ -8031,7 +8330,7 @@ function renderAlertas(hostEl,opt){
   const d2=(()=>{const d=new Date();d.setDate(d.getDate()-2);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")})();
   const am=(()=>{const d=new Date();d.setDate(d.getDate()+1);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")})();
   const falta=r=>{const pv=prevQ(r);return ITENS.some(i=>(+pv[i.c]||0)>(+r.qtd?.[i.c]||0))};
-  const semBaixa=all.filter(r=>isCobra(r)&&!r.ocorrencia&&!cancBx(r));
+  const semBaixa=all.filter(r=>isProg(r)&&!r.ocorrencia&&(r.data||"")<=d2&&!cancBx(r));
   // remarcados 2x ou mais: some depois de "dar ciência" (volta se for remarcado de novo)
   const remKey=r=>"rem:"+r.id+":"+(r.historico||[]).length;
   const remarc=all.filter(r=>isProg(r)&&(r.historico||[]).length>=2&&!notifCanc[remKey(r)]);
@@ -9085,6 +9384,7 @@ const ICO={
   chk:svgI('<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/>'),
   man:svgI('<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/>'),
   resumo:svgI('<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'),
+  dash:svgI('<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>'),
   oc:svgI('<path d="M12 3v7M6 8l3 3M18 8l-3 3"/><path d="M4 21h16l-4-8H8z"/>'),
   lista:svgI('<path d="M8 6h13M8 12h13M8 18h13M3 6h.5M3 12h.5M3 18h.5"/>'),
   upd:svgI('<path d="M12 3v12M7 10l5 5 5-5M4 20h16"/>'),
@@ -9098,8 +9398,8 @@ const ICO={
   pend:svgI('<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/>'),
   vist:svgI('<path d="M6 3h8l4 4v6"/><path d="M6 3v18h6"/><circle cx="16.5" cy="16.5" r="3.5"/><path d="M19 19l2.5 2.5"/>')
 };
-const VIEW_NOME={inicio:"Início",pend:"Pendências",form:"Programar",campo:"Em aberto",oc:"Registro emergencial",vist:"Vistoria de processo",lista:"Lista",resumo:"Painel",chk:"Checklist",orc:"Orçamento",upd:"Atualizar"};
-const NAV_PRIO=["form","campo","chk","resumo","oc","vist","lista","orc","upd"];
+const VIEW_NOME={inicio:"Início",pend:"Pendências",form:"Programar",campo:"Em aberto",oc:"Registro emergencial",vist:"Vistoria de processo",lista:"Lista",resumo:"Painel",dash:"Dashboard",chk:"Checklist",orc:"Orçamento",upd:"Atualizar"};
+const NAV_PRIO=["form","campo","chk","resumo","dash","oc","vist","lista","orc","upd"];
 let NAV_PERM=new Set(), NAV_MAIS=[];
 function navMontar(){
   const w=document.querySelector("nav.tabs .wrap"); if(!w||w.dataset.ui) return; w.dataset.ui="1";
@@ -9761,7 +10061,7 @@ function stepify(panel,primeiro){
   ir(0);
 }
 
-function renderAll(){ try{renderEscala()}catch(e){} try{renderPend()}catch(e){console.error(e)} try{renderInicio()}catch(e){console.error(e)} syncUI(); try{renderAvisoGlobal()}catch(e){console.error(e)} try{renderProxSem()}catch(e){console.error(e)} renderCampo(); renderOc(); try{renderChk();renderChkGraf()}catch(e){console.error(e)} renderLista(); renderResumo(); renderSemProg(); renderContrato(); renderAlertas(); }
+function renderAll(){ try{renderEscala()}catch(e){} try{renderPend()}catch(e){console.error(e)} try{renderInicio()}catch(e){console.error(e)} syncUI(); try{renderAvisoGlobal()}catch(e){console.error(e)} try{renderProxSem()}catch(e){console.error(e)} renderCampo(); renderOc(); try{renderChk();renderChkGraf()}catch(e){console.error(e)} renderLista(); renderResumo(); try{ if(curView==="dash") renderDash(); }catch(e){console.error(e)} renderSemProg(); renderContrato(); renderAlertas(); }
 
 /* ---------- botão de olho em todo campo de senha (mostrar o que está sendo digitado) ---------- */
 const OLHO_ABERTO='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
