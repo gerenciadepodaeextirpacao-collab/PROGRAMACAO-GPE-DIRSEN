@@ -425,9 +425,11 @@ nav.tabs .wrap.nav5 .tbadge{position:absolute;top:2px;right:calc(50% - 22px)}
 .ajlist{margin:0;padding:0;list-style:none;counter-reset:aj;display:grid;gap:10px}
 .ajlist li{counter-increment:aj;display:flex;gap:10px;align-items:flex-start;font-size:15px;line-height:1.35}
 .ajlist li::before{content:counter(aj);flex:none;width:26px;height:26px;border-radius:13px;background:var(--accent);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:14px}
-.maislist{display:grid;gap:8px}
-.maisit{display:flex;align-items:center;gap:12px;min-height:56px;padding:0 14px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-family:inherit;font-weight:700;font-size:16px;text-align:left;cursor:pointer}
-.maisit span{flex:1}.maisit b{color:var(--muted);font-size:20px}.maisit svg{color:var(--brand)}
+/* Mais opções em quadradinhos (grade), não em lista */
+.maislist{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
+.maisit{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:104px;padding:12px 8px;border-radius:16px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-family:inherit;font-weight:700;font-size:14px;line-height:1.2;text-align:center;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.maisit:active{transform:scale(.97)}.maisit:hover{border-color:var(--brand)}
+.maisit span{flex:none}.maisit b{display:none}.maisit svg{color:var(--brand);width:30px;height:30px}
 .maisit.sair{color:var(--bad)}.maisit.sair svg{color:var(--bad)}
 .inhead{display:flex;flex-direction:column;gap:2px;margin:16px 0 12px}
 .inhead span{color:var(--muted);font-size:15px}.inhead b{font-family:var(--display);font-size:30px;line-height:1.05}.inhead small{color:var(--muted);font-size:14px}
@@ -2334,7 +2336,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.12d";
+const APP_VERSAO="2026.11.12e";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
