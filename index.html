@@ -3084,7 +3084,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.15m";
+const APP_VERSAO="2026.11.16b";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -4500,7 +4500,7 @@ const LS = (k, v) => { try { if (v === undefined) return localStorage.getItem(k)
 const full = (a) => a + ", Goiânia - GO";
 const cssId = (s) => (window.CSS && CSS.escape ? CSS.escape(s) : s);
 const EQUIPS = ["Van", "Sky", "Splinter"];
-const REGS = ["CENTRO OESTE", "SUL", "LESTE", "NORTE", "OESTE"];
+const REGS = ["CENTRO OESTE", "SUL", "SUDOESTE", "LESTE", "NORTE", "OESTE"];
 const EST = { pendente: ["Não vistoriado", ""], ja_executado: ["Já executado", "vp-s-ja_executado"], nao_executado: ["Não executado", "vp-s-nao_executado"] };
 const URB = { ja: "Já estava no Urbantrim", reg: "Registrada agora no Urbantrim", pend: "Falta registrar no Urbantrim" };
 const urbTxt = (r) => !r || r.situacao !== "nao_executado" || !r.urbantrim ? "" : URB[r.urbantrim.st] + (r.urbantrim.id ? " · ID " + r.urbantrim.id : "");
@@ -4524,7 +4524,15 @@ function montar(root) {
     S.vist = Object.entries(acesso || {}).filter(([id, u]) => u && u.ativo !== false && u.nome && u.perfil !== "admin" && pessoaNoEscopo(u) && (u.perfil !== "fiscal" || fisPerm(id).vrota)).map(([id, u]) => ({ uid: id, nome: u.nome, rot: u.nome + (u.perfil === "fiscal" ? " (fiscal)" : "") })).sort((a, b) => a.nome.localeCompare(b.nome, "pt"));
     const quem = meuId(); if (S._ini !== quem) { S._ini = quem; S.tela = pode.fis() ? (minhaAlguma() || !VIST.nFiscal(quem) ? "rotas" : "exec") : pode.sup() && (VIST.nTurmaAberto(sessao.sup) || VIST.nTurmaAssinar(sessao.sup)) && !minhaAlguma() ? "exec" : pode.resumo() && !pode.coord() && !minhaAlguma() ? "resumo" : "rotas"; }
   }
-  const REGN = ["CENTRO OESTE", "SUL", "LESTE", "NORTE", "OESTE"];
+  const REGN = ["CENTRO OESTE", "SUL", "SUDOESTE", "LESTE", "NORTE", "OESTE"];
+  // regional automática: pelo setor/bairro (ou pelo bairro escrito no endereço), com base nos processos já cadastrados
+  const regNorm = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z0-9 ]/g, " ").replace(/\b(SETOR|SET|ST|STR|RESIDENCIAL|RES|JARDIM|JD|VILA|VL|PARQUE|PQ|BAIRRO|BRO|CONJUNTO|CONJ|CJ|LOTEAMENTO|LOT|CHACARA|CH|RESID)\b/g, " ").replace(/\s+/g, " ").trim();
+  let regMapa = null;
+  const regMapaDe = () => { if (regMapa) return regMapa; const c = {}; (S.proc || []).forEach((p) => { const k = regNorm(p.setor); if (!k || k.length < 3 || !REGN.includes(p.regional) || p.setor_aproximado && p.manual) return; (c[k] = c[k] || {})[p.regional] = (c[k][p.regional] || 0) + 1; });
+    regMapa = Object.fromEntries(Object.entries(c).map(([k, o]) => [k, Object.entries(o).sort((a, b) => b[1] - a[1])[0][0]])); return regMapa; };
+  const regionalDe = (setor, endereco) => { const M = regMapaDe(), k = regNorm(setor); if (k && M[k]) return M[k];
+    if (k) { const parc = Object.keys(M).filter((x) => x.length >= 5 && (x.includes(k) && k.length >= 5 || k.includes(x))).sort((a, b) => b.length - a.length)[0]; if (parc) return M[parc]; }
+    const e = " " + regNorm(endereco) + " "; const hit = Object.keys(M).filter((x) => x.length >= 6 && e.includes(" " + x + " ")).sort((a, b) => b.length - a.length)[0]; return hit ? M[hit] : ""; };
   let _base = null;
   // processos do relatório + processos cadastrados manualmente
   const todosProc = () => { _base = _base || VIST_PROC(); const man = Object.entries(VIST.regs || {}).filter(([k, r]) => k.startsWith("m_") && r && r.manual && !r.manual.removido).map(([k, r], i) => { const m = r.manual;
@@ -5132,7 +5140,7 @@ function montar(root) {
       <div class="vp-ctl"><label class="vp-f vp-grow">GED${inp("ged", "0000663-2024")}</label><label class="vp-f vp-grow">Parecer técnico${inp("parecer", "Ex.: 1031/2025")}</label><label class="vp-f" style="width:90px">Ano${inp("ano", "2024", 'inputmode="numeric"')}</label></div>
       <label class="vp-f">Endereço *${inp("endereco", "Rua, número, quadra, lote")}</label>
       <div class="vp-ctl"><label class="vp-f vp-grow">Setor / bairro${inp("setor", "Ex.: Setor Marista")}</label>
-      ${gSel ? `<label class="vp-f">Gerência *<select data-nv="ger"><option value="DIRSEN"${n.ger !== "DIROP" ? " selected" : ""}>DIRSEN</option><option value="DIROP"${n.ger === "DIROP" ? " selected" : ""}>DIROP</option></select></label>` : ""}<label class="vp-f">Regional *<select id="vp-nv-regional" data-nv="regional"><option value="">Escolher…</option>${REGN.map((r) => `<option value="${r}"${n.regional === r ? " selected" : ""}>${cap(r)}</option>`).join("")}</select></label></div>
+      ${gSel ? `<label class="vp-f">Gerência *<select data-nv="ger"><option value="DIRSEN"${n.ger !== "DIROP" ? " selected" : ""}>DIRSEN</option><option value="DIROP"${n.ger === "DIROP" ? " selected" : ""}>DIROP</option></select></label>` : ""}<label class="vp-f">Regional *<select id="vp-nv-regional" data-nv="regional"><option value="">Escolher…</option>${REGN.map((r) => `<option value="${r}"${n.regional === r ? " selected" : ""}>${cap(r)}</option>`).join("")}</select></label><span id="vp-nv-regav" class="vp-msg" style="color:var(--lf);font-size:12.5px">${n._regAuto && n.regional ? "✓ regional preenchida pelo bairro (" + cap(n.regional) + "). Confira." : ""}</span></div>
       <label class="vp-f">Cadastrado no Urbantrim? *<select data-nv="urb"><option value="">Escolher…</option><option value="sim"${n.urb === "sim" ? " selected" : ""}>Sim, já está no Urbantrim</option><option value="nao"${n.urb === "nao" ? " selected" : ""}>Não está no Urbantrim</option></select></label>
       <div class="vp-ctl"><label class="vp-f" style="width:90px">Poda${inp("po", "0", 'inputmode="numeric"')}</label><label class="vp-f" style="width:90px">Extirpação${inp("ex", "0", 'inputmode="numeric"')}</label><label class="vp-f" style="width:90px">Destoca${inp("de", "0", 'inputmode="numeric"')}</label></div>
       <span class="vp-lab">PDF do processo</span>
@@ -5697,7 +5705,7 @@ function montar(root) {
         ids.forEach((id) => { if (usados.has(id)) { fila.push({ file: f, st: "dup", id }); return; } usados.add(id); fila.push({ file: f, st: "ok", id, ja: !!docLinks(R({ id })).length }); }); });
       S.pdfFila = fila; S.pdfCopias = copias.length; S.pdfVerTodos = false; render();
       toast(`${fila.filter((x) => x.st === "ok").length} processos com PDF encontrado · ${fila.filter((x) => x.st === "nao").length} arquivos sem processo no relatório`); return; }
-    if (ds.nv && S.novo) { S.novo[ds.nv] = t.value; if (ds.nv === "regional") render(); return; }
+    if (ds.nv && S.novo) { S.novo[ds.nv] = t.value; if (ds.nv === "regional") { S.novo._regAuto = false; render(); } return; }
     if (ds.ed && S.ed) { S.ed[ds.ed] = t.value; return; }
     if (ds.nvpdf) { const fl = t.files && t.files[0]; if (!fl) return; if (!/\.pdf$/i.test(fl.name)) { toast("Escolha um arquivo PDF"); return; } S.novo.file = fl; render(); return; }
     if (t.id === "vp-psobre") { S.pdfSobre = t.checked; render(); return; }
@@ -5716,7 +5724,10 @@ function montar(root) {
     const t = e.target, ds = t.dataset;
     if (t.id === "vp-q") { S.q = t.value; render(); return; }
     if (t.id === "vp-rq") { S.rq = t.value; render(); return; }
-    if (ds.nv && S.novo && ds.nv !== "regional") S.novo[ds.nv] = t.value;
+    if (ds.nv && S.novo && ds.nv !== "regional") { S.novo[ds.nv] = t.value;
+      if ((ds.nv === "setor" || ds.nv === "endereco") && (!S.novo.regional || S.novo._regAuto)) { const g = regionalDe(S.novo.setor, S.novo.endereco), sel = document.getElementById("vp-nv-regional"), av = document.getElementById("vp-nv-regav");
+        if (g) { S.novo.regional = g; S.novo._regAuto = true; if (sel) sel.value = g; if (av) av.textContent = "✓ regional preenchida pelo bairro (" + cap(g) + "). Confira."; }
+        else if (S.novo._regAuto) { S.novo.regional = ""; if (sel) sel.value = ""; if (av) av.textContent = ""; } } }
     if (ds.ed && S.ed && ds.ed !== "regional") S.ed[ds.ed] = t.value;
     if (ds.exobs && S.ex && S.ex[ds.exobs]) S.ex[ds.exobs].obs = t.value;
     if (ds.exq && S.ex && S.ex[ds.exq]) { const x = S.ex[ds.exq], tinha = QK().some((c) => +x.qtd[c] > 0); x.qtd[ds.c] = t.value; if (tinha !== QK().some((c) => +x.qtd[c] > 0)) render(); }
