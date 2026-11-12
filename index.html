@@ -1937,7 +1937,7 @@ const SUPS_ALL = [
   {id:"PODA I DIURNO (A)", enc:"ALEX", grupo:"PODA I", turno:"DIURNO"},
   {id:"PODA I DIURNO (B)", enc:"EDIVARDO", grupo:"PODA I", turno:"DIURNO"},
   {id:"PODA I NOTURNO (A)", enc:"ANDERSON", grupo:"PODA I", turno:"NOTURNO"},
-  {id:"PODA I NOTURNO (B)", enc:"KLEBER", grupo:"PODA I", turno:"NOTURNO"},
+  {id:"PODA I NOTURNO (B)", enc:"WESLEY DOMINGOS FERREIRA", grupo:"PODA I", turno:"NOTURNO"},
   {id:"PODA II DIURNO (A)", enc:"CARLOS CESAR", grupo:"PODA II", turno:"DIURNO"},
   {id:"PODA II DIURNO (B)", enc:"UBIRACIMAR", grupo:"PODA II", turno:"DIURNO"},
   {id:"PODA II NOTURNO (A)", enc:"CARLOS ROSA", grupo:"PODA II", turno:"NOTURNO"},
@@ -2837,14 +2837,14 @@ function histCard(r){ const ff=r.fotosFiscal||{}, G=ff.geo||{}, sv=r.osDia?.sv?.
     <div class="hs-fs">${S.map(x=>{ const f=ff[x.k]||r.relat?.midia?.[x.k], g=G[x.k]; if(!f&&x.opc) return ""; if(!f) return `<div class="hs-f hs-sem"><span>${esc(x.curto)}<br>sem foto</span></div>`;
       return `<figure class="hs-f"><img data-hsfoto="${esc(r.id)}|${x.k}" alt="foto ${esc(x.curto)}"><figcaption><b>${g?.em?hm(g.em):""}</b> ${g?.em?fmtD(iso(new Date(g.em))):""}<br>${esc(x.curto)} · ${esc(r.logradouro||"")}${r.bairro?" – "+esc(r.bairro):""}<br>${g&&g.lat!=null?`📍 ${g.lat.toFixed(6)}, ${g.lng.toFixed(6)}${g.prec?" (±"+g.prec+" m)":""}`:relTem(r)?"":"📍 sem localização"}</figcaption>${histMapa(g)?`<a href="${histMapa(g)}" target="_blank" rel="noopener">Localização e verificação: ver no mapa</a>`:""}</figure>`; }).join("")}</div></article>`; }
 // PDF / imagem do histórico (prestação de contas): um serviço ou todos os da lista filtrada (ex.: o dia)
-function histDocHtml(L,tit){ const td="padding:4px 8px;border:1px solid #d5dbd3;font-size:11px;vertical-align:top", th="padding:4px 8px;border:1px solid #d5dbd3;font-size:10.5px;background:#eef3ec;color:#24402c;font-weight:700;width:130px";
+function histDocHtml(L,tit){ const nw="white-space:normal;text-align:left;word-break:break-word;overflow-wrap:anywhere;", td=nw+"padding:4px 8px;border:1px solid #d5dbd3;font-size:11px;vertical-align:top", th=nw+"padding:4px 8px;border:1px solid #d5dbd3;font-size:10.5px;background:#eef3ec;color:#24402c;font-weight:700;width:130px";
   const bloco=r=>{ const ff=r.fotosFiscal||{}, G=ff.geo||{}, sv=r.osDia?.sv?.[r.id]||{}, h0=histHora(r), hf=sv.fim?.em||"", S=fotoSlots(r), fis=ff.por||r.osDia?.fiscal?.nome||"", x=sv.fim?.exec;
     const fs=S.map(s=>{ const f=ff[s.k]||r.relat?.midia?.[s.k], g=G[s.k]; if(!f) return ""; const u=midUrl(f); if(!u) return "";
-      return `<td style="width:50%;padding:4px;vertical-align:top"><img src="${u}" style="width:100%;height:210px;object-fit:cover;border-radius:6px;display:block"><div style="font-size:10px;margin-top:3px;line-height:1.35"><b>${esc(s.curto)}</b> · ${g?.em?hm(g.em)+" de "+fmtD(iso(new Date(g.em))):""}${g&&g.lat!=null?`<br>📍 ${g.lat.toFixed(6)}, ${g.lng.toFixed(6)}${g.prec?" (±"+g.prec+" m)":""}`:""}</div></td>`; }).filter(Boolean);
+      return `<td style="width:50%;padding:4px;vertical-align:top;white-space:normal;text-align:left"><img src="${u}" style="width:100%;height:210px;object-fit:cover;border-radius:6px;display:block"><div style="font-size:10px;margin-top:3px;line-height:1.35"><b>${esc(s.curto)}</b> · ${g?.em?hm(g.em)+" de "+fmtD(iso(new Date(g.em))):""}${g&&g.lat!=null?`<br>📍 ${g.lat.toFixed(6)}, ${g.lng.toFixed(6)}${g.prec?" (±"+g.prec+" m)":""}`:""}</div></td>`; }).filter(Boolean);
     const lin=[]; for(let i=0;i<fs.length;i+=2) lin.push(`<tr>${fs[i]}${fs[i+1]||'<td style="width:50%"></td>'}</tr>`);
     return `<div style="break-inside:avoid;page-break-inside:avoid;margin:0 0 14px;border:1px solid #cfd8cc;border-radius:8px;padding:8px">
-      <table style="width:100%;border-collapse:collapse">${[["Supervisão / equipe",esc(r.supervisao||"")+(r.equipe?" · "+esc(r.equipe):"")],["Data",fmtD(r.data)+" ("+diaDe(r.data)+")"],["Horário",(h0?hm(h0):"—")+(hf?" às "+hm(hf):"")],["Tipo de atendimento",esc(tipoTxt(r)||r.tipo||"")],["Processo",r.processo?esc(procNum(r)):"—"],["Endereço",esc(r.logradouro||"")+(r.bairro?" – "+esc(r.bairro):"")],["Situação",(histSit(r)==="SIM"?"Executado":"Parcial")+(x?" · fiscal: "+esc(svExecTxt(x)):"")],["Fiscal",esc(fis||"—")+(r.osDia?.num?" · O.S nº "+esc(r.osDia.num):"")],...(r.obs?[["Obs.",esc(r.obs)]]:[])].map(([a,b])=>`<tr><th style="${th}">${a}</th><td style="${td}">${b}</td></tr>`).join("")}</table>
-      ${lin.length?`<table style="width:100%;border-collapse:collapse;margin-top:6px">${lin.join("")}</table>`:`<p style="font-size:11px;color:#667;margin:6px 0 0">Sem fotos registradas.</p>`}</div>`; };
+      <table style="width:100%;border-collapse:collapse;table-layout:fixed">${[["Supervisão / equipe",esc(r.supervisao||"")+(r.equipe?" · "+esc(r.equipe):"")],["Data",fmtD(r.data)+" ("+diaDe(r.data)+")"],["Horário",(h0?hm(h0):"—")+(hf?" às "+hm(hf):"")],["Tipo de atendimento",esc(tipoTxt(r)||r.tipo||"")],["Processo",r.processo?esc(procNum(r)):"—"],["Endereço",esc(r.logradouro||"")+(r.bairro?" – "+esc(r.bairro):"")],["Situação",(histSit(r)==="SIM"?"Executado":"Parcial")+(x?" · fiscal: "+esc(svExecTxt(x)):"")],["Fiscal",esc(fis||"—")+(r.osDia?.num?" · O.S nº "+esc(r.osDia.num):"")],...(r.obs?[["Obs.",esc(r.obs)]]:[])].map(([a,b])=>`<tr><th style="${th}">${a}</th><td style="${td}">${b}</td></tr>`).join("")}</table>
+      ${lin.length?`<table style="width:100%;border-collapse:collapse;margin-top:6px;table-layout:fixed">${lin.join("")}</table>`:`<p style="font-size:11px;color:#667;margin:6px 0 0">Sem fotos registradas.</p>`}</div>`; };
   return `<div class="fdoc lx"><style>${typeof FDOC_CSS!=="undefined"?FDOC_CSS:""}</style><div class="r-body">${fhead("HISTÓRICO DE EXECUÇÃO",tit)}<p style="font-size:11px;margin:6px 0 10px">${L.length} serviço${L.length===1?"":"s"} · gerado em ${fmtD(hoje())} às ${hm(new Date().toISOString())} por ${esc(sessao?.nome||"")}</p>${L.map(bloco).join("")}</div></div>`; }
 async function histBaixar(btn,L,tipo){ if(!L.length) return toast("Nenhum registro para baixar.");
   if(L.length>80) return toast("São muitos registros: filtre por dia ou supervisão (até 80 por arquivo).",6000);
@@ -2854,7 +2854,7 @@ async function histBaixar(btn,L,tipo){ if(!L.length) return toast("Nenhum regist
   const um=L.length===1, r0=L[0], tit=um?`${(tipoTxt(r0)||"SERVIÇO").toUpperCase()} · ${fmtD(r0.data)}`:(HIST.dia?"SERVIÇOS DE "+fmtD(HIST.dia):"SERVIÇOS EXECUTADOS")+(HIST.sup?" · "+HIST.sup:"");
   const nome=("historico-"+(um?(r0.data+"-"+(r0.logradouro||"").slice(0,30)):(HIST.dia||hoje())+(HIST.sup?"-"+HIST.sup:""))).normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9]+/g,"-").replace(/-+$/,"").toLowerCase();
   const html=histDocHtml(L,tit);
-  if(tipo==="pdf") await baixarFormPdf(btn,html,nome+".pdf","Histórico de execução"); else await baixarDocImg(btn,html,nome+".png"); }
+  if(tipo==="pdf") await baixarFormPdf(btn,html,nome+".pdf","Histórico de execução",{janela:794}); else await baixarDocImg(btn,html,nome+".png",794); }
 function renderHist(){ const host=$("#histBody"); if(!host) return; if(!sessao){ host.innerHTML=""; return; }
   const L=histLista(), sups=SUPS.filter(x=>travado()?x.id===sessao.sup:noEscopo(x.id)), nC=L.filter(r=>histFotos(r)>0).length;
   const foco=["hsQ","hsEnd"].includes(document.activeElement?.id)?document.activeElement.id:"";
@@ -3084,7 +3084,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.15c";
+const APP_VERSAO="2026.11.15f";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -7378,13 +7378,13 @@ async function listaImgBlob(rows,agr,det,ftxt,sub){ await loadH2P(); try{await d
   finally{ host.remove(); scrollTo(sx,sy); }
   return await new Promise(ok=>cv.toBlob(ok,"image/png")); }
 // imagem (PNG) de qualquer documento do app (mesmo padrão do PDF)
-async function baixarDocImg(btn,html,nome){
+async function baixarDocImg(btn,html,nome,janela){
   const t=btn.textContent; btn.disabled=true; btn.textContent="Gerando imagem…";
   try{ await loadH2P(); try{await document.fonts.ready}catch(e){}
     const host=document.createElement("div"); host.style.cssText="position:absolute;left:-12000px;top:0;width:794px;background:#fff"; host.innerHTML=html; document.body.appendChild(host);
     const sx=scrollX, sy=scrollY; scrollTo(0,0); let cv;
     try{ const el=host.firstElementChild, H=el.scrollHeight, k=Math.max(1,Math.min(2,Math.sqrt(14e6/(794*H))));
-      cv=await html2pdf().set({html2canvas:{scale:k,backgroundColor:"#ffffff",logging:false,scrollX:0,scrollY:0,x:0,y:0,useCORS:true,windowWidth:1280}}).from(el).toCanvas().get("canvas"); }
+      cv=await html2pdf().set({html2canvas:{scale:k,backgroundColor:"#ffffff",logging:false,scrollX:0,scrollY:0,x:0,y:0,useCORS:true,windowWidth:janela||1280,...(janela?{width:janela,onclone:d=>{ try{ d.querySelectorAll(".fdoc").forEach(x=>{ x.style.margin="0"; }); }catch(e){} }}:{})}}).from(el).toCanvas().get("canvas"); }
     finally{ host.remove(); scrollTo(sx,sy); }
     const blob=await new Promise(ok=>cv.toBlob(ok,"image/png")), f=new File([blob],nome,{type:"image/png"});
     let ok=false; if(downloads){ try{ await downloads.save({filename:nome,data:blob}); ok=true; toast("Imagem baixada: "+nome); }catch(e){ if(e?.code==="cancelled"||e?.code==="declined") return; } }
@@ -8145,7 +8145,7 @@ async function rptPdf(html, label, op={}){
   try{
     if(op.umaFolha){ try{ await Promise.all([...host.querySelectorAll("img")].map(im=>im.complete?0:new Promise(r=>{im.onload=im.onerror=r;setTimeout(r,4000);}))); }catch(e){} caberFolha(host.firstElementChild); }
     const H=paginarRpt(host.firstElementChild), sc=pdfEscala(op.escala,H); // imagem muito grande falha no celular: reduz a escala em relatórios longos
-    const w=html2pdf().set({margin:PDF_MARG,image:{type:"jpeg",quality:op.qualidade||.95},html2canvas:{scale:sc,backgroundColor:op.fundo||"#fcfcfb",logging:false,scrollX:0,scrollY:0,x:0,y:0,useCORS:true,windowWidth:1280,onclone:repaginarCopia},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css"]}}).from(host.firstElementChild).toPdf();
+    const w=html2pdf().set({margin:PDF_MARG,image:{type:"jpeg",quality:op.qualidade||.95},html2canvas:{scale:sc,backgroundColor:op.fundo||"#fcfcfb",logging:false,scrollX:0,scrollY:0,x:0,y:0,useCORS:true,windowWidth:op.janela||1280,...(op.janela?{width:op.janela}:{}),onclone:repaginarCopia},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css"]}}).from(host.firstElementChild).toPdf();
     const pdf=await w.get("pdf"); const n=pdf.internal.getNumberOfPages();
     for(let i=1;i<=n;i++){pdf.setPage(i);pdf.setFontSize(8);pdf.setTextColor(110);pdf.text(`Programação GPE · ${label} · página ${i} de ${n}`,105,288,{align:"center"});pdf.setFontSize(7);pdf.text("Desenvolvido por Victor Ricardo Porto Alcântara",105,292,{align:"center"})}
     return pdf.output("blob");
