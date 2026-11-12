@@ -3084,7 +3084,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.16m";
+const APP_VERSAO="2026.11.16n";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -5898,6 +5898,17 @@ const CHK_ITENS=[ // 2. conferência final do equipamento
   "Cesto aéreo sem danos aparentes","Estrutura do cesto sem trincas aparentes","Estrutura sem fissuras aparentes","Estrutura sem deformações aparentes",
   "Sistema hidráulico sem vazamentos aparentes","Mangueiras em condições aparentes de uso","Comandos funcionando normalmente",
   "Movimentação do braço articulado sem anormalidades aparentes","Estabilizadores funcionando normalmente","Dispositivo de segurança oferecidos (Cones): o equipamento está com os cones oferecidos pela empresa MAAS?","Equipamento deixado em local adequado"];
+// conferência final por tipo de equipamento: cesto aéreo (SPLINTER, SKY…), caminhão triturador e van
+const CHK_ITENS_T={cesto:CHK_ITENS,
+  triturador:["Triturador sem danos aparentes","Facas / lâminas em condições aparentes de uso","Rolos alimentadores funcionando normalmente","Parada de emergência (barra de segurança) funcionando normalmente",
+    "Proteções e tampas de segurança no lugar","Bica / calha de descarga sem danos e bem fixada","Fixação do triturador no caminhão sem anormalidades aparentes","Sistema hidráulico sem vazamentos aparentes",
+    "Caçamba / carroceria sem danos aparentes","Pneus em condições aparentes de uso","Luzes e sinalização funcionando normalmente","Dispositivo de segurança oferecidos (Cones): o equipamento está com os cones oferecidos pela empresa MAAS?","Equipamento deixado em local adequado"],
+  van:["Lataria e carroceria sem danos aparentes","Pneus (e estepe) em condições aparentes de uso","Faróis, lanternas e setas funcionando normalmente","Freios funcionando normalmente","Cintos de segurança em condições de uso",
+    "Bancos em condições de uso","Portas e travas funcionando normalmente","Para-brisa, vidros e retrovisores sem danos aparentes","Limpador de para-brisa funcionando normalmente","Painel sem luz de alerta acesa",
+    "Extintor, triângulo, macaco e chave de roda no veículo","Dispositivo de segurança oferecidos (Cones): o equipamento está com os cones oferecidos pela empresa MAAS?","Veículo limpo e deixado em local adequado"]};
+const CHK_TIPO_NOME={cesto:"Cesto aéreo",triturador:"Caminhão triturador",van:"Van"};
+const chkTipoVt=vt=>{ const t=(typeof eqTipoDe==="function"?eqTipoDe(vt):"")||String(vt||""); return /TRITURADOR/i.test(t)?"triturador":/^VAN/i.test(t)?"van":"cesto"; };
+const chkItensDe=c=>CHK_ITENS_T[c?.chkTipo]||CHK_ITENS; // checklists antigos (sem chkTipo) foram feitos com a lista do cesto
 const CHK_OBS_INSP="A conferência realizada pelo operador e pelo supervisor possui caráter de inspeção visual e operacional, limitada às condições aparentes e aos itens que podem ser verificados durante a rotina de operação. Ressalta-se que o servidor/operador não possui condições técnicas de identificar ou diagnosticar defeitos ocultos, falhas internas ou problemas que não sejam perceptíveis visualmente ou durante o funcionamento normal do equipamento. A ausência de anormalidade aparente durante a inspeção não significa que o equipamento esteja isento de defeitos ocultos. Qualquer comportamento anormal, ruído, vazamento, alteração de funcionamento ou indício de falha deverá ser comunicado imediatamente ao supervisor, para adoção das providências necessárias e, quando cabível, avaliação técnica.";
 const CHK_DECL="Declaro que foram realizadas as verificações previstas neste formulário, dentro dos limites da inspeção visual e operacional, tendo sido comunicada ao supervisor qualquer anormalidade aparente identificada durante a utilização do equipamento.";
 let chks=[];
@@ -5989,7 +6000,7 @@ async function assinante(px,sup){
 function chkAlertas(c){
   const out=[];
   CHK_SIT.forEach(q=>{const v=c.sit?.[q.k]; if(v&&v!==q.bom) out.push(q.t+": "+v);});
-  CHK_ITENS.forEach((t,i)=>{if(c.itens?.[i]==="NÃO") out.push(t+": NÃO");});
+  chkItensDe(c).forEach((t,i)=>{if(c.itens?.[i]==="NÃO") out.push(t+": NÃO");});
   return out;
 }
 const chkNivel=c=>c.sit?.apto==="NÃO"?"NÃO":chkAlertas(c).length?"PARCIAL":"SIM";
@@ -6209,7 +6220,7 @@ function abrirChk(c){
   const supOpts=(sel,exc)=>`<option value="">Selecione…</option>`+SUPS.filter(s=>s.id!==exc).map(s=>`<option value="${esc(s.id)}"${s.id===sel?" selected":""}>${esc(nomeSupDe(s.id)||s.enc)} · ${esc(s.id)}</option>`).join("");
   const host=$("#sheetHost");
   host.innerHTML=`<div class="sheet" id="sh"><div class="panel" role="dialog" aria-label="Checklist de inspeção pós-operacional">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div><b style="font-family:var(--display);font-size:21px;line-height:1.1;display:block">Checklist diário de inspeção pós-operacional</b><span class="note">Cesto aéreo · COMURG</span></div><button type="button" class="btn sec" id="kClose" style="min-height:40px;padding:0 14px">Fechar</button></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div><b style="font-family:var(--display);font-size:21px;line-height:1.1;display:block">Checklist diário de inspeção pós-operacional</b><span class="note" id="kfTipoNm">${CHK_TIPO_NOME[c?.chkTipo||"cesto"]} · COMURG</span></div><button type="button" class="btn sec" id="kClose" style="min-height:40px;padding:0 14px">Fechar</button></div>
     ${c&&downloads?`<button type="button" class="btn pri" id="kPdf" style="min-height:44px;font-size:15px">Baixar PDF do checklist</button>`:""}
     ${c&&downloads&&c.midia&&Object.keys(c.midia).length?`<button type="button" class="btn sec" id="kMidAll" style="min-height:44px;font-size:15px">⬇ Baixar todas as fotos e vídeos</button>`:""}
     ${rec?`<p class="note" style="margin:0">Turno entregue e recebido: o checklist está fechado e não pode mais ser alterado.</p>`:c&&edit?`<p class="note" style="margin:0">Você pode corrigir enquanto o turno não for recebido. Ao salvar, a assinatura de entrega é feita de novo.</p>`:""}
@@ -6231,9 +6242,9 @@ function abrirChk(c){
     </div>
     <div class="ckgrp">1. Situação do equipamento ao final do turno</div>
     <div id="kfSit">${CHK_SIT.map(q=>`<div class="ckit"><div class="nm">${esc(q.t)}</div>${snHtml("s:"+q.k,sit[q.k],q.bom,edit)}</div>`).join("")}</div>
-    <div class="ckgrp">2. Conferência final do equipamento</div>
+    <div class="ckgrp" id="kfItTit">2. Conferência final do equipamento · ${CHK_TIPO_NOME[c?.chkTipo||"cesto"]}</div>
     ${edit?`<div style="display:flex;justify-content:flex-end"><button type="button" class="btn sec" id="kTudoOk" style="min-height:38px;padding:0 12px;font-size:13px">Marcar o resto como SIM</button></div>`:""}
-    <div id="kfItens">${CHK_ITENS.map((t,i)=>`<div class="ckit"><div class="nm">${esc(t)}</div>${snHtml("i:"+i,itens[i],"SIM",edit)}</div>`).join("")}</div>
+    <div id="kfItens">${chkItensDe(c).map((t,i)=>`<div class="ckit"><div class="nm">${esc(t)}</div>${snHtml("i:"+i,itens[i],"SIM",edit)}</div>`).join("")}</div>
     <div class="ckgrp">3. Observação sobre a inspeção</div>
     <p class="note cklegal">${esc(CHK_OBS_INSP)}</p>
     <div class="ckgrp">4. Ocorrências / observações</div>
@@ -6360,7 +6371,12 @@ function abrirChk(c){
   const marca=(nome,v)=>{ if(nome.startsWith("s:")) sit[nome.slice(2)]=v; else itens[nome.slice(2)]=v;
     document.querySelectorAll(`.cksn button[data-n="${CSS.escape(nome)}"]`).forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.s===v))); };
   host.querySelector(".panel").addEventListener("click",e=>{const b=e.target.closest(".cksn button"); if(b) marca(b.dataset.n,b.dataset.s);});
-  $("#kTudoOk").onclick=()=>CHK_ITENS.forEach((t,i)=>{ if(!itens[i]) marca("i:"+i,"SIM"); });
+  let kTipo=c?.chkTipo||"cesto";
+  // novo checklist: a lista da seção 2 muda conforme o equipamento escolhido (cesto, triturador, van)
+  const kItensUI=()=>{ if(c) return; const tp=chkTipoVt($("#kfVt").value); if(tp===kTipo) return; kTipo=tp; Object.keys(itens).forEach(k=>delete itens[k]);
+    $("#kfItens").innerHTML=CHK_ITENS_T[tp].map((t,i)=>`<div class="ckit"><div class="nm">${esc(t)}</div>${snHtml("i:"+i,"","SIM",true)}</div>`).join("");
+    $("#kfItTit").textContent="2. Conferência final do equipamento · "+CHK_TIPO_NOME[tp]; $("#kfTipoNm").textContent=CHK_TIPO_NOME[tp]+" · COMURG"; };
+  $("#kTudoOk").onclick=()=>CHK_ITENS_T[kTipo].forEach((t,i)=>{ if(!itens[i]) marca("i:"+i,"SIM"); });
   // quantos checklists a turma já fez no dia e qual equipamento ainda falta
   const cotaUI=(trocar)=>{ const el=$("#kfCota"); if(!el) return; const t=$("#kfSup").value, d=$("#kfData").value;
     if(!t){el.textContent="";return;}
@@ -6368,7 +6384,7 @@ function abrirChk(c){
     el.innerHTML=`Checklists da ${esc(t)} no turno de ${fmtD(d)}: <b>${feitos.length} de ${meta}</b>${feitos.length?" · já feitos: "+feitos.map(esc).join(", "):""}${feitos.length>=meta?" · todos os equipamentos da turma já têm checklist.":falt.length?" · <b>falta: "+falt.map(esc).join(", ")+"</b>":""}`;
     if(trocar&&feitos.includes($("#kfVt").value)){ const ops=[...$("#kfVt").options].map(o=>o.value), livre=falt.find(v=>ops.includes(v))||ops.find(v=>!feitos.includes(v)); if(livre){$("#kfVt").value=livre; if($("#kfVt").onchange) $("#kfVt").onchange(); else eqpUI();} } };
   const eqpUI=()=>{ const e=$("#kfEqp"); if(e) e.value=eqTipoDe($("#kfVt").value); }; try{ eqpUI(); }catch(x){}
-  if(!c){ $("#kfVt").onchange=()=>{eqpUI();cotaUI(false); { const m=eqVtMapa($("#kfSup").value), dono=m&&Object.entries(m).find(([,v])=>v===$("#kfVt").value)?.[0]; if(dono&&$("#kfEq")) $("#kfEq").value=dono; } const ns=chkSlots($("#kfVt").value); if(ns!==kSlots._de){ kSlots.splice(0,kSlots.length,...ns); kSlots._de=ns; kMidCtl.redesenha(); }}; $("#kfData").onchange=()=>cotaUI(true); eqpUI(); cotaUI(true); }
+  if(!c){ $("#kfVt").onchange=()=>{eqpUI();kItensUI();cotaUI(false); { const m=eqVtMapa($("#kfSup").value), dono=m&&Object.entries(m).find(([,v])=>v===$("#kfVt").value)?.[0]; if(dono&&$("#kfEq")) $("#kfEq").value=dono; } const ns=chkSlots($("#kfVt").value); if(ns!==kSlots._de){ kSlots.splice(0,kSlots.length,...ns); kSlots._de=ns; kMidCtl.redesenha(); }}; $("#kfData").onchange=()=>cotaUI(true); eqpUI(); kItensUI(); cotaUI(true); }
   $("#kfSup").onchange=()=>{ $("#kfSupNome").value=nomeSupDe($("#kfSup").value); }; const _kfSupOld=null;
   const recAuto=()=>{ const rs=$("#kfRecSup"), dica=$("#kfRecDica"); if(!rs||c) return; const px=proxEquipe($("#kfSup").value,$("#kfData").value);
     if(px&&(!rs.value||rs.dataset.auto==="1")){ rs.value=px; rs.dataset.auto="1"; }
@@ -6387,12 +6403,12 @@ function abrirChk(c){
     const substituir=!c&&ant&&!chkRecebido(ant);
     if(!c&&ant&&chkRecebido(ant)) e.push(`o checklist do ${vt} da ${sup} em ${fmtD(data)} já foi feito por ${ant.entrega?.nome||ant.ultimoUsuario||"—"} e já foi recebido por quem assumiu o turno (${ant.recebe?.nome||""}); escolha outro equipamento ou abra o existente na lista`);
     if(!kmI||!kmF) e.push("KM inicial e KM final"); else if(+kmF.replace(/\D/g,"")<+kmI.replace(/\D/g,"")) e.push("KM final menor que o KM inicial");
-    const semSit=CHK_SIT.filter(q=>!sit[q.k]).length, semIt=CHK_ITENS.filter((t,i)=>!itens[i]).length;
+    const semSit=CHK_SIT.filter(q=>!sit[q.k]).length, semIt=CHK_ITENS_T[kTipo].filter((t,i)=>!itens[i]).length;
     if(semSit) e.push(`responda ${semSit} pergunta${semSit>1?"s":""} da situação do equipamento (seção 1)`);
     if(semIt) e.push(`marque ${semIt} ${semIt>1?"itens":"item"} da conferência final (seção 2)`);
-    const tmp={sit,itens};
+    const tmp={sit,itens,chkTipo:kTipo};
     if(chkAlertas(tmp).length && !$("#kfOcorr").value.trim()) e.push("descreva em Ocorrências / observações o problema encontrado");
-    const slt=kSlots, semFoto=slt.filter(x=>x.tipo==="foto"&&!midia[x.k]).length; if(semFoto) e.push(`anexe ${semFoto===1?"a foto que falta":"as "+semFoto+" fotos que faltam"} (${ehVan(vt)?"frente, traseira, lado direito e lado esquerdo":"carroceria, cesto, lado direito e lado esquerdo"})`);
+    const slt=kSlots, semFoto=slt.filter(x=>x.tipo==="foto"&&!midia[x.k]).length; if(semFoto) e.push(`anexe ${semFoto===1?"a foto que falta":"as "+semFoto+" fotos que faltam"} (${ehVan(vt)?"frente, traseira, lado direito e lado esquerdo":kTipo==="triturador"?"caçamba, triturador, lado direito e lado esquerdo":"carroceria, cesto, lado direito e lado esquerdo"})`);
     if(assets&&!midia.video360) e.push(ehVan(vt)?"anexe o vídeo 360° da van":"anexe o vídeo 360° do cesto");
     Object.keys(midia).forEach(k=>{ if(!slt.some(x=>x.k===k)) delete midia[k]; }); // tira foto que era do outro tipo de equipamento
     if(document.querySelector("#kfMid .midst")?.textContent.includes("enviando")||[...document.querySelectorAll("#kfMid .midst")].some(x=>/enviando|reduzindo/.test(x.textContent))) e.push("espere terminar o envio das fotos / vídeo");
@@ -6409,7 +6425,7 @@ function abrirChk(c){
     const q=await assinante("kE",sup); if(q.erro) return erro("Assinatura: "+q.erro+".");
     const agora=new Date().toISOString();
     const body={data,semana:semanaDe(data),supervisao:sup,grupo:supOf(sup)?.grupo||"",turno:supOf(sup)?.turno||"",equipe:$("#kfEq").value,
-      equipamento:eqTipoDe(vt)||$("#kfEqp").value.trim(),viatura:vt,kmIni:kmI,kmFim:kmF,sit,itens,midia,ocorr:$("#kfOcorr").value.trim(),declaracao:true,hora:$("#kfHora").value,
+      equipamento:eqTipoDe(vt)||$("#kfEqp").value.trim(),viatura:vt,chkTipo:kTipo,kmIni:kmI,kmFim:kmF,sit,itens,midia,ocorr:$("#kfOcorr").value.trim(),declaracao:true,hora:$("#kfHora").value,
       entrega:{...q,sup:q.sup||sup,em:agora},
       recebe:{sup:recSup},
       ultimoUsuario:nomeAutor(),
@@ -6668,7 +6684,7 @@ function chkDocHtml(c){
   const kv=(a,b,c2,d)=>`<tr><td class="k">${a}</td><td>${b}</td><td class="k">${c2}</td><td>${d}</td></tr>`;
   const cab=`<table>${kv("Data",fmtD(c.data),"Turno",esc(c.turno||supOf(c.supervisao)?.turno||""))}${kv("Equipe",esc(c.equipe||""),"Supervisor",esc(c.entrega?.nome||""))}${kv("Equipamento",esc(c.viatura?eqTxt(c.viatura):c.equipamento||""),"","")}${kv("KM inicial",esc(c.kmIni||""),"KM final",esc(c.kmFim||""))}${kv("Supervisão",esc(c.supervisao||""),"","")}</table>`;
   const s1=`<div><p class="sec">1. Situação do equipamento ao final do turno</p><table><tr><th>Item</th><th class="c">Sim</th><th class="c">Não</th></tr>${CHK_SIT.map(q=>{const v=c.sit?.[q.k];return `<tr${v&&v!==q.bom?' class="bad"':""}><td>${esc(q.t)}</td><td class="c">${fx(v,"SIM")}</td><td class="c">${fx(v,"NÃO")}</td></tr>`}).join("")}</table></div>`;
-  const s2=`<div><p class="sec">2. Conferência final do equipamento</p><table><tr><th>Item</th><th class="c">Sim</th><th class="c">Não</th></tr>${CHK_ITENS.map((t,i)=>{const v=c.itens?.[i];return `<tr${v==="NÃO"?' class="bad"':""}><td>${esc(t)}</td><td class="c">${fx(v,"SIM")}</td><td class="c">${fx(v,"NÃO")}</td></tr>`}).join("")}</table></div>`;
+  const s2=`<div><p class="sec">2. Conferência final do equipamento · ${CHK_TIPO_NOME[c.chkTipo||"cesto"]}</p><table><tr><th>Item</th><th class="c">Sim</th><th class="c">Não</th></tr>${chkItensDe(c).map((t,i)=>{const v=c.itens?.[i];return `<tr${v==="NÃO"?' class="bad"':""}><td>${esc(t)}</td><td class="c">${fx(v,"SIM")}</td><td class="c">${fx(v,"NÃO")}</td></tr>`}).join("")}</table></div>`;
   const s3=`<div><p class="sec">3. Observação sobre a inspeção</p><p class="leg">${esc(CHK_OBS_INSP)}</p></div>`;
   const s4=`<div><p class="sec">4. Ocorrências / observações</p><div class="box">${esc(c.ocorr||"Sem ocorrências.")}</div></div>`;
   const s5=`<div><p class="sec">5. Declaração</p><p class="leg">${c.declaracao?"( X ) ":""}${esc(CHK_DECL)}</p></div>`;
@@ -6736,10 +6752,17 @@ const VAN_SLOTS=[
   {k:"ladoDir",t:"Lateral inteira da van – lado direito",tipo:"foto"},
   {k:"ladoEsq",t:"Lateral inteira da van – lado esquerdo",tipo:"foto"},
   {k:"video360",t:"Vídeo curto 360° da van (até uns 20 segundos)",tipo:"video"}];
+// CAMINHÃO TRITURADOR: caçamba, triturador, lados e vídeo 360°
+const TRI_SLOTS=[
+  {k:"carroceria",t:"Caçamba / carroceria (mostrando que está limpa)",tipo:"foto"},
+  {k:"triturador",t:"Triturador – boca de alimentação e bica (mostrando que estão limpas)",tipo:"foto"},
+  {k:"ladoDir",t:"Lateral inteira do caminhão – lado direito",tipo:"foto"},
+  {k:"ladoEsq",t:"Lateral inteira do caminhão – lado esquerdo",tipo:"foto"},
+  {k:"video360",t:"Vídeo curto 360° do caminhão triturador (até uns 20 segundos)",tipo:"video"}];
 const ehVan=vt=>/^VAN/i.test(vt||"");
-const chkSlots=vt=>ehVan(vt)?VAN_SLOTS:MID_SLOTS;
+const chkSlots=vt=>ehVan(vt)?VAN_SLOTS:chkTipoVt(vt)==="triturador"?TRI_SLOTS:MID_SLOTS;
 // checklist já salvo: van antiga feita no padrão do caminhão continua mostrando as fotos que tem
-const chkSlotsDe=c=>ehVan(c?.viatura)&&!c?.midia?.frente&&!c?.midia?.traseira&&(c?.midia?.carroceria||c?.midia?.cesto)?MID_SLOTS:chkSlots(c?.viatura);
+const chkSlotsDe=c=>!c?.chkTipo&&!ehVan(c?.viatura)?MID_SLOTS:ehVan(c?.viatura)&&!c?.midia?.frente&&!c?.midia?.traseira&&(c?.midia?.carroceria||c?.midia?.cesto)?MID_SLOTS:chkSlots(c?.viatura);
 const MID_COL="chkmidia"; let assets=null; const midCache={};
 // fora do Claude as fotos ficam no Supabase (bucket "midia"); vale mesmo com um camada-gpe.js antigo
 const SUPA_URL="https://eyqbihvatzcjismsszvs.supabase.co", SUPA_KEY="sb_publishable_ekN-TZqBKMwRs6aGHPPejg_rLkBgjgv";
