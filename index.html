@@ -222,7 +222,7 @@
 <script>/* sempre tema claro (o escuro fica ruim de ler no celular) */try{const H=document.documentElement,L=()=>{ if(H.getAttribute("data-theme")!=="light") H.setAttribute("data-theme","light"); };L();new MutationObserver(L).observe(H,{attributes:true,attributeFilter:["data-theme"]});}catch(e){}</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=Lora:ital,wght@1,500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=Lora:ital,wght@1,500&family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600;700&display=swap">
 <style>
 /* Layout: app de campo, uma coluna, barra de abas fixa embaixo; alvos de toque grandes para uso com luva e sol forte */
 :root{
@@ -1397,6 +1397,33 @@ body.sofiscal nav.tabs{display:none!important}
 #v-dash .dmx svg text{fill:var(--ink)}#v-dash .dmx-cab h3{color:var(--ink)}
 .pvsw{display:flex;gap:4px;background:var(--sunk);border:1px solid var(--line);border-radius:12px;padding:4px;margin:0 0 10px;max-width:420px}.pvsw button{flex:1;min-height:42px;border:0;border-radius:9px;background:none;color:var(--muted);font:700 15px var(--body);cursor:pointer}.pvsw button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.15)}
 #v-dash .pvsw.dk{background:#0b1620;border-color:#1f3442;margin:0}#v-dash .pvsw.dk button{color:#8fb0c0}#v-dash .pvsw.dk button[aria-pressed="true"]{background:linear-gradient(90deg,#0f3b4a,#1f2a55);color:#e8f3f8;box-shadow:0 0 12px rgba(56,189,248,.25)}
+/* Dashboard futurista (HUD) */
+#v-dash .dmx{--hud:#00e5ff;--hud2:#7c4dff;--neo:#39ff9f;--hfont:"Orbitron","Barlow Condensed",Arial,sans-serif;--tfont:"Rajdhani","Barlow",Arial,sans-serif;
+  position:relative;isolation:isolate;font-family:var(--tfont);font-size:15px;border:1px solid rgba(0,229,255,.25);
+  background:linear-gradient(rgba(0,229,255,.06) 1px,transparent 1px) 0 0/28px 28px,linear-gradient(90deg,rgba(0,229,255,.06) 1px,transparent 1px) 0 0/28px 28px,radial-gradient(900px 420px at 0% 0%,rgba(0,229,255,.18),transparent 60%),radial-gradient(800px 500px at 100% 20%,rgba(124,77,255,.22),transparent 60%),#04080d;
+  box-shadow:0 0 0 1px rgba(124,77,255,.15),0 0 40px rgba(0,229,255,.12) inset}
+#v-dash .dmx::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:-1;background:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px)}
+#v-dash .dmx-top b{font:800 30px/1.05 var(--hfont);letter-spacing:.12em;background:linear-gradient(90deg,var(--neo),var(--hud) 50%,var(--hud2));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 10px rgba(0,229,255,.45))}
+#v-dash .dmx-top small{font:600 10px var(--hfont);letter-spacing:.22em;color:#6fd6e6}
+#v-dash .dmx-live{font:600 10px var(--hfont);border-color:rgba(57,255,159,.4);animation:dmxPulse 1.8s ease-in-out infinite}
+@keyframes dmxPulse{50%{opacity:.45;box-shadow:0 0 14px rgba(57,255,159,.5)}}
+#v-dash .dmx-c{position:relative;background:linear-gradient(160deg,rgba(0,229,255,.07),rgba(124,77,255,.05) 60%,rgba(255,255,255,.01));border:1px solid rgba(0,229,255,.22);border-radius:6px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 0 18px rgba(0,229,255,.08),inset 0 0 22px rgba(0,229,255,.05);clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,16px 100%,0 calc(100% - 16px))}
+#v-dash .dmx-c::before{content:"";position:absolute;top:0;left:0;width:38px;height:2px;background:var(--hud);box-shadow:0 0 10px var(--hud)}
+#v-dash .dmx-c::after{content:"";position:absolute;right:0;bottom:0;width:38px;height:2px;background:var(--hud2);box-shadow:0 0 10px var(--hud2)}
+#v-dash .dmx-h{font:600 11.5px var(--hfont);letter-spacing:.22em;color:var(--hud);text-shadow:0 0 8px rgba(0,229,255,.6)}
+#v-dash .dmx-h::before{background:var(--neo);box-shadow:0 0 10px var(--neo);transform:rotate(45deg);width:7px;height:7px;border-radius:0}
+#v-dash .dmx-h::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(0,229,255,.5),transparent)}
+#v-dash .dmx .kpi,#v-dash .dmx .dash>*{border-color:rgba(0,229,255,.2)!important;background:rgba(4,12,20,.72)!important;border-radius:4px!important;box-shadow:inset 0 0 18px rgba(0,229,255,.06)}
+#v-dash .dmx .kpi span{font-family:var(--hfont)!important;font-size:10px!important;letter-spacing:.14em;color:#7fb7c7!important}
+#v-dash .dmx .kpi b,#v-dash .dmx .dash b{font-family:var(--hfont);color:var(--neo);text-shadow:0 0 12px rgba(57,255,159,.5);letter-spacing:.02em}
+#v-dash .dmx h2,#v-dash .dmx h3,#v-dash .dmx h4{font-family:var(--hfont);letter-spacing:.06em;color:#d9f7ff;text-shadow:0 0 10px rgba(0,229,255,.25)}
+#v-dash .dmx .tbl{border-radius:4px;border:1px solid rgba(0,229,255,.2)}#v-dash .dmx table th{background:rgba(0,229,255,.08)!important;color:var(--hud)!important;font-family:var(--hfont);font-size:10px;letter-spacing:.12em}
+#v-dash .dmx table tr:hover td{background:rgba(0,229,255,.06)}#v-dash .dmx table tfoot td{color:var(--neo);font-weight:700}
+#v-dash .dmx .btn,#v-dash .dmx button:not([data-pvsw]){border-radius:4px;border-color:rgba(0,229,255,.35);font-family:var(--hfont);letter-spacing:.06em;font-size:11.5px}
+#v-dash .dmx-f select,#v-dash .dmx-f input{border-radius:4px;border-color:rgba(0,229,255,.3);background:rgba(4,12,20,.85);font-family:var(--tfont);font-weight:600;font-size:15px}
+#v-dash .pvsw.dk{border-radius:6px;border-color:rgba(0,229,255,.3)}#v-dash .pvsw.dk button{font-family:var(--hfont);font-size:11.5px;letter-spacing:.1em;border-radius:4px}
+#v-dash .dmx svg{filter:drop-shadow(0 0 6px rgba(0,229,255,.18))}
+@media (prefers-reduced-motion:reduce){#v-dash .dmx-live{animation:none}}
 /* Histórico de execução */
 #v-hist .hs-top{background:linear-gradient(135deg,#18241c,#24402c);color:#e9f3ea;border-radius:14px;padding:14px 16px;margin:4px 0 10px}#v-hist .hs-top b{display:block;font-size:17px;letter-spacing:.04em}#v-hist .hs-top small{opacity:.85}
 #v-hist .hs-flt{display:flex;flex-wrap:wrap;gap:8px}#v-hist .hs-lb{display:grid;gap:3px;font-size:12.5px;font-weight:700;flex:1;min-width:150px}#v-hist .hs-lb input{width:100%;min-width:0;box-sizing:border-box}#v-hist .hs-g2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}#v-hist .hs-g2 .btn{grid-column:1/-1}#v-hist .hs-flt select{width:auto}#v-hist .hs-flt input{flex:1;min-width:200px}
@@ -3057,7 +3084,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.15b";
+const APP_VERSAO="2026.11.15c";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
