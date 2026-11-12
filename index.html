@@ -3084,7 +3084,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.16b";
+const APP_VERSAO="2026.11.16g";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -4524,12 +4524,22 @@ function montar(root) {
     S.vist = Object.entries(acesso || {}).filter(([id, u]) => u && u.ativo !== false && u.nome && u.perfil !== "admin" && pessoaNoEscopo(u) && (u.perfil !== "fiscal" || fisPerm(id).vrota)).map(([id, u]) => ({ uid: id, nome: u.nome, rot: u.nome + (u.perfil === "fiscal" ? " (fiscal)" : "") })).sort((a, b) => a.nome.localeCompare(b.nome, "pt"));
     const quem = meuId(); if (S._ini !== quem) { S._ini = quem; S.tela = pode.fis() ? (minhaAlguma() || !VIST.nFiscal(quem) ? "rotas" : "exec") : pode.sup() && (VIST.nTurmaAberto(sessao.sup) || VIST.nTurmaAssinar(sessao.sup)) && !minhaAlguma() ? "exec" : pode.resumo() && !pode.coord() && !minhaAlguma() ? "resumo" : "rotas"; }
   }
+  // tipo da localidade (setor, bairro, vila…): fica junto do nome no cadastro (ex.: "JARDIM AMÉRICA")
+  const LOC_TIPOS = ["Setor", "Bairro", "Vila", "Jardim", "Residencial", "Parque", "Conjunto", "Chácara", "Condomínio", "Loteamento", "Núcleo", "Outro"];
+  const locTipoDe = (t) => { const u = String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase(); return LOC_TIPOS.find((x) => x !== "Outro" && (u.startsWith(x.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase() + " "))) || ""; };
+  const locNome = (t) => { const tp = locTipoDe(t); return tp ? String(t).trim().slice(tp.length).trim() : String(t || "").trim(); };
+  const locJunta = (tp, nome) => { nome = String(nome || "").trim(); if (!nome) return ""; if (!tp || tp === "Outro" || locTipoDe(nome)) return nome.toUpperCase(); return (tp + " " + nome).toUpperCase(); };
+  // endereço em campos separados (tipo, nome, número, quadra, lote, complemento) → vira uma linha só: "RUA C-182, Nº 10, QD 12, LT 3"
+  const LOG_TIPOS = ["Rua", "Avenida", "Alameda", "Praça", "Travessa", "Rodovia", "Viela", "Via", "Estrada", "Outro"];
+  const endJunta = (n) => { const nome = String(n.e_nome || "").trim(); if (!nome) return ""; const tp = n.e_tipo && n.e_tipo !== "Outro" && !new RegExp("^" + n.e_tipo + "\\b", "i").test(nome) ? n.e_tipo + " " : "";
+    return [tp + nome, n.e_num ? "Nº " + String(n.e_num).trim() : "", n.e_qd ? "QD " + String(n.e_qd).trim() : "", n.e_lt ? "LT " + String(n.e_lt).trim() : "", String(n.e_comp || "").trim()].filter(Boolean).join(", ").toUpperCase(); };
   const REGN = ["CENTRO OESTE", "SUL", "SUDOESTE", "LESTE", "NORTE", "OESTE"];
   // regional automática: pelo setor/bairro (ou pelo bairro escrito no endereço), com base nos processos já cadastrados
   const regNorm = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z0-9 ]/g, " ").replace(/\b(SETOR|SET|ST|STR|RESIDENCIAL|RES|JARDIM|JD|VILA|VL|PARQUE|PQ|BAIRRO|BRO|CONJUNTO|CONJ|CJ|LOTEAMENTO|LOT|CHACARA|CH|RESID)\b/g, " ").replace(/\s+/g, " ").trim();
   let regMapa = null;
-  const regMapaDe = () => { if (regMapa) return regMapa; const c = {}; (S.proc || []).forEach((p) => { const k = regNorm(p.setor); if (!k || k.length < 3 || !REGN.includes(p.regional) || p.setor_aproximado && p.manual) return; (c[k] = c[k] || {})[p.regional] = (c[k][p.regional] || 0) + 1; });
+  const regMapaDe = () => { const c = {}; (S.proc || []).forEach((p) => { const k = regNorm(p.setor); if (!k || k.length < 3 || !REGN.includes(p.regional)) return; (c[k] = c[k] || {})[p.regional] = (c[k][p.regional] || 0) + 1; });
     regMapa = Object.fromEntries(Object.entries(c).map(([k, o]) => [k, Object.entries(o).sort((a, b) => b[1] - a[1])[0][0]])); return regMapa; };
+  const setoresConhecidos = () => { const M = {}; (S.proc || []).forEach((p) => { const nm = locNome(p.setor), k = regNorm(p.setor); if (nm && k && k.length >= 3 && REGN.includes(p.regional) && !M[k]) M[k] = nm.toUpperCase(); }); return [...new Set(Object.values(M))].sort(); };
   const regionalDe = (setor, endereco) => { const M = regMapaDe(), k = regNorm(setor); if (k && M[k]) return M[k];
     if (k) { const parc = Object.keys(M).filter((x) => x.length >= 5 && (x.includes(k) && k.length >= 5 || k.includes(x))).sort((a, b) => b.length - a.length)[0]; if (parc) return M[parc]; }
     const e = " " + regNorm(endereco) + " "; const hit = Object.keys(M).filter((x) => x.length >= 6 && e.includes(" " + x + " ")).sort((a, b) => b.length - a.length)[0]; return hit ? M[hit] : ""; };
@@ -5042,7 +5052,7 @@ function montar(root) {
     const fila = S.pdfFila || [];
     let h = `<div class="vp-kpis"><div class="vp-kpi"><b>${com}<small style="font-size:16px;color:var(--mu)"> / ${n}</small></b><span>Processos com PDF</span><em>${n - com} ainda sem PDF</em></div></div>
     <div class="vp-card" style="padding:14px;display:flex;flex-direction:column;gap:8px"><b style="font-size:18px">Enviar vários PDFs de uma vez</b>
-    <p class="vp-msg">Escolha os PDFs (pode selecionar vários). O app liga cada arquivo ao processo pelo <b>número no nome do arquivo</b> (SEI, GED, O.S, PED ou nº do processo). Ex.: <code>24.17.000002489-7.pdf</code>, <code>GED 0004957-2024.pdf</code>, <code>OS 1787257.pdf</code>.</p>
+    <p class="vp-msg">Escolha os PDFs (pode selecionar vários). O app liga cada arquivo ao processo pelo <b>número no nome do arquivo</b> (SEI, GED, O.S, PED ou nº do processo). Se o processo ainda não está no app, ele <b>lê o PDF</b> (nº, endereço, bairro, quantidades) e <b>cadastra sozinho</b>; o que faltar, você completa. Ex.: <code>24.17.000002489-7.pdf</code>, <code>GED 0004957-2024.pdf</code>, <code>OS 1787257.pdf</code>.</p>
     <label class="vp-btn vp-filebtn vp-pri">📂 Escolher os PDFs<input type="file" accept="application/pdf,.pdf" multiple data-pdflote="1"></label></div>
     ${S.novo ? novoHtml() : `<button class="vp-btn" data-nvabrir="1" style="align-self:flex-start">➕ Cadastrar processo manualmente (com PDF ou link)</button>`}${resumoManualHtml()}`;
     if (fila.length) {
@@ -5057,7 +5067,7 @@ function montar(root) {
       ${ja ? `<label class="vp-row" style="font-size:14px"><input type="checkbox" id="vp-psobre" ${S.pdfSobre ? "checked" : ""}> Substituir também os ${ja} processos que já têm PDF</label>` : ""}
       <div class="vp-row"><button class="vp-btn vp-pri" data-pdfenviar="1" ${!aEnviar.length || S.pdfBusy ? "disabled" : ""}>${S.pdfBusy ? `Enviando… ${env} de ${env + aEnviar.length} · não feche esta tela` : `⬆ Enviar ${aEnviar.length} PDF${aEnviar.length === 1 ? "" : "s"}`}</button>${S.pdfBusy ? `<button class="vp-btn" data-pdfparar="1">Parar</button>` : `<button class="vp-btn" data-pdflimpar="1">Limpar lista</button>`}</div>
       ${S.pdfBusy ? `<div class="vp-prog" style="height:8px;border-radius:4px"><i style="width:${pct(env, env + aEnviar.length)}%"></i></div>` : ""}
-      ${nao.length ? `<details class="vp-card" style="padding:10px 14px" ${S.pdfNaoAberto ? "open" : ""}><summary><b>${nao.length} arquivos sem processo no relatório</b> <span class="vp-msg">(toque para ver e ligar na mão)</span></summary><ol>${nao.map((x) => { const i = fila.indexOf(x); return `<li class="vp-stop vp-pdfit"><span class="vp-seq"></span><div><div style="font-weight:600;overflow-wrap:anywhere">📄 ${esc(x.file.name)}</div>${x.st === "cad" ? `<span class="vp-sp vp-s-ja_executado">✔ processo cadastrado com este PDF</span>` : `<input type="text" id="vp-pm-${i}" data-pdfmanual="${i}" value="${esc(x.manual || "")}" placeholder="Digite o nº do processo para ligar" style="margin-top:4px;width:100%"><button class="vp-btn" data-nvfila="${i}" style="margin-top:4px">➕ Cadastrar processo novo com este PDF</button>`}</div></li>`; }).join("")}</ol></details>` : ""}
+      ${nao.length ? `<details class="vp-card" style="padding:10px 14px" ${S.pdfNaoAberto ? "open" : ""}><summary><b>${nao.length} arquivos sem processo no relatório</b> <span class="vp-msg">${S.pdfLendo ? "📖 lendo os PDFs e cadastrando sozinho…" : `(${nao.filter((x) => x.st === "cad").length} cadastrados pelo PDF · toque para ver)`}</span></summary><ol>${nao.map((x) => { const i = fila.indexOf(x); return `<li class="vp-stop vp-pdfit"><span class="vp-seq"></span><div><div style="font-weight:600;overflow-wrap:anywhere">📄 ${esc(x.file.name)}</div>${x.lendo ? `<span class="vp-msg">📖 lendo o PDF…</span>` : x.msg ? `<div class="vp-msg" style="color:${x.st === "cad" ? "var(--lf)" : "var(--bk)"};margin:2px 0">${esc(x.msg)}</div>` : ""}${x.st === "cad" ? `<span class="vp-sp vp-s-ja_executado">✔ processo cadastrado com este PDF</span>${x.auto ? `<span class="vp-msg">Confira o processo na lista e informe se está no Urbantrim (✏️ Editar).</span>` : ""}` : `<input type="text" id="vp-pm-${i}" data-pdfmanual="${i}" value="${esc(x.manual || "")}" placeholder="Digite o nº do processo para ligar" style="margin-top:4px;width:100%"><button class="vp-btn" data-nvfila="${i}" style="margin-top:4px">${x.lido && !x.lido.vazio ? "✍️ Completar o cadastro (já preenchido pelo PDF)" : "➕ Cadastrar processo novo com este PDF"}</button>`}</div></li>`; }).join("")}</ol></details>` : ""}
       <details class="vp-card" style="padding:10px 14px" ${S.pdfVerTodos ? "open" : ""}><summary><b>Ver a lista dos ${okL.length} arquivos ligados</b></summary><ol>${okL.map((x) => { const pr = procDe(x.id); return `<li class="vp-stop vp-pdfit"><span class="vp-seq"></span><div><div style="overflow-wrap:anywhere">📄 ${esc(x.file.name)} <span class="vp-msg">· ${(x.file.size / 1048576).toFixed(1)} MB</span></div><div class="vp-msg">→ <b>${esc(pr.processo)}</b> · ${esc(pr.endereco)}</div>${x.feito ? `<span class="vp-sp vp-s-ja_executado">✔ enviado</span>` : x.erro ? `<span class="vp-need">${esc(x.erro)}</span>` : x.ja && !S.pdfSobre ? `<span class="vp-msg">já tem PDF (não será enviado)</span>` : ""}</div></li>`; }).join("")}</ol></details>`;
     }
     const term = (S.pq || "").trim().toLowerCase();
@@ -5099,22 +5109,96 @@ function montar(root) {
       <tfoot><tr style="border-top:2px solid var(--line,#ddd)"><td colspan="2"><b>Total</b></td><td style="text-align:right"><b>${L.length}</b></td></tr></tfoot></table></div>
       <div class="vp-row" style="margin-top:8px"><button class="vp-btn" data-resmanxls="1">⬇ Baixar em Excel (CSV)</button><button class="vp-btn" data-resmanpdf="1">📄 Baixar em PDF</button><button class="vp-btn" data-resmanimg="1">🖼 Baixar em imagem</button></div></details>`;
   }
+  // ----- leitura automática do PDF: tira do texto o nº do processo, endereço, bairro, quantidades… -----
+  const PDFJS = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/";
+  let _pdfjs = null;
+  function loadPdfJs() { if (_pdfjs) return _pdfjs;
+    _pdfjs = new Promise((ok, f) => { if (window.pdfjsLib) return ok(window.pdfjsLib); const s = document.createElement("script"); s.src = PDFJS + "pdf.min.js"; s.onload = () => ok(window.pdfjsLib); s.onerror = () => { _pdfjs = null; f(new Error("não carregou o leitor de PDF")); }; document.head.appendChild(s); })
+      .then(async (L) => { if (!L) throw new Error("leitor de PDF indisponível"); try { const tx = await (await fetch(PDFJS + "pdf.worker.min.js")).text(); L.GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([tx], { type: "text/javascript" })); } catch (e) { L.GlobalWorkerOptions.workerSrc = PDFJS + "pdf.worker.min.js"; } return L; });
+    return _pdfjs; }
+  async function pdfTexto(file, maxPag) { const L = await loadPdfJs(); const pdf = await L.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise; let out = "";
+    try { for (let pg = 1; pg <= Math.min(pdf.numPages, maxPag || 6); pg++) { const c = await (await pdf.getPage(pg)).getTextContent(); let y = null;
+        c.items.forEach((it) => { const yy = it.transform ? Math.round(it.transform[5]) : y; if (y !== null && yy !== null && Math.abs(yy - y) > 3) out += "\n"; else if (out && !/\s$/.test(out)) out += " "; out += it.str; if (it.hasEOL) out += "\n"; y = yy; }); out += "\n"; } }
+    finally { try { pdf.destroy(); } catch (e) {} }
+    return out.replace(/[ \t ]+/g, " ").replace(/ *\n */g, "\n"); }
+  const LOG_RX = /^(RUA|R\.|AVENIDA|AV\.?|ALAMEDA|AL\.|PRA[CÇ]A|P[CÇ]A\.?|TRAVESSA|TV\.?|RODOVIA|ROD\.?|VIELA|VIA|ESTRADA|EST\.)\s+/i;
+  const LOG_MAP = { R: "Rua", RUA: "Rua", AV: "Avenida", AVENIDA: "Avenida", AL: "Alameda", ALAMEDA: "Alameda", PRACA: "Praça", PCA: "Praça", TRAVESSA: "Travessa", TV: "Travessa", RODOVIA: "Rodovia", ROD: "Rodovia", VIELA: "Viela", VIA: "Via", ESTRADA: "Estrada", EST: "Estrada" };
+  function pdfCampos(txt, nomeArq) { const T = String(txt || ""), U = T.normalize("NFD").replace(/[̀-ͯ]/g, "");
+    const pega = (rx, s) => { const m = (s || T).match(rx); return m ? String(m[1]).trim() : ""; };
+    const o = {};
+    o.processo = pega(/(\d{2}\.\d{2}\.\s?\d{9}\s?-\s?\d)/) || pega(/(\d{2}\.\d{2}\.\s?\d{5,}\s?-\s?\d)/);
+    o.ged = pega(/GED\W{0,6}(\d{4,8}\s?[-\/]\s?\d{4})/i).replace(/\s+/g, "");
+    if (!o.processo && o.ged) o.processo = "GED " + o.ged;
+    o.parecer = pega(/PARECER\s*(?:T[EÉ]CNICO)?\s*(?:N[º°O.]*\s*)?(\d{1,5}\s?\/\s?\d{4})/i).replace(/\s+/g, "");
+    o.ano = o.processo.match(/^(\d{2})\./) ? "20" + o.processo.slice(0, 2) : (o.ged.match(/(\d{4})$/) || [])[1] || "";
+    // endereço: depois de "Endereço:", "Logradouro:", "Local:"
+    let end = pega(/(?:ENDERE[CÇ]O(?:\s+D[OA]\s+\w+)?|LOGRADOURO|LOCAL(?:IZA[CÇ][AÃ]O)?(?:\s+D[OA]\s+\w+)?)\s*[:\-–]\s*([^\n]{4,160})/i);
+    if (!end) { const m = T.match(/(?:^|\n|\s)((?:RUA|AVENIDA|AV\.|ALAMEDA|PRA[CÇ]A|TRAVESSA|RODOVIA)\s+[^\n]{3,120})/i); if (m) end = m[1].trim(); }
+    end = end.replace(/\s*(?:CEP|TELEFONE|FONE|E-?MAIL|INTERESSAD[OA]|REQUERENTE|CPF|RG)\b.*$/i, "").replace(/[\s,;.–-]+$/, "").trim();
+    // bairro / setor
+    let bai = pega(/(?:BAIRRO|SETOR)\s*[:\-–]\s*([^\n,;]{3,60})/i);
+    if (!bai && end) { const m = end.match(/[,–-]\s*((?:SETOR|ST\.|BAIRRO|VILA|JARDIM|JD\.?|RESIDENCIAL|RES\.|PARQUE|PQ\.|CONJUNTO|CONJ\.|CH[AÁ]CARA|CONDOM[IÍ]NIO|LOTEAMENTO|N[UÚ]CLEO)\s+[^,;–]{2,50})/i); if (m) bai = m[1].trim(); }
+    if (!bai) { const set = setoresConhecidos(); const UU = " " + regNorm(U) + " "; bai = set.filter((x) => regNorm(x).length >= 5 && UU.includes(" " + regNorm(x) + " ")).sort((a, b) => b.length - a.length)[0] || ""; }
+    bai = bai.replace(/\s*(?:CEP|GOI[AÂ]NIA|GO\b).*$/i, "").replace(/[\s,;.–-]+$/, "").trim();
+    // tira o bairro e "Goiânia-GO" de dentro do endereço
+    if (end) { if (bai) end = end.replace(new RegExp("[,–-]?\\s*" + bai.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ".*$", "i"), ""); end = end.replace(/[,–-]?\s*GOI[AÂ]NIA.*$/i, "").replace(/[\s,;.–-]+$/, "").trim(); }
+    const tpL = locTipoDe(bai.replace(/^ST\.?\s/i, "SETOR ").replace(/^JD\.?\s/i, "JARDIM ").replace(/^RES\.?\s/i, "RESIDENCIAL ").replace(/^PQ\.?\s/i, "PARQUE ").replace(/^CONJ\.?\s/i, "CONJUNTO "));
+    o.stipo = tpL || ""; o.setor = tpL ? locNome(bai.replace(/^\S+\s/, tpL + " ")) : bai;
+    // endereço em partes
+    o.endereco = end.toUpperCase();
+    const mt = end.match(LOG_RX); o.e_tipo = mt ? LOG_MAP[mt[1].normalize("NFD").replace(/[̀-ͯ.]/g, "").toUpperCase()] || "" : "";
+    let resto = mt ? end.slice(mt[0].length) : end;
+    o.e_num = pega(/\b(?:N[º°O]\.?|N[UÚ]MERO|NR\.?)\s*(\d+[A-Z]?|S\/?N)\b/i, resto);
+    o.e_qd = pega(/\b(?:QD\.?|QUADRA)\s*([\w-]{1,8})/i, resto); o.e_lt = pega(/\b(?:LT\.?|LOTE)\s*([\w,-]{1,10}?)(?=[\s,;]|$)/i, resto);
+    o.e_nome = resto.split(/\s*,\s*|\s+(?=N[º°]|QD\.?\s|QUADRA\s|LT\.?\s|LOTE\s)/i)[0].trim();
+    if (o.e_nome && !o.e_tipo) o.e_tipo = "Outro";
+    const ultimo = resto.split(/\s*,\s*/).slice(1).filter((p) => !/^(N[º°O]|N[UÚ]MERO|QD|QUADRA|LT|LOTE)\b/i.test(p)).join(", "); o.e_comp = ultimo;
+    // quantidades de árvores
+    const qt = (rx) => { let s = 0; for (const m of U.matchAll(rx)) s = Math.max(s, +m[1] || 0); return s ? String(s) : ""; };
+    o.po = qt(/PODA\w*\s+(?:DE\s+)?(?:EM\s+)?(\d{1,3})\b/gi) || qt(/(\d{1,3})\s*\(?[A-Z ]*\)?\s*(?:ARVORES?|INDIVIDUOS?|EXEMPLARES?)?\s*(?:PARA|A SEREM|SERAO)?\s*PODAD/gi);
+    o.ex = qt(/(?:EXTIRPA\w*|SUPRESS\w*|ERRADICA\w*|CORTE)\s+(?:DE\s+)?(?:TOTAL\s+)?(?:DE\s+)?(\d{1,3})\b/gi) || qt(/(\d{1,3})\s*\(?[A-Z ]*\)?\s*(?:ARVORES?|INDIVIDUOS?|EXEMPLARES?)?\s*(?:PARA|A SEREM|SERAO)?\s*(?:EXTIRPAD|SUPRIMID|ERRADICAD)/gi);
+    o.de = qt(/DESTOCA\w*\s+(?:DE\s+)?(\d{1,3})\b/gi);
+    if (!o.processo && nomeArq) { const nm = nomeArq.replace(/\.pdf$/i, ""); o.processo = (nm.match(/(\d{2}\.\d{2}\.\s*\d{5,}\s*-\s*\d)/) || nm.match(/(GED\W{0,3}\d{4,8}\s*[-\/ ]\s*\d{2,4})/i) || [])[1] || ""; }
+    o.regional = o.setor || o.endereco ? regionalDe(locJunta(o.stipo, o.setor), o.endereco + " " + o.setor) : "";
+    return o; }
+  // lê todos os PDFs sem processo; quando acha tudo, cadastra sozinho
+  async function pdfLerFila() { if (S.pdfLendo) return; const fila = S.pdfFila || []; S.pdfLendo = 1; render();
+    for (const x of fila) { if (x.st !== "nao" || x.lido || S.pdfParar) continue;
+      x.lendo = 1; render();
+      try { const tx = await pdfTexto(x.file, 6);
+        if (tx.replace(/\s/g, "").length < 40) { x.lido = { vazio: 1 }; x.msg = "PDF escaneado (sem texto): complete os dados na mão"; }
+        else { const c = pdfCampos(tx, x.file.name); x.lido = c;
+          const r = c.processo ? acharProc(c.processo + " " + (c.ged || "")) : { st: "nao" };
+          if (r.st !== "nao") { const id = r.st === "ok" ? r.id : r.ids[0]; Object.assign(x, { id, st: "ok", ja: !!docLinks(R({ id })).length }); x.msg = "o PDF é do processo " + procDe(id).processo + " (já estava no app)"; }
+          else { const falta = [!c.processo && "nº do processo", !c.endereco && "endereço", !c.setor && "setor/bairro", !c.regional && "regional"].filter(Boolean);
+            if (!falta.length) { const id = await pdfCadAuto(x, c); if (id) { Object.assign(x, { st: "cad", id, feito: !!x.pdfOk, auto: 1 }); x.msg = "cadastrado sozinho pelo PDF: " + c.processo + " · " + c.endereco + " · " + locJunta(c.stipo, c.setor) + " · " + cap(c.regional); } }
+            else x.msg = "li o PDF, mas faltou: " + falta.join(", ") + ". Toque em Completar."; } } }
+      catch (e) { x.lido = { vazio: 1 }; x.msg = "não consegui ler este PDF (" + (e && e.message || "erro") + ")"; }
+      delete x.lendo; render(); }
+    S.pdfLendo = 0; render();
+    const cad = fila.filter((x) => x.auto).length, lig = fila.filter((x) => x.st === "ok" && x.msg).length; if (cad || lig) toast((cad ? cad + " processo" + (cad === 1 ? "" : "s") + " cadastrado" + (cad === 1 ? "" : "s") + " pelo PDF" : "") + (cad && lig ? " · " : "") + (lig ? lig + " ligado" + (lig === 1 ? "" : "s") + " a processo existente" : "")); }
+  async function pdfCadAuto(x, c) { if (!db) return "";
+    const id = "m_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const doc = { processo_id: id, manual: { processo: c.processo, ged: c.ged || "", parecer: c.parecer || "", endereco: c.endereco, setor: locJunta(c.stipo, c.setor), regional: c.regional, ano: c.ano || "", po: +c.po || 0, ex: +c.ex || 0, de: +c.de || 0, ger: vistGerVis() || "DIRSEN", urbantrim: "", auto_pdf: 1, por: usuario(), uid: meuId(), em: new Date().toISOString() } };
+    if (assets && x.file.size <= (window.GPE_NETLIFY ? 50 : 15) * 1048576) { try { const up = await assets.upload(x.file, { type: "application/pdf" }); doc.proc_pdf = { id: up.id, url: up.url || "", nome: x.file.name, em: new Date().toISOString(), por: usuario() }; x.pdfOk = 1; } catch (e) {} }
+    if (await gravar([id], doc)) { S.proc = todosProc(); _idx = null; return id; } return ""; }
   // ----- cadastrar processo manualmente (com PDF ou link) -----
   function novoForm(pref) { const nome = pref && pref.file ? pref.file.name.replace(/\.pdf$/i, "") : "";
     const num = (nome.match(/(\d{2}\.\d{2}\.\s*\d{5,}\s*-\s*\d)/) || nome.match(/(GED\W{0,3}\d{4,8}\s*[-\/ ]\s*\d{2,4})/i) || nome.match(/(O\.?\s*S\.?\W{0,4}\d{6,8})/i) || nome.match(/(\d{6,})/) || [])[1] || "";
     const ged = ((nome.match(/GED\W{0,3}(\d{4,8}\s*[-\/ ]\s*\d{2,4})/i) || [])[1] || "").replace(/\s+/g, "");
     const ano = ((nome.match(/(?:GED\W{0,3}\d{4,8}\s*[-\/ ]\s*|\b)(20\d{2})\b/) || [])[1]) || (num.match(/^(\d{2})\./) ? "20" + num.slice(0, 2) : "");
     const setor = nome.replace(num, "").replace(/^[\s_.-]+|[\s_.-]+$/g, "").replace(/\(\d+\)/g, "").trim();
-    S.novo = { file: pref && pref.file || null, filaIdx: pref ? pref.idx : null, processo: num.trim(), ged, parecer: "", endereco: "", setor, regional: S.preg || "", ano, po: "", ex: "", de: "", link: "" }; }
+    S.novo = { file: pref && pref.file || null, filaIdx: pref ? pref.idx : null, processo: num.trim(), ged, parecer: "", endereco: "", setor, regional: S.preg || "", ano, po: "", ex: "", de: "", link: "" };
+    const L = pref && pref.lido; if (L && !L.vazio) { S.novo.setor = ""; Object.keys(L).forEach((k) => { if (L[k]) S.novo[k] = L[k]; }); if (L.regional) S.novo._regAuto = true; S.novo._doPdf = 1; } }
   // ✏️ editar as informações de um processo (coordenação para cima)
-  function edAbrir(p) { S.ed = { id: p.id, processo: p.processo || "", ged: p.ged || "", parecer: p.parecer && p.parecer !== "SEM NUMERO" ? p.parecer : "", ano: p.ano ? String(p.ano) : "", endereco: p.endereco || "", setor: p.setor || "", regional: p.regional || "", po: String(p.qtd_poda || 0), ex: String(p.qtd_extirpacao || 0), de: String(p.qtd_destocamento || 0), loc: p.loc || "", urb: p.urbantrim || "" }; }
+  function edAbrir(p) { S.ed = { id: p.id, processo: p.processo || "", ged: p.ged || "", parecer: p.parecer && p.parecer !== "SEM NUMERO" ? p.parecer : "", ano: p.ano ? String(p.ano) : "", endereco: p.endereco || "", setor: locNome(p.setor), stipo: locTipoDe(p.setor), regional: p.regional || "", po: String(p.qtd_poda || 0), ex: String(p.qtd_extirpacao || 0), de: String(p.qtd_destocamento || 0), loc: p.loc || "", urb: p.urbantrim || "" }; }
   function edHtml(p) { const n = S.ed;
     const inp = (k, ph, extra) => `<input type="text" id="vp-ed-${k}" data-ed="${k}" value="${esc(n[k] || "")}" placeholder="${ph}" ${extra || ""}>`;
     return `<div class="vp-vb" style="border-color:var(--lf);display:flex;flex-direction:column;gap:8px"><b>✏️ Editar as informações do processo</b>
       <label class="vp-f">Nº do processo *${inp("processo", "Ex.: 25.30.000012368-0 ou GED 0000663-2024")}</label>
       <div class="vp-ctl"><label class="vp-f vp-grow">GED${inp("ged", "0000663-2024")}</label><label class="vp-f vp-grow">Parecer técnico${inp("parecer", "Ex.: 1031/2025")}</label><label class="vp-f" style="width:90px">Ano${inp("ano", "2024", 'inputmode="numeric"')}</label></div>
       <label class="vp-f">Endereço *${inp("endereco", "Rua, número, quadra, lote")}</label>
-      <div class="vp-ctl"><label class="vp-f vp-grow">Setor / bairro${inp("setor", "Ex.: Setor Marista")}</label>
+      <div class="vp-ctl"><label class="vp-f">Tipo *<select id="vp-ed-stipo" data-ed="stipo"><option value="">Escolher…</option>${LOC_TIPOS.map((x) => `<option${(n.stipo || locTipoDe(n.setor)) === x ? " selected" : ""}>${x}</option>`).join("")}</select></label><label class="vp-f vp-grow">Nome do setor / bairro${inp("setor", "Ex.: Marista")}</label>
       <label class="vp-f">Regional *<select id="vp-ed-regional" data-ed="regional">${REGN.map((r) => `<option value="${r}"${n.regional === r ? " selected" : ""}>${cap(r)}</option>`).join("")}</select></label></div>
       <div class="vp-ctl"><label class="vp-f" style="width:90px">Poda${inp("po", "0", 'inputmode="numeric"')}</label><label class="vp-f" style="width:90px">Extirpação${inp("ex", "0", 'inputmode="numeric"')}</label><label class="vp-f" style="width:90px">Destoca${inp("de", "0", 'inputmode="numeric"')}</label></div>
       <label class="vp-f">Cadastrado no Urbantrim?<select data-ed="urb"><option value="">Não informado</option><option value="sim"${n.urb === "sim" ? " selected" : ""}>Sim, já está no Urbantrim</option><option value="nao"${n.urb === "nao" ? " selected" : ""}>Não está no Urbantrim</option></select></label>
@@ -5126,7 +5210,8 @@ function montar(root) {
     const n = S.ed; if (!n || S.busy.ed) return;
     if (!n.processo.trim()) { toast("Informe o nº do processo"); return; }
     if (!n.endereco.trim()) { toast("Informe o endereço"); return; }
-    const edicao = { processo: n.processo.trim(), ged: n.ged.trim(), parecer: n.parecer.trim(), ano: n.ano.trim(), endereco: n.endereco.trim(), setor: n.setor.trim(), regional: n.regional, po: +n.po || 0, ex: +n.ex || 0, de: +n.de || 0, loc: n.loc.trim(), urbantrim: n.urb || "", por: usuario(), uid: meuId(), em: new Date().toISOString() };
+    if (n.setor.trim() && !n.stipo && !locTipoDe(n.setor)) { toast("Escolha o tipo: setor, bairro, vila…"); return; }
+    const edicao = { processo: n.processo.trim(), ged: n.ged.trim(), parecer: n.parecer.trim(), ano: n.ano.trim(), endereco: n.endereco.trim(), setor: locJunta(n.stipo, n.setor), regional: n.regional, po: +n.po || 0, ex: +n.ex || 0, de: +n.de || 0, loc: n.loc.trim(), urbantrim: n.urb || "", por: usuario(), uid: meuId(), em: new Date().toISOString() };
     S.busy.ed = 1; render();
     const p0 = S.proc.find((q) => q.id === id) || {}, mudou = edicao.endereco !== p0.endereco || edicao.setor !== p0.setor;
     try { if (await gravar([id], mudou ? { edicao, geo: null } : { edicao })) { S.ed = null; S.proc = todosProc(); _idx = null; toast("Informações atualizadas"); } }
@@ -5138,8 +5223,11 @@ function montar(root) {
       <p class="vp-msg">Para processo que não veio no relatório. Ele entra na regional escolhida, aparece nas rotas e no Resumo como os outros.</p>
       <label class="vp-f">Nº do processo (SEI, GED, O.S ou PED) *${inp("processo", "Ex.: 25.30.000012368-0 ou GED 0000663-2024")}</label>
       <div class="vp-ctl"><label class="vp-f vp-grow">GED${inp("ged", "0000663-2024")}</label><label class="vp-f vp-grow">Parecer técnico${inp("parecer", "Ex.: 1031/2025")}</label><label class="vp-f" style="width:90px">Ano${inp("ano", "2024", 'inputmode="numeric"')}</label></div>
-      <label class="vp-f">Endereço *${inp("endereco", "Rua, número, quadra, lote")}</label>
-      <div class="vp-ctl"><label class="vp-f vp-grow">Setor / bairro${inp("setor", "Ex.: Setor Marista")}</label>
+      <span class="vp-lab">Endereço *</span>
+      <div class="vp-ctl"><label class="vp-f">Tipo *<select id="vp-nv-e_tipo" data-nv="e_tipo"><option value="">Escolher…</option>${LOG_TIPOS.map((x) => `<option${n.e_tipo === x ? " selected" : ""}>${x}</option>`).join("")}</select></label><label class="vp-f vp-grow">Nome da rua / avenida *${inp("e_nome", "Ex.: C-182 ou T-25")}</label></div>
+      <div class="vp-ctl"><label class="vp-f" style="width:90px">Número${inp("e_num", "S/N", 'inputmode="numeric"')}</label><label class="vp-f" style="width:90px">Quadra${inp("e_qd", "Ex.: 12")}</label><label class="vp-f" style="width:90px">Lote${inp("e_lt", "Ex.: 3")}</label><label class="vp-f vp-grow">Complemento / esquina${inp("e_comp", "Ex.: esq. c/ Rua C-39")}</label></div>
+      <span class="vp-msg" id="vp-nv-endprev" style="font-size:12.5px">${n.endereco ? "Fica assim: <b>" + esc(n.endereco) + "</b>" : ""}</span>
+      <div class="vp-ctl"><label class="vp-f">Tipo *<select id="vp-nv-stipo" data-nv="stipo"><option value="">Escolher…</option>${LOC_TIPOS.map((x) => `<option${(n.stipo || locTipoDe(n.setor)) === x ? " selected" : ""}>${x}</option>`).join("")}</select></label><label class="vp-f vp-grow">Nome do setor / bairro *${inp("setor", "Ex.: Marista", 'list="vp-nv-setlist" autocomplete="off"')}<datalist id="vp-nv-setlist">${setoresConhecidos().map((x) => `<option value="${esc(x)}">`).join("")}</datalist></label>
       ${gSel ? `<label class="vp-f">Gerência *<select data-nv="ger"><option value="DIRSEN"${n.ger !== "DIROP" ? " selected" : ""}>DIRSEN</option><option value="DIROP"${n.ger === "DIROP" ? " selected" : ""}>DIROP</option></select></label>` : ""}<label class="vp-f">Regional *<select id="vp-nv-regional" data-nv="regional"><option value="">Escolher…</option>${REGN.map((r) => `<option value="${r}"${n.regional === r ? " selected" : ""}>${cap(r)}</option>`).join("")}</select></label><span id="vp-nv-regav" class="vp-msg" style="color:var(--lf);font-size:12.5px">${n._regAuto && n.regional ? "✓ regional preenchida pelo bairro (" + cap(n.regional) + "). Confira." : ""}</span></div>
       <label class="vp-f">Cadastrado no Urbantrim? *<select data-nv="urb"><option value="">Escolher…</option><option value="sim"${n.urb === "sim" ? " selected" : ""}>Sim, já está no Urbantrim</option><option value="nao"${n.urb === "nao" ? " selected" : ""}>Não está no Urbantrim</option></select></label>
       <div class="vp-ctl"><label class="vp-f" style="width:90px">Poda${inp("po", "0", 'inputmode="numeric"')}</label><label class="vp-f" style="width:90px">Extirpação${inp("ex", "0", 'inputmode="numeric"')}</label><label class="vp-f" style="width:90px">Destoca${inp("de", "0", 'inputmode="numeric"')}</label></div>
@@ -5151,6 +5239,9 @@ function montar(root) {
     const n = S.novo; if (!n || S.busy.nv) return;
     if (!n.processo.trim()) { toast("Informe o nº do processo"); return; }
     if (!n.endereco.trim()) { toast("Informe o endereço"); return; }
+    if (!n.e_tipo) { toast("Escolha o tipo do endereço: rua, avenida…"); return; }
+    if (!n.setor.trim()) { toast("Informe o nome do setor / bairro"); return; }
+    if (!n.stipo && !locTipoDe(n.setor)) { toast("Escolha o tipo: setor, bairro, vila…"); return; }
     if (!n.regional) { toast("Escolha a regional"); return; }
     if (!n.urb) { toast("Informe se o processo está cadastrado no Urbantrim"); return; }
     const link = (n.link || "").trim(); if (link && !/^https?:\/\//i.test(link)) { toast("O link precisa começar com http:// ou https://"); return; }
@@ -5158,7 +5249,7 @@ function montar(root) {
     S.busy.nv = 1; render();
     try {
       const id = "m_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-      const doc = { processo_id: id, manual: { processo: n.processo.trim(), ged: n.ged.trim(), parecer: n.parecer.trim(), endereco: n.endereco.trim().toUpperCase(), setor: n.setor.trim(), regional: n.regional, ano: n.ano.trim(), po: +n.po || 0, ex: +n.ex || 0, de: +n.de || 0, ger: vistGerVis() || (n.ger === "DIROP" ? "DIROP" : "DIRSEN"), urbantrim: n.urb || "", por: usuario(), uid: meuId(), em: new Date().toISOString() } };
+      const doc = { processo_id: id, manual: { processo: n.processo.trim(), ged: n.ged.trim(), parecer: n.parecer.trim(), endereco: n.endereco.trim().toUpperCase(), setor: locJunta(n.stipo, n.setor), regional: n.regional, ano: n.ano.trim(), po: +n.po || 0, ex: +n.ex || 0, de: +n.de || 0, ger: vistGerVis() || (n.ger === "DIROP" ? "DIROP" : "DIRSEN"), urbantrim: n.urb || "", por: usuario(), uid: meuId(), em: new Date().toISOString() } };
       if (link) doc.proc_link = link;
       if (n.file) { if (!assets) throw new Error("envio de PDF não liberado neste acesso; use o link"); const up = await assets.upload(n.file, { type: "application/pdf" }); doc.proc_pdf = { id: up.id, url: up.url || "", nome: n.file.name, em: new Date().toISOString(), por: usuario() }; }
       if (await gravar([id], doc)) {
@@ -5631,7 +5722,7 @@ function montar(root) {
     if (ds.pdfenviar) { pdfEnviarLote(); return; }
     if (ds.pdflimpar) { S.pdfFila = []; render(); return; }
     if (ds.nvabrir) { novoForm(null); render(); return; }
-    if (ds.nvfila) { const i = +ds.nvfila; novoForm({ file: S.pdfFila[i].file, idx: i }); S.pdfNaoAberto = 1; render(); root.querySelector("#vp-nv-endereco")?.scrollIntoView({ block: "center" }); return; }
+    if (ds.nvfila) { const i = +ds.nvfila; novoForm({ file: S.pdfFila[i].file, idx: i, lido: S.pdfFila[i].lido }); S.pdfNaoAberto = 1; render(); root.querySelector("#vp-nv-endereco")?.scrollIntoView({ block: "center" }); return; }
     if (ds.resmanpdf) { await baixarFormPdf(t, resumoManualDoc(), "cadastros-manuais-" + new Date().toISOString().slice(0, 10) + ".pdf", "Resumo dos cadastros manuais"); return; }
     if (ds.resmanimg) { await baixarDocImg(t, resumoManualDoc(), "cadastros-manuais-" + new Date().toISOString().slice(0, 10) + ".png"); return; }
     if (ds.resmanxls) { const L = Object.entries(VIST.regs || {}).filter(([k, r]) => k.startsWith("m_") && r && r.manual && !r.manual.removido && r.manual.em).map(([k, r]) => r.manual).sort((a, b) => String(a.em).localeCompare(String(b.em)));
@@ -5703,8 +5794,8 @@ function montar(root) {
       fs.forEach((f) => { const r = acharProc(f.name); const ids = r.st === "ok" ? [r.id] : r.st === "varios" ? r.ids : [];
         if (!ids.length) { fila.push({ file: f, st: "nao", id: "" }); return; }
         ids.forEach((id) => { if (usados.has(id)) { fila.push({ file: f, st: "dup", id }); return; } usados.add(id); fila.push({ file: f, st: "ok", id, ja: !!docLinks(R({ id })).length }); }); });
-      S.pdfFila = fila; S.pdfCopias = copias.length; S.pdfVerTodos = false; render();
-      toast(`${fila.filter((x) => x.st === "ok").length} processos com PDF encontrado · ${fila.filter((x) => x.st === "nao").length} arquivos sem processo no relatório`); return; }
+      S.pdfFila = fila; S.pdfCopias = copias.length; S.pdfVerTodos = false; const nN = fila.filter((x) => x.st === "nao").length; S.pdfNaoAberto = nN ? 1 : S.pdfNaoAberto; render();
+      toast(`${fila.filter((x) => x.st === "ok").length} processos com PDF encontrado · ${nN} sem processo${nN ? ": lendo os PDFs para cadastrar…" : ""}`); if (nN) pdfLerFila(); return; }
     if (ds.nv && S.novo) { S.novo[ds.nv] = t.value; if (ds.nv === "regional") { S.novo._regAuto = false; render(); } return; }
     if (ds.ed && S.ed) { S.ed[ds.ed] = t.value; return; }
     if (ds.nvpdf) { const fl = t.files && t.files[0]; if (!fl) return; if (!/\.pdf$/i.test(fl.name)) { toast("Escolha um arquivo PDF"); return; } S.novo.file = fl; render(); return; }
@@ -5725,9 +5816,10 @@ function montar(root) {
     if (t.id === "vp-q") { S.q = t.value; render(); return; }
     if (t.id === "vp-rq") { S.rq = t.value; render(); return; }
     if (ds.nv && S.novo && ds.nv !== "regional") { S.novo[ds.nv] = t.value;
-      if ((ds.nv === "setor" || ds.nv === "endereco") && (!S.novo.regional || S.novo._regAuto)) { const g = regionalDe(S.novo.setor, S.novo.endereco), sel = document.getElementById("vp-nv-regional"), av = document.getElementById("vp-nv-regav");
+      if (/^e_/.test(ds.nv)) { S.novo.endereco = endJunta(S.novo); const pv = document.getElementById("vp-nv-endprev"); if (pv) pv.innerHTML = S.novo.endereco ? "Fica assim: <b>" + esc(S.novo.endereco) + "</b>" : ""; }
+      if ((ds.nv === "setor" || ds.nv === "stipo" || /^e_/.test(ds.nv)) && (!S.novo.regional || S.novo._regAuto)) { const g = regionalDe(locJunta(S.novo.stipo, S.novo.setor), S.novo.endereco), sel = document.getElementById("vp-nv-regional"), av = document.getElementById("vp-nv-regav");
         if (g) { S.novo.regional = g; S.novo._regAuto = true; if (sel) sel.value = g; if (av) av.textContent = "✓ regional preenchida pelo bairro (" + cap(g) + "). Confira."; }
-        else if (S.novo._regAuto) { S.novo.regional = ""; if (sel) sel.value = ""; if (av) av.textContent = ""; } } }
+        else { if (S.novo._regAuto) { S.novo.regional = ""; if (sel) sel.value = ""; } if (av) av.textContent = S.novo.setor.trim().length >= 3 ? "Setor ainda sem regional no app: escolha a regional (nos próximos ele já vem sozinho)." : ""; } } }
     if (ds.ed && S.ed && ds.ed !== "regional") S.ed[ds.ed] = t.value;
     if (ds.exobs && S.ex && S.ex[ds.exobs]) S.ex[ds.exobs].obs = t.value;
     if (ds.exq && S.ex && S.ex[ds.exq]) { const x = S.ex[ds.exq], tinha = QK().some((c) => +x.qtd[c] > 0); x.qtd[ds.c] = t.value; if (tinha !== QK().some((c) => +x.qtd[c] > 0)) render(); }
