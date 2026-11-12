@@ -1544,14 +1544,14 @@ body.sofiscal nav.tabs{display:none!important}
       <label class="f" id="extraJustW"><span id="extraJustLbl">Complemento (opcional)</span><textarea id="extraJust" rows="2" maxlength="300" placeholder="Ex.: nº do protocolo, nome de quem pediu"></textarea></label>
       <p class="note" id="extraCont" style="margin:0"></p>
       <div id="extraValid" class="extraval"></div>
-      <div class="extrasegue">⬇ <b>Agora preencha abaixo igual à programação normal:</b> equipe e viatura, data, tipo de local (Processo Intranet, Processo SEI, Entre-pista, Praça, Área pública, Calçada), nº do processo / PED / parecer, endereço, serviço e quantidade.</div>
+      <div class="extrasegue">⬇ <b>Agora preencha abaixo igual à programação normal:</b> equipe e equipamento (veículo), data, tipo de local (Processo Intranet, Processo SEI, Entre-pista, Praça, Área pública, Calçada), nº do processo / PED / parecer, endereço, serviço e quantidade.</div>
     </div>
   </section>
   <section class="card" id="secTurma">
     <div class="step">Equipe <b>quem vai executar</b></div>
     <div class="row2">
       <label class="f">Equipe<select id="equipe"><option>1ª EQUIPE</option><option>2ª EQUIPE</option><option>3ª EQUIPE</option></select></label>
-      <label class="f">Viatura<select id="viatura"><option>SPLINTER 5063.6</option><option>SPLINTER 5064.6</option><option>SPLINTER 5065.6</option><option>SPLINTER 5066.6</option><option value="SPLINTER 5071.0">SPLINTER 5071.0 (reserva)</option><option>SKY 5073.0</option><option value="SKY 5074.0">SKY 5074.0 (reserva)</option><option>VAN 4051.5</option></select></label>
+      <label class="f">Equipamento (veículo)<select id="viatura"><option>SPLINTER 5063.6</option><option>SPLINTER 5064.6</option><option>SPLINTER 5065.6</option><option>SPLINTER 5066.6</option><option value="SPLINTER 5071.0">SPLINTER 5071.0 (reserva)</option><option>SKY 5073.0</option><option value="SKY 5074.0">SKY 5074.0 (reserva)</option><option>VAN 4051.5</option></select></label>
     </div>
   </section>
 
@@ -1682,7 +1682,7 @@ body.sofiscal nav.tabs{display:none!important}
       <p class="note" style="margin:0" id="naoNote"></p>
       <div class="row2">
         <label class="f">Remarcar para<input type="date" id="proxData"></label>
-        <label class="f">Motivo<select id="motivo"><option value="">Selecione…</option><option>Chuva</option><option>Viatura/equipamento quebrado</option><option>Rede elétrica (aguardando Equatorial)</option><option>Veículos estacionados / sem acesso</option><option>Morador impediu</option><option>Remanejado pela gerência (emergência)</option><option>Atendimento de galho / árvore caída</option><option>Endereço não localizado</option><option>Executado por outra equipe</option><option>Gerência determinou substituição por outro serviço</option><option value="Outro">Outro (digitar)</option></select></label>
+        <label class="f">Motivo<select id="motivo"><option value="">Selecione…</option><option>Chuva</option><option>Equipamento (veículo) quebrado</option><option>Rede elétrica (aguardando Equatorial)</option><option>Veículos estacionados / sem acesso</option><option>Morador impediu</option><option>Remanejado pela gerência (emergência)</option><option>Atendimento de galho / árvore caída</option><option>Endereço não localizado</option><option>Executado por outra equipe</option><option>Gerência determinou substituição por outro serviço</option><option value="Outro">Outro (digitar)</option></select></label>
       </div>
       <p class="note" id="remDica" style="margin:-4px 0 0"></p>
       <div id="outraBox" class="sub" hidden style="margin:0">
@@ -2067,7 +2067,7 @@ function abrirTransferir(r){
     <p class="note" style="margin:0">O serviço <b>sai da programação desta turma</b> e passa para a turma que executou, no mesmo dia, para ela dar a baixa. A O.S desta turma deixa de valer para este serviço. Fica registrado no histórico.</p>
     <label class="f">Turma que executou<select id="tfSup"><option value="">— Escolher —</option>${ts.map(s=>`<option value="${esc(s.id)}">${esc(supNome(s.id))}</option>`).join("")}</select></label>
     <div class="row2"><label class="f">Equipe<select id="tfEq">${["1ª EQUIPE","2ª EQUIPE","3ª EQUIPE"].map(q=>`<option ${q===r.equipe?"selected":""}>${q}</option>`).join("")}</select></label>
-    <label class="f">Equipamento<select id="tfVt">${[...$("#viatura").options].map(o=>`<option value="${esc(o.value)}" ${o.value===r.viatura?"selected":""}>${esc(o.textContent)}</option>`).join("")}</select></label></div>
+    <label class="f">Equipamento (veículo)<select id="tfVt">${[...$("#viatura").options].map(o=>`<option value="${esc(o.value)}" ${o.value===r.viatura?"selected":""}>${esc(o.textContent)}</option>`).join("")}</select></label></div>
     <label class="f">Motivo (opcional)<input id="tfMot" placeholder="Ex.: a PODA I NOTURNO (A) atendeu no lugar"></label>
     <div class="err" id="tfErr" hidden></div>
     <div class="actions" style="grid-template-columns:1fr 1fr;margin:0"><button type="button" class="btn sec" data-tfno>Voltar</button><button type="button" class="btn pri" data-tfok>🔁 Transferir</button></div></div>`;
@@ -3084,7 +3084,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.15f";
+const APP_VERSAO="2026.11.15i";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -6092,7 +6092,7 @@ function abrirChk(c){
       <label class="f">Supervisor que entrega<input id="kfSupNome" value="${esc(c?.entrega?.nome||nomeSupDe(sup0))}" disabled></label>
     </div>
     <div class="row2">
-      <label class="f">Equipamento<input id="kfEqp" value="${esc(c?.equipamento||"CESTO AÉREO")}" ${dis}></label>
+      <label class="f">Tipo do equipamento <small class="note">(automático pelo prefixo)</small><input id="kfEqp" value="${esc(eqTipoDe(c?.viatura)||c?.equipamento||"")}" readonly tabindex="-1" style="background:var(--sunk)"></label>
       <label class="f">Prefixo / placa<select id="kfVt" ${edit&&!c?"":"disabled"}>${vtOpts}</select></label>
     </div>
     ${!c&&edit?`<p class="note" id="kfCota" style="margin:0"></p>`:""}
@@ -6238,7 +6238,7 @@ function abrirChk(c){
     const {feitos,meta,faltam:falt}=chkCota(t,d);
     el.innerHTML=`Checklists da ${esc(t)} no turno de ${fmtD(d)}: <b>${feitos.length} de ${meta}</b>${feitos.length?" · já feitos: "+feitos.map(esc).join(", "):""}${feitos.length>=meta?" · todos os equipamentos da turma já têm checklist.":falt.length?" · <b>falta: "+falt.map(esc).join(", ")+"</b>":""}`;
     if(trocar&&feitos.includes($("#kfVt").value)){ const ops=[...$("#kfVt").options].map(o=>o.value), livre=falt.find(v=>ops.includes(v))||ops.find(v=>!feitos.includes(v)); if(livre){$("#kfVt").value=livre; if($("#kfVt").onchange) $("#kfVt").onchange(); else eqpUI();} } };
-  const eqpUI=()=>{ const e=$("#kfEqp"); if(e&&(e.value===""||e.value==="CESTO AÉREO"||e.value==="VAN")) e.value=/^VAN/.test($("#kfVt").value)?"VAN":"CESTO AÉREO"; };
+  const eqpUI=()=>{ const e=$("#kfEqp"); if(e) e.value=eqTipoDe($("#kfVt").value); }; try{ eqpUI(); }catch(x){}
   if(!c){ $("#kfVt").onchange=()=>{eqpUI();cotaUI(false); { const m=eqVtMapa($("#kfSup").value), dono=m&&Object.entries(m).find(([,v])=>v===$("#kfVt").value)?.[0]; if(dono&&$("#kfEq")) $("#kfEq").value=dono; } const ns=chkSlots($("#kfVt").value); if(ns!==kSlots._de){ kSlots.splice(0,kSlots.length,...ns); kSlots._de=ns; kMidCtl.redesenha(); }}; $("#kfData").onchange=()=>cotaUI(true); eqpUI(); cotaUI(true); }
   $("#kfSup").onchange=()=>{ $("#kfSupNome").value=nomeSupDe($("#kfSup").value); }; const _kfSupOld=null;
   const recAuto=()=>{ const rs=$("#kfRecSup"), dica=$("#kfRecDica"); if(!rs||c) return; const px=proxEquipe($("#kfSup").value,$("#kfData").value);
@@ -6280,7 +6280,7 @@ function abrirChk(c){
     const q=await assinante("kE",sup); if(q.erro) return erro("Assinatura: "+q.erro+".");
     const agora=new Date().toISOString();
     const body={data,semana:semanaDe(data),supervisao:sup,grupo:supOf(sup)?.grupo||"",turno:supOf(sup)?.turno||"",equipe:$("#kfEq").value,
-      equipamento:$("#kfEqp").value.trim()||"CESTO AÉREO",viatura:vt,kmIni:kmI,kmFim:kmF,sit,itens,midia,ocorr:$("#kfOcorr").value.trim(),declaracao:true,hora:$("#kfHora").value,
+      equipamento:eqTipoDe(vt)||$("#kfEqp").value.trim(),viatura:vt,kmIni:kmI,kmFim:kmF,sit,itens,midia,ocorr:$("#kfOcorr").value.trim(),declaracao:true,hora:$("#kfHora").value,
       entrega:{...q,sup:q.sup||sup,em:agora},
       recebe:{sup:recSup},
       ultimoUsuario:nomeAutor(),
@@ -6371,7 +6371,7 @@ function abrirMan(m,pre){
     <label class="f">Turma / supervisão<select id="mfSup" ${travado()||!novo?"disabled":""}><option value="">Selecione…</option>${SUPS.map(s=>`<option value="${esc(s.id)}"${s.id===sup0?" selected":""}>${esc(s.id)} · ${esc(s.enc)}</option>`).join("")}</select></label>
     <div class="row2"><label class="f">Data<input type="date" id="mfData" value="${esc(m?.data||pre.data||hoje())}" ${dis}></label><label class="f">Turno<input id="mfTurno" value="${esc(supOf(sup0)?.turno||"")}" disabled></label></div>
     <div class="row2"><label class="f">Equipe<select id="mfEq" ${dis}>${["1ª EQUIPE","2ª EQUIPE","3ª EQUIPE"].map(x=>`<option${x===(m?.equipe||pre.equipe||turma.equipe||"1ª EQUIPE")?" selected":""}>${x}</option>`).join("")}</select></label><label class="f">Supervisor<input id="mfSupNome" value="${esc(m?.assin?.nome||nomeSupDe(sup0))}" disabled></label></div>
-    <div class="row2"><label class="f">Equipamento<input id="mfEqp" value="${esc(m?.equipamento||"CESTO AÉREO")}" ${dis}></label><label class="f">Prefixo / placa<select id="mfVt" ${dis}>${vtOpts}</select></label></div>
+    <div class="row2"><label class="f">Tipo do equipamento <small class="note">(automático pelo prefixo)</small><input id="mfEqp" value="${esc(eqTipoDe(m?.viatura)||m?.equipamento||"")}" readonly tabindex="-1" style="background:var(--sunk)"></label><label class="f">Prefixo / placa<select id="mfVt" ${dis}>${vtOpts}</select></label></div>
     <label class="f">KM atual<input id="mfKm" inputmode="numeric" value="${esc(m?.km||pre.km||"")}" ${dis}></label>
     <div class="ckgrp">1. Descrição do defeito / anomalia</div>
     <textarea id="mfDesc" aria-label="Descrição do defeito" placeholder="O que aconteceu, onde, quando apareceu" ${dis}>${esc(m?.desc||pre.desc||"")}</textarea>
@@ -6404,7 +6404,7 @@ function abrirMan(m,pre){
     ${edit?`<div class="actions" style="grid-template-columns:1fr;margin:4px 0 0"><button type="button" class="btn pri" id="mSalvar">Salvar e assinar comunicação</button></div>`:""}
   </div></div>`;
   const close=()=>host.innerHTML="";
-  $("#sh").onclick=e=>{if(e.target.id==="sh")close()}; $("#mClose").onclick=close;
+  $("#sh").onclick=e=>{if(e.target.id==="sh")close()}; $("#mClose").onclick=close; { const t=$("#mfEqp"), v=$("#mfVt"); if(t&&v&&v.value) t.value=eqTipoDe(v.value); }
   if(edit&&novo) stepify(host.querySelector(".panel"),"Equipamento");
   if(m) MID_PRE=`comunicacao-defeito-${m.viatura||""}-${m.data||""}`;
   const midCtl=midLigar(host,midia,edit,manSlotsEd);
@@ -6475,7 +6475,7 @@ function abrirMan(m,pre){
     const q=await assinante("mE",sup); if(q.erro) return erro("Assinatura: "+q.erro+".");
     const agora=new Date().toISOString(), id=db.collection(MAN_COL).doc().id;
     const body={data,semana:semanaDe(data),supervisao:sup,grupo:supOf(sup)?.grupo||"",turno:supOf(sup)?.turno||"",equipe:$("#mfEq").value,
-      equipamento:$("#mfEqp").value.trim()||"CESTO AÉREO",viatura:$("#mfVt").value,km:$("#mfKm").value.trim(),
+      equipamento:eqTipoDe($("#mfVt").value)||$("#mfEqp").value.trim(),viatura:$("#mfVt").value,km:$("#mfKm").value.trim(),
       desc:$("#mfDesc").value.trim(),tipos:v.tipos,onde:v.onde,tipoOutro:v.tipos.includes("OUTRO")?$("#mfTipoOutro").value.trim():"",
       ...Object.fromEntries(MAN_SIT.map(q=>[q.k,v.sit[q.k]])),
       recolh:v.sit.recolhido==="SIM"?{data:$("#mfRData").value,hora:$("#mfRHora").value,resp:$("#mfRResp").value.trim().toUpperCase(),destino:MAN_LOCAL}:null,
@@ -6537,7 +6537,7 @@ const fsig=(t,a)=>a&&a.em?`<div><div class="sl">${esc(t)}${a.teste?` <span style
 const fhead=(t1,t2)=>`<div class="fh"><img src="${LOGO_FULL}" alt="COMURG"><div class="tt"><div class="org">Companhia de Urbanização de Goiânia – COMURG · Gerência de Poda e Extirpação – DIRSEN</div><h1>${t1}</h1><h2>${t2}</h2></div></div><div class="band"></div>`;
 function chkDocHtml(c){
   const kv=(a,b,c2,d)=>`<tr><td class="k">${a}</td><td>${b}</td><td class="k">${c2}</td><td>${d}</td></tr>`;
-  const cab=`<table>${kv("Data",fmtD(c.data),"Turno",esc(c.turno||supOf(c.supervisao)?.turno||""))}${kv("Equipe",esc(c.equipe||""),"Supervisor",esc(c.entrega?.nome||""))}${kv("Equipamento",esc(c.equipamento||"CESTO AÉREO"),"Prefixo/placa",esc(c.viatura||""))}${kv("KM inicial",esc(c.kmIni||""),"KM final",esc(c.kmFim||""))}${kv("Supervisão",esc(c.supervisao||""),"","")}</table>`;
+  const cab=`<table>${kv("Data",fmtD(c.data),"Turno",esc(c.turno||supOf(c.supervisao)?.turno||""))}${kv("Equipe",esc(c.equipe||""),"Supervisor",esc(c.entrega?.nome||""))}${kv("Equipamento",esc(eqTipoDe(c.viatura)||c.equipamento||""),"Prefixo/placa",esc(c.viatura||""))}${kv("KM inicial",esc(c.kmIni||""),"KM final",esc(c.kmFim||""))}${kv("Supervisão",esc(c.supervisao||""),"","")}</table>`;
   const s1=`<div><p class="sec">1. Situação do equipamento ao final do turno</p><table><tr><th>Item</th><th class="c">Sim</th><th class="c">Não</th></tr>${CHK_SIT.map(q=>{const v=c.sit?.[q.k];return `<tr${v&&v!==q.bom?' class="bad"':""}><td>${esc(q.t)}</td><td class="c">${fx(v,"SIM")}</td><td class="c">${fx(v,"NÃO")}</td></tr>`}).join("")}</table></div>`;
   const s2=`<div><p class="sec">2. Conferência final do equipamento</p><table><tr><th>Item</th><th class="c">Sim</th><th class="c">Não</th></tr>${CHK_ITENS.map((t,i)=>{const v=c.itens?.[i];return `<tr${v==="NÃO"?' class="bad"':""}><td>${esc(t)}</td><td class="c">${fx(v,"SIM")}</td><td class="c">${fx(v,"NÃO")}</td></tr>`}).join("")}</table></div>`;
   const s3=`<div><p class="sec">3. Observação sobre a inspeção</p><p class="leg">${esc(CHK_OBS_INSP)}</p></div>`;
@@ -6557,7 +6557,7 @@ function manDocHtml(m){
   const kv=(a,b,c2,d)=>`<tr><td class="k">${a}</td><td>${b}</td><td class="k">${c2}</td><td>${d}</td></tr>`;
   const ops=(val,list,lab)=>list.map(o=>`${fx(val,o)} ${esc(lab?.[o]||o)}`).join("&nbsp;&nbsp; ");
   const tiposTxt=MAN_TIPOS.map(t=>`${(m.tipos||[]).includes(t)?"( X )":"(&nbsp;&nbsp;&nbsp;&nbsp;)"} ${t}${t==="OUTRO"&&m.tipoOutro?": "+esc(m.tipoOutro):""}`).join("&nbsp;&nbsp; ");
-  const cab=`<table>${kv("Data",fmtD(m.data),"Turno",esc(m.turno||""))}${kv("Equipe",esc(m.equipe||""),"Supervisor",esc(m.assin?.nome||""))}${kv("Equipamento",esc(m.equipamento||"CESTO AÉREO"),"Prefixo/placa",esc(m.viatura||""))}${kv("KM atual",esc(m.km||""),"","")}</table>`;
+  const cab=`<table>${kv("Data",fmtD(m.data),"Turno",esc(m.turno||""))}${kv("Equipe",esc(m.equipe||""),"Supervisor",esc(m.assin?.nome||""))}${kv("Equipamento",esc(eqTipoDe(m.viatura)||m.equipamento||""),"Prefixo/placa",esc(m.viatura||""))}${kv("KM atual",esc(m.km||""),"","")}</table>`;
   const rc=m.recolh||{};
   const ret=m.retorno||{};
   return `<div class="fdoc"><style>${FDOC_CSS}</style><div class="r-body">${fhead("COMUNICAÇÃO DE DEFEITO E RECOLHIMENTO PARA MANUTENÇÃO","CESTO AÉREO")}<div>${cab}</div>
@@ -6971,12 +6971,16 @@ const equipLista=()=>{ const d=assins?.equip_lista; const L=Array.isArray(d?.ite
   const M=JSON.parse(JSON.stringify(L)); EQUIP_DIROP.forEach(([v,pod])=>{ const x=M.find(e=>e.v===v), o={ger:"DIROP",pod,sup:"",grp:"",reserva:false}; if(x) Object.assign(x,o); else M.push({v,tipo:v.split(" ")[0],...o,ativo:true}); }); return M; };
 const equipGerVis=()=>{ const e=escopoG(); return !e?null:e===ESC_DIROP?"DIROP":"DIRSEN"; };
 const GER_EQ={DIRSEN:"Gerência de Poda e Extirpação - DIRSEN",DIROP:"Gerência de Poda e Extirpação - DIROP"};
-// quem é de uma turma só vê os equipamentos da própria turma e os sem turma (reserva)
-const equipVis=()=>{ const g=equipGerVis(), t=(typeof travado==="function"&&travado())?sessao?.sup:""; const tg=t?supOf(t)?.grupo:""; return equipLista().filter(x=>x.ativo!==false&&(!g||x.ger===g)&&(!t||(x.sup?x.sup===t:x.pod?x.pod===tg:(!x.grp||x.grp===tg)))); };
+// quem é de uma turma só vê os equipamentos da própria turma; os equipamentos RESERVA aparecem para todas as equipes
+const equipVis=()=>{ const g=equipGerVis(), t=(typeof travado==="function"&&travado())?sessao?.sup:""; const tg=t?supOf(t)?.grupo:""; return equipLista().filter(x=>x.ativo!==false&&(x.reserva||((!g||x.ger===g)&&(!t||(x.sup?x.sup===t:x.pod?x.pod===tg:(!x.grp||x.grp===tg)))))); }; // equipamento reserva: qualquer equipe (das duas gerências) pode usar
 function equipAplicar(){ try{ const sel=$("#viatura"), v0=sel.value, L=equipVis();
   sel.innerHTML=L.map(x=>`<option value="${esc(x.v)}">${esc(x.v)}${x.reserva?" (reserva)":""}</option>`).join("")+(v0&&form?.base?.viatura===v0&&!L.some(x=>x.v===v0)?`<option value="${esc(v0)}">${esc(v0)}</option>`:"");
   if(v0&&[...sel.options].some(o=>o.value===v0)) sel.value=v0;
   const kg=$("#kgVt"); if(kg){ const k0=kg.value; kg.innerHTML='<option value="">Todos os equipamentos</option>'+L.map(x=>`<option value="${esc(x.v)}">${esc(x.v)}${x.reserva?" (reserva)":""}</option>`).join(""); kg.value=k0; } }catch(e){} }
+// tipo do equipamento sempre junto do prefixo (vem do cadastro de equipamentos)
+document.addEventListener("change",e=>{ if(e.target.id==="mfVt"){ const t=document.getElementById("mfEqp"); if(t) t.value=eqTipoDe(e.target.value); } });
+const EQ_TIPO_TXT={SPLINTER:"SPLINTER – CESTO AÉREO 10 M",SKY:"SKY – CESTO AÉREO 17 M",VAN:"VAN","CAMINHÃO TRITURADOR":"CAMINHÃO TRITURADOR",MUNCK:"MUNCK",TRATOR:"TRATOR"};
+const eqTipoDe=vt=>{ if(!vt) return ""; const x=(typeof equipLista==="function"?equipLista():[]).find(e=>e.v===vt), t=(x?.tipo||String(vt).split(" ")[0]||"").toUpperCase(); return EQ_TIPO_TXT[t]||t; };
 const podeEquip=()=>isAdm()||isGerente();
 let EQ_TAB="lista";
 function abrirEquip(){ if(!podeEquip()) return; const host=$("#sheetHost"), g=equipGerVis();
@@ -7630,7 +7634,7 @@ function csv(){
   const sem=$("#rSem").value, grp=$("#rGrp").value, rsup=$("#rSup").value;
   const rows=todos().filter(filtroR(rptFiltro())).sort((a,b)=>(a.supervisao||"").localeCompare(b.supervisao||"")||(a.equipe||"").localeCompare(b.equipe||"")||(a.data||"").localeCompare(b.data||""));
   const num=v=>v?v.toFixed(2).replace(".",","):"";
-  const H=["SUPERVISÃO","SUPERVISOR","EQUIPE","VIATURA","DATA EXECUÇÃO","DIA","REF.","BAIRRO","LOGRADOURO","TIPO","Nº PROC",...ITENS.map(i=>i.c),"RECEITA (R$)","EXECUTADO?","PRÓX. DATA EXEC.","MOTIVO",
+  const H=["SUPERVISÃO","SUPERVISOR","EQUIPE","EQUIPAMENTO (VEÍCULO)","DATA EXECUÇÃO","DIA","REF.","BAIRRO","LOGRADOURO","TIPO","Nº PROC",...ITENS.map(i=>i.c),"RECEITA (R$)","EXECUTADO?","PRÓX. DATA EXEC.","MOTIVO",
     "SUBST. DATA EXECUÇÃO","SUBST. DIA","SUBST. BAIRRO","SUBST. LOGRADOURO","SUBST. TIPO","SUBST. Nº PROC",...ITENS.map(i=>"SUBST. "+i.c),"SUBST. RECEITA (R$)","OCORRÊNCIA","HORA CHAMADO","ORIGEM CHAMADO","PROTOCOLO","SEM PROGRAMAÇÃO","REMARCADO DE","FISCAL","OBS"];
   const L=rows.map(r=>{const s=r.substituto; const q=(r.status==="SIM"||r.status==="PARCIAL")?r.qtd:prevQ(r);
     return [r.supervisao,r.encarregado,r.equipe,r.viatura,fmtD(r.data),r.dia||diaDe(r.data),r.semana?r.semana+"ª":"",r.bairro,r.logradouro,tipoTxt(r),r.processo,
@@ -8289,7 +8293,7 @@ function listaPlanilha(rows){
   const c=(z,o={})=>st({font:{sz:9,b:o.b?1:0,color:o.color||"1F2A22"},fill:z?"F4F7F2":"FFFFFF",border:{l:{c:"E2E6DF"},r:{c:"E2E6DF"},b:{c:"E2E6DF"}},align:{h:o.h,wrap:o.wrap},num:o.num});
   const tot=o=>st({font:{b:1,sz:10,color:G},fill:"EEF1EC",border:{t:{s:"medium",c:G}},align:{h:o.h},num:o.num});
   const ws=XL.Sheet("Lista"); ws.tab="F37020";
-  const H=["Data","Dia","Sem.","Supervisão","Supervisor","Equipe","Viatura","Bairro","Logradouro","Tipo / serviço","Nº processo / O.S.","Situação",...ITENS.map(i=>i.c),...ITENS.map(i=>i.c),"Receita prevista","Receita executada","Remarcado para","Motivo","Observação"];
+  const H=["Data","Dia","Sem.","Supervisão","Supervisor","Equipe","Equipamento (veículo)","Bairro","Logradouro","Tipo / serviço","Nº processo / O.S.","Situação",...ITENS.map(i=>i.c),...ITENS.map(i=>i.c),"Receita prevista","Receita executada","Remarcado para","Motivo","Observação"];
   const NI=ITENS.length, P0=12, E0=P0+NI, R0=E0+NI, NC=H.length;
   ws.widths=[11,6,6,20,15,11,15,22,32,22,18,16,...ITENS.map(()=>7.5),...ITENS.map(()=>7.5),15,15,13,26,32];
   ws.set(0,0,"PROGRAMAÇÃO GPE — Lista de serviços",tit).fill(0,1,NC-1,tit).merge(0,0,0,NC-1).h(0,26);
@@ -8516,7 +8520,7 @@ function planilhaGPE(){
     return {}; };
   const w2=XL.Sheet("Serviços");w2.tab=AC;
   const NI=ITENS.length, B0=12, BE=B0+NI, BA=B0+2*NI, RV=B0+3*NI;
-  const H2=["Data","Dia","Sem.","Supervisão","Supervisor","Equipe","Viatura","Bairro","Logradouro","Tipo","Nº processo","Situação",...ITENS.map(i=>i.c),...ITENS.map(i=>i.c),...ITENS.map(i=>i.c),"Receita prevista","Receita executada","Receita a executar","Executado em","Remarcado para","Motivo","Feito no lugar","Receita feito no lugar","Ocorrência","Fiscal","Lançado por","Observações"];
+  const H2=["Data","Dia","Sem.","Supervisão","Supervisor","Equipe","Equipamento (veículo)","Bairro","Logradouro","Tipo","Nº processo","Situação",...ITENS.map(i=>i.c),...ITENS.map(i=>i.c),...ITENS.map(i=>i.c),"Receita prevista","Receita executada","Receita a executar","Executado em","Remarcado para","Motivo","Feito no lugar","Receita feito no lugar","Ocorrência","Fiscal","Lançado por","Observações"];
   w2.widths=[11,6,6,20,14,11,15,22,32,13,18,15,...ITENS.map(()=>7.5),...ITENS.map(()=>7.5),...ITENS.map(()=>7.5),15,15,15,12,13,26,32,15,18,18,16,34];
   const NC2=H2.length;head(w2,NC2,"PROGRAMAÇÃO GPE — Serviços programados e executados");
   // linha de grupo sobre os blocos de itens
@@ -10591,7 +10595,7 @@ async function fisBaixaAuto(g){ let n=0; const em=new Date().toISOString();
   try{ renderAll(); }catch(e){} return n; }
 const baixaRevisar=r=>!!r?.baixaFiscal&&!r.baixaFiscal.rev;
 // ao finalizar o serviço o fiscal informa se foi executado integralmente ou parcial (e quanto ficou a fazer)
-const SVX_MOT=["Chuva","Viatura/equipamento quebrado","Rede elétrica (aguardando Equatorial)","Veículos estacionados / sem acesso","Morador impediu","Remanejado pela gerência (emergência)","Atendimento de galho / árvore caída","Endereço não localizado","Executado por outra equipe"];
+const SVX_MOT=["Chuva","Equipamento (veículo) quebrado","Rede elétrica (aguardando Equatorial)","Veículos estacionados / sem acesso","Morador impediu","Remanejado pela gerência (emergência)","Atendimento de galho / árvore caída","Endereço não localizado","Executado por outra equipe"];
 const svExecTxt=x=>{ if(!x) return ""; if(x.sit==="SIM") return "executado integralmente"; if(x.sit==="NÃO") return "NÃO EXECUTADO – "+(x.motivo||"")+(x.obs?" · "+x.obs:""); const f=ITENS.filter(i=>+x.falta?.[i.c]).map(i=>`${x.falta[i.c]} ${arv(+x.falta[i.c])} com ${itPorte(i)} (${i.c})`).join("; "); return "executado PARCIAL"+(f?" – ficou a fazer: "+f:"")+(x.obs?" · "+x.obs:""); };
 function svFimPerguntar(r){ return new Promise(res=>{ const pq=prevQ(r), its=ITENS.filter(i=>+pq[i.c]);
   const box=document.createElement("div"); box.className="sheet"; box.style.zIndex=45;
