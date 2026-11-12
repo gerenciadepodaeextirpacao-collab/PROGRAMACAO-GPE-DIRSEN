@@ -1384,6 +1384,19 @@ body.sofiscal nav.tabs{display:none!important}
 .ossp-l{display:grid;grid-template-columns:120px 1fr;gap:8px;font-size:14px;border-top:1px dashed var(--line);padding-top:4px}.ossp-l span{color:var(--muted);font-size:12.5px;text-transform:uppercase;letter-spacing:.03em}
 .ossp-t{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}.ossp-t th{text-align:left;font-size:12px;color:var(--muted);border-bottom:2px solid var(--line);padding:4px}.ossp-t td{padding:5px 4px;border-bottom:1px solid var(--line);vertical-align:top}.ossp-t td:last-child,.ossp-t th:last-child{text-align:right;white-space:nowrap}.ossp-t tr.g td{text-align:left!important;font-weight:800;color:var(--ok);font-size:12.5px;letter-spacing:.05em;border-bottom:0;padding-top:8px}.ossp-t tr.tot td{border-bottom:0;font-weight:700}
 .ossp-obs{background:var(--sunk);border-radius:8px;padding:6px 8px;font-size:13.5px}
+/* Dashboard (espelho do Painel, visual escuro) */
+#v-dash .dmx{--bg:#070d12;--surface:#0e1821;--sunk:#13212c;--line:#1f3442;--ink:#e8f3f8;--muted:#8fb0c0;--brand:#22d3a0;--brand-ink:#04110c;--accent:#ff8a3d;--accent-ink:#1a0c03;--ok:#3ef0a4;--ok-bg:#0f3326;--warn:#ffc24d;--warn-bg:#3a2a0c;--bad:#ff6b6b;--bad-bg:#3a1416;--idle:#9fb3c0;--idle-bg:#1a2a35;--c-exec:#38bdf8;--c-prev:#1e4f73;--d-pod:#38bdf8;--d-ext:#ff8a3d;--d-track:#16283a;--d-title:#3ef0a4;
+  color-scheme:dark;background:radial-gradient(1200px 500px at 10% -10%,#0f3b4a 0%,transparent 60%),radial-gradient(900px 500px at 110% 10%,#2a1a4a 0%,transparent 55%),var(--bg);color:var(--ink);border-radius:18px;padding:14px;display:grid;gap:14px;margin:0 -4px}
+#v-dash .dmx-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}#v-dash .dmx-top small{display:block;font:700 11px var(--display);letter-spacing:.14em;color:var(--muted)}#v-dash .dmx-top b{display:block;font:800 34px/1 var(--display);letter-spacing:.06em;background:linear-gradient(90deg,#3ef0a4,#38bdf8 60%,#a78bfa);-webkit-background-clip:text;background-clip:text;color:transparent}#v-dash .dmx-top span{font-size:13px;color:var(--muted)}
+#v-dash .dmx-live{font:700 11px var(--display);letter-spacing:.12em;color:#3ef0a4;border:1px solid #1f5c48;border-radius:999px;padding:4px 10px;font-style:normal;white-space:nowrap;text-shadow:0 0 8px #3ef0a4}
+#v-dash .dmx-f{display:flex;flex-wrap:wrap;gap:8px}#v-dash .dmx-f select,#v-dash .dmx-f input{background:var(--sunk);color:var(--ink);border:1px solid var(--line);border-radius:10px;width:auto;flex:1 1 150px;min-width:0}#v-dash .dmx-dia{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);flex:1 1 200px}#v-dash .dmx-f .btn{width:auto}
+#v-dash .dmx-c{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01));border:1px solid var(--line);border-radius:16px;padding:12px;box-shadow:0 0 0 1px rgba(56,189,248,.05),0 14px 34px rgba(0,0,0,.35);min-width:0;overflow:hidden}
+#v-dash .dmx-h{margin:0 0 10px;font:800 13px var(--display);letter-spacing:.16em;text-transform:uppercase;color:#38bdf8;display:flex;align-items:center;gap:8px}#v-dash .dmx-h::before{content:"";width:8px;height:8px;border-radius:2px;background:#3ef0a4;box-shadow:0 0 10px #3ef0a4}
+#v-dash .dmx .kpi,#v-dash .dmx .card,#v-dash .dmx .alert,#v-dash .dmx .pxs,#v-dash .dmx section{background:var(--surface);border-color:var(--line);color:var(--ink)}
+#v-dash .dmx .kpi b{color:#3ef0a4;text-shadow:0 0 12px rgba(62,240,164,.35)}#v-dash .dmx .tbl{background:var(--surface);border-color:var(--line)}#v-dash .dmx table th{background:var(--sunk);color:var(--muted)}#v-dash .dmx table td{border-color:var(--line)}
+#v-dash .dmx svg text{fill:var(--ink)}#v-dash .dmx-cab h3{color:var(--ink)}
+.pvsw{display:flex;gap:4px;background:var(--sunk);border:1px solid var(--line);border-radius:12px;padding:4px;margin:0 0 10px;max-width:420px}.pvsw button{flex:1;min-height:42px;border:0;border-radius:9px;background:none;color:var(--muted);font:700 15px var(--body);cursor:pointer}.pvsw button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.15)}
+#v-dash .pvsw.dk{background:#0b1620;border-color:#1f3442;margin:0}#v-dash .pvsw.dk button{color:#8fb0c0}#v-dash .pvsw.dk button[aria-pressed="true"]{background:linear-gradient(90deg,#0f3b4a,#1f2a55);color:#e8f3f8;box-shadow:0 0 12px rgba(56,189,248,.25)}
 /* Histórico de execução */
 #v-hist .hs-top{background:linear-gradient(135deg,#18241c,#24402c);color:#e9f3ea;border-radius:14px;padding:14px 16px;margin:4px 0 10px}#v-hist .hs-top b{display:block;font-size:17px;letter-spacing:.04em}#v-hist .hs-top small{opacity:.85}
 #v-hist .hs-flt{display:flex;flex-wrap:wrap;gap:8px}#v-hist .hs-lb{display:grid;gap:3px;font-size:12.5px;font-weight:700;flex:1;min-width:150px}#v-hist .hs-lb input{width:100%;min-width:0;box-sizing:border-box}#v-hist .hs-g2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}#v-hist .hs-g2 .btn{grid-column:1/-1}#v-hist .hs-flt select{width:auto}#v-hist .hs-flt input{flex:1;min-width:200px}
@@ -1833,11 +1846,10 @@ body.sofiscal nav.tabs{display:none!important}
   <div id="horiBody"></div>
 </div>
 <div id="v-dash" hidden>
-  <h2>Dashboard</h2>
-  <p class="lead">Resumo dos números da gerência: valor x meta, execução, baixas e O.S do dia.</p>
   <div id="dashBody"></div>
 </div>
 <div id="v-resumo" hidden>
+  <div class="pvsw" role="group" aria-label="Escolher a visão"><button type="button" data-pvsw="painel" aria-pressed="true">📊 Painel</button><button type="button" data-pvsw="dash" aria-pressed="false">✨ Dashboard</button></div>
   <h2>Painel</h2>
   <p class="lead">Programado × executado em tempo real, direto dos lançamentos. Use os filtros para ver uma semana, um grupo ou uma turma.</p>
   <div id="proxSem"></div>
@@ -2277,7 +2289,7 @@ function applyPerms(){ try{ equipAplicar(); }catch(e){}
   $("#testeBtn").hidden=!isGerente(); $("#testeBtn").setAttribute("aria-pressed",String(modoTeste())); barTeste();
   const tabs=[...document.querySelectorAll("nav.tabs button")];
   tabs.forEach(b=>b.hidden = ehVictor() ? false : PERF_ABAIXO.includes(per) ? !abaOn(per,b.dataset.v) : abaPadraoOculta(per,b.dataset.v));
-  { const rb=tabs.find(b=>b.dataset.v==="resumo"), db_=tabs.find(b=>b.dataset.v==="dash"); window.__dashOk=!!rb&&!rb.hidden&&per!=="fiscal"; if(db_) db_.hidden=!window.__dashOk; if(curView==="dash"&&!window.__dashOk) show("inicio"); } // Dashboard: mesmo acesso do Painel
+  { const rb=tabs.find(b=>b.dataset.v==="resumo"), db_=tabs.find(b=>b.dataset.v==="dash"); window.__dashOk=!!rb&&!rb.hidden&&per!=="fiscal"; if(db_) db_.hidden=true; /* o Dashboard fica dentro do Painel (botões Painel | Dashboard) */ if(curView==="dash"&&!window.__dashOk) show("inicio"); } // Dashboard: mesmo acesso do Painel
   function abaPadraoOculta(per,v){ const b={dataset:{v}}; return (b.dataset.v==="upd" && !ehGerPerf(per)) || (b.dataset.v==="orc" && !["admin","gerencia","gerencia_op","fiscal"].includes(per)) || (per==="fiscal" && b.dataset.v!=="inicio" && b.dataset.v!=="mais" && !fisAbas().has(b.dataset.v)) || (per==="diretoria" && (b.dataset.v==="form"||b.dataset.v==="campo"||b.dataset.v==="oc")) || (per==="supervisor" && b.dataset.v==="resumo") || (per==="supervisor1" && !SUP1_ABAS.has(b.dataset.v)); }
   if(PERF_ABAIXO.includes(per)&&PERM_ABAS.some(x=>x.k===curView)&&!abaOn(per,curView)) show("inicio");
   document.body.classList.toggle("sofiscal",per==="fiscal"&&[...fisAbas()].filter(k=>k!=="vist").length<=1); if(per==="fiscal"&&!fisAbas().has(curView)) show("inicio");
@@ -2375,7 +2387,7 @@ function d3Area(cv,lbl,A,B){
   x.fillStyle=DC.mu; x.textAlign="center"; const step=Math.max(1,Math.ceil(n/Math.max(3,(w-pl)/48))); for(let i=0;i<n;i+=step) x.fillText(lbl[i],X(i),h-7);
 }
 const d3K=v=>v>=1e6?(v/1e6).toLocaleString("pt-BR",{maximumFractionDigits:1})+" mi":v>=1e3?Math.round(v/1e3).toLocaleString("pt-BR")+" mil":Math.round(v).toLocaleString("pt-BR");
-function renderDash(){
+function renderDash3d(){
   const host=$("#dashBody"); if(!host) return;
   const sv=()=>{ try{ localStorage.setItem("gpe_dash_f",JSON.stringify(DASH)); }catch(e){} };
   const isoD=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
@@ -2840,6 +2852,32 @@ function renderHist(){ const host=$("#histBody"); if(!host) return; if(!sessao){
   [["hsEnd","end"],["hsQ","q"]].forEach(([id,k])=>{ const e=$("#"+id); if(e) e.oninput=()=>{ HIST[k]=e.value; clearTimeout(HIST._t); HIST._t=setTimeout(renderHist,300); }; });
 }
 
+/* ================= DASHBOARD = as mesmas informações do Painel, com visual de painel de controle =================
+   não calcula nada próprio: usa o que o Painel já montou (mesmos filtros), para os números serem sempre iguais */
+function renderDash(){ const host=$("#dashBody"); if(!host) return;
+  try{ renderResumo(); }catch(e){ console.error(e); }
+  const cp=id=>{ const el=document.getElementById(id); return el?el.innerHTML.replace(/\sid="[^"]*"/g,"").replace(/\sfor="[^"]*"/g,""):""; };
+  const opt=id=>{ const el=document.getElementById(id); return el?[...el.options].map(o=>`<option value="${esc(o.value)}"${o.value===el.value?" selected":""}${o.disabled?" disabled":""}>${esc(o.textContent)}</option>`).join(""):""; };
+  const dia=$("#rDia")?.value||"", semDis=!!$("#rSem")?.disabled;
+  const sec=(t,h,cls="")=>h&&h.replace(/<[^>]+>/g,"").trim()?`<section class="dmx-c ${cls}"><h3 class="dmx-h">${t}</h3>${h}</section>`:"";
+  const tab=(cab,id)=>{ const t=cp(id); return t?`${cab?`<div class="dmx-cab">${cp(cab)}</div>`:""}<div class="tbl"><table>${t}</table></div>`:""; };
+  host.innerHTML=`<div class="dmx">
+    <div class="pvsw dk" role="group" aria-label="Escolher a visão"><button type="button" data-pvsw="painel" aria-pressed="false">📊 Painel</button><button type="button" data-pvsw="dash" aria-pressed="true">✨ Dashboard</button></div>
+    <header class="dmx-top"><div><small>COMURG · GERÊNCIA DE PODA E EXTIRPAÇÃO</small><b>DASHBOARD</b><span>As mesmas informações do Painel, em tempo real.</span></div><i class="dmx-live">● AO VIVO</i></header>
+    <div class="dmx-f"><select data-dmx="rSem"${semDis?" disabled":""} aria-label="Semana">${opt("rSem")}</select><select data-dmx="rGrp" aria-label="Grupo">${opt("rGrp")}</select><select data-dmx="rSup" aria-label="Turma">${opt("rSup")}</select><label class="dmx-dia">Dia<input type="date" data-dmx="rDia" value="${esc(dia)}"></label>${dia?`<button type="button" class="btn sec" data-dmxx="1">Limpar dia</button>`:""}</div>
+    ${sec("Programação da próxima semana",cp("proxSem"))}
+    ${sec("Avisos",cp("alertas"),"dmx-al")}
+    ${sec("Painel",cp("painel"),"dmx-pn")}
+    ${sec("Contrato",cp("contrato"))}
+    ${sec("Indicadores",`<div class="kpis">${cp("kpis")}</div>`)}
+    ${sec("Detalhamento",tab("tSupCab","tSup")+tab("tItemCab","tItem")+tab("tMotCab","tMot"),"dmx-tb")}
+  </div>`;
+  host.querySelectorAll("[data-dmx]").forEach(el=>el.onchange=()=>{ const o=document.getElementById(el.dataset.dmx); if(!o) return; o.value=el.value; o.dispatchEvent(new Event("change",{bubbles:true})); o.dispatchEvent(new Event("input",{bubbles:true})); setTimeout(renderDash,30); });
+  const x=host.querySelector("[data-dmxx]"); if(x) x.onclick=()=>{ const b=$("#rDiaX"); if(b) b.click(); setTimeout(renderDash,30); };
+  // botões copiados do Painel (Dia/Semana/Mês, Semanal/Mensal…) agem no Painel: o Dashboard se atualiza em seguida
+  if(!host.__dmxClk){ host.__dmxClk=1; host.addEventListener("click",e=>{ if(e.target.closest("button,[role=tab],.chip")&&!e.target.closest("[data-dmxx]")) setTimeout(()=>{ if(curView==="dash") renderDash(); },200); }); }
+}
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-pvsw]"); if(!b) return; const v=b.dataset.pvsw; try{ localStorage.setItem("gpe_pnl_vis",v); }catch(x){} if(v==="dash") show("dash"); else show("resumo",false,"painel"); scrollTo(0,0); });
 function nomeAutor(){ return sessao?.nome||""; }
 function refazTurmas(){ const keep=(sel,html)=>{ const el=$(sel); if(!el) return; const v=el.value; el.innerHTML=html; el.value=[...el.options].some(o=>o.value===v)?v:""; };
   ["#cSup","#oSup","#kSup","#kgSup"].forEach(x=>keep(x,optTurmas()));
@@ -3019,7 +3057,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.14y";
+const APP_VERSAO="2026.11.15b";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -4259,7 +4297,10 @@ $("#form").addEventListener("submit", async ev=>{
 /* ---------- navegação ---------- */
 let curView="form";
 function show(v, keepForm=false, tabHint){
-  if(v==="dash"&&window.__dashOk===false) v="inicio";
+  if(v==="dash"&&window.__dashOk===false) v="resumo";
+  // Painel e Dashboard ficam no mesmo lugar: abre o último que a pessoa escolheu
+  if(v==="resumo"&&tabHint!=="painel"&&window.__dashOk){ try{ if(localStorage.getItem("gpe_pnl_vis")==="dash") v="dash"; }catch(e){} }
+  if(v==="dash") tabHint="resumo"; if(tabHint==="painel") tabHint="resumo";
   if(sessao?.perfil==="fiscal"&&!fisAbas().has(v)) v="inicio";
   if(PERF_ABAIXO.includes(sessao?.perfil)&&PERM_ABAS.some(x=>x.k===v)&&!abaOn(sessao.perfil,v)) v="inicio"; // aba desativada pelo administrador // fiscal: só o que o administrador liberou
   curView=v;
