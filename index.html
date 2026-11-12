@@ -3084,7 +3084,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.16l";
+const APP_VERSAO="2026.11.16m";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -3767,13 +3767,18 @@ function lerMotivo(){ const v=$("#motivo").value; return v==="Outro" ? $("#motiv
 function setMotivo(m){ const opts=[...$("#motivo").options].map(o=>o.value); if(!m){$("#motivo").value="";$("#motivoTxt").value=""} else if(opts.includes(m)&&m!=="Outro"){$("#motivo").value=m;$("#motivoTxt").value=""} else {$("#motivo").value="Outro";$("#motivoTxt").value=m==="Outro"?"":m} motivoUI(); }
 const MOT_OUTRA="Executado por outra equipe";
 const outraEq=()=>form.mode==="baixa"&&form.st==="NÃO"&&$("#motivo").value===MOT_OUTRA;
+// morador impediu: não remarca (não pede nova data)
+const MOT_MOR="Morador impediu";
+const semRemarcar=()=>form.mode==="baixa"&&(form.st==="NÃO"||form.st==="PARCIAL")&&$("#motivo").value===MOT_MOR;
+const remTxt=(r,pre)=>r.proxData?(pre||"remarcado p/ ")+fmtD(r.proxData):"não remarcado";
 const outraTxt=r=>{ const o=r.outraEquipe; if(!o) return ""; return `Executado por outra equipe: ${[o.sup==="OUTRA"?(o.outro||"outra equipe"):o.sup,o.equipe].filter(Boolean).join(" · ")}${o.data?" em "+fmtD(o.data):""}`; };
 function motivoUI(){ $("#motivoTxtW").hidden = $("#motivo").value!=="Outro";
-  const oe=outraEq(), pd=$("#proxData").closest("label"); if(pd){ pd.hidden=oe; pd.parentElement.style.gridTemplateColumns=oe?"1fr":""; } $("#remDica").hidden=oe; $("#outraBox").hidden=!oe;
+  const oe=outraEq(), sr=semRemarcar(), pd=$("#proxData").closest("label"); if(pd){ pd.hidden=oe||sr; pd.parentElement.style.gridTemplateColumns=oe||sr?"1fr":""; } $("#remDica").hidden=oe||sr; if(sr) $("#proxData").value=""; $("#outraBox").hidden=!oe;
   if(oe){ const sel=$("#oeSup"), cur=sel.value; sel.innerHTML=`<option value="">Selecione…</option>${SUPS_ALL.filter(x=>x.id!==form.base?.supervisao).map(x=>`<option value="${esc(x.id)}">${esc(x.id)}</option>`).join("")}<option value="OUTRA">Outra (digitar)</option>`; sel.value=cur; }
   $("#oeOutroW").hidden=!(oe&&$("#oeSup").value==="OUTRA");
   const rb=$("#relBloq"); if(rb&&oe) rb.hidden=true;
-  if(form.mode==="baixa"&&form.st==="NÃO") $("#naoNote").innerHTML = oe ? "Outra equipe já executou: o serviço programado <b>não é remarcado</b>. Abaixo, registre o <b>outro serviço que a equipe fez no dia</b> – se for O.S ou processo, o relatório de serviço sai para ele." : "O serviço programado será <b>remarcado</b> para a nova data. Abaixo, registre o <b>outro serviço que a equipe fez no dia</b>."; }
+  if(sr) $("#naoNote").innerHTML = form.st==="PARCIAL" ? "Morador impediu: o que faltou <b>não é remarcado</b>." : "Morador impediu: o serviço <b>não é remarcado</b>. Abaixo, registre o <b>outro serviço que a equipe fez no dia</b>.";
+  else if(form.mode==="baixa"&&form.st==="NÃO") $("#naoNote").innerHTML = oe ? "Outra equipe já executou: o serviço programado <b>não é remarcado</b>. Abaixo, registre o <b>outro serviço que a equipe fez no dia</b> – se for O.S ou processo, o relatório de serviço sai para ele." : "O serviço programado será <b>remarcado</b> para a nova data. Abaixo, registre o <b>outro serviço que a equipe fez no dia</b>."; }
 $("#oeSup").onchange=()=>motivoUI();
 $("#motivo").onchange=()=>{ motivoUI(); if($("#motivo").value==="Outro") $("#motivoTxt").focus(); };
 $("#semSub").onchange=()=>{$("#subFields").hidden=$("#semSub").checked; try{ relSync(); }catch(e){} };
@@ -4215,7 +4220,8 @@ $("#form").addEventListener("submit", async ev=>{
       if(od&&errDataExec(od)) e.push("a data em que a outra equipe executou não pode ser futura");
       body.motivo=MOT_OUTRA; body.outraEquipe={sup:os, outro:os==="OUTRA"?oo:"", equipe:$("#oeEq").value, data:od}; }
     if(m==="baixa" && form.st==="PARCIAL"){ const pv=prevQ(base); remQ={}; ITENS.forEach(i=>{const d=Math.round(((+pv[i.c]||0)-(+q[i.c]||0))*100)/100; if(d>0) remQ[i.c]=d}); if(!Object.keys(remQ).length) remQ=null; }
-    body.proxData=""; if(!body.outraEquipe) body.motivo=""; body.substituto=null; body.semSubstituto=false;
+    body.proxData=""; if(!body.outraEquipe) body.motivo=""; body.substituto=null; body.semSubstituto=false; body.semRemarcar=false;
+    if(semRemarcar()){ body.motivo=MOT_MOR; body.semRemarcar=true; body.qtdRemarcada=form.st==="PARCIAL"?remQ:null; remQ=null; }
     if(m==="baixa" && form.st==="NÃO"){
       const sem=$("#semSub").checked;
       let sub=null;
@@ -4288,7 +4294,7 @@ $("#form").addEventListener("submit", async ev=>{
     : m==="avulso" ? "Lançou serviço sem programação"
     : form.st==="SIM" ? (base&&!isProg(base)?"Corrigiu a baixa (executado)":"Deu baixa: executado")
     : form.st==="PARCIAL" ? (base&&!isProg(base)?"Corrigiu a baixa (parcial)":"Deu baixa: parcial")+(body.pctItens?" "+(body.pctExec!=null?body.pctExec+"%":Object.entries(body.pctItens).map(([c,v])=>c+" "+v+"%").join(", ")):"")+(body.proxData?" · restante p/ "+fmtD(body.proxData):"")
-    : "Não executado · remarcado p/ "+fmtD(body.proxData);
+    : body.semRemarcar ? "Não executado · morador impediu (não remarcado)" : "Não executado · remarcado p/ "+fmtD(body.proxData);
   if(extra) extra.body._acao="Criado por remarcação de "+fmtD(base.data)+(form.st==="PARCIAL"?" (restante do parcial)":"");
   let res = "ok";
   if(extra){ res = await saveDoc(extra.id, extra.body); }
@@ -7296,7 +7302,7 @@ function progCard(r, late){
 }
 function doneCard(r,comTurma){
   return `<button type="button" class="rec" data-id="${esc(r.id)}"><div class="l1"><span class="when">${tagOc(r)}${comTurma?esc(r.supervisao)+" · ":""}${esc(r.equipe)} · ${esc(r.bairro)}</span><span class="pill ${stKey(r)}">${stTxt[stKey(r)]}</span></div>
-    <div class="meta">${esc(r.logradouro)}${r.status==="NÃO"?" · remarcado p/ "+fmtD(r.proxData)+(r.substituto?" · fez "+esc(r.substituto.bairro):""):""}</div>
+    <div class="meta">${esc(r.logradouro)}${r.status==="NÃO"?" · "+remTxt(r)+(r.substituto?" · fez "+esc(r.substituto.bairro):""):""}</div>
     <div class="nums">${r.avulso&&!r.ocorrencia?"Sem programação · ":""}<b>${brl(execRec(r))}</b> executado</div></button>`;
 }
 const cModo=()=>ls.get("gpe_cmodo","dia")==="sem"?"sem":"dia";
@@ -7403,7 +7409,7 @@ function renderLista(){
       <div class="l1"><span class="when">${fmtD(r.data)} · ${esc(r.dia||diaDe(r.data))} · ${r.semana?r.semana+"ª":""}</span>${r._fila?`<span class="pill FILA">No aparelho</span>`:`<span class="pill ${stKey(r)}">${stTxt[stKey(r)]}</span>`}</div>
       <div class="where">${tagOc(r)}${esc(r.bairro)} — ${esc(r.logradouro)}</div>
       <div class="meta">${r.extra?'<span class="extrab">⚡ EXTRA</span> ':""}${esc(r.supervisao)} · ${esc(r.equipe)} · ${esc(tipoTxt(r)||"sem tipo")}${r.processo?" · "+esc(procNum(r)):""}${r.avulso?" · sem programação":""}${r.remarcadaDe?" · remarcação":""}</div>
-      <div class="nums">${val}${r.status==="NÃO"?" · remarcado p/ "+fmtD(r.proxData)+(r.substituto?" · no lugar: "+esc(r.substituto.bairro):""):""}</div>
+      <div class="nums">${val}${r.status==="NÃO"?" · "+remTxt(r)+(r.substituto?" · no lugar: "+esc(r.substituto.bairro):""):""}</div>
     </button>`};
   const tot=rs=>{ const p=rs.reduce((a,r)=>a+(r.avulso?0:receitaDe(prevQ(r))),0), e=rs.reduce((a,r)=>a+execRec(r),0), ex=rs.filter(r=>r.status==="SIM"||r.status==="PARCIAL").length;
     const ap=rs.reduce((a,r)=>a+(r.avulso?0:somaG(prevQ(r),"P")+somaG(prevQ(r),"E")),0), ae=rs.reduce((a,r)=>{const q=execQ(r),s2=subQ(r);return a+somaG(q,"P")+somaG(q,"E")+somaG(s2,"P")+somaG(s2,"E")},0); return {p,e,ex,ap,ae}; };
@@ -7485,7 +7491,7 @@ function lxCard(r){ const pq=prevQ(r), s=r.substituto;
   if(!r.avulso) L.push(["Previsto",`${qtdTxt(pq)}<div>Valor previsto: <b>${brl(receitaDe(pq))}</b></div>`]);
   if(r.status==="SIM"||r.status==="PARCIAL") L.push(["Executado",`${qtdTxt(r.qtd)}<div>Valor executado: <b>${brl(receitaDe(r.qtd))}</b>${r.dataExec&&r.dataExec!==r.data?" em "+fmtD(r.dataExec):""}</div>`]);
   if(r.status==="PARCIAL"&&r.proxData) L.push(["Não executado · remarcado",`${qtdTxt(r.qtdRemarcada)}<div>remarcado p/ ${fmtD(r.proxData)}${r.motivo?" · "+esc(r.motivo):""}</div>`]);
-  if(r.status==="NÃO"){ L.push(r.outraEquipe?["Não executado",esc(outraTxt(r))]:["Remarcado",`para ${fmtD(r.proxData)}${r.motivo?" · "+esc(r.motivo):""}`]); L.push(["No lugar",s?`${fmtD(s.data)} · ${esc(s.bairro)} — ${esc(s.logradouro)}${s.tipo?" ("+esc(s.tipo)+")":""}${qtdTxt(s.qtd)}<div>Valor: <b>${brl(s.receita)}</b></div>`:"nenhum serviço executado no lugar"]); }
+  if(r.status==="NÃO"){ L.push(r.outraEquipe?["Não executado",esc(outraTxt(r))]:[r.proxData?"Remarcado":"Não executado",`${r.proxData?"para "+fmtD(r.proxData):"não remarcado"}${r.motivo?" · "+esc(r.motivo):""}`]); L.push(["No lugar",s?`${fmtD(s.data)} · ${esc(s.bairro)} — ${esc(s.logradouro)}${s.tipo?" ("+esc(s.tipo)+")":""}${qtdTxt(s.qtd)}<div>Valor: <b>${brl(s.receita)}</b></div>`:"nenhum serviço executado no lugar"]); }
   if((r.historico||[]).length) L.push(["Remarcações",r.historico.map(h=>`${h.de?fmtDs(h.de):"—"} → ${h.para?fmtDs(h.para):"—"}${h.motivo?" ("+esc(h.motivo)+")":""}`).join(" · ")]);
   if(r.geo) L.push(["GPS",fmtCoord(r.geo)]);
   if(r.fiscal) L.push(["Fiscal",esc(r.fiscal)]); if(r.obs) L.push(["Obs.",esc(r.obs)]); if(r.ultimoUsuario) L.push(["Lançado por",esc(r.ultimoUsuario)]);
@@ -7571,7 +7577,7 @@ function detalhe(r, abrirAdiar=false, soVer=false){
       ${r.avulso?`<dt>Origem</dt><dd>Serviço sem programação</dd>`:`<dt>Previsto</dt><dd>${qtdTxt(pq)}<br>Valor previsto: <b>${brl(receitaDe(pq))}</b></dd>`}
       ${(r.status==="SIM"||r.status==="PARCIAL")?`${quedaErrado(r)?`<dt>Atenção</dt><dd><b style="color:var(--bad)">⚠ ${esc(quedaErrado(r))}</b></dd>`:""}<dt>Executado</dt><dd>${qtdTxt(r.qtd)}<br>Valor executado: <b>${brl(receitaDe(r.qtd))}</b>${r.dataExec&&r.dataExec!==r.data?" em "+fmtD(r.dataExec):""}</dd>`:""}
       ${r.status==="PARCIAL"&&r.proxData?`<dt>Não executado · remarcado</dt><dd>${qtdTxt(r.qtdRemarcada)}<br>remarcado p/ ${fmtD(r.proxData)} · ${esc(r.motivo||"")}</dd>`:""}
-      ${r.status==="NÃO"?`${r.outraEquipe?`<dt>Não executado</dt><dd>${esc(outraTxt(r))}</dd>`:`<dt>Remarcado</dt><dd>para ${fmtD(r.proxData)} · ${esc(r.motivo||"")}</dd>`}
+      ${r.status==="NÃO"?`${r.outraEquipe?`<dt>Não executado</dt><dd>${esc(outraTxt(r))}</dd>`:`<dt>${r.proxData?"Remarcado":"Não executado"}</dt><dd>${r.proxData?"para "+fmtD(r.proxData):"não remarcado"} · ${esc(r.motivo||"")}</dd>`}
         <dt>No lugar</dt><dd>${s?`${fmtD(s.data)} · ${esc(s.bairro)} — ${esc(s.logradouro)} (${esc(s.tipo)})<br>${qtdTxt(s.qtd)}<br>Valor: <b>${brl(s.receita)}</b>`:"Nenhum serviço executado no lugar"}</dd>`:""}
       ${r.fiscal?`<dt>Fiscal</dt><dd>${esc(r.fiscal)}</dd>`:""}
       ${r.obs?`<dt>Obs.</dt><dd>${esc(r.obs)}</dd>`:""}
@@ -8768,7 +8774,7 @@ function msgGrupo(r){
   if(r.ocorrencia){const o=r.ocorrencia;L.push(`Ocorrência: ${OC[o.tipo]||""} · ${o.qtd||1} un.${o.hora?" · chamado "+o.hora:""}${o.origem?" · "+o.origem:""}${o.protocolo?" · prot. "+o.protocolo:""}${o.rede?" · rede elétrica":""}${o.via?" · via bloqueada":""}`); const im=o.impacto; if(im) L.push(im.houve?`Impacto na programação: ${im.servicos.map(s=>s.local+" ("+EFEITO_C[s.efeito]+")").join("; ")}`:"Impacto na programação: nenhum")}
   const ex=execQ(r); if(Object.keys(ex).length) L.push(`Executado: ${qs(ex)}`);
   if(r.status==="PARCIAL"){const pv=prevQ(r),f={};ITENS.forEach(i=>{const d=(+pv[i.c]||0)-(+r.qtd?.[i.c]||0);if(d>0)f[i.c]=d});const fq=r.qtdRemarcada||f; if(Object.keys(fq).length) L.push(`Faltou: ${qs(fq)}${r.proxData?" · remarcado p/ "+fmtD(r.proxData):""}`)}
-  if(r.status==="NÃO"){L.push(`Programado: ${qs(prevQ(r))}`);L.push(`Remarcado para: ${fmtD(r.proxData)}`);
+  if(r.status==="NÃO"){L.push(`Programado: ${qs(prevQ(r))}`);L.push(r.proxData?`Remarcado para: ${fmtD(r.proxData)}`:"Não remarcado");
     L.push(r.substituto?`Feito no lugar: ${r.substituto.bairro} — ${r.substituto.logradouro}${r.substituto.tipo?" ("+r.substituto.tipo+")":""} · ${qs(r.substituto.qtd)}`:"Feito no lugar: nenhum serviço")}
   if(r.outraEquipe) L.push(outraTxt(r)); else if(r.motivo) L.push(r.outraEquipe?outraTxt(r):`Motivo: ${r.motivo}`);
   if(r.obs) L.push(`Obs.: ${r.obs}`);
@@ -8834,7 +8840,7 @@ async function msgImagem(r){
   if(Object.keys(ex).length){ sep(); blocos("Executado",ex); }
   if(r.status==="PARCIAL"){ const pv=prevQ(r),f={}; ITENS.forEach(i=>{const d=(+pv[i.c]||0)-(+r.qtd?.[i.c]||0); if(d>0) f[i.c]=d}); const fq=r.qtdRemarcada||f; if(Object.keys(fq).length){ blocos("Faltou",fq,"#9a5b00"); if(r.proxData) campo("Remarcado para",fmtD(r.proxData),{peso:700,cor:"#9a5b00"}); } }
   if(isProg(r)&&!r.ocorrencia){ sep(); blocos("Programado",prevQ(r)); }
-  if(r.status==="NÃO"){ sep(); blocos("Programado",prevQ(r),"#5b6670"); campo("Remarcado para",fmtD(r.proxData),{peso:700,cor:"#b3261e"});
+  if(r.status==="NÃO"){ sep(); blocos("Programado",prevQ(r),"#5b6670"); campo(r.proxData?"Remarcado para":"Remarcação",r.proxData?fmtD(r.proxData):"não remarcado",{peso:700,cor:"#b3261e"});
     campo("Feito no lugar",r.substituto?`${r.substituto.bairro} — ${r.substituto.logradouro}${r.substituto.tipo?" ("+r.substituto.tipo+")":""}`:"nenhum serviço");
     if(r.substituto) blocos("Executado no lugar",r.substituto.qtd); }
   if(r.motivo||r.obs) sep();
@@ -9092,7 +9098,7 @@ function renderAlertas(hostEl,opt){
   const remarc=all.filter(r=>isProg(r)&&(r.historico||[]).length>=2&&!notifCanc[remKey(r)]);
   window.__REMCIE=remarc.map(r=>({key:remKey(r),txt:`${r.bairro||""} — ${r.logradouro||""} (remarcado ${(r.historico||[]).length}x)`,sup:r.supervisao||""}));
   const ocAg=all.filter(r=>r.ocorrencia&&isProg(r));
-  const parc=all.filter(r=>r.status==="PARCIAL"&&!r.proxData&&!r.remarcadaPara&&falta(r));
+  const parc=all.filter(r=>r.status==="PARCIAL"&&!r.proxData&&!r.remarcadaPara&&!r.semRemarcar&&falta(r));
   const PX=proxSemInfo(), semAm=(!PX.cobra?[]:travado()?SUPS.filter(x=>x.id===sessao.sup):SUPS).filter(s=>!proxSemTurma(s.id,PX).ok&&!cancProg(s.id,PX));
   const ex=(arr,f)=>arr.slice(0,3).map(f).join(" · ")+(arr.length>3?` · +${arr.length-3}`:"");
   const itens=[
@@ -9921,7 +9927,7 @@ function acompHtml(F){
       ${mostraE?`<div class="hl"><span>Produzido <small>${brlS(ex)}${!umDia&&dPass.length<dTrab.length?" · meta até hoje ("+dPass.length+" dias)":""}</small></span><b class="${ke}">${pe}%</b></div><div class="hb"><i style="width:${W(pe)}%;background:${cor(ke)}"></i><span class="m"></span></div>`:`<div class="hl"><span>Produzido</span><b style="color:var(--muted)">ainda não</b></div>`}
       <div class="st">${["SIM","PARCIAL","ATRASADO","NÃO","PROGRAMADO"].filter(k=>st[k]).map(k=>`<span><em style="color:${ICO[k][1]}">${ICO[k][0]} ${st[k]}</em> ${ICO[k][2]}</span>`).join("")}</div></button>`;
     if(sel) h+=`<div class="adet" style="margin:-4px 0 10px">${rs.map(r=>{const k=stKey(r);return `<button type="button" class="it" data-acid="${esc(r.id)}"><span class="lc">${umDia?"":`<b>${fmtD(r.data).slice(0,5)}</b> · `}${esc(r.bairro)} — ${esc(r.logradouro)}</span><span class="pill ${k}">${ST_NOME[k]}</span>
-        <span class="mt">${esc(r.equipe||"")} · previsto ${brl(receitaDe(prevQ(r)))}${k==="SIM"||k==="PARCIAL"?" · executado "+brl(execRec(r)):""}${k==="NÃO"?(r.outraEquipe?" · "+esc(outraTxt(r)):" · remarcado p/ "+fmtD(r.proxData)+(r.motivo?" · "+esc(r.motivo):"")):""}${r.impactoQueda?" · afetado por queda":""}</span></button>`}).join("")}</div>`;
+        <span class="mt">${esc(r.equipe||"")} · previsto ${brl(receitaDe(prevQ(r)))}${k==="SIM"||k==="PARCIAL"?" · executado "+brl(execRec(r)):""}${k==="NÃO"?(r.outraEquipe?" · "+esc(outraTxt(r)):" · "+remTxt(r)+(r.motivo?" · "+esc(r.motivo):"")):""}${r.impactoQueda?" · afetado por queda":""}</span></button>`}).join("")}</div>`;
   });
   if(!base.length) h+=`<div class="dempty">Nenhum serviço programado ${umDia?"neste dia":"neste período"}.${!umDia?" Se for um período antigo, use “Carregar histórico anterior” na Evolução.":""}</div>`;
   if(semP.length) h+=`<div class="acrow vz"><div class="t"><b style="font-size:13px">Sem programação (${semP.length})</b></div><small style="color:var(--muted);font-size:12px">${semP.map(esc).join(" · ")}</small></div>`;
