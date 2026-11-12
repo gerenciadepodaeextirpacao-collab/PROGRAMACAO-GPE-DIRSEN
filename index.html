@@ -1379,6 +1379,18 @@ body.sofiscal nav.tabs{display:none!important}
 #v-dash .dmi b{display:block;font-size:22px;color:var(--ac);font-variant-numeric:tabular-nums;text-shadow:0 0 12px color-mix(in srgb,var(--ac) 50%,transparent)}
 #v-dash .dmi span{display:block;font-size:12px;color:var(--dtx);margin-top:2px}
 #v-dash .dmi small{display:block;font-size:11.5px;color:var(--dmu)}
+/* Histórico de execução */
+#v-hist .hs-top{background:linear-gradient(135deg,#18241c,#24402c);color:#e9f3ea;border-radius:14px;padding:14px 16px;margin:4px 0 10px}#v-hist .hs-top b{display:block;font-size:17px;letter-spacing:.04em}#v-hist .hs-top small{opacity:.85}
+#v-hist .hs-flt{display:flex;flex-wrap:wrap;gap:8px}#v-hist .hs-lb{display:grid;gap:3px;font-size:12.5px;font-weight:700;flex:1;min-width:150px}#v-hist .hs-lb input{width:100%;min-width:0;box-sizing:border-box}#v-hist .hs-g2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}#v-hist .hs-g2 .btn{grid-column:1/-1}#v-hist .hs-flt select{width:auto}#v-hist .hs-flt input{flex:1;min-width:200px}
+#v-hist .hs-l{display:grid;gap:12px}#v-hist .hs-c{background:var(--surface);border:1px solid var(--line);border-left:4px solid #1f6b3a;border-radius:12px;padding:12px;display:grid;gap:10px}
+#v-hist .hs-tx{display:grid;gap:2px;font-size:14px}#v-hist .hs-tx>b{font-size:15.5px}#v-hist .hs-tx span b{font-size:12px;color:var(--muted);margin-right:4px}
+#v-hist .hs-fs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:10px}
+#v-hist .hs-f{margin:0;position:relative;border-radius:10px;overflow:hidden;background:#111;min-height:160px}#v-hist .hs-f img{display:block;width:100%;height:240px;object-fit:cover;cursor:zoom-in}
+#v-hist .hs-f figcaption{position:absolute;left:0;right:0;bottom:24px;padding:6px 8px;background:linear-gradient(transparent,rgba(0,0,0,.75));color:#fff;font-size:11.5px;line-height:1.3}#v-hist .hs-f figcaption b{font-size:20px;color:#ffd23f}
+#v-hist .hs-f a{display:block;background:#0b1a10;color:#7ee2a0;font-size:12px;padding:4px 8px;height:24px;position:absolute;left:0;right:0;bottom:0}
+#v-hist .hs-row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}#v-hist .hs-row .btn{width:auto;min-height:38px}#v-hist .hs-c.hs-p{border-left-color:#2a5bd7}#v-hist .hs-st{font-style:normal;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--sunk);margin-left:6px;vertical-align:middle}#v-hist .hs-SIM{background:#dff3e4;color:#1f6b3a}#v-hist .hs-PARCIAL{background:#fff1d6;color:#8a5200}#v-hist .hs-NÃO,#v-hist .hs-ATRASADO{background:#fde2e0;color:#b42318}
+#v-hist .hs-sem{display:flex;align-items:center;justify-content:center;color:#ccc;text-align:center;font-size:13px}
+
 /* Horímetro (área separada) */
 .hz-busca{width:100%;margin:4px 0}.hz-aviso{display:block;width:100%;margin:8px 0;padding:10px;border:0;border-radius:10px;background:#fff4d6;color:#7a4a00;font-weight:700;text-align:left}.hz-ab{background:#fffbeb}.hz-abl{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px;padding:6px 0;border-top:1px solid #eee}.hz-abl small{display:block;color:#667}.hz-f0{background:#e5e7eb;color:#374151}.hz-fotos{display:flex;gap:6px;margin:6px 0}.hz-fotos img{width:72px;height:72px;object-fit:cover;border-radius:8px;background:#eee}.hz-msgc.enc{opacity:.7}.hz-cf{padding:6px 0;border-top:1px solid #eee;font-size:13px}.hz-h{margin:14px 0 6px}
 #v-hori .hz-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:linear-gradient(135deg,#18241c,#24402c);color:#e9f3ea;border-radius:14px;padding:14px 16px;margin:4px 0 10px}
@@ -1808,6 +1820,9 @@ body.sofiscal nav.tabs{display:none!important}
 </div>
 
 <!-- ============ RESUMO ============ -->
+<div id="v-hist" hidden>
+  <div id="histBody"></div>
+</div>
 <div id="v-hori" hidden>
   <div id="horiBody"></div>
 </div>
@@ -1857,6 +1872,7 @@ body.sofiscal nav.tabs{display:none!important}
   <button type="button" data-v="lista">Lista</button>
   <button type="button" data-v="resumo">Painel</button>
   <button type="button" data-v="dash">Dashboard</button>
+  <button type="button" data-v="hist">Histórico de execução</button>
   <button type="button" data-v="hori">Horímetro</button>
   <button type="button" data-v="chk">Checklist</button>
   <button type="button" data-v="orc" hidden>Orçamento</button>
@@ -2749,6 +2765,53 @@ function renderHori(){
     baixarFormPdf(ev.currentTarget,html,"horimetro-"+hoje()+".pdf","Horímetro GPE"); };
 }
 
+/* ================= HISTÓRICO DE EXECUÇÃO (substitui o controle pelo WhatsApp) =================
+   todos os serviços da O.S que tiveram execução (start, fotos ou baixa), com as fotos do fiscal, data/hora e GPS */
+const HIST={per:"tudo",sup:"",q:"",dia:"",end:"",tipo:"",fot:"",st:""};
+const histFotos=r=>{ const S=fotoSlots(r); return S.filter(x=>r.fotosFiscal?.[x.k]||r.relat?.midia?.[x.k]).length; };
+const histExec=r=>!!(r.osDia?.sv?.[r.id]?.start||r.osDia?.start&&!r.osDia?.porServ||histFotos(r)||!isProg(r));
+const histLista=()=>{ const d1=HIST.dia||hoje(), d0=HIST.dia?HIST.dia:HIST.per==="tudo"?"":(()=>{ const d=new Date(hoje()+"T12:00"); d.setDate(d.getDate()-(+HIST.per-1)); return iso(d); })(), q=semAcento(HIST.q||"").toUpperCase(), qe=semAcento(HIST.end||"").toUpperCase().replace(/[^A-Z0-9 ]/g," ").split(/\s+/).filter(Boolean);
+  return todosGlobal().filter(r=>!r.arquivado&&!r.ocorrencia&&r.supervisao&&fotoSlots(r).length&&histExec(r)&&(travado()?r.supervisao===sessao.sup:noEscopo(r.supervisao))&&(!HIST.sup||r.supervisao===HIST.sup)&&(!d0||(r.data||"")>=d0)&&(r.data||"")<=d1
+    &&(!HIST.tipo||(HIST.tipo==="rot"?fotosRot(r):relTem(r)))&&(!HIST.fot||(HIST.fot==="com"?histFotos(r)>0:histFotos(r)===0))&&(!HIST.st||stKey(r)===HIST.st)
+    &&(!qe.length||(()=>{ const t=semAcento([r.logradouro,r.bairro].join(" ")).toUpperCase().replace(/[^A-Z0-9 ]/g," "); return qe.every(w=>t.includes(w)); })())
+    &&(!q||semAcento([r.supervisao,r.equipe,tipoTxt(r),r.servico,r.processo,r.fotosFiscal?.por,r.osDia?.fiscal?.nome,r.osDia?.num].join(" ")).toUpperCase().includes(q)))
+    .sort((a,b)=>(b.data||"").localeCompare(a.data||"")||(histHora(b)||"").localeCompare(histHora(a)||"")); };
+const histHora=r=>{ const sv=r.osDia?.sv?.[r.id]; return (sv?.start||r.osDia?.start)?.em||r.fotosFiscal?.em||""; };
+const histMapa=g=>g&&g.lat!=null?`https://www.google.com/maps?q=${g.lat},${g.lng}`:"";
+function histCard(r){ const ff=r.fotosFiscal||{}, G=ff.geo||{}, sv=r.osDia?.sv?.[r.id]||{}, h0=histHora(r), hf=sv.fim?.em||"", S=fotoSlots(r), k=stKey(r), fis=ff.por||r.osDia?.fiscal?.nome||(r.osDia?.semFiscal?"supervisor (sem fiscal)":"");
+  return `<article class="hs-c${relTem(r)?" hs-p":""}"><div class="hs-tx"><b>${esc(r.supervisao||"")}${r.equipe?" · "+esc(r.equipe):""} <em class="hs-st hs-${esc(k)}">${esc(ST_NOME[k]||k||"")}</em></b>
+    <span><b>DATA</b> ${fmtD(r.data)} (${diaDe(r.data)})</span>
+    <span><b>HORÁRIO</b> ${h0?hm(h0):"—"}${hf?" às "+hm(hf):""}</span>
+    <span><b>TIPO DE ATENDIMENTO</b> ${esc(tipoTxt(r)||r.tipo||"")}</span>
+    <span><b>PROCESSO</b> ${r.processo?esc(procNum(r)):"—"}</span>
+    <span><b>ENDEREÇO</b> ${esc(r.logradouro||"")}${r.bairro?" – "+esc(r.bairro):""}</span>
+    ${r.obs?`<span><b>OBS</b> ${esc(r.obs)}</span>`:""}
+    <span><b>FISCAL</b> ${esc(fis||"—")}${r.osDia?.num?" · O.S nº "+esc(r.osDia.num):""}</span></div>
+    <div class="hs-fs">${S.map(x=>{ const f=ff[x.k]||r.relat?.midia?.[x.k], g=G[x.k]; if(!f&&x.opc) return ""; if(!f) return `<div class="hs-f hs-sem"><span>${esc(x.curto)}<br>sem foto</span></div>`;
+      return `<figure class="hs-f"><img data-hsfoto="${esc(r.id)}|${x.k}" alt="foto ${esc(x.curto)}"><figcaption><b>${g?.em?hm(g.em):""}</b> ${g?.em?fmtD(iso(new Date(g.em))):""}<br>${esc(x.curto)} · ${esc(r.logradouro||"")}${r.bairro?" – "+esc(r.bairro):""}<br>${g&&g.lat!=null?`📍 ${g.lat.toFixed(6)}, ${g.lng.toFixed(6)}${g.prec?" (±"+g.prec+" m)":""}`:relTem(r)?"":"📍 sem localização"}</figcaption>${histMapa(g)?`<a href="${histMapa(g)}" target="_blank" rel="noopener">Localização e verificação: ver no mapa</a>`:""}</figure>`; }).join("")}</div></article>`; }
+function renderHist(){ const host=$("#histBody"); if(!host) return; if(!sessao){ host.innerHTML=""; return; }
+  const L=histLista(), sups=SUPS.filter(x=>travado()?x.id===sessao.sup:noEscopo(x.id)), nC=L.filter(r=>histFotos(r)>0).length;
+  const foco=["hsQ","hsEnd"].includes(document.activeElement?.id)?document.activeElement.id:"";
+  const sel=(id,v,ops)=>`<select id="${id}">${ops.map(([k,t])=>`<option value="${k}"${v===k?" selected":""}>${t}</option>`).join("")}</select>`;
+  host.innerHTML=`<div class="hs-top"><b>📸 HISTÓRICO DE EXECUÇÃO</b><small>Todos os serviços executados nas O.S, com as fotos que o fiscal registra durante a execução, data, hora e localização. Substitui o controle pelo WhatsApp.</small></div>
+    <div class="hs-g2"><label class="hs-lb">Dia<input type="date" id="hsDia" value="${esc(HIST.dia)}" max="${hoje()}"></label><label class="hs-lb">Endereço<input type="search" id="hsEnd" value="${esc(HIST.end)}" placeholder="Rua, avenida, quadra, bairro…"></label>${HIST.dia?`<button type="button" class="btn sec" id="hsDiaX">Limpar dia</button>`:""}</div>
+    <div class="hs-flt" style="margin-top:8px">${HIST.dia?"":sel("hsPer",HIST.per,[["tudo","Todo o período"],["1","Hoje"],["7","7 dias"],["30","30 dias"],["90","90 dias"]])}
+      ${sups.length>1?sel("hsSup",HIST.sup,[["","Todas as supervisões"],...sups.map(x=>[x.id,x.id])]):""}
+      ${sel("hsTipo",HIST.tipo,[["","Todos os tipos"],["rot","Rotina (entre-pistas, praças…)"],["proc","Processo SEI / Intranet"]])}
+      ${sel("hsFot",HIST.fot,[["","Com e sem foto"],["com","Só com fotos"],["sem","Só sem fotos"]])}
+      ${sel("hsSt",HIST.st,[["","Toda situação"],["SIM","Executado"],["PARCIAL","Parcial"],["NÃO","Não executado"],["PROGRAMADO","Em execução / a executar"],["ATRASADO","Sem baixa"]])}
+      <input type="search" id="hsQ" value="${esc(HIST.q)}" placeholder="Buscar fiscal, equipe, O.S, processo…"></div>
+    <div class="hs-row"><p class="note" style="margin:6px 0">${HIST.dia?"Dia "+fmtD(HIST.dia)+" · ":""}<b>${L.length}</b> registro${L.length===1?"":"s"} · ${nC} com fotos</p>${HIST.dia||HIST.end||HIST.sup||HIST.tipo||HIST.fot||HIST.st||HIST.q||HIST.per!=="tudo"?`<button type="button" class="btn sec" id="hsLimpa">Mostrar todos</button>`:""}</div>
+    <div class="hs-l">${L.slice(0,HIST.lim||60).map(histCard).join("")||`<div class="empty">Nenhum registro com esses filtros.</div>`}</div>${L.length>(HIST.lim||60)?`<button type="button" class="btn sec" id="hsMais" style="margin-top:10px">Mostrar mais (${L.length-(HIST.lim||60)} restantes)</button>`:""}`;
+  if(foco){ const q=$("#"+foco); q.focus(); q.setSelectionRange(q.value.length,q.value.length); }
+  host.querySelectorAll("img[data-hsfoto]").forEach(async im=>{ const [id,k]=im.dataset.hsfoto.split("|"), r=L.find(x=>x.id===id), f=r?.fotosFiscal?.[k]||r?.relat?.midia?.[k]; if(!f) return; try{ await midCarregar(f); im.src=midUrl(f); im.onclick=()=>{ const u=midUrl(f); if(u) window.open(u,"_blank"); }; }catch(x){} });
+  [["hsPer","per"],["hsSup","sup"],["hsTipo","tipo"],["hsFot","fot"],["hsSt","st"],["hsDia","dia"]].forEach(([id,k])=>{ const e=$("#"+id); if(e) e.onchange=()=>{ HIST[k]=e.value; HIST.lim=60; renderHist(); }; });
+  const dx=$("#hsDiaX"); if(dx) dx.onclick=()=>{ HIST.dia=""; renderHist(); };
+  const lp=$("#hsLimpa"); if(lp) lp.onclick=()=>{ Object.assign(HIST,{per:"tudo",sup:"",q:"",dia:"",end:"",tipo:"",fot:"",st:"",lim:60}); renderHist(); };
+  const mm=$("#hsMais"); if(mm) mm.onclick=()=>{ HIST.lim=(HIST.lim||60)+60; renderHist(); };
+  [["hsEnd","end"],["hsQ","q"]].forEach(([id,k])=>{ const e=$("#"+id); if(e) e.oninput=()=>{ HIST[k]=e.value; clearTimeout(HIST._t); HIST._t=setTimeout(renderHist,300); }; });
+}
+
 function nomeAutor(){ return sessao?.nome||""; }
 function refazTurmas(){ const keep=(sel,html)=>{ const el=$(sel); if(!el) return; const v=el.value; el.innerHTML=html; el.value=[...el.options].some(o=>o.value===v)?v:""; };
   ["#cSup","#oSup","#kSup","#kgSup"].forEach(x=>keep(x,optTurmas()));
@@ -2799,10 +2862,7 @@ function abrirAcessos(){
       <div class="row2"><input type="password" placeholder="${u.hash?"Nova senha":"Definir senha"}" data-pin="${esc(id)}" aria-label="Senha de ${esc(u.nome)}">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><button type="button" class="btn pri" style="min-height:48px;font-size:14px" data-savepin="${esc(id)}">Salvar senha</button>
         ${id===sessao?.id?"":`<button type="button" class="btn ${u.ativo?"danger":"sec"}" style="min-height:48px;font-size:14px" data-toggle="${esc(id)}">${u.ativo?"Desativar":"Reativar"}</button>`}</div></div>
-      <div class="assbox"><div class="note" style="margin:0">✍ Senha de assinatura: ${assins[id]?.hash?`<b style="color:var(--ok)">cadastrada</b>${assins[id].em?" em "+fmtHora(assins[id].em):""}${assins[id].porGerente?" (pela gerência)":" (pela própria pessoa)"}`:`<b style="color:var(--bad)">não cadastrada</b>`}</div>
-        <div class="row2"><input type="password" autocomplete="new-password" placeholder="${assins[id]?.hash?"Nova senha de assinatura":"Cadastrar senha de assinatura"}" data-assp="${esc(id)}" aria-label="Senha de assinatura de ${esc(u.nome)}">
-        <button type="button" class="btn sec" style="min-height:48px;font-size:14px" data-asssave="${esc(id)}">${assins[id]?.hash?"Trocar senha de assinatura":"Salvar senha de assinatura"}</button></div>
-        ${assins[id]?.hash?`<button type="button" class="btn danger" style="min-height:44px;font-size:14px" data-assreset="${esc(id)}">Resetar senha de assinatura (esqueceu)</button>`:""}</div>
+      <div class="assbox"><div class="note" style="margin:0">✍ Assina com a <b>mesma senha de entrar no app</b>.</div></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><button type="button" class="btn sec" style="min-height:44px;font-size:14px" data-edit="${esc(id)}">Editar</button>
         ${id===sessao?.id?"":`<button type="button" class="btn danger" style="min-height:44px;font-size:14px" data-del="${esc(id)}">Excluir</button>`}</div>
       <div class="inline" data-editbox="${esc(id)}" hidden>
@@ -2931,7 +2991,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.13";
+const APP_VERSAO="2026.11.14i";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -3150,7 +3210,7 @@ const fotosPede=r=>!!r&&relTem(r)&&(r.tipo==="O.S"||(r.tipo==="PROCESSO"&&(r.pro
 // acessos do fiscal de turma, ativados / desativados pelo administrador (documento "perm_fiscal" da coleção assinaturas)
 const FIS_PERMS=[
   {k:"fotos",t:"O.S recebidas e fotos do serviço",d:"Ver as O.S que o supervisor enviou e anexar as fotos antes, durante e depois (sempre ativo).",fixo:1},
-  {k:"equipe",t:"Formar a equipe",d:"Informar nome e função de quem está trabalhando na O.S do dia.",pad:1},
+  {k:"equipe",t:"Formar a equipe",d:"Informar nome e função de quem está trabalhando na O.S do dia (sempre ativo: quem aponta a equipe é o fiscal).",fixo:1},
   {k:"campo",t:"Ver a programação (Em aberto)",d:"Consultar os serviços programados da turma, sem dar baixa."},
   {k:"baixa",t:"Dar baixa nos serviços",d:"Registrar executado / parcial / não executado (O.S e processo continuam com o supervisor)."},
   {k:"pend",t:"Pendências",d:"Ver a aba de pendências da turma."},
@@ -3184,7 +3244,7 @@ const vistTemFiscal=()=>{ try{ return !!sessao&&(VIST.nMeus(sessao.id)>0||VIST.n
 const podeFisPerm=()=>isAdm()||((sessao?.perfil==="gerencia"||sessao?.perfil==="gerencia_op")&&!sessao?.porGerente);
 // acessos dos demais perfis abaixo do gerente: o administrador ativa / desativa cada aba por perfil (documento "perm_perfis")
 const PERF_ABAIXO=["ger_equipe","coordenador","supervisor","supervisor1"];
-const PERM_ABAS=[{k:"pend",t:"Pendências",d:"Avisos e cobranças da turma."},{k:"form",t:"Programar",d:"Fazer a programação da semana."},{k:"campo",t:"Em aberto / dar baixa",d:"Ver os serviços e dar baixa."},{k:"chk",t:"Checklist e comunicar defeito",d:"Checklist do equipamento e comunicado de defeito."},{k:"oc",t:"Registro emergencial",d:"Galho ou árvore caída."},{k:"vist",t:"Vistoria de processo",d:"Rotas de vistoria, já executado / não executado e serviços enviados à turma."},{k:"lista",t:"Lista",d:"Lista de serviços e planilha."},{k:"resumo",t:"Painel",d:"Painel, acompanhamento e relatórios."},{k:"orc",t:"Orçamento",d:"Propostas orçamentárias."},{k:"escala",t:"Cadastrar / atualizar a escala de trabalho",d:"Cadastrar e mudar a escala da turma (dias de trabalho e folgas), para o app só cobrar nos dias de trabalho. Supervisor e supervisor 1 sempre têm."},{k:"busca",t:"Pesquisar serviço por endereço",d:"Procurar serviços pelo endereço (menu Mais)."},{k:"hori",t:"Horímetro",d:"Horas, abastecimento e manutenção das máquinas (motosserra, motopoda, soprador)."}];
+const PERM_ABAS=[{k:"pend",t:"Pendências",d:"Avisos e cobranças da turma."},{k:"form",t:"Programar",d:"Fazer a programação da semana."},{k:"campo",t:"Em aberto / dar baixa",d:"Ver os serviços e dar baixa."},{k:"chk",t:"Checklist e comunicar defeito",d:"Checklist do equipamento e comunicado de defeito."},{k:"oc",t:"Registro emergencial",d:"Galho ou árvore caída."},{k:"vist",t:"Vistoria de processo",d:"Rotas de vistoria, já executado / não executado e serviços enviados à turma."},{k:"lista",t:"Lista",d:"Lista de serviços e planilha."},{k:"resumo",t:"Painel",d:"Painel, acompanhamento e relatórios."},{k:"orc",t:"Orçamento",d:"Propostas orçamentárias."},{k:"escala",t:"Cadastrar / atualizar a escala de trabalho",d:"Cadastrar e mudar a escala da turma (dias de trabalho e folgas), para o app só cobrar nos dias de trabalho. Supervisor e supervisor 1 sempre têm."},{k:"busca",t:"Pesquisar serviço por endereço",d:"Procurar serviços pelo endereço (menu Mais)."},{k:"hist",t:"Histórico de execução",d:"Fotos e localização da execução das O.S de rotina (substitui o controle pelo WhatsApp)."},{k:"hori",t:"Horímetro",d:"Horas, abastecimento e manutenção das máquinas (motosserra, motopoda, soprador)."}];
 const abaPadrao=(per,v)=>{ if(v==="pend") return true; if(v==="escala") return per==="supervisor"||per==="supervisor1"; if(v==="busca") return !["supervisor","supervisor1"].includes(per); if(v==="upd"||v==="orc") return false; return !((per==="supervisor"&&v==="resumo")||(per==="supervisor1"&&!SUP1_ABAS.has(v))); };
 const abaFixa=(per,v)=>v==="escala"&&(per==="supervisor"||per==="supervisor1");
 const abaOn=(per,v,uid=sessao?.id)=>{ if(abaFixa(per,v)&&!cargoObj(acesso?.[uid]?.cargo)?.abas) return true; const pa=acesso?.[uid]?.abas; if(pa&&PERM_ABAS.some(x=>x.k===v)&&(v in pa)) return !!pa[v]; const cg=cargoObj(acesso?.[uid]?.cargo); if(cg?.abas&&cg.p===per&&PERM_ABAS.some(x=>x.k===v)) return v==="pend"?false:cg.abas.includes(v); const o=assins?.perm_perfis?.p?.[per]; if(o&&PERM_ABAS.some(x=>x.k===v)&&(v in o)) return !!o[v]; return abaPadrao(per,v); };
@@ -3219,6 +3279,15 @@ const REL_SLOTS=[
   {k:"durante",t:"2 · DURANTE: as equipes e o maquinário executando o serviço",tipo:"foto",galeria:true,janelaH:24,curto:"DURANTE",dica:"equipe e máquinas trabalhando"},
   {k:"depois",t:"3 · DEPOIS: serviço concluído – galhos cortados e picados e o local limpo, sem servidor e sem maquinário",tipo:"foto",galeria:true,janelaH:24,curto:"DEPOIS",dica:"serviço concluído, local limpo"}];
 let relMidia={};
+// O.S de rotina (entre-pistas, praças, áreas públicas…): 2 fotos com a localização; não vão para relatório, vão para o Histórico de execução
+const ROT_SLOTS=[
+  {k:"rot1",t:"1 · SERVIÇO: a equipe executando o serviço no local",tipo:"foto",janelaH:24,curto:"SERVIÇO",dica:"equipe executando no local"},
+  {k:"rot2",t:"2 · ENDEREÇO: placa da rua / referência do local",tipo:"foto",janelaH:24,curto:"ENDEREÇO",dica:"placa da rua ou referência"},
+  {k:"rot3",t:"3 · MAIS UMA FOTO do serviço (opcional)",tipo:"foto",janelaH:24,curto:"EXTRA",dica:"opcional",opc:true}];
+const fotoObrig=r=>fotoSlots(r).filter(x=>!x.opc);
+const fotosRot=r=>!!r&&!relTem(r)&&!r.ocorrencia&&!r.avulso&&!r.extra;
+const fotoSlots=r=>fotosPede(r)?REL_SLOTS:fotosRot(r)?ROT_SLOTS:[];
+const fotosOk=r=>fotoObrig(r).every(x=>r.fotosFiscal?.[x.k]||r.relat?.midia?.[x.k]);
 const relMatSup=sup=>{ const u=Object.values(acesso||{}).find(x=>x.perfil==="supervisor"&&x.ativo&&x.sup===sup); return u?String(u.matricula||"").replace(/^m/i,""):""; };
 function relCarregar(r){ let R=r.relat||null; if(!R){ const ant=relCadeia(r).slice(0,-1).reverse().find(x=>x.relat); R=ant?{...ant.relat,ass:null}:{}; } relMidia={...(R.midia||{})};
   { const ff=r.fotosFiscal; if(ff) REL_SLOTS.forEach(x=>{ if(!relMidia[x.k]&&ff[x.k]) relMidia[x.k]=ff[x.k]; }); }
@@ -3566,7 +3635,7 @@ function abrirExtraValidar(){ const host=$("#sheetHost"), L=extraAguardam();
     toast(no?"Serviço recusado. O supervisor vê o motivo no histórico.":"Validado: o serviço entrou na programação e na baixa."); try{ renderAll(); }catch(x){} abrirExtraValidar(); }; }
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-exval]"); if(!b) return; e.preventDefault(); abrirExtraValidar(); });
 const extraValidadores=sup=>{ const gr=supOf(sup)?.grupo||"", op=ESC_DIROP.includes(gr); return Object.entries(acesso||{}).filter(([,u])=>u.ativo&&(u.perfil==="coordenador"||u.perfil==="ger_equipe"||(op?u.perfil==="gerencia_op":u.perfil==="gerencia"))).map(([id,u])=>({id,nome:u.nome,cargo:PERF[u.perfil]||u.perfil})).sort((a,b)=>a.cargo.localeCompare(b.cargo)||a.nome.localeCompare(b.nome,"pt")); };
-function extraValidUI(){ const h=$("#extraValid"); if(!h) return; const v=form.base?.extra?.valid, chave=(form.sup||"")+"|"+(form.base?.id||"")+"|"+(v?1:0)+"|"+(sessao?.id||""); if(h.dataset.k===chave&&h.innerHTML) return; h.dataset.k=chave;
+function extraValidUI(){ const h=$("#extraValid"); if(!h) return; h.innerHTML=""; h.hidden=true; return; const v=form.base?.extra?.valid, chave=(form.sup||"")+"|"+(form.base?.id||"")+"|"+(v?1:0)+"|"+(sessao?.id||""); if(h.dataset.k===chave&&h.innerHTML) return; h.dataset.k=chave;
   if(v){ h.innerHTML=`<b>✍ Validado por ${esc(v.nome)}</b><small class="note">${esc(v.cargo||"")} · ${fmtHora(v.em)} · código ${esc(v.cod||"")}</small>`; return; }
   if(form.mode==="prog"&&!extraPodeValidarSup(form.sup)){ h.innerHTML=`<b>✍ Validação do gerente ou coordenador</b><small class="note">Depois de salvar, o serviço vai como <b>aviso para o gerente ou o coordenador validar</b>. Só depois da validação ele entra na programação e na opção da baixa.</small>`; return; }
   const L=extraValidadores(form.sup), cur=$("#exVQuem")?.value, eu=L.find(x=>x.id===sessao?.id)?.id, sel=cur&&L.some(x=>x.id===cur)?cur:(eu||"");
@@ -3819,9 +3888,11 @@ function abrirBaixa(r, pre){ if(ehFiscal()&&(!fisPode("baixa")||(r&&relTem(r))))
     <span>${esc(r.bairro)} — ${esc(r.logradouro)}</span>
     <span>${esc(tipoTxt(r)||"sem tipo")}${r.processo?" · "+esc(procNum(r)):""}</span>
     <span>Previsto: ${qtdTxt(pq,1)} · ${brl(receitaDe(pq))}</span>
-    ${r.remarcadaDe?`<span class="prev">Remarcação ${(r.historico||[]).length}ª vez</span>`:""}`;
+    ${r.remarcadaDe?`<span class="prev">Remarcação ${(r.historico||[]).length}ª vez</span>`:""}${(()=>{ const x=r.osDia?.sv?.[r.id]?.fim?.exec; return x?`<span class="prev" style="color:${x.sit==="NÃO"?"var(--bad)":x.sit==="PARCIAL"?"#8a5200":"var(--ok)"};font-weight:700">👷 Fiscal ${esc(r.osDia.sv[r.id].fim.por||"")}: ${esc(svExecTxt(x))}</span>`:""; })()}`;
   showPrev(pq);
   if(isProg(r)){ writeQ("q_",pq,$("#qtdMain")); $("#dataExec").value=r.data<=hoje()?r.data:hoje(); $("#s_data").value=r.data<=hoje()?r.data:hoje(); if(pre){form.st=pre;setPressed($("#stChips"),pre)}
+    { const fx=r.osDia?.sv?.[r.id]?.fim?.exec; if(fx&&!pre){ form.st=fx.sit; setPressed($("#stChips"),fx.sit); if(fx.sit==="PARCIAL"){ const q={}; ITENS.forEach(i=>{ const v=(+pq[i.c]||0)-(+fx.falta?.[i.c]||0); if(v>0) q[i.c]=v; }); writeQ("q_",q,$("#qtdMain")); if(fx.obs&&!$("#obs").value) $("#obs").value="Fiscal: "+fx.obs; }
+      if(fx.sit==="NÃO"){ try{ setMotivo(fx.motivo||""); }catch(e){} if(!$("#obs").value) $("#obs").value="Fiscal: "+[fx.motivo,fx.obs].filter(Boolean).join(" · "); } } }
     const iq=r.impactoQueda; if(iq&&!pre){ const st=iq.efeito==="NAO"?"NÃO":iq.efeito==="PARCIAL"?"PARCIAL":""; if(st){form.st=st;setPressed($("#stChips"),st);}
       if(iq.efeito!=="ATRASO"){ setMotivo("Atendimento de galho / árvore caída"); }
       if(iq.efeito==="NAO"){ $("#semSub").checked=true; if(!$("#obs").value) $("#obs").value="Equipe deslocada para atender "+(OC[iq.tipo]||"queda").toLowerCase()+(iq.local?" em "+iq.local:"")+(iq.hora?" às "+iq.hora:"")+"."; } } }
@@ -4104,7 +4175,8 @@ $("#form").addEventListener("submit", async ev=>{
   // serviço fora de programação: gerente ou coordenador assina validando
   // na programação: o supervisor lança e o serviço fica aguardando a validação do gerente/coordenador (não entra na programação nem na baixa);
   // se quem lança é gerente/coordenador, assina na hora. No lançamento já executado (avulso) a assinatura é na hora.
-  if(body&&body.extra&&m!=="baixa"){ let v=base?.extra?.valid||null, aguarda=false;
+  const EXTRA_VALIDA=false; // serviço extra sem validação do gerente/coordenador: entra direto na programação e na baixa
+  if(EXTRA_VALIDA&&body&&body.extra&&m!=="baixa"){ let v=base?.extra?.valid||null, aguarda=false;
     if(!v){ const eu=extraPodeValidarSup(form.sup);
       if(m==="prog"&&!eu){ aguarda=true; }
       else { const vu=$("#exVQuem")?.value||""; if(!vu) e.push("serviço fora de programação: escolha o gerente ou coordenador que valida e a assinatura dele");
@@ -4160,8 +4232,9 @@ function show(v, keepForm=false, tabHint){
   if(sessao?.perfil==="fiscal"&&!fisAbas().has(v)) v="inicio";
   if(PERF_ABAIXO.includes(sessao?.perfil)&&PERM_ABAS.some(x=>x.k===v)&&!abaOn(sessao.perfil,v)) v="inicio"; // aba desativada pelo administrador // fiscal: só o que o administrador liberou
   curView=v;
-  ["inicio","pend","form","campo","oc","vist","lista","resumo","dash","hori","chk","orc","upd"].forEach(k=>$("#v-"+k).hidden=k!==v);
+  ["inicio","pend","form","campo","oc","vist","lista","resumo","dash","hist","hori","chk","orc","upd"].forEach(k=>$("#v-"+k).hidden=k!==v);
   if(v==="hori") try{renderHori()}catch(e){console.error(e)}
+  if(v==="hist") try{renderHist()}catch(e){console.error(e)}
   if(v==="dash") try{renderDash()}catch(e){console.error(e)}
   if(v==="vist") try{renderVist()}catch(e){console.error(e)}
   if(v==="pend") try{renderPend()}catch(e){console.error(e)}
@@ -5645,21 +5718,18 @@ const tipoAss=px=>px==="rS"?"rel":"chk";
 const supAssinaProprio=(sup,tipo="chk")=>modoTeste()||(!!sessao&&podeAssinar(sessao.id,tipo)&&(tipo==="chk"||(travado()?sessao.sup===sup:(!sup||noEscopo(sup)))));
 const assTeste=sup=>({uid:sessao.id,nome:sessao.nome,sup:sup||"",cargo:"Gerente – ASSINATURA DE TESTE"+(sup?" pela "+sup:""),mat:matDe(acesso?.[sessao.id]||{}),como:"MODO TESTE do gerente – sem validade",teste:true});
 // matrícula + senha de assinatura; se a pessoa ainda não tem senha de assinatura, cria ali mesmo (confirmando a senha de entrar dela)
-const sigMatHtml=(idMat,idPin,rot)=>`<div class="row2"><label class="f">${rot}<input id="${idMat}" class="sigmat" data-pin="${idPin}" autocomplete="off" placeholder="ex.: m859209"></label><label class="f" id="${idPin}W">Senha de assinatura <small class="note">(1ª vez: 654321)</small><input id="${idPin}" type="password" autocomplete="off"></label></div>
+const sigMatHtml=(idMat,idPin,rot)=>`<div class="row2"><label class="f">${rot}<input id="${idMat}" class="sigmat" data-pin="${idPin}" autocomplete="off" placeholder="ex.: m859209"></label><label class="f" id="${idPin}W">Senha <small class="note">(a mesma de entrar no app)</small><input id="${idPin}" type="password" autocomplete="off"></label></div>
   <div class="signovo" id="${idPin}Novo" hidden><p class="note" style="margin:0"><b>Primeira assinatura de <span data-nome></span>.</b> Crie agora a senha de assinatura (pelo menos 6 caracteres, diferente da senha de entrar no app). Ela vale como a assinatura dele: não passe para ninguém.</p>
     <div class="row2"><label class="f">Nova senha de assinatura<input id="${idPin}N" type="password" autocomplete="new-password"></label><label class="f">Repita a senha<input id="${idPin}C" type="password" autocomplete="new-password"></label></div>
     <label class="f">Senha de entrar no app de <span data-nome></span> (para confirmar que é ele)<input id="${idPin}L" type="password" autocomplete="off"></label></div>`;
-function sigMatUI(inp){ const id=inp.dataset.pin, a=acharMat(inp.value), novo=!!(a&&a[1].ativo&&!assins[a[0]]?.hash&&!assIni(a[0]));
+function sigMatUI(inp){ const id=inp.dataset.pin, a=acharMat(inp.value), novo=false;
   const w=document.getElementById(id+"W"), bx=document.getElementById(id+"Novo"); if(!w||!bx) return;
   w.hidden=novo; bx.hidden=!novo; if(novo) bx.querySelectorAll("[data-nome]").forEach(x=>x.textContent=a[1].nome); }
 document.addEventListener("input",e=>{ const m=e.target.closest?.(".sigmat"); if(m) sigMatUI(m); });
 // confere a senha de assinatura de a=[uid,u] (ou cria a primeira); "" = ok
 async function senhaPorMat(idPin,a){
-  if(assIni(a[0])){ const p=$("#"+idPin)?.value||""; if(!p) return "senha de assinatura (primeira vez: 654321)"; if(p!==ASS_INI) return "senha de assinatura não confere (primeira vez: 654321)"; await assMarcaIni(a[0]); return ""; }
-  if(assins[a[0]]?.hash){ const p=$("#"+idPin)?.value||""; if(!p) return "senha de assinatura"; return await hashPin(assins[a[0]].salt,p)===assins[a[0]].hash?"":"senha de assinatura não confere"; }
-  const r=await criarSenhaAss(a[0],$("#"+idPin+"N")?.value,$("#"+idPin+"C")?.value,$("#"+idPin+"L")?.value);
-  if(!r){ const inp=document.querySelector(`.sigmat[data-pin="${idPin}"]`); if(inp) sigMatUI(inp); }
-  return r?(r==="a senha de entrar no app não confere"?"a senha de entrar no app de "+a[1].nome+" não confere":"primeira senha de assinatura: "+r):"";
+  const p=$("#"+idPin)?.value||""; if(!p) return "senha de assinatura";
+  return await senhaAssOk(a[0],p)?"":"senha de assinatura não confere";
 }
 const gerAssina=()=>isGerente()&&!modoTeste();
 const assGerente=sup=>({uid:sessao.id,nome:sessao.nome,sup:sup||"",cargo:"Gerente"+(sup?" – assinando pela "+sup:""),mat:matDe(acesso?.[sessao.id]||{}),como:"pelo próprio acesso (gerente)",gerente:true});
@@ -5710,15 +5780,11 @@ const codVerif=async(obj)=>(await hashPin("gpe-verif",JSON.stringify(obj))).slic
 const ASS_INI="654321";
 const assIni=uid=>!assins[uid]?.hash&&!assins[uid]?.ini; // ainda pode usar a senha inicial
 let _assIniAvisou=false;
-function assIniLembrar(){ try{ const u=sessao?.id; if(!u||_assIniAvisou||!assins[u]?.ini||assins[u]?.hash) return; _assIniAvisou=true; setTimeout(()=>{ try{ abrirSenhaAss(); toast("Você já assinou com a senha inicial. Cadastre agora a sua senha própria de assinatura."); }catch(e){} },1500); }catch(e){} }
+function assIniLembrar(){ return; try{ const u=sessao?.id; if(!u||_assIniAvisou||!assins[u]?.ini||assins[u]?.hash) return; _assIniAvisou=true; setTimeout(()=>{ try{ abrirSenhaAss(); toast("Você já assinou com a senha inicial. Cadastre agora a sua senha própria de assinatura."); }catch(e){} },1500); }catch(e){} }
 async function assMarcaIni(uid){ try{ const doc={ini:true,em_ini:new Date().toISOString()}; await db.collection(ASS_COL).doc(uid).set(doc); assins[uid]=doc; }catch(e){} }
-const sigFormHtml=(px,uid)=>assIni(uid)
-  ? `<label class="f">Senha de assinatura<input id="${px}Sig" type="password" autocomplete="new-password" inputmode="numeric" placeholder="primeira vez: 654321"></label><p class="note" style="margin:0"><b>Primeira assinatura:</b> use a senha inicial <b>654321</b>. Depois o app pede para você cadastrar a sua senha própria de assinatura.</p>`
-  : assins[uid]?.hash
-  ? `<label class="f">Senha de assinatura<input id="${px}Sig" type="password" autocomplete="new-password" inputmode="text"></label>`
-  : `<p class="note" style="margin:0"><b>Você ainda não tem senha de assinatura.</b> Crie agora uma senha só para assinar (pelo menos 6 caracteres, diferente da senha de entrar no app).</p>
-     <div class="row2"><label class="f">Nova senha de assinatura<input id="${px}SigN" type="password" autocomplete="new-password"></label><label class="f">Repita a senha<input id="${px}SigC" type="password" autocomplete="new-password"></label></div>
-     <label class="f">Senha de entrar no app (para confirmar que é você)<input id="${px}SigL" type="password" autocomplete="off"></label>`;
+const sigFormHtml=(px,uid)=>`<label class="f">Senha de assinatura<input id="${px}Sig" type="password" autocomplete="new-password" inputmode="text" placeholder="a mesma senha de entrar no app"></label><p class="note" style="margin:0">Use a <b>mesma senha de entrar no app</b>.</p>`;
+// aceita: senha de entrar no app, senha de assinatura (se tiver) ou a inicial 654321 (se nunca usou)
+async function senhaAssOk(uid,p){ if(!p) return false; try{ return !!(await senhaConfere(uid,p)); }catch(e){ return false; } } // só a senha de entrar no app
 async function criarSenhaAss(uid,nova,conf,login){
   const u=acesso?.[uid]; if(!u) return "usuário não encontrado";
   if(!nova||nova.length<6) return "a senha de assinatura precisa ter pelo menos 6 caracteres";
@@ -5732,10 +5798,8 @@ async function criarSenhaAss(uid,nova,conf,login){
 }
 // valida (ou cria) a senha de assinatura do usuário uid a partir dos campos com prefixo px; devolve "" se ok
 async function conferirAss(px,uid){
-  if(assIni(uid)){ const p=$("#"+px+"Sig")?.value||""; if(!p) return "senha de assinatura (primeira vez: 654321)"; if(p!==ASS_INI) return "senha de assinatura não confere (primeira vez: 654321)";
-    await assMarcaIni(uid); if(uid===sessao?.id) setTimeout(()=>{ try{ abrirSenhaAss(); toast("Agora cadastre a sua senha própria de assinatura."); }catch(e){} },1500); return ""; }
-  if(assins[uid]?.hash){ const p=$("#"+px+"Sig")?.value||""; if(!p) return "senha de assinatura"; return await hashPin(assins[uid].salt,p)===assins[uid].hash?"":"senha de assinatura não confere"; }
-  return await criarSenhaAss(uid,$("#"+px+"SigN")?.value,$("#"+px+"SigC")?.value,$("#"+px+"SigL")?.value);
+  const p=$("#"+px+"Sig")?.value||""; if(!p) return "senha (a mesma de entrar no app)";
+  return await senhaAssOk(uid,p)?"":"senha não confere (use a mesma senha de entrar no app)";
 }
 function abrirSenhaAss(){
   if(!sessao) return;
@@ -5809,7 +5873,7 @@ $("#kBxBtn").onclick=async()=>{
   }catch(e){ if(e?.message==="load") toast("Sem internet para montar o PDF. Tente de novo com conexão."); else if(e?.code!=="cancelled"&&e?.code!=="declined") toast("Não foi possível gerar o PDF."); console.error(e); }
   finally{ btn.disabled=false; btn.textContent=t; chkLoteInfo(); }
 };
-$("#kSenha").onclick=abrirSenhaAss;
+if($("#kSenha")) $("#kSenha").hidden=true;
 
 function renderChk(){
   const host=$("#kList"); if(!host) return;
@@ -6544,26 +6608,26 @@ const manSlots=midia=>{ const ex=[]; for(let n=2;n<=MAN_VID_MAX;n++) if(midia?.[
   return [MAN_SLOTS[0],...ex,...MAN_SLOTS.slice(1)].concat(MAN_ANT.filter(s=>midia?.[s.k])); };
 /* ---------- fotos do serviço registradas pelo fiscal de turma (O.S / processo) ---------- */
 // o fiscal tira as 3 fotos (antes, durante, depois); elas entram sozinhas no relatório que o supervisor assina na baixa
-const fotosFisPode=r=>ehFiscal()&&fotosPede(r)&&!!r.osDia?.start&&(!r.osDia.porServ||!!r.osDia.sv?.[r.id]?.start)&&!r.osDia?.fim&&!r.arquivado&&!r._fila&&!!db&&r.supervisao===sessao.sup&&osDoFiscal(r,acesso?.[sessao.id])&&!r.relat?.ass&&r.status!=="NÃO";
-function fotosFisHtml(r){ if(!fotosPede(r)) return ""; const ff=r.fotosFiscal||{}, n=REL_SLOTS.filter(x=>ff[x.k]).length;
-  const info=n?`<p class="note" style="margin:4px 0 0">📷 Fotos do serviço registradas pelo fiscal: <b>${n} de 3</b>${ff.por?" · "+esc(ff.por):""}${ff.em?" · "+fmtHora(ff.em):""}${ehFiscal()?"":" – entram no relatório na baixa"}</p>`:"";
-  return info+(fotosFisPode(r)?`<button type="button" class="btn pri" id="shFotFis" style="min-height:52px">📷 ${n?"Ver / completar as fotos do serviço":"Registrar fotos do serviço (antes, durante, depois)"}</button>`:""); }
+const fotosFisPode=r=>ehFiscal()&&fotoSlots(r).length>0&&!!r.osDia?.start&&(!r.osDia.porServ||!!r.osDia.sv?.[r.id]?.start)&&!r.osDia?.fim&&!r.arquivado&&!r._fila&&!!db&&r.supervisao===sessao.sup&&osDoFiscal(r,acesso?.[sessao.id])&&!r.relat?.ass&&r.status!=="NÃO";
+function fotosFisHtml(r){ const S=fotoSlots(r); if(!S.length) return ""; const ff=r.fotosFiscal||{}, n=S.filter(x=>ff[x.k]).length, rot=S===ROT_SLOTS;
+  const info=n?`<p class="note" style="margin:4px 0 0">📷 Fotos do serviço registradas pelo fiscal: <b>${n}${S.some(x=>x.opc)?"":" de "+S.length}</b>${ff.por?" · "+esc(ff.por):""}${ff.em?" · "+fmtHora(ff.em):""}${ehFiscal()?"":rot?" – ficam no Histórico de execução":" – entram no relatório na baixa"}</p>`:"";
+  return info+(fotosFisPode(r)?`<button type="button" class="btn pri" id="shFotFis" style="min-height:52px">📷 ${n?"Ver / completar as fotos do serviço":(rot?"Registrar as fotos do serviço (2 obrigatórias, com a localização)":"Registrar fotos do serviço (antes, durante, depois)")}</button>`:""); }
 // serviços (O.S / processo) da equipe do fiscal, do dia e atrasados, que ainda não têm as 3 fotos
 function fisFotosLista(){ if(!ehFiscal()) return []; const hj=hoje();
-  return todosGlobal().filter(r=>fotosFisPode(r)&&r.data<=hj&&REL_SLOTS.some(x=>!r.fotosFiscal?.[x.k])).sort((a,b)=>(a.data||"").localeCompare(b.data||"")); }
+  return todosGlobal().filter(r=>fotosFisPode(r)&&r.data<=hj&&fotoObrig(r).some(x=>!r.fotosFiscal?.[x.k])).sort((a,b)=>(a.data||"").localeCompare(b.data||"")); }
 function fisFotosHtml(){ const L=fisFotosLista(); if(!L.length) return "";
   return `<section class="alert" style="margin:0 0 10px"><h3>📷 Fotos das O.S / processos (${L.length})</h3><p class="note" style="margin:0 0 6px">Ao executar O.S ou processo, você pode anexar as fotos <b>antes, durante e depois</b>: elas vão direto para o relatório de serviço. É opcional – se não registrar, o supervisor anexa na baixa e completa o resto.</p>
-    ${L.map(r=>{ const n=REL_SLOTS.filter(x=>r.fotosFiscal?.[x.k]).length; return `<button type="button" class="btn sec" data-fotfis="${esc(r.id)}" style="width:100%;text-align:left;justify-content:flex-start;min-height:52px;margin-top:6px;white-space:normal;line-height:1.25">📷 <span><b>${fmtDs(r.data)} · ${esc(r.tipo==="O.S"?"O.S":"Processo")} ${esc(procNum(r))}</b><br><small>${esc(r.bairro||"")} — ${esc(r.logradouro||"")} · fotos ${n} de 3</small></span></button>`; }).join("")}</section>`; }
+    ${L.map(r=>{ const S=fotoSlots(r), n=S.filter(x=>r.fotosFiscal?.[x.k]).length; return `<button type="button" class="btn sec" data-fotfis="${esc(r.id)}" style="width:100%;text-align:left;justify-content:flex-start;min-height:52px;margin-top:6px;white-space:normal;line-height:1.25">📷 <span><b>${fmtDs(r.data)} · ${esc(relTem(r)?(r.tipo==="O.S"?"O.S":"Processo")+" "+procNum(r):tipoTxt(r)||r.tipo||"Serviço")}</b><br><small>${esc(r.bairro||"")} — ${esc(r.logradouro||"")} · fotos ${n} de ${S.filter(x=>!x.opc).length}</small></span></button>`; }).join("")}</section>`; }
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-fotfis]"); if(!b) return; const r=todosGlobal().find(x=>x.id===b.dataset.fotfis); if(r) abrirFotosFiscal(r); });
 function abrirFotosFiscal(r){
-  const host=$("#sheetHost"), m={...(r.fotosFiscal||{})}; delete m.por; delete m.uid; delete m.em;
+  const host=$("#sheetHost"), m={...(r.fotosFiscal||{})}, S=fotoSlots(r), rot=S===ROT_SLOTS, geo0={...(m.geo||{})}; delete m.por; delete m.uid; delete m.em; delete m.geo;
   // fotos em ordem: a próxima só libera depois da anterior (antes → durante → depois)
-  const ffSlots=REL_SLOTS.filter((x,i)=>i===0||m[REL_SLOTS[i-1].k]), ffTrav=REL_SLOTS.filter(x=>!ffSlots.includes(x));
+  const ffSlots=S.filter((x,i)=>i===0||m[S[i-1].k]), ffTrav=S.filter(x=>!ffSlots.includes(x));
   host.innerHTML=`<div class="sheet" id="sh"><div class="panel" role="dialog" aria-label="Fotos do serviço">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:22px">Fotos do serviço</b><button type="button" class="btn sec" id="ffX" style="min-height:40px;padding:0 14px">Fechar</button></div>
-    <p class="note" style="margin:0"><b>${esc(r.tipo==="O.S"?"O.S":"Processo")} ${esc(procNum(r))}</b> · ${esc(r.bairro||"")} — ${esc(r.logradouro||"")} · ${esc(r.equipe||"")}</p>
-    <div id="ffMid">${midSecHtml(m,true,ffSlots,"Registro fotográfico – O.S / processo","Uma foto em cada momento do serviço, na ordem: <b>1 ANTES</b> (logo depois do start: a árvore por completo, sem equipe e sem servidor), <b>2 DURANTE</b> (as equipes e o maquinário executando) e <b>3 DEPOIS</b> (serviço concluído: galhos cortados e picados e o local limpo, sem servidor e sem maquinário). Salve e volte na O.S para a próxima foto. As fotos vão para o relatório de serviço que o supervisor assina.")}</div>
-    ${ffTrav.length?`<div class="fftrav">${ffTrav.map(x=>`<p>🔒 <b>${esc(x.t)}</b><br><small>Libera depois da foto ${REL_SLOTS.indexOf(x)}.</small></p>`).join("")}</div>`:""}
+    <p class="note" style="margin:0"><b>${esc(relTem(r)?(r.tipo==="O.S"?"O.S":"Processo")+" "+procNum(r):tipoTxt(r)||r.tipo||"Serviço")}</b> · ${esc(r.bairro||"")} — ${esc(r.logradouro||"")} · ${esc(r.equipe||"")}</p>
+    <div id="ffMid">${midSecHtml(m,true,ffSlots,rot?"Registro fotográfico – execução":"Registro fotográfico – O.S / processo",rot?"Duas fotos obrigatórias, tiradas na hora, no local: <b>1 SERVIÇO</b> (a equipe executando) e <b>2 ENDEREÇO</b> (placa da rua ou referência do local). Se quiser, tire uma <b>3ª foto</b> (opcional). Ao salvar, o app grava junto a <b>localização (GPS)</b>, a data e a hora. Essas fotos não vão para relatório: ficam no <b>Histórico de execução</b>.":"Uma foto em cada momento do serviço, na ordem: <b>1 ANTES</b> (logo depois do start: a árvore por completo, sem equipe e sem servidor), <b>2 DURANTE</b> (as equipes e o maquinário executando) e <b>3 DEPOIS</b> (serviço concluído: galhos cortados e picados e o local limpo, sem servidor e sem maquinário). Salve e volte na O.S para a próxima foto. As fotos vão para o relatório de serviço que o supervisor assina.")}</div>
+    ${ffTrav.length?`<div class="fftrav">${ffTrav.map(x=>`<p>🔒 <b>${esc(x.t)}</b><br><small>Libera depois da foto ${S.indexOf(x)}.</small></p>`).join("")}</div>`:""}
     <div class="err" id="ffErr" hidden></div>
     <div class="actions" style="grid-template-columns:1fr;margin:0"><button type="button" class="btn pri" id="ffOk">Salvar foto</button></div>
   </div></div>`;
@@ -6572,15 +6636,20 @@ function abrirFotosFiscal(r){
   $("#sh").onclick=e=>{if(e.target.id==="sh")close()}; $("#ffX").onclick=close;
   $("#ffOk").onclick=async()=>{
     if([...host.querySelectorAll("#ffMid .midst")].some(x=>/enviando|reduzindo/.test(x.textContent))) return erro("Espere terminar o envio das fotos.");
-    const n=REL_SLOTS.filter(x=>m[x.k]).length; if(!n) return erro("Tire ou anexe pelo menos uma foto.");
-    const fresh=todosGlobal().find(x=>x.id===r.id)||r, upd={...fresh}; delete upd.id; delete upd._fila;
-    const fotos={}; REL_SLOTS.forEach(x=>{ if(m[x.k]) fotos[x.k]=m[x.k]; });
-    upd.fotosFiscal={...fotos,por:sessao.nome,uid:sessao.id,em:new Date().toISOString()}; upd._acao=`Fiscal registrou as fotos do serviço (${n} de 3)`;
+    const n=S.filter(x=>m[x.k]).length; if(!n) return erro("Tire ou anexe pelo menos uma foto.");
     const b=$("#ffOk"); b.disabled=true; b.textContent="Salvando…";
+    // localização de cada foto nova (GPS do celular na hora de salvar)
+    const geo={...geo0}, novas=S.filter(x=>m[x.k]&&!geo[x.k]);
+    if(novas.length){ b.textContent="Pegando a localização…"; let p=null; try{ p=await svGpsAgora(); }catch(x){ if(x&&x.code===1){ b.disabled=false; b.textContent="Salvar foto"; return erro("Libere a localização do celular para o app (o GPS é gravado junto com a foto)."); } }
+      const em=new Date().toISOString(); novas.forEach(x=>geo[x.k]=p?{...p,em}:{sem:true,em}); b.textContent="Salvando…"; if(!p) toast("Não foi possível pegar o GPS agora: a foto foi salva sem a localização.",6000); }
+    const fresh=todosGlobal().find(x=>x.id===r.id)||r, upd={...fresh}; delete upd.id; delete upd._fila;
+    const fotos={}; S.forEach(x=>{ if(m[x.k]) fotos[x.k]=m[x.k]; });
+    upd.fotosFiscal={...fotos,geo,por:sessao.nome,uid:sessao.id,em:new Date().toISOString()}; upd._acao=`Fiscal registrou as fotos do serviço (${n} de ${S.length})`;
     const res=await saveDoc(r.id,upd); if(res!=="ok"&&res!=="fila"){ b.disabled=false; b.textContent="Salvar foto"; return erro("Não foi possível salvar agora. Tente de novo."); }
     close(); try{ renderInicio(); renderPend(); }catch(x){}
-    const fimB=n===3?(document.querySelector(`[data-svfim="${CSS.escape(r.id)}"]`)||document.querySelector("[data-fisfim]")):null; if(fimB) fimB.scrollIntoView({behavior:"smooth",block:"center"});
-    toast(n===3?(fimB?"Última foto salva. Agora toque em FINALIZAR ESTE SERVIÇO.":"3 fotos salvas. Elas entram no relatório quando o supervisor der a baixa."):`Foto salva (${n} de 3). Volte na O.S para a foto ${n+1} – ${REL_SLOTS[n].curto}.`);
+    const nOb=S.filter(x=>!x.opc&&m[x.k]).length, okOb=nOb===S.filter(x=>!x.opc).length;
+    const fimB=okOb?(document.querySelector(`[data-svfim="${CSS.escape(r.id)}"]`)||document.querySelector("[data-fisfim]")):null; if(fimB) fimB.scrollIntoView({behavior:"smooth",block:"center"});
+    toast(okOb?(fimB?"Última foto salva. Agora toque em FINALIZAR ESTE SERVIÇO.":rot?"Fotos salvas com a localização. Ficam no Histórico de execução.":"3 fotos salvas. Elas entram no relatório quando o supervisor der a baixa."):`Foto salva (${n} de ${S.filter(x=>!x.opc).length}). Volte na O.S para a foto ${n+1} – ${S[n].curto}.`);
   };
 }
 function midSecHtml(midia,edit,slots=MID_SLOTS,titulo="Fotos e vídeo do equipamento",nota){
@@ -9843,6 +9912,7 @@ const ICO={
   chk:svgI('<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/>'),
   man:svgI('<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/>'),
   resumo:svgI('<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'),
+  hist:svgI('<rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 6l1.5-2h5L16 6"/>'),
   hori:svgI('<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/>'),
   dash:svgI('<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>'),
   oc:svgI('<path d="M12 3v7M6 8l3 3M18 8l-3 3"/><path d="M4 21h16l-4-8H8z"/>'),
@@ -9858,8 +9928,8 @@ const ICO={
   pend:svgI('<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/>'),
   vist:svgI('<path d="M6 3h8l4 4v6"/><path d="M6 3v18h6"/><circle cx="16.5" cy="16.5" r="3.5"/><path d="M19 19l2.5 2.5"/>')
 };
-const VIEW_NOME={inicio:"Início",pend:"Pendências",form:"Programar",campo:"Em aberto",oc:"Registro emergencial",vist:"Vistoria de processo",lista:"Lista",resumo:"Painel",dash:"Dashboard",hori:"Horímetro",chk:"Checklist",orc:"Orçamento",upd:"Atualizar"};
-const NAV_PRIO=["form","campo","chk","resumo","dash","oc","vist","lista","hori","orc","upd"];
+const VIEW_NOME={inicio:"Início",pend:"Pendências",form:"Programar",campo:"Em aberto",oc:"Registro emergencial",vist:"Vistoria de processo",lista:"Lista",resumo:"Painel",dash:"Dashboard",hist:"Histórico de execução",hori:"Horímetro",chk:"Checklist",orc:"Orçamento",upd:"Atualizar"};
+const NAV_PRIO=["form","campo","chk","resumo","dash","oc","vist","lista","hist","hori","orc","upd"];
 let NAV_PERM=new Set(), NAV_MAIS=[];
 function navMontar(){
   const w=document.querySelector("nav.tabs .wrap"); if(!w||w.dataset.ui) return; w.dataset.ui="1";
@@ -9997,7 +10067,8 @@ function renderPend(){
   const ps=box.querySelector("#pendSup"); if(ps) ps.onchange=()=>{ ls.set("gpe_pendsup",ps.value); renderPend(); };
   const nFis=fisFotosLista().length; if(nFis) box.insertAdjacentHTML("afterbegin",fisFotosHtml());
   const nFim=osFimGrupos().reduce((a,g)=>a+g.rs.length,0); if(nFim) box.insertAdjacentHTML("afterbegin",osFimHtml());
-  const tot=n1+(pode("chk")?nbChk:0)+nFim; // fotos do fiscal são opcionais: aparecem na lista, mas não contam como pendência (nem tocam aviso)
+  const nRec=osNaoRecGrupos().length; if(nRec) box.insertAdjacentHTML("afterbegin",osNaoRecHtml());
+  const tot=n1+(pode("chk")?nbChk:0)+nFim+nRec; // fotos do fiscal são opcionais: aparecem na lista, mas não contam como pendência (nem tocam aviso)
   if(!tot) box.innerHTML=(canc?filtro+pendCancHtml([]):"")+(nFis?fisFotosHtml():"")+`<section class="alert ok"><h3>Tudo em dia</h3><p class="note" style="margin:0">Nenhuma pendência para você agora. Quando aparecer alguma, ela fica aqui e o número aparece no sino.</p></section>`;
   const tb=document.querySelector('nav.tabs button[data-v="pend"]'); if(tb) tb.innerHTML=ICO.pend+`<span class="tl">Pendências</span>`+(tot?`<span class="tbadge" aria-label="${tot} pendência(s)">${tot>99?"99+":tot}</span>`:"");
   window.__nPend=tot; try{ avisoSonoro(tot); avSomUI(); }catch(e){}
@@ -10059,34 +10130,49 @@ const OS_FIS_ESC={};
 const osDoFiscal=(r,me)=>{ const o=r.osDia; if(o?.semFiscal) return false; if(o?.fiscalTroca) return o.fiscal?.id===sessao.id; return !me?.equipe||(r.equipe||"")===me.equipe||o?.fiscal?.id===sessao.id; };
 const fiscalDe=(sup,eq)=>{ const L=Object.entries(acesso||{}).filter(([,u])=>u.perfil==="fiscal"&&u.ativo&&u.sup===sup); const f=L.find(([,u])=>u.equipe===eq)||L.find(([,u])=>!u.equipe); return f?{id:f[0],nome:f[1].nome,zap:f[1].zap||""}:null; };
 const osPodeIniciar=sup=>!!sessao&&!soLeitura()&&((["supervisor","supervisor1"].includes(sessao.perfil)&&sessao.sup===sup)||(isGerente()&&noEscopo(sup))||(sessao.perfil==="coordenador"&&noEscopo(sup))||(sessao.perfil==="gerencia_op"&&noEscopo(sup)));
-function osDiaGrupos(){ if(!sessao) return []; const d=hoje(), G=[];
-  todos().filter(r=>r.data===d&&!r.avulso&&!r.ocorrencia&&!r.arquivado&&r.status!=="VALIDAR"&&r.osCanc?.data!==d&&r.supervisao&&noEscopo(r.supervisao)&&(!travado()||r.supervisao===sessao.sup)).forEach(r=>{
-    const k=r.supervisao+"|"+(r.equipe||""); let g=G.find(x=>x.k===k); if(!g){ g={k,sup:r.supervisao,eq:r.equipe||"",rs:[]}; G.push(g); } g.rs.push(r); });
+// dia da O.S da turma: a noturna que começou ontem continua sendo a O.S de ontem até as 07:00
+const diaOS=sup=>{ if(supOf(sup)?.turno==="NOTURNO"&&new Date().getHours()<7){ const x=new Date(hoje()+"T12:00"); x.setDate(x.getDate()-1); return iso(x); } return hoje(); };
+// depois das 07:00 a O.S noturna de ontem sai do envio, mas se já foi enviada e não foi finalizada continua até o fiscal finalizar
+const osNoturnaAberta=r=>{ if(supOf(r.supervisao)?.turno!=="NOTURNO"||!r.osDia||r.osDia.fim) return false; const x=new Date(hoje()+"T12:00"); x.setDate(x.getDate()-1); return r.data===iso(x); };
+function osDiaGrupos(){ if(!sessao) return []; const G=[];
+  // todo serviço programado para o dia gera a O.S; serviço extra NÃO (o supervisor lança no fechamento do expediente e já dá baixa)
+  todos().filter(r=>r.supervisao&&(r.data===diaOS(r.supervisao)||osNoturnaAberta(r))&&!r.extra&&!r.avulso&&!r.ocorrencia&&!r.arquivado&&r.osCanc?.data!==r.data&&r.supervisao&&noEscopo(r.supervisao)&&(!travado()||r.supervisao===sessao.sup)).forEach(r=>{
+    const k=r.supervisao+"|"+(r.equipe||"")+(r.data!==diaOS(r.supervisao)?"|"+r.data:""); let g=G.find(x=>x.k===k); if(!g){ g={k,sup:r.supervisao,eq:r.equipe||"",dia:r.data,rs:[]}; G.push(g); } g.rs.push(r); });
   let L=G.sort((a,b)=>(SUPS.findIndex(s=>s.id===a.sup)-SUPS.findIndex(s=>s.id===b.sup))||a.eq.localeCompare(b.eq));
-  L=L.map(g=>({...g,os:g.rs.find(r=>r.osDia)?.osDia||null,fis:OS_FIS_ESC[g.k]||fiscalDe(g.sup,g.eq)}));
+  L=L.map(g=>({...g,os:g.rs.find(r=>r.osDia)?.osDia||null,fis:OS_FIS_ESC[g.k]||fiscalDe(g.sup,g.eq)})); // a O.S sempre vem com o fiscal titular; o supervisor pode indicar outro ou acompanhar ele mesmo (sem fiscal)
   if(sessao.perfil==="fiscal"){ const me=acesso?.[sessao.id]; L=L.filter(g=>g.os?osDoFiscal({osDia:g.os,equipe:g.eq},me):(!me?.equipe||g.eq===me.equipe)); }
   return L; }
 const osNum=(sup,eq,d)=>{ const s=supOf(sup)||{}; const L=(sup.match(/\(([A-Z])\)/)||[])[1]||""; return `${d.slice(2).replace(/-/g,"")}-P${ROMANO[s.grupo]||""}${(s.turno||"")[0]||""}${L}-${(eq||"").slice(0,1)||"0"}`; };
-function osDiaTxt(g){ const o=g.os||{}, d=hoje(), pv=g.rs.reduce((a,r)=>a+receitaDe(prevQ(r)),0);
+function osDiaTxt(g){ const o=g.os||{}, d=g.dia||hoje(), pv=g.rs.reduce((a,r)=>a+receitaDe(prevQ(r)),0);
   return [`*ORDEM DE SERVIÇO Nº ${o.num||osNum(g.sup,g.eq,d)} – INICIADA*`,`COMURG · Gerência de Poda e Extirpação`,``,`📅 ${fmtD(d)} (${diaDe(d)})`,`👷 ${g.sup} · ${g.eq}${g.rs[0]?.viatura?" · "+g.rs[0].viatura:""}`,`Supervisor: ${nomeSupDe(g.sup)||"—"}`,`Fiscal: ${o.semFiscal?"sem fiscal – o supervisor faz o papel de fiscal":o.fiscal?.nome||g.fis?.nome||"—"}`,...(o.membros?.length?[``,`*Equipe (${o.membros.length}):*`,...o.membros.map(m=>`• ${m.nome} – ${m.funcao}`)]:[]),``,
     `*Serviços do dia (${g.rs.length}):*`,...g.rs.map((r,i)=>`${i+1}. ${r.bairro||""} — ${r.logradouro||""}${tipoTxt(r)?` · ${tipoTxt(r)}`:""}${r.processo?` · nº ${procNum(r)}`:""}\n   ${qtdTxtPlano(prevQ(r))||"—"}`),``,
     `Previsto: ${brl(pv)}`,o.em?`Iniciada às ${new Date(o.em).toTimeString().slice(0,5)} por ${o.por||"—"}.`:""].filter(x=>x!==null).join("\n"); }
 // O.S finalizadas pelo fiscal que ainda têm serviço sem baixa: aparecem para o supervisor (Início e Pendências)
-function osFimGrupos(){ if(!sessao||ehFiscal()) return []; const G={};
-  todosGlobal().filter(r=>r.osDia?.fim&&!r.arquivado&&isProg(r)&&(travado()?r.supervisao===sessao.sup:noEscopo(r.supervisao))).forEach(r=>{ const k=r.osDia.num||r.osDia.em; (G[k]=G[k]||{os:r.osDia,rs:[]}).rs.push(r); });
+// aviso "O.S finalizada pelo fiscal – fazer a baixa": só para o supervisor responsável pela turma
+function osFimGrupos(){ if(!sessao||!["supervisor","supervisor1"].includes(sessao.perfil)||!sessao.sup) return []; const G={};
+  todosGlobal().filter(r=>r.osDia?.fim&&!r.arquivado&&isProg(r)&&r.supervisao===sessao.sup).forEach(r=>{ const k=r.osDia.num||r.osDia.em; (G[k]=G[k]||{os:r.osDia,rs:[]}).rs.push(r); });
   return Object.values(G).sort((a,b)=>(a.os.fim.em||"").localeCompare(b.os.fim.em||"")); }
+// O.S enviada ao fiscal há mais de 30 minutos e ainda não recebida: avisa o supervisor da turma
+const OS_REC_MIN=30;
+function osNaoRecGrupos(){ if(!sessao||!["supervisor","supervisor1"].includes(sessao.perfil)||!sessao.sup) return []; const G={}, lim=Date.now()-OS_REC_MIN*6e4;
+  todosGlobal().filter(r=>r.supervisao===sessao.sup&&r.osDia&&!r.osDia.recebida&&!r.osDia.semFiscal&&!r.osDia.fim&&!r.arquivado&&r.osDia.fiscal&&new Date(r.osDia.em).getTime()<lim&&(r.data||"")>=iso(new Date(Date.now()-864e5))).forEach(r=>{ const k=r.osDia.num||r.osDia.em; (G[k]=G[k]||{os:r.osDia,rs:[],sup:r.supervisao,eq:r.equipe||"",k:r.supervisao+"|"+(r.equipe||"")}).rs.push(r); });
+  return Object.values(G); }
+function osNaoRecHtml(){ const L=osNaoRecGrupos(); if(!L.length) return "";
+  return `<section class="alert bad"><h3>⏰ O.S enviada e ainda não recebida pelo fiscal (${L.length})</h3><p class="note" style="margin:0 0 6px">O fiscal tem no máximo <b>30 minutos</b> para confirmar o recebimento e ainda não confirmou. Ligue para ele ou indique outro fiscal / acompanhe a equipe.</p>
+    ${L.map(g=>{ const min=Math.round((Date.now()-new Date(g.os.em).getTime())/6e4), f=acesso?.[g.os.fiscal?.id]||{}; return `<div class="osfimc"><b>O.S nº ${esc(g.os.num||"")}</b> · ${esc(g.sup)} · ${esc(g.eq)}<small>Enviada às ${hm(g.os.em)} para <b>${esc(g.os.fiscal?.nome||"")}</b> · há ${min>=120?Math.floor(min/60)+" h "+(min%60)+" min":min+" min"} sem confirmação${f.zap?` · 📱 ${esc(f.zap)}`:""}</small>
+      <div class="row2" style="margin-top:6px">${f.zap?`<a class="btn sec" href="tel:${esc(String(f.zap).replace(/\D/g,""))}" style="min-height:42px">📞 Ligar</a>`:""}<button type="button" class="btn sec" data-osfis="${esc(g.k)}" style="min-height:42px">Trocar fiscal / sem fiscal</button></div></div>`; }).join("")}</section>`; }
 function osFimHtml(){ const L=osFimGrupos(); if(!L.length) return "";
   return `<section class="alert ok osfim"><h3>✅ O.S finalizada pelo fiscal – fazer a baixa (${L.length})</h3><p class="note" style="margin:0 0 6px">O fiscal finalizou a execução. As fotos dele já estão no relatório: dê a baixa e complete o restante.</p>
     ${L.map(g=>`<div class="osfimc"><b>O.S nº ${esc(g.os.num||"")}</b> · ${esc(g.rs[0]?.supervisao||"")} · ${esc(g.rs[0]?.equipe||"")}<small>Finalizada às ${hm(g.os.fim.em)} de ${fmtDs(iso(new Date(g.os.fim.em)))} por ${esc(g.os.fim.por||"o fiscal")} · ${g.rs.length} serviço${g.rs.length>1?"s":""} sem baixa</small>
-      ${g.rs.map(r=>`<button type="button" data-baixa="${esc(r.id)}"><b>✔</b><span>${esc(r.bairro||"")} — ${esc(r.logradouro||"")}<small>${esc(tipoTxt(r)||r.tipo||"")}${r.processo?" · nº "+esc(procNum(r)):""}${fotosPede(r)?` · 📷 fotos ${REL_SLOTS.filter(x=>r.fotosFiscal?.[x.k]).length} de 3`:""}</small></span><em>Dar baixa</em></button>`).join("")}</div>`).join("")}</section>`; }
+      ${g.rs.map(r=>`<button type="button" data-baixa="${esc(r.id)}"><b>✔</b><span>${esc(r.bairro||"")} — ${esc(r.logradouro||"")}<small>${esc(tipoTxt(r)||r.tipo||"")}${r.processo?" · nº "+esc(procNum(r)):""}${fotosPede(r)?` · 📷 fotos ${REL_SLOTS.filter(x=>r.fotosFiscal?.[x.k]).length} de 3`:""}${(()=>{ const x=r.osDia?.sv?.[r.id]?.fim?.exec; return x?`<br><b style="color:${x.sit==="NÃO"?"var(--bad)":x.sit==="PARCIAL"?"#8a5200":"var(--ok)"}">Fiscal: ${esc(svExecTxt(x))}</b>`:""; })()}</small></span><em>Dar baixa</em></button>`).join("")}</div>`).join("")}</section>`; }
 document.addEventListener("click",e=>{ const b=e.target.closest(".osfim [data-baixa]"); if(!b) return; e.stopPropagation(); const r=todosGlobal().find(x=>x.id===b.dataset.baixa); if(r) abrirBaixa(r); },true);
 function osDiaHtml(){ const L=osDiaGrupos().filter(g=>sessao.perfil==="fiscal"||!g.os); if(!L.length) return ""; // depois de iniciada e enviada ao fiscal, a O.S some do Início (o fiscal continua vendo a dele)
   return `<div class="osdia"><div class="osdh">ORDEM DE SERVIÇO DO DIA · ${fmtDs(hoje())}</div>${L.map(g=>{ const k=esc(g.k), n=g.rs.length;
-    const fis=(g.fis?`fiscal: <b>${esc(g.fis.nome)}</b>`:`<span style="color:var(--bad)">sem fiscal cadastrado para esta equipe (Acessos)</span>`)+(osPodeIniciar(g.sup)?` · <button type="button" data-osfis="${k}" style="border:0;background:none;padding:0;color:var(--accent);font:inherit;font-weight:700;cursor:pointer;text-decoration:underline">trocar</button>`:"");
+    const fis=(g.fis?(g.fis.sem?`<b>supervisor acompanha</b>`:`fiscal: <b>${esc(g.fis.nome)}</b>`):`<span style="color:var(--bad)">sem fiscal cadastrado para esta equipe (Acessos)</span>`)+(osPodeIniciar(g.sup)?` · <button type="button" data-osfis="${k}" style="border:0;background:none;padding:0;color:var(--accent);font:inherit;font-weight:700;cursor:pointer;text-decoration:underline">trocar fiscal / sem fiscal</button>`:"");
     if(g.os) return `<div class="osl ok"><div><b>✅ ${esc(g.sup)} · ${esc(g.eq)}</b><small>O.S nº ${esc(g.os.num)} enviada às ${new Date(g.os.em).toTimeString().slice(0,5)} por ${esc(g.os.por||"—")} · ${n} serviço${n===1?"":"s"} · para ${esc(g.os.fiscal?.nome||"o fiscal")}</small>${osEtapaHtml(g.os)}</div>
       <div class="osb"><button type="button" class="btn sec" data-osenv="${k}">👁 Ver a O.S</button><button type="button" class="btn sec" data-ospdf="${k}">📄 PDF</button></div></div>`;
     return `<div class="osl"><div><b>🟠 ${esc(g.sup)} · ${esc(g.eq)}</b><small>${n} serviço${n===1?"":"s"} programado${n===1?"":"s"} para hoje · ${fis}</small></div>
-      <div class="osb">${osPodeIniciar(g.sup)?(osLiberada(g.sup)?`<button type="button" class="btn pri" data-osini="${k}">👷 Informar a equipe e enviar a O.S</button>`:`<button type="button" class="btn sec" disabled>🔒 Envio liberado às ${osLibTxt(g.sup)}</button><small style="color:var(--muted)">🕕 A O.S só pode ser enviada ao fiscal a partir das <b>${osLibTxt(g.sup)}</b> (turma ${/NOTURNO/i.test(g.sup)?"noturna":"diurna"}).</small>`):`<small style="color:var(--muted)">Aguardando o supervisor iniciar a O.S.</small>`}</div></div>`; }).join("")}</div>`; }
+      <div class="osb">${osPodeIniciar(g.sup)?(osLiberada(g.sup,g.dia)?`<button type="button" class="btn pri" data-osini="${k}">📤 Enviar a O.S ao fiscal</button>`:`<button type="button" class="btn sec" disabled>🔒 Envio liberado às ${osLibTxt(g.sup)}</button><small style="color:var(--muted)">🕕 A O.S só pode ser enviada ao fiscal a partir das <b>${osLibTxt(g.sup)}</b> (turma ${/NOTURNO/i.test(g.sup)?"noturna":"diurna"}).</small>`):`<small style="color:var(--muted)">Aguardando o supervisor iniciar a O.S.</small>`}</div></div>`; }).join("")}</div>`; }
 // O.S no detalhe do serviço: iniciar (só no dia da execução) ou reenviar ao fiscal
 // etapas da O.S do dia: 1 enviada pelo supervisor → 2 recebida pelo fiscal → 3 equipe cadastrada → 4 start (em execução)
 const hm=t=>t?new Date(t).toTimeString().slice(0,5):"";
@@ -10095,10 +10181,10 @@ function osEtapaHtml(o){ if(!o) return ""; if(o.semFiscal) return `<div class="o
 async function fisOsAtualiza(g,patch,acao){ const os={...g.os,...patch}; let ok=true;
   for(const r of g.rs){ const fresh=todosGlobal().find(x=>x.id===r.id)||r, upd={...fresh}; delete upd.id; delete upd._fila; upd.osDia=os; upd._acao=acao; const res=await saveDoc(r.id,upd); if(res!=="ok"&&res!=="fila") ok=false; else r.osDia=os; }
   if(!ok){ toast("Não foi possível salvar agora. Tente de novo."); return false; } g.os=os; try{renderAll()}catch(e){} return true; }
-function detOsHtml(r){ if(!r||r.ocorrencia||r.avulso||r.arquivado||!r.supervisao) return ""; const k=esc(r.supervisao+"|"+(r.equipe||""));
+function detOsHtml(r){ if(!r||r.extra||r.ocorrencia||r.avulso||r.arquivado||!r.supervisao) return ""; const k=esc(r.supervisao+"|"+(r.equipe||""));
   if(r.osDia) return `<div class="detos ok"><b>✅ O.S nº ${esc(r.osDia.num)} enviada</b><small>${new Date(r.osDia.em).toTimeString().slice(0,5)} de ${fmtDs(iso(new Date(r.osDia.em)))} por ${esc(r.osDia.por||"—")} · para ${esc(r.osDia.fiscal?.nome||"o fiscal")}</small>${osEtapaHtml(r.osDia)}${r.data===hoje()?`<button type="button" class="btn sec" data-osenv="${k}">👁 Ver a O.S</button>`:""}</div>`;
   if(!isProg(r)||!osPodeIniciar(r.supervisao)) return "";
-  if(r.data!==hoje()) return `<div class="detos"><button type="button" class="btn sec" disabled>▶ Iniciar O.S e enviar ao fiscal</button><small>Disponível só no dia da execução: ${diaDe(r.data)} ${fmtD(r.data)}.</small></div>`;
+  if(r.data!==diaOS(r.supervisao)) return `<div class="detos"><button type="button" class="btn sec" disabled>▶ Iniciar O.S e enviar ao fiscal</button><small>Disponível só no dia da execução: ${diaDe(r.data)} ${fmtD(r.data)}.</small></div>`;
   if(!osLiberada(r.supervisao)) return `<div class="detos"><button type="button" class="btn sec" disabled>🔒 Envio liberado às ${osLibTxt(r.supervisao)}</button><small>A O.S só pode ser enviada ao fiscal a partir das ${osLibTxt(r.supervisao)} (turma ${/NOTURNO/i.test(r.supervisao)?"noturna":"diurna"}).</small></div>`;
   const f=fiscalDe(r.supervisao,r.equipe);
   return `<div class="detos"><button type="button" class="btn pri" data-osini="${k}">▶ Iniciar O.S da ${esc(r.equipe||"equipe")} e enviar ao fiscal</button><small>${f?`Fiscal: ${esc(f.nome)}`:"Sem fiscal cadastrado para esta equipe em Acessos."} A O.S vale para todos os serviços da equipe hoje.</small></div>`; }
@@ -10109,7 +10195,7 @@ document.addEventListener("click",async e=>{ const b=e.target.closest("[data-osc
   const g=osDiaGrupos().find(x=>x.k===b.dataset.oscanc); if(!g) return; if(g.os) return toast("Esta O.S já foi enviada: não pode ser cancelada aqui.");
   if(b.dataset.armed!=="1"){ b.dataset.armed="1"; b.textContent="Toque de novo para cancelar esta O.S"; setTimeout(()=>{ if(b.isConnected){ b.dataset.armed=""; b.textContent="🗑 Cancelar esta O.S"; } },4000); return; }
   b.disabled=true; const now=new Date().toISOString(); let n=0;
-  for(const r of g.rs){ try{ const u={...r}; delete u.id; delete u._fila; u.osCanc={data:hoje(),em:now,por:sessao.nome||"",uid:sessao.id}; u._acao=`O.S do dia cancelada por ${sessao.nome} (saiu da fila de envio ao fiscal)`; const res=await saveDoc(r.id,u); if(res==="ok"||res==="fila") n++; }catch(x){} }
+  for(const r of g.rs){ try{ const u={...r}; delete u.id; delete u._fila; u.osCanc={data:r.data||hoje(),em:now,por:sessao.nome||"",uid:sessao.id}; u._acao=`O.S do dia cancelada por ${sessao.nome} (saiu da fila de envio ao fiscal)`; const res=await saveDoc(r.id,u); if(res==="ok"||res==="fila") n++; }catch(x){} }
   toast(`O.S cancelada: saiu da fila de envio ao fiscal. Os ${n} serviço${n===1?"":"s"} continua${n===1?"":"m"} na programação sem nenhuma mudança.`,6000);
   const aberto=!!document.querySelector("#sheetHost [data-osdx]"); try{ renderAll(); }catch(x){} if(aberto) setTimeout(abrirOsDia,50); });
 // tela "Iniciar O.S do dia": os serviços de hoje de cada equipe, prontos para iniciar e enviar ao fiscal
@@ -10120,16 +10206,16 @@ function abrirOsDia(){ const host=$("#sheetHost"), G=osDiaGrupos(), d=hoje();
       <span>${g.os?.semFiscal?`🧑‍💼 <b>Sem fiscal hoje</b> – o supervisor faz o papel de fiscal (a O.S não foi enviada a ninguém)`:fis?`Fiscal: <b>${esc(fis.nome)}</b>`:`<em style="color:var(--bad);font-style:normal">Sem fiscal cadastrado para esta equipe (Acessos)</em>`}${g.os?.fiscalTroca&&!g.os?.semFiscal?` <small style="color:var(--muted)">(no lugar de ${esc(g.os.fiscalTroca.de||"titular")})</small>`:""}${osPodeIniciar(g.sup)&&!g.os?.fim?` <button type="button" class="btn sec" data-osfis="${k}" style="min-height:32px;padding:0 10px;font-size:12px;margin-left:4px">🔄 ${g.os?(g.os.semFiscal?"Enviar a um fiscal":"Trocar o fiscal"):fis?"Outro fiscal / sem fiscal":"Sem fiscal: supervisor acompanha"}</button>`:""}</span>
       ${g.os?`<span style="color:var(--ok)">O.S nº <b>${esc(g.os.num)}</b> ${g.os.semFiscal?"registrada":"enviada"} às ${new Date(g.os.em).toTimeString().slice(0,5)} por ${esc(g.os.por||"—")}</span>${osEtapaHtml(g.os)}`:""}
       ${g.os?.membros?.length?`<span>👷 Equipe: ${g.os.membros.map(m=>`<b>${esc(m.nome)}</b> (${esc(m.funcao.toLowerCase())})`).join(" · ")}</span>`:""}</div>${lista}
-      <div class="osb">${g.os?`<button type="button" class="btn sec" data-osenv="${k}">👁 Ver a O.S</button>${osPodeIniciar(g.sup)&&!g.os.fim?`<button type="button" class="btn sec" data-oseqsup="${k}">👷 ${g.os.membros?.length?"Alterar":"Informar"} a equipe</button>`:g.os.membros?.length?"":`<small style="color:var(--muted);align-self:center">👷 Aguardando o fiscal formar a equipe</small>`}`:osPodeIniciar(g.sup)?`<button type="button" class="btn pri" data-osini="${k}">👷 Informar a equipe e enviar a O.S</button>${osLiberada(g.sup)?"":`<small style="color:var(--muted)">🕕 O fiscal recebe esta O.S a partir das <b>${osLibTxt(g.sup)}</b> (turma ${/NOTURNO/i.test(g.sup)?"noturna":"diurna"}).</small>`}`:`<small>Aguardando o supervisor iniciar.</small>`}${!g.os&&osPodeCancelar()?`<button type="button" class="btn danger" data-oscanc="${k}">🗑 Cancelar esta O.S</button>`:""}
+      <div class="osb">${g.os?`<button type="button" class="btn sec" data-osenv="${k}">👁 Ver a O.S</button>${osPodeIniciar(g.sup)&&!g.os.fim&&g.os.semFiscal?`<button type="button" class="btn sec" data-oseqsup="${k}">👷 ${g.os.membros?.length?"Alterar":"Informar"} a equipe</button>`:g.os.membros?.length?"":`<small style="color:var(--muted);align-self:center">👷 Aguardando o fiscal formar a equipe</small>`}`:osPodeIniciar(g.sup)?`<button type="button" class="btn pri" data-osini="${k}">📤 Enviar a O.S ao fiscal</button>${osLiberada(g.sup,g.dia)?"":`<small style="color:var(--muted)">🕕 O fiscal recebe esta O.S a partir das <b>${osLibTxt(g.sup)}</b> (turma ${/NOTURNO/i.test(g.sup)?"noturna":"diurna"}).</small>`}`:`<small>Aguardando o supervisor iniciar.</small>`}${!g.os&&osPodeCancelar()?`<button type="button" class="btn danger" data-oscanc="${k}">🗑 Cancelar esta O.S</button>`:""}
       <button type="button" class="btn sec" data-ospdf="${k}">📄 PDF</button></div></div>`; };
   host.innerHTML=`<div class="sheet" id="sh"><div class="panel" role="dialog" aria-label="Iniciar O.S do dia">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:22px">O.S do dia · ${diaDe(d)} ${fmtDs(d)}</b><button type="button" class="btn sec" data-osdx style="min-height:44px;padding:0 14px">Fechar</button></div>
-    <p class="note" style="margin:0">Os serviços programados para hoje já estão aqui, separados por equipe. Confira, toque em <b>Informar a equipe e enviar a O.S</b>, marque quem veio trabalhar e confirme: a O.S chega <b>direto no app do fiscal</b> (não é mais enviada pelo WhatsApp). A O.S só pode ser iniciada no dia da execução.</p>
+    <p class="note" style="margin:0">Os serviços programados para hoje já estão aqui, separados por equipe. Confira e toque em <b>Enviar a O.S ao fiscal</b> (toque duas vezes para confirmar): a O.S chega <b>direto no app do fiscal</b>, e é o <b>fiscal que aponta a equipe</b> do dia. A O.S só pode ser iniciada no dia da execução.</p>
     ${G.length?G.map(card).join(""):`<section class="alert ok"><h3>Nenhum serviço programado para hoje</h3><p class="note" style="margin:0">Quando houver programação para o dia, os serviços aparecem aqui para iniciar a O.S.</p></section>`}
   </div></div>`;
   host.querySelector("#sh").addEventListener("click",e=>{ if(e.target.id==="sh"||e.target.closest("[data-osdx]")) host.innerHTML=""; }); }
-function osSel(g){ return {det:true,rows:g.rs,sub:"O.S Nº "+(g.os?.num||osNum(g.sup,g.eq,hoje()))+" – EXECUÇÃO DO DIA",ftxt:`${fmtD(hoje())} · ${diaDe(hoje())} · ${g.sup} · ${g.eq}${g.os?.fiscal?.nome?" · fiscal: "+g.os.fiscal.nome:""}`,
-  nome:("os-"+(g.os?.num||osNum(g.sup,g.eq,hoje()))+"-"+g.sup+"-"+g.eq).normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Za-z0-9]+/g,"-").replace(/-+$/,"").toLowerCase()}; }
+function osSel(g){ return {det:true,rows:g.rs,sub:"O.S Nº "+(g.os?.num||osNum(g.sup,g.eq,g.dia||hoje()))+" – EXECUÇÃO DO DIA",ftxt:`${fmtD(g.dia||hoje())} · ${diaDe(g.dia||hoje())} · ${g.sup} · ${g.eq}${g.os?.fiscal?.nome?" · fiscal: "+g.os.fiscal.nome:""}`,
+  nome:("os-"+(g.os?.num||osNum(g.sup,g.eq,g.dia||hoje()))+"-"+g.sup+"-"+g.eq).normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Za-z0-9]+/g,"-").replace(/-+$/,"").toLowerCase()}; }
 function osEnviar(g){ const txt=osDiaTxt(g), f=g.os?.fiscal||g.fis, fisV=sessao.perfil==="fiscal";
   const box=document.createElement("div"); box.className="sheet"; box.style.zIndex=40;
   box.innerHTML=`<div class="panel" role="dialog" aria-label="O.S do dia"><b style="font-family:var(--display);font-size:22px">O.S nº ${esc(g.os?.num||"")}</b>
@@ -10268,12 +10354,12 @@ function osEscolherFiscal(g){ const L=fiscaisSup(g.sup), atual=(g.os?.fiscal||g.
   box.addEventListener("click",async e=>{ if(e.target===box||e.target.closest("[data-osfx]")){ box.remove(); return; }
     const okb=e.target.closest("[data-osfok]"); if(!okb) return; const id=box.querySelector("input[name=osfisr]:checked")?.value; if(!id){ toast("Escolha o fiscal"); return; }
     if(id==="__sup"){ if(g.os?.semFiscal){ box.remove(); return; } okb.disabled=true; okb.textContent="Salvando…"; const em=new Date().toISOString(), sf={em,por:sessao.nome||""};
-      const patch=g.os?{fiscal:null,recebida:null,semFiscal:sf,fiscalTroca:{de:g.os.fiscal?.nome||"",deId:g.os.fiscal?.id||"",em,por:sessao.nome||""}}:{num:osNum(g.sup,g.eq,hoje()),em,por:sessao.nome||"",porId:sessao.id,fiscal:null,membros:[],semFiscal:sf};
+      const patch=g.os?{fiscal:null,recebida:null,semFiscal:sf,fiscalTroca:{de:g.os.fiscal?.nome||"",deId:g.os.fiscal?.id||"",em,por:sessao.nome||""}}:{num:osNum(g.sup,g.eq,g.dia||hoje()),em,por:sessao.nome||"",porId:sessao.id,fiscal:null,membros:[],semFiscal:sf};
       delete OS_FIS_ESC[g.k];
       const ok=await fisOsAtualiza(g,patch,g.os?`O.S nº ${g.os.num} retirada do fiscal ${g.os.fiscal?.nome||""}: sem fiscal, o supervisor faz o papel de fiscal`:`O.S nº ${patch.num} sem fiscal: o supervisor faz o papel de fiscal`);
       if(ok){ box.remove(); toast("Sem fiscal hoje: o supervisor faz o papel de fiscal. A O.S não foi enviada a ninguém.",6000); try{ if($("#sheetHost").innerHTML) abrirOsDia(); }catch(x){} } else { okb.disabled=false; okb.textContent="Confirmar"; } return; }
     const u=acesso[id]||{}, nf={id,nome:u.nome||""};
-    if(!g.os){ if(tit&&tit.id===id) delete OS_FIS_ESC[g.k]; else OS_FIS_ESC[g.k]=nf; box.remove(); toast("Fiscal escolhido: "+nf.nome+". Agora inicie a O.S."); try{ if($("#sheetHost").innerHTML) abrirOsDia(); renderAll(); }catch(x){} return; }
+    if(!g.os){ if(g.eq&&tit&&tit.id===id) delete OS_FIS_ESC[g.k]; else OS_FIS_ESC[g.k]=nf; box.remove(); toast("Fiscal escolhido: "+nf.nome+". Agora inicie a O.S."); try{ if($("#sheetHost").innerHTML) abrirOsDia(); renderAll(); }catch(x){} return; }
     if(g.os.fiscal?.id===id){ box.remove(); return; }
     okb.disabled=true; okb.textContent="Trocando…";
     const ok=await fisOsAtualiza(g,{fiscal:nf,recebida:null,semFiscal:null,fiscalTroca:{de:g.os.semFiscal?"supervisor (sem fiscal)":g.os.fiscal?.nome||"",deId:g.os.fiscal?.id||"",em:new Date().toISOString(),por:sessao.nome||""}},`Trocou o fiscal da O.S nº ${g.os.num}: ${g.os.fiscal?.nome||"—"} → ${nf.nome}`);
@@ -10281,11 +10367,13 @@ function osEscolherFiscal(g){ const L=fiscaisSup(g.sup), atual=(g.os?.fiscal||g.
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-oseqsup]"); if(!b) return; e.stopPropagation(); const g=osDiaGrupos().find(x=>x.k===b.dataset.oseqsup); if(!g||!g.os||!osPodeIniciar(g.sup)) return; eqcAbrir(g,M=>eqcSalvar(g,M),true); },true);
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-osfis]"); if(!b) return; e.stopPropagation(); const g=osDiaGrupos().find(x=>x.k===b.dataset.osfis); if(!g){ toast("O.S não encontrada."); return; } if(!osPodeIniciar(g.sup)) return; osEscolherFiscal(g); },true);
 async function osIniciar(g,btn){ // o supervisor informa a equipe do dia antes de enviar a O.S (o fiscal pode corrigir depois)
-  if(!osLiberada(g.sup)){ toast(`A O.S só pode ser enviada a partir das ${osLibTxt(g.sup)}.`); return false; }
-  return new Promise(res=>eqcAbrir(g,async M=>{ const r=await osIniciarCom(g,btn,M); res(r); return r; },false)); }
+  if(!osLiberada(g.sup,g.dia)){ toast(`A O.S só pode ser enviada a partir das ${osLibTxt(g.sup)}.`); return false; }
+  // quem aponta a equipe é o fiscal: o supervisor só envia (se ficar sem fiscal, o supervisor informa a equipe depois)
+  if(btn.dataset.armed!=="1"){ btn.dataset.armed="1"; const t0=btn.textContent; btn.textContent="Toque de novo para enviar ao fiscal"; setTimeout(()=>{ if(btn.isConnected&&btn.dataset.armed==="1"){ btn.dataset.armed=""; btn.textContent=t0; } },4000); return false; }
+  return await osIniciarCom(g,btn,[]); }
 async function osIniciarCom(g,btn,M){
   btn.disabled=true; btn.textContent="Iniciando…";
-  const em=new Date().toISOString(), f0=OS_FIS_ESC[g.k]||g.fis, sem=!!f0?.sem, fis=sem?null:f0, os={num:osNum(g.sup,g.eq,hoje()),em,por:sessao.nome||"",porId:sessao.id,fiscal:fis?{id:fis.id,nome:fis.nome}:null,membros:M,...(sem?{semFiscal:{em,por:sessao.nome||"",...(f0.nome?{fiscalNome:f0.nome}:{})}}:{}),...((()=>{ const tit=g.fis||fiscalDe(g.sup,g.eq); return fis&&tit&&tit.id!==fis.id?{fiscalTroca:{de:tit.nome||"",deId:tit.id||"",em,por:sessao.nome||""}}:{}; })())};
+  const em=new Date().toISOString(), f0=OS_FIS_ESC[g.k]||g.fis, sem=!!f0?.sem, fis=sem?null:f0, os={num:osNum(g.sup,g.eq,g.dia||hoje()),em,por:sessao.nome||"",porId:sessao.id,fiscal:fis?{id:fis.id,nome:fis.nome}:null,membros:M,...(sem?{semFiscal:{em,por:sessao.nome||"",...(f0.nome?{fiscalNome:f0.nome}:{})}}:{}),...((()=>{ const tit=g.fis||fiscalDe(g.sup,g.eq); return fis&&tit&&tit.id!==fis.id?{fiscalTroca:{de:tit.nome||"",deId:tit.id||"",em,por:sessao.nome||""}}:{}; })())};
   let ok=true; for(const r of g.rs){ const upd={...r}; delete upd.id; delete upd._fila; upd.osDia=os; upd._acao=`Iniciou a O.S nº ${os.num}${fis?" e enviou ao fiscal "+fis.nome:""}`; const res=await saveDoc(r.id,upd); if(res!=="ok"&&res!=="fila") ok=false; else r.osDia=os; }
   if(!ok){ toast("Não foi possível iniciar a O.S agora. Tente de novo."); btn.disabled=false; btn.textContent="▶ Iniciar O.S e enviar ao fiscal"; btn.dataset.armed=""; return false; }
   delete OS_FIS_ESC[g.k];
@@ -10365,36 +10453,64 @@ async function svConfereLocal(r,b){ const t0=b.textContent; b.disabled=true; b.t
     if(d>raio){ toast(`Você está a ${d>=1000?(d/1000).toFixed(1).replace(".",",")+" km":d+" m"} do endereço. Chegue ao local para dar o START.`,6000); return null; }
     return {lat:+eu.lat.toFixed(6),lng:+eu.lng.toFixed(6),prec:eu.prec,dist:d,ref:loc.fonte,conf:true};
   } finally { b.disabled=false; b.textContent=t0; } }
+// ao finalizar o serviço o fiscal informa se foi executado integralmente ou parcial (e quanto ficou a fazer)
+const SVX_MOT=["Chuva","Viatura/equipamento quebrado","Rede elétrica (aguardando Equatorial)","Veículos estacionados / sem acesso","Morador impediu","Remanejado pela gerência (emergência)","Atendimento de galho / árvore caída","Endereço não localizado","Executado por outra equipe"];
+const svExecTxt=x=>{ if(!x) return ""; if(x.sit==="SIM") return "executado integralmente"; if(x.sit==="NÃO") return "NÃO EXECUTADO – "+(x.motivo||"")+(x.obs?" · "+x.obs:""); const f=ITENS.filter(i=>+x.falta?.[i.c]).map(i=>`${x.falta[i.c]} ${arv(+x.falta[i.c])} com ${itPorte(i)} (${i.c})`).join("; "); return "executado PARCIAL"+(f?" – ficou a fazer: "+f:"")+(x.obs?" · "+x.obs:""); };
+function svFimPerguntar(r){ return new Promise(res=>{ const pq=prevQ(r), its=ITENS.filter(i=>+pq[i.c]);
+  const box=document.createElement("div"); box.className="sheet"; box.style.zIndex=45;
+  box.innerHTML=`<div class="panel" role="dialog" aria-label="Como ficou o serviço"><b style="font-family:var(--display);font-size:20px">Como ficou este serviço?</b>
+    <p class="note" style="margin:0">${esc(r.bairro||"")} — ${esc(r.logradouro||"")}<br>Programado: ${esc(qtdTxtPlano(pq)||"—")}</p>
+    <div style="display:grid;gap:8px"><button type="button" class="btn start" data-svx="SIM" style="min-height:54px">✅ Executado integralmente</button><button type="button" class="btn sec" data-svx="PARCIAL" style="min-height:54px">◐ Executado parcial (ficou serviço a fazer)</button><button type="button" class="btn danger" data-svx="NÃO" style="min-height:54px">✖ Não executado</button></div>
+    <div id="svxN" hidden style="display:grid;gap:8px"><label class="f">Motivo (obrigatório)<select id="svxMot"><option value="">Selecione…</option>${SVX_MOT.map(t=>`<option>${esc(t)}</option>`).join("")}<option value="Outro">Outro (escrever)</option></select></label><label class="f">Explique o que aconteceu<textarea id="svxNObs" placeholder="Ex.: rede elétrica energizada sobre a árvore, aguardando Equatorial"></textarea></label><div class="err" id="svxNErr" hidden></div><button type="button" class="btn danger" data-svxnok="1">Confirmar não executado e finalizar</button></div>
+    <div id="svxP" hidden style="display:grid;gap:8px"><p class="note" style="margin:0"><b>Quanto ficou a fazer (em haver)?</b> O supervisor vê isso na baixa.</p>
+      ${its.map(i=>`<label class="f">${esc(itPorte(i))} (${i.c}) · programado ${pq[i.c]}<input type="number" inputmode="numeric" min="0" max="${+pq[i.c]}" data-svf="${i.c}" placeholder="quantas ficaram"></label>`).join("")}
+      <label class="f">Observação${its.length?" (opcional)":" (obrigatória: o que ficou a fazer)"}<textarea id="svxObs" placeholder="Ex.: faltou 1 árvore por causa da rede elétrica"></textarea></label>
+      <div class="err" id="svxErr" hidden></div><button type="button" class="btn pri" data-svxok="1">Confirmar parcial e finalizar</button></div>
+    <button type="button" class="btn sec" data-svxx="1">Cancelar</button></div>`;
+  document.body.appendChild(box); const fim=v=>{ box.remove(); res(v); };
+  box.addEventListener("click",e=>{ if(e.target===box||e.target.closest("[data-svxx]")) return fim(null);
+    const x=e.target.closest("[data-svx]"); if(x){ if(x.dataset.svx==="SIM") return fim({sit:"SIM"}); box.querySelector("#svxP").hidden=x.dataset.svx!=="PARCIAL"; box.querySelector("#svxN").hidden=x.dataset.svx!=="NÃO"; const p=box.querySelector(x.dataset.svx==="NÃO"?"#svxN":"#svxP"); p.scrollIntoView({block:"center",behavior:"smooth"}); return; }
+    if(e.target.closest("[data-svxnok]")){ const mt=box.querySelector("#svxMot").value, ob=(box.querySelector("#svxNObs").value||"").trim().toUpperCase(), er=box.querySelector("#svxNErr");
+      if(!mt){ er.textContent="Falta: escolha o motivo."; er.hidden=false; return; } if(mt==="Outro"&&ob.length<5){ er.textContent="Falta: explique o motivo."; er.hidden=false; return; }
+      return fim({sit:"NÃO",motivo:mt==="Outro"?ob:mt,obs:mt==="Outro"?"":ob}); }
+    if(e.target.closest("[data-svxok]")){ const falta={}, er=box.querySelector("#svxErr"); let bad="";
+      box.querySelectorAll("[data-svf]").forEach(inp=>{ const v=+inp.value||0, mx=+inp.max; if(v<0||v>mx) bad=`no máximo ${mx} em ${inp.dataset.svf}`; if(v>0) falta[inp.dataset.svf]=v; });
+      const obs=(box.querySelector("#svxObs").value||"").trim().toUpperCase();
+      if(!bad&&!Object.keys(falta).length&&!obs) bad=its.length?"informe a quantidade que ficou a fazer":"escreva o que ficou a fazer";
+      if(!bad&&its.length&&ITENS.every(i=>!+pq[i.c]||(+falta[i.c]||0)>=+pq[i.c])) bad="se não fez nada, não é parcial: informe ao supervisor (não executado)";
+      if(bad){ er.textContent="Falta: "+bad+"."; er.hidden=false; return; }
+      return fim({sit:"PARCIAL",falta,obs}); } }); }); }
 document.addEventListener("click",async e=>{ const b=e.target.closest("[data-svstart],[data-svfim]"); if(!b||sessao?.perfil!=="fiscal") return;
   const rid=b.dataset.svstart||b.dataset.svfim, g=fisOsGrupos(30).find(x=>x.rs.some(r=>r.id===rid)); if(!g) return toast("O.S não encontrada."); const r=g.rs.find(x=>x.id===rid);
   const quem={por:sessao.nome,uid:sessao.id,em:new Date().toISOString()}, ant=svDe(g.os,r), end=`${r.bairro||""} — ${r.logradouro||""}`;
   if(b.dataset.svstart){ if(fisPode("equipe")&&!g.os.membros?.length) return toast("Cadastre a equipe de trabalho antes do start.");
     const gps=await svConfereLocal(r,b); if(!gps) return; quem.gps=gps;
     b.disabled=true; const patch={sv:{...(g.os.sv||{}),[rid]:{...ant,start:quem}}}; if(!g.os.start){ patch.start=quem; patch.porServ=true; }
-    if(await fisOsAtualiza(g,patch,`Fiscal deu o START no serviço ${end} (O.S nº ${g.os.num})`)) toast(fotosPede(r)?"Start registrado. Tire a 1ª foto (ANTES).":"Start registrado: serviço em execução."); else b.disabled=false; return; }
-  if(fotosPede(r)&&!REL_SLOTS.every(x=>r.fotosFiscal?.[x.k]||r.relat?.midia?.[x.k])) return toast("Tire as 3 fotos deste serviço antes de finalizar.");
-  b.disabled=true; if(await fisOsAtualiza(g,{sv:{...(g.os.sv||{}),[rid]:{...ant,fim:quem}}},`Fiscal finalizou o serviço ${end} (O.S nº ${g.os.num})`)) toast(g.rs.every(x=>x.id===rid||svFeito(g.os,x))?"Serviço finalizado. Todos os serviços prontos: assine e finalize a O.S.":"Serviço finalizado. Passe para o próximo endereço."); else b.disabled=false; });
+    if(await fisOsAtualiza(g,patch,`Fiscal deu o START no serviço ${end} (O.S nº ${g.os.num})`)) toast(fotoSlots(r).length?`Start registrado. Tire a 1ª foto (${fotoSlots(r)[0].curto}).`:"Start registrado: serviço em execução."); else b.disabled=false; return; }
+  const ex=await svFimPerguntar(r); if(!ex) return; quem.exec=ex;
+  if(ex.sit!=="NÃO"&&!fotosOk(r)) return toast(`Tire as ${fotoObrig(r).length} fotos deste serviço antes de finalizar.`);
+  b.disabled=true; if(await fisOsAtualiza(g,{sv:{...(g.os.sv||{}),[rid]:{...ant,fim:quem}}},`Fiscal finalizou o serviço ${end} (O.S nº ${g.os.num}): ${svExecTxt(ex)}`)) toast(g.rs.every(x=>x.id===rid||svFeito(g.os,x))?"Serviço finalizado. Todos os serviços prontos: assine e finalize a O.S.":"Serviço finalizado. Passe para o próximo endereço."); else b.disabled=false; });
 function renderInicioFiscal(h){
   const hr=new Date().getHours(), sau=hr<12?"Bom dia":hr<18?"Boa tarde":"Boa noite", me=acesso?.[sessao.id]||{}, G=fisOsGrupos(30), GA=G.filter(g=>!g.os.fim), GC=fisOsGrupos(90).filter(g=>g.os.fim);
-  const card=g=>{ const o=g.os, d=g.rs[0]?.data||"", nF=g.rs.filter(r=>fotosPede(r)).length, ok=g.rs.filter(r=>fotosPede(r)&&REL_SLOTS.every(x=>r.fotosFiscal?.[x.k]||r.relat?.midia?.[x.k])).length;
+  const card=g=>{ const o=g.os, d=g.rs[0]?.data||"", nF=g.rs.filter(r=>fotoSlots(r).length).length, ok=g.rs.filter(r=>fotoSlots(r).length&&fotosOk(r)).length;
     return `<section class="fosc ${nF&&ok===nF?"ok":""}"><div class="fosh"><b>O.S nº ${esc(o.num||"—")}</b><span class="note" style="margin:0">${d?fmtD(d)+" ("+diaDe(d)+")":""}</span></div>
       <p class="note" style="margin:0">${esc(g.rs[0]?.supervisao||"")} · ${esc(g.rs[0]?.equipe||"")}${g.rs[0]?.viatura?" · "+esc(g.rs[0].viatura):""}<br>Enviada por <b>${esc(o.por||"—")}</b>${o.em?" às "+new Date(o.em).toTimeString().slice(0,5):""}${o.membros?.length?`<br>👷 Equipe: ${o.membros.map(m=>`<b>${esc(m.nome)}</b> (${esc((m.funcao||"").toLowerCase())})`).join(" · ")}`:""}</p>
       ${osEtapaHtml(o)}
       ${(()=>{ const ehHoje=!o.fim||(g.rs[0]?.data||"")>=iso(new Date(Date.now()-864e5)), K=esc(o.num||o.em); if(!ehHoje) return "";
-        if(!o.recebida) return `<button type="button" class="btn pri" data-fisrec="${K}" style="min-height:54px">📥 Confirmar que recebi a O.S</button><small style="color:var(--muted)">O supervisor vê na hora que você recebeu. Depois cadastre a equipe e dê o start.</small>`;
+        if(!o.recebida) return `<button type="button" class="btn pri" data-fisrec="${K}" style="min-height:54px">📥 Confirmar que recebi a O.S</button>${(()=>{ const lim=new Date(new Date(o.em).getTime()+OS_REC_MIN*6e4), pas=Date.now()>lim; return `<small style="color:${pas?"var(--bad)":"var(--muted)"};font-weight:${pas?700:400}">${pas?`⏰ Prazo de 30 min vencido às ${hm(lim.toISOString())}: confirme agora (o supervisor já foi avisado).`:`⏰ Confirme em até 30 minutos (até as <b>${hm(lim.toISOString())}</b>).`} Depois forme a equipe e dê o start.</small>`; })()}`;
         if(o.fim) return `<p class="fisrun">🏁 O.S finalizada às ${hm(o.fim.em)} por ${esc(o.fim.por||"")}${o.fim.ass?` · ✍ assinada (código ${esc(o.fim.ass.cod||"")})`:""}</p>`;
         const precisaEq=fisPode("equipe")&&!o.membros?.length, nOk=g.rs.filter(r=>svFeito(o,r)).length, nT=g.rs.length;
         if(nOk===nT) return `<p class="fisrun">✅ Os ${nT} serviço${nT>1?"s":""} desta O.S foram finalizados</p><button type="button" class="btn start" data-fisfim="${K}" style="min-height:60px;font-size:20px">✍ ASSINAR E FINALIZAR A O.S</button><small style="color:var(--muted)">O supervisor vê na hora e faz a baixa.</small>`;
         return `${o.start?`<p class="fisrun">🟢 Em execução · ${nOk} de ${nT} serviço${nT>1?"s":""} finalizado${nOk===1?"":"s"}</p>`:""}${precisaEq?`<small style="color:var(--bad);font-weight:600">Cadastre a equipe de trabalho para liberar o start dos serviços.</small>`:`<small style="color:var(--muted)">Cada endereço tem o seu <b>START</b> e o seu <b>FINALIZAR</b>, logo abaixo. Quando todos terminarem, assine e finalize a O.S.</small>`}`; })()}
       ${(()=>{ const ehHoje=!o.fim||(g.rs[0]?.data||"")>=iso(new Date(Date.now()-864e5)); return ehHoje&&fisPode("equipe")&&o.recebida&&!o.fim?`<button type="button" class="btn ${o.membros?.length?"sec":"pri"}" data-fiseq="${esc(o.num||o.em)}" style="min-height:48px">👷 ${o.membros?.length?`Equipe formada (${o.membros.length}) – editar`:"Formar a equipe (nome e função)"}</button>`:""; })()}
-      <ol class="fosl">${g.rs.map(r=>{ const tem=fotosPede(r), n=REL_SLOTS.filter(x=>r.fotosFiscal?.[x.k]||r.relat?.midia?.[x.k]).length, k=stKey(r);
+      <ol class="fosl">${g.rs.map(r=>{ const S=fotoSlots(r), tem=S.length>0, n=S.filter(x=>r.fotosFiscal?.[x.k]||r.relat?.midia?.[x.k]).length, k=stKey(r);
         return `<li><span class="fosst ${k==="SIM"?"ok":""}">${esc(ST_NOME[k]||k)}</span><b>${esc(r.bairro||"")} — ${esc(r.logradouro||"")}</b><small>${esc(tipoTxt(r)||r.tipo||"")}${r.processo?" · nº "+esc(procNum(r)):""}<br>${esc(qtdTxtPlano(prevQ(r))||"")}</small>
           ${(()=>{ if(!o.recebida||o.fim||r.status==="NÃO") return ""; const sv=svDe(o,r), ini=svIniciado(o,r), pe=fisPode("equipe")&&!o.membros?.length;
             if(!ini) return `<button type="button" class="btn start" data-svstart="${esc(r.id)}" ${pe?"disabled":""} style="min-height:52px">▶ START neste endereço</button>`;
-            if(sv.fim) return `<small style="color:var(--ok);font-weight:700">🏁 Serviço finalizado às ${hm(sv.fim.em)}</small>`;
-            const fOk=!fotosPede(r)||REL_SLOTS.every(x=>r.fotosFiscal?.[x.k]||r.relat?.midia?.[x.k]);
-            return `<small style="color:var(--ok);font-weight:700">🟢 Em execução${(sv.start||o.start)?" desde "+hm((sv.start||o.start).em):""}</small>`+(fOk?`<button type="button" class="btn start" data-svfim="${esc(r.id)}" style="min-height:52px">✅ FINALIZAR ESTE SERVIÇO</button>`:""); })()}
-          ${tem?(!svIniciado(o,r)&&!r.relat?.ass?`<small>📷 Fotos: depois do <b>START</b> deste endereço (1 antes · 2 durante · 3 depois)</small>`:fotosFisPode(r)?(()=>{ const nx=REL_SLOTS.find(x=>!(r.fotosFiscal?.[x.k]||r.relat?.midia?.[x.k])); return nx?`<button type="button" class="btn pri" data-fotfis="${esc(r.id)}" style="min-height:52px">📷 Foto ${REL_SLOTS.indexOf(nx)+1} de 3 · ${nx.curto} <small style="display:block;font:600 12px var(--body);opacity:.9">${nx.dica}</small></button>`:`<button type="button" class="btn sec" data-fotfis="${esc(r.id)}" style="min-height:48px">✅ 3 fotos registradas – ver</button>`; })():`<small>${r.relat?.ass?"✅ Relatório assinado pelo supervisor":n?`📷 Fotos ${n} de 3`:"Fotos: o supervisor anexa na baixa"}</small>`):(relTem(r)?`<small>Processo GED: sem fotos (o supervisor faz o relatório na baixa)</small>`:``)}</li>`; }).join("")}</ol></section>`; };
+            if(sv.fim) return `<small style="color:${sv.fim.exec?.sit==="NÃO"?"var(--bad)":sv.fim.exec?.sit==="PARCIAL"?"#8a5200":"var(--ok)"};font-weight:700">🏁 Serviço finalizado às ${hm(sv.fim.em)}${sv.fim.exec?" · "+esc(svExecTxt(sv.fim.exec)):""}</small>`;
+            const fOk=fotosOk(r);
+            return `<small style="color:var(--ok);font-weight:700">🟢 Em execução${(sv.start||o.start)?" desde "+hm((sv.start||o.start).em):""}</small>`+(fOk?`<button type="button" class="btn start" data-svfim="${esc(r.id)}" style="min-height:52px">✅ FINALIZAR ESTE SERVIÇO</button>`:`<button type="button" class="btn sec" data-svfim="${esc(r.id)}" style="min-height:44px">✖ Não foi possível executar (informar)</button>`); })()}
+          ${tem?(!svIniciado(o,r)&&!r.relat?.ass?`<small>📷 Fotos: depois do <b>START</b> deste endereço (${S.map((x,i)=>(i+1)+" "+x.curto.toLowerCase()).join(" · ")})</small>`:fotosFisPode(r)?(()=>{ const SO=S.filter(x=>!x.opc), nx=SO.find(x=>!(r.fotosFiscal?.[x.k]||r.relat?.midia?.[x.k])); return nx?`<button type="button" class="btn pri" data-fotfis="${esc(r.id)}" style="min-height:52px">📷 Foto ${S.indexOf(nx)+1} de ${SO.length} · ${nx.curto} <small style="display:block;font:600 12px var(--body);opacity:.9">${nx.dica}</small></button>`:`<button type="button" class="btn sec" data-fotfis="${esc(r.id)}" style="min-height:48px">✅ ${n} foto${n>1?"s":""} registrada${n>1?"s":""} – ver${S.length>n?" / tirar mais uma (opcional)":""}</button>`; })():`<small>${r.relat?.ass?"✅ Relatório assinado pelo supervisor":n?`📷 Fotos ${n} de ${S.length}`:S===ROT_SLOTS?"Fotos não registradas":"Fotos: o supervisor anexa na baixa"}</small>`):(relTem(r)?`<small>Processo GED: sem fotos (o supervisor faz o relatório na baixa)</small>`:``)}</li>`; }).join("")}</ol></section>`; };
   h.innerHTML=`<p class="note" style="margin:0 0 2px">${sau},</p><h2 style="margin:0 0 4px">${esc((sessao.nome||"").split(" ").slice(0,2).join(" "))}</h2>
     <p class="note" style="margin:0 0 12px">Fiscal de turma · ${esc(sessao.sup||"")} · ${me.equipe?esc(me.equipe):"todas as equipes"}</p>
     ${(()=>{ try{ if(!fisPode("vist")&&!fisPode("vrota")&&!vistTemFiscal()) return ""; VIST.ouvir(vistInicioOuvinte); const n=VIST.nFiscal(sessao.id), m=VIST.nMeus(sessao.id); return (m?`<button type="button" class="inav warn" data-iv="vist" style="margin:0 0 12px;width:100%">${ICO.vist}<span><b>${m} ${m===1?"processo":"processos"} na sua rota de vistoria</b><small>Rota indicada pela coordenação · abra no GPS e informe cada vistoria</small></span><em>Ver</em></button>`:"")+(n?`<button type="button" class="inav warn" data-iv="vist" style="margin:0 0 12px;width:100%">${ICO.vist}<span><b>${n} ${n===1?"serviço da vistoria":"serviços da vistoria"} para você executar</b><small>Enviado pelo supervisor · anexe as fotos antes, durante e depois</small></span><em>Ver</em></button>`:""); }catch(e){ return ""; } })()}
@@ -10450,7 +10566,7 @@ function renderInicio(){
   if(travado()&&(ehSup()||sessao.perfil==="supervisor1")&&podeEditarEscala(sessao.sup)&&!escCfg(sessao.sup)) av+=`<button type="button" class="inav warn" data-escala="${esc(sessao.sup)}">${ICO.form}<span><b>Cadastre a escala de trabalho da sua turma</b><small>Assim o app só cobra nos seus dias de trabalho</small></span><em>Cadastrar</em></button>`;
   const escHj=travado()&&escCfg(sessao.sup)?(trabalha(sessao.sup,hoje())?" · hoje: dia de trabalho":" · hoje: FOLGA"):"";
   h.innerHTML=`<div class="inhead"><span>${sau},</span><b>${esc(nome)}</b><small>${esc(onde)} · ${dsTxt}${escHj}${hj?` · ${hj} ${hj===1?"serviço programado":"serviços programados"} hoje`:""}</small></div>
-    ${(()=>{ let xa="";   { const nx=extraAguardam().length; if(nx) xa+=`<button type="button" class="inav bad" data-exval="1">${ICO.alerta}<span><b>${nx} ${nx===1?"serviço fora de programação":"serviços fora de programação"} para validar</b><small>O supervisor lançou: assine para entrar na programação</small></span><em>Validar</em></button>`; }   { const ns=travado()?todos().filter(r=>r.status==="VALIDAR"&&!r.arquivado&&r.supervisao===sessao.sup).length:0; if(ns) xa+=`<div class="inav warn">${ICO.alerta}<span><b>${ns} ${ns===1?"serviço fora de programação aguardando":"serviços fora de programação aguardando"} validação</b><small>Só entra na programação e na baixa depois que o gerente ou o coordenador validar</small></span></div>`; }  return xa?`<div class="inavs">${xa}</div>`:""; })()}${INICIO_AVISOS?`<div class="inavs">${av}</div>`:""}${ehFiscal()?fisFotosHtml():osFimHtml()}
+    ${(()=>{ let xa="";   { const nr=osNaoRecGrupos().length; if(nr) xa+=`<button type="button" class="inav bad" data-iv="pend">${ICO.alerta}<span><b>${nr} O.S ${nr===1?"enviada e não recebida":"enviadas e não recebidas"} pelo fiscal</b><small>Mais de 30 min sem confirmação (prazo máximo) · ligue para o fiscal ou troque</small></span><em>Ver</em></button>`; }   { const nx=extraAguardam().length; if(nx) xa+=`<button type="button" class="inav bad" data-exval="1">${ICO.alerta}<span><b>${nx} ${nx===1?"serviço fora de programação":"serviços fora de programação"} para validar</b><small>O supervisor lançou: assine para entrar na programação</small></span><em>Validar</em></button>`; }   { const ns=travado()?todos().filter(r=>r.status==="VALIDAR"&&!r.arquivado&&r.supervisao===sessao.sup).length:0; if(ns) xa+=`<div class="inav warn">${ICO.alerta}<span><b>${ns} ${ns===1?"serviço fora de programação aguardando":"serviços fora de programação aguardando"} validação</b><small>Só entra na programação e na baixa depois que o gerente ou o coordenador validar</small></span></div>`; }  return xa?`<div class="inavs">${xa}</div>`:""; })()}${INICIO_AVISOS?`<div class="inavs">${av}</div>`:""}${ehFiscal()?fisFotosHtml():osFimHtml()}
     <div class="inq">O QUE VOCÊ QUER FAZER?</div>
     <div class="intiles">${tiles.map(x=>`<button type="button" class="intile ${x.c||""}" data-iv="${x.v||""}" data-ia="${x.a||""}">${x.i}<span>${esc(x.t)}${x.sub?`<small class="insub">${esc(x.sub)}</small>`:""}</span></button>`).join("")}</div>`;
 }
@@ -10521,7 +10637,7 @@ function stepify(panel,primeiro){
   ir(0);
 }
 
-function renderAll(){ try{renderEscala()}catch(e){} try{renderPend()}catch(e){console.error(e)} try{renderInicio()}catch(e){console.error(e)} syncUI(); try{renderAvisoGlobal()}catch(e){console.error(e)} try{renderProxSem()}catch(e){console.error(e)} renderCampo(); renderOc(); try{renderChk();renderChkGraf()}catch(e){console.error(e)} renderLista(); renderResumo(); try{ if(curView==="dash") renderDash(); }catch(e){console.error(e)} renderSemProg(); renderContrato(); renderAlertas(); }
+function renderAll(){ try{renderEscala()}catch(e){} try{renderPend()}catch(e){console.error(e)} try{renderInicio()}catch(e){console.error(e)} syncUI(); try{renderAvisoGlobal()}catch(e){console.error(e)} try{renderProxSem()}catch(e){console.error(e)} renderCampo(); renderOc(); try{renderChk();renderChkGraf()}catch(e){console.error(e)} renderLista(); renderResumo(); try{ if(curView==="hist") renderHist(); }catch(e){} try{ if(curView==="dash") renderDash(); }catch(e){console.error(e)} renderSemProg(); renderContrato(); renderAlertas(); }
 
 /* ---------- botão de olho em todo campo de senha (mostrar o que está sendo digitado) ---------- */
 const OLHO_ABERTO='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
