@@ -3086,7 +3086,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.16y";
+const APP_VERSAO="2026.11.16z";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -6246,6 +6246,7 @@ function abrirChk(c){
   host.innerHTML=`<div class="sheet" id="sh"><div class="panel" role="dialog" aria-label="Checklist de inspeção pós-operacional">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div><b style="font-family:var(--display);font-size:21px;line-height:1.1;display:block">Checklist diário de inspeção pós-operacional</b><span class="note" id="kfTipoNm">${CHK_TIPO_NOME[c?.chkTipo||"cesto"]} · COMURG</span></div><button type="button" class="btn sec" id="kClose" style="min-height:40px;padding:0 14px">Fechar</button></div>
     ${c&&downloads?`<button type="button" class="btn pri" id="kPdf" style="min-height:44px;font-size:15px">Baixar PDF do checklist</button>`:""}
+    ${c&&ehGerPerf(sessao?.perfil)?`<button type="button" class="btn danger" id="kDel" style="min-height:44px;font-size:15px">🗑 Excluir este checklist</button>`:""}
     ${c&&downloads&&c.midia&&Object.keys(c.midia).length?`<button type="button" class="btn sec" id="kMidAll" style="min-height:44px;font-size:15px">⬇ Baixar todas as fotos e vídeos</button>`:""}
     ${rec?`<p class="note" style="margin:0">Turno entregue e recebido: o checklist está fechado e não pode mais ser alterado.</p>`:c&&edit?`<p class="note" style="margin:0">Você pode corrigir enquanto o turno não for recebido. Ao salvar, a assinatura de entrega é feita de novo.</p>`:""}
     <label class="f">Turma / supervisão<select id="kfSup" ${travado()||c?"disabled":""}>${supOpts(sup0)}</select></label>
@@ -6318,6 +6319,9 @@ function abrirChk(c){
   const kMidCtl=midLigar(host,midia,edit,kSlots);
   if(c) MID_PRE=`checklist-${c.viatura||""}-${c.data||""}`;
   if($("#kMidAll")) $("#kMidAll").onclick=()=>midBaixarTodos(chkSlotsDe(c),c.midia,$("#kMidAll"));
+  // excluir checklist: só administrador / gerência, com 2 toques para confirmar
+  if($("#kDel")) $("#kDel").onclick=async e=>{ const b=e.currentTarget; if(!ehGerPerf(sessao?.perfil)) return; if(b.dataset.armed!=="1"){ b.dataset.armed="1"; b.textContent="⚠️ Toque de novo para excluir de vez"; setTimeout(()=>{ if(b.isConnected){ b.dataset.armed=""; b.textContent="🗑 Excluir este checklist"; } },6000); return; }
+    b.disabled=true; try{ await db.collection(CHK_COL).doc(c.id).delete(); chks=chks.filter(x=>x.id!==c.id); close(); toast("Checklist excluído."); try{ renderChk(); }catch(x){} }catch(x){ b.disabled=false; toast("Não foi possível excluir agora."); } };
   if($("#kPdf")) $("#kPdf").onclick=async()=>{ await Promise.all(chkSlotsDe(c).map(s=>midCarregar(c.midia?.[s.k]))); baixarFormPdf($("#kPdf"),chkDocHtml(c),arqNome("checklist",c.data,c.viatura),"Checklist "+(c.viatura||"")+" · "+fmtD(c.data)); };
   const err=$("#kfErr"), erro=t=>{err.textContent=t; err.hidden=false; err.scrollIntoView({block:"nearest"});};
   if($("#kComDef")) $("#kComDef").onclick=()=>abrirMan(null,c.validacao?.decisao==="PROCEDE"?comDefPre(c):{supervisao:c.supervisao,data:c.data,equipe:c.equipe,viatura:c.viatura,km:c.kmFim,desc:[c.ocorr,...chkAlertas(c)].filter(Boolean).join("\n"),chkId:c.id});
