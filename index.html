@@ -1682,7 +1682,7 @@ body.sofiscal nav.tabs{display:none!important}
       <p class="note" style="margin:0" id="naoNote"></p>
       <div class="row2">
         <label class="f">Remarcar para<input type="date" id="proxData"></label>
-        <label class="f">Motivo<select id="motivo"><option value="">Selecione…</option><option>Chuva</option><option>Equipamento (veículo) quebrado</option><option>Rede elétrica (aguardando Equatorial)</option><option>Veículos estacionados / sem acesso</option><option>Morador impediu</option><option>Remanejado pela gerência (emergência)</option><option>Atendimento de galho / árvore caída</option><option>Endereço não localizado</option><option>Executado por outra equipe</option><option>Gerência determinou substituição por outro serviço</option><option value="Outro">Outro (digitar)</option></select></label>
+        <label class="f">Motivo<select id="motivo"><option value="">Selecione…</option><option>Chuva</option><option>Equipamento (veículo) quebrado</option><option>Rede elétrica (aguardando Equatorial)</option><option>Veículos estacionados / sem acesso</option><option>Morador impediu</option><option>Remanejado pela gerência (emergência)</option><option>Atendimento de galho / árvore caída</option><option>Endereço não localizado</option><option>Executado por outra equipe</option><option>Já executado antes por outra equipe da COMURG</option><option>Executado por terceiro (não identificamos o executor)</option><option>Gerência determinou substituição por outro serviço</option><option value="Outro">Outro (digitar)</option></select></label>
       </div>
       <p class="note" id="remDica" style="margin:-4px 0 0"></p>
       <div id="outraBox" class="sub" hidden style="margin:0">
@@ -2815,8 +2815,10 @@ function renderHori(){
 const HIST={per:"tudo",sup:"",q:"",dia:"",end:"",tipo:"",fot:"",st:""};
 const histFotos=r=>{ const S=fotoSlots(r); return S.filter(x=>r.fotosFiscal?.[x.k]||r.relat?.midia?.[x.k]).length; };
 // só entra o que foi EXECUTADO ou PARCIAL (pela baixa ou pelo que o fiscal informou ao finalizar)
-const histSit=r=>{ if(r.status==="SIM"||r.status==="PARCIAL") return r.status; const x=r.osDia?.sv?.[r.id]?.fim?.exec; return isProg(r)&&(x?.sit==="SIM"||x?.sit==="PARCIAL")?x.sit:""; };
+const histSit=r=>{ if(jaDe(r)) return "JA"; if(r.status==="SIM"||r.status==="PARCIAL") return r.status; const x=r.osDia?.sv?.[r.id]?.fim?.exec; return isProg(r)&&(x?.sit==="SIM"||x?.sit==="PARCIAL")?x.sit:""; };
 const histExec=r=>!!histSit(r);
+const jaTxt=r=>{ const j=jaDe(r); if(!j) return ""; if(j!=="comurg"){ const qm=r.jaQuem||r.osDia?.sv?.[r.id]?.fim?.exec?.jaQuem; return qm?"Serviço já executado anteriormente por terceiro: "+qm:"Serviço executado por terceiros – não identificamos o executor"; } const sp=r.jaSup||r.osDia?.sv?.[r.id]?.fim?.exec?.jaSup; return "Serviço já executado anteriormente por equipe da COMURG"+(sp?" – "+supNome(sp):" (equipe não identificada)"); };
+const histSitTxt=r=>{ const h=histSit(r); return h==="JA"?jaTxt(r):h==="SIM"?"Executado":"Parcial"; };
 const histLista=()=>{ const d1=HIST.dia||hoje(), d0=HIST.dia?HIST.dia:HIST.per==="tudo"?"":(()=>{ const d=new Date(hoje()+"T12:00"); d.setDate(d.getDate()-(+HIST.per-1)); return iso(d); })(), q=semAcento(HIST.q||"").toUpperCase(), qe=semAcento(HIST.end||"").toUpperCase().replace(/[^A-Z0-9 ]/g," ").split(/\s+/).filter(Boolean);
   return todosGlobal().filter(r=>!r.arquivado&&!r.ocorrencia&&r.supervisao&&fotoSlots(r).length&&histExec(r)&&(travado()?r.supervisao===sessao.sup:noEscopo(r.supervisao))&&(!HIST.sup||r.supervisao===HIST.sup)&&(!d0||(r.data||"")>=d0)&&(r.data||"")<=d1
     &&(!HIST.tipo||(HIST.tipo==="rot"?fotosRot(r):relTem(r)))&&(!HIST.fot||(HIST.fot==="com"?histFotos(r)>0:histFotos(r)===0))&&(!HIST.st||histSit(r)===HIST.st)
@@ -2826,7 +2828,7 @@ const histLista=()=>{ const d1=HIST.dia||hoje(), d0=HIST.dia?HIST.dia:HIST.per==
 const histHora=r=>{ const sv=r.osDia?.sv?.[r.id]; return (sv?.start||r.osDia?.start)?.em||r.fotosFiscal?.em||""; };
 const histMapa=g=>g&&g.lat!=null?`https://www.google.com/maps?q=${g.lat},${g.lng}`:"";
 function histCard(r){ const ff=r.fotosFiscal||{}, G=ff.geo||{}, sv=r.osDia?.sv?.[r.id]||{}, h0=histHora(r), hf=sv.fim?.em||"", S=fotoSlots(r), k=stKey(r), fis=ff.por||r.osDia?.fiscal?.nome||(r.osDia?.semFiscal?"supervisor (sem fiscal)":"");
-  return `<article class="hs-c${relTem(r)?" hs-p":""}"><div class="hs-tx"><b>${esc(r.supervisao||"")}${r.equipe?" · "+esc(r.equipe):""} <em class="hs-st hs-${esc(histSit(r))}">${histSit(r)==="SIM"?"Executado":"Parcial"}${isProg(r)?" · aguardando baixa":""}</em></b>
+  return `<article class="hs-c${relTem(r)?" hs-p":""}"><div class="hs-tx"><b>${esc(r.supervisao||"")}${r.equipe?" · "+esc(r.equipe):""} <em class="hs-st hs-${esc(histSit(r))}">${histSitTxt(r)}${isProg(r)?" · aguardando baixa":""}</em></b>
     <span><b>DATA</b> ${fmtD(r.data)} (${diaDe(r.data)})</span>
     <span><b>HORÁRIO</b> ${h0?hm(h0):"—"}${hf?" às "+hm(hf):""}</span>
     <span><b>TIPO DE ATENDIMENTO</b> ${esc(tipoTxt(r)||r.tipo||"")}</span>
@@ -2843,7 +2845,7 @@ function histDocHtml(L,tit){ const nw="white-space:normal;text-align:left;word-b
       return `<td style="width:50%;padding:4px;vertical-align:top;white-space:normal;text-align:left"><img src="${u}" style="width:100%;height:210px;object-fit:cover;border-radius:6px;display:block"><div style="font-size:10px;margin-top:3px;line-height:1.35"><b>${esc(s.curto)}</b> · ${g?.em?hm(g.em)+" de "+fmtD(iso(new Date(g.em))):""}${g&&g.lat!=null?`<br>📍 ${g.lat.toFixed(6)}, ${g.lng.toFixed(6)}${g.prec?" (±"+g.prec+" m)":""}`:""}</div></td>`; }).filter(Boolean);
     const lin=[]; for(let i=0;i<fs.length;i+=2) lin.push(`<tr>${fs[i]}${fs[i+1]||'<td style="width:50%"></td>'}</tr>`);
     return `<div style="break-inside:avoid;page-break-inside:avoid;margin:0 0 14px;border:1px solid #cfd8cc;border-radius:8px;padding:8px">
-      <table style="width:100%;border-collapse:collapse;table-layout:fixed">${[["Supervisão / equipe",esc(r.supervisao||"")+(r.equipe?" · "+esc(r.equipe):"")],["Data",fmtD(r.data)+" ("+diaDe(r.data)+")"],["Horário",(h0?hm(h0):"—")+(hf?" às "+hm(hf):"")],["Tipo de atendimento",esc(tipoTxt(r)||r.tipo||"")],["Processo",r.processo?esc(procNum(r)):"—"],["Endereço",esc(r.logradouro||"")+(r.bairro?" – "+esc(r.bairro):"")],["Situação",(histSit(r)==="SIM"?"Executado":"Parcial")+(x?" · fiscal: "+esc(svExecTxt(x)):"")],["Fiscal",esc(fis||"—")+(r.osDia?.num?" · O.S nº "+esc(r.osDia.num):"")],...(r.obs?[["Obs.",esc(r.obs)]]:[])].map(([a,b])=>`<tr><th style="${th}">${a}</th><td style="${td}">${b}</td></tr>`).join("")}</table>
+      <table style="width:100%;border-collapse:collapse;table-layout:fixed">${[["Supervisão / equipe",esc(r.supervisao||"")+(r.equipe?" · "+esc(r.equipe):"")],["Data",fmtD(r.data)+" ("+diaDe(r.data)+")"],["Horário",(h0?hm(h0):"—")+(hf?" às "+hm(hf):"")],["Tipo de atendimento",esc(tipoTxt(r)||r.tipo||"")],["Processo",r.processo?esc(procNum(r)):"—"],["Endereço",esc(r.logradouro||"")+(r.bairro?" – "+esc(r.bairro):"")],["Situação",histSitTxt(r)+(x&&!jaDe(r)?" · fiscal: "+esc(svExecTxt(x)):"")],["Fiscal",esc(fis||"—")+(r.osDia?.num?" · O.S nº "+esc(r.osDia.num):"")],...(r.obs?[["Obs.",esc(r.obs)]]:[])].map(([a,b])=>`<tr><th style="${th}">${a}</th><td style="${td}">${b}</td></tr>`).join("")}</table>
       ${lin.length?`<table style="width:100%;border-collapse:collapse;margin-top:6px;table-layout:fixed">${lin.join("")}</table>`:`<p style="font-size:11px;color:#667;margin:6px 0 0">Sem fotos registradas.</p>`}</div>`; };
   return `<div class="fdoc lx"><style>${typeof FDOC_CSS!=="undefined"?FDOC_CSS:""}</style><div class="r-body">${fhead("HISTÓRICO DE EXECUÇÃO",tit)}<p style="font-size:11px;margin:6px 0 10px">${L.length} serviço${L.length===1?"":"s"} · gerado em ${fmtD(hoje())} às ${hm(new Date().toISOString())} por ${esc(sessao?.nome||"")}</p>${L.map(bloco).join("")}</div></div>`; }
 async function histBaixar(btn,L,tipo){ if(!L.length) return toast("Nenhum registro para baixar.");
@@ -2865,7 +2867,7 @@ function renderHist(){ const host=$("#histBody"); if(!host) return; if(!sessao){
       ${sups.length>1?sel("hsSup",HIST.sup,[["","Todas as supervisões"],...sups.map(x=>[x.id,x.id])]):""}
       ${sel("hsTipo",HIST.tipo,[["","Todos os tipos"],["rot","Rotina (entre-pistas, praças…)"],["proc","Processo SEI / Intranet"]])}
       ${sel("hsFot",HIST.fot,[["","Com e sem foto"],["com","Só com fotos"],["sem","Só sem fotos"]])}
-      ${sel("hsSt",HIST.st,[["","Executado e parcial"],["SIM","Só executado"],["PARCIAL","Só parcial"]])}
+      ${sel("hsSt",HIST.st,[["","Todos"],["SIM","Só executado"],["PARCIAL","Só parcial"],["JA","Já estava feito"]])}
       <input type="search" id="hsQ" value="${esc(HIST.q)}" placeholder="Buscar fiscal, equipe, O.S, processo…"></div>
     <div class="hs-row"><p class="note" style="margin:6px 0">${HIST.dia?"Dia "+fmtD(HIST.dia)+" · ":""}<b>${L.length}</b> registro${L.length===1?"":"s"} · ${nC} com fotos</p><span class="hs-dl">${L.length?`<button type="button" class="btn sec" data-hsdl="pdf" data-hsall="1">📄 PDF de todos (${L.length})</button><button type="button" class="btn sec" data-hsdl="img" data-hsall="1">🖼 Imagem de todos</button>`:""}${HIST.dia||HIST.end||HIST.sup||HIST.tipo||HIST.fot||HIST.st||HIST.q||HIST.per!=="tudo"?`<button type="button" class="btn sec" id="hsLimpa">Mostrar todos</button>`:""}</span></div>${!HIST.dia&&L.length>1?`<p class="note" style="margin:0 0 6px">Para prestar contas de um dia, escolha o <b>Dia</b> acima e baixe “de todos”.</p>`:""}
     <div class="hs-l">${L.slice(0,HIST.lim||60).map(histCard).join("")||`<div class="empty">Nenhum registro com esses filtros.</div>`}</div>${L.length>(HIST.lim||60)?`<button type="button" class="btn sec" id="hsMais" style="margin-top:10px">Mostrar mais (${L.length-(HIST.lim||60)} restantes)</button>`:""}`;
@@ -3084,7 +3086,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.16p";
+const APP_VERSAO="2026.11.16y";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -3296,7 +3298,11 @@ const relTem=r=>r&&(r.tipo==="O.S"||r.tipo==="PROCESSO")&&!r.ocorrencia;
 // relatório só é liberado (assinatura e download) quando o serviço é executado na totalidade;
 // se parte foi remarcada (parcial / não executado), ele sai na baixa que concluir o serviço, somando todas as etapas
 const relCadeia=r=>{ const L=[r]; let x=r, n=0; while(x&&x.remarcadaDe&&n++<30){ x=todosGlobal().find(y=>y.id===x.remarcadaDe); if(x) L.unshift(x); } return L; };
-const relLiberado=r=>relTem(r)&&r.status==="SIM"&&!!r.relat?.ass; // executado na totalidade e assinado pelo supervisor
+const relLiberado=r=>relTem(r)&&(r.status==="SIM"||(r.status==="NÃO"&&!!r.jaExecutado))&&!!r.relat?.ass; // também o serviço que o fiscal achou já executado
+// processo / O.S que o fiscal achou já executado: o relatório sai com 1 foto e o texto de quem executou (para a baixa no processo)
+let relJa=false;
+const relJaB=b=>!!b&&relTem(b)&&form?.mode==="baixa"&&form.st==="NÃO"&&(!!b.jaExecutado||(typeof MOT_JA!=="undefined"&&MOT_JA.includes($("#motivo")?.value)));
+const relSlots=()=>relJa?JA_SLOTS:REL_SLOTS; // executado na totalidade e assinado pelo supervisor
 const ehFiscal=()=>sessao?.perfil==="fiscal";
 // fotos (antes, durante, depois) só são exigidas na O.S (Intranet) e no processo SEI; processo GED segue o mesmo fluxo, sem fotos
 const fotosPede=r=>!!r&&relTem(r)&&(r.tipo==="O.S"||(r.tipo==="PROCESSO"&&(r.procSist||"SEI")==="SEI"));
@@ -3360,7 +3366,8 @@ const relSubTemRec=r=>!!(r&&r.status==="NÃO"&&relTem(relSubRec(r)));
 const relAcha=id=>{ id=String(id||""); if(id.endsWith("~s")) return relSubRec(todosGlobal().find(x=>x.id===id.slice(0,-2))); return todosGlobal().find(x=>x.id===id); };
 const relSubForm=()=>!ehFiscal()&&form.mode==="baixa"&&form.st==="NÃO"&&!$("#semSub").checked&&["O.S","PROCESSO"].includes($("#s_tipo").value);
 let relAlvo="";
-function relSync(){ const b=form.base; const alvo=!(form.mode==="baixa"&&b)||ehFiscal()?"":(form.st==="SIM"&&relTem(b))?"base":relSubForm()?"sub":"";
+function relSync(){ const b=form.base, ja=!ehFiscal()&&relJaB(b); const alvo=!(form.mode==="baixa"&&b)||ehFiscal()?"":((form.st==="SIM"&&relTem(b))||ja)?"base":relSubForm()?"sub":"";
+  if(ja!==relJa){ relJa=ja; relAlvo=""; }
   $("#secRel").hidden=!alvo; const n=$("#relSubNota"); if(n) n.hidden=alvo!=="sub";
   if(alvo&&alvo!==relAlvo){ if(alvo==="base") relCarregar(b); else relCarregar({supervisao:b.supervisao, tipo:$("#s_tipo").value, processo:$("#s_processo").value.trim(), relat:b.substituto?.relat?{...b.substituto.relat,ass:null}:{}, parecer:""}); }
   if(alvo==="sub"){ relTipo=$("#s_tipo").value; if(!$("#rlProc").value.trim()) $("#rlProc").value=$("#s_processo").value.trim(); relIdUI(); }
@@ -3380,16 +3387,20 @@ const ROT_SLOTS=[
 const fotoObrig=r=>fotoSlots(r).filter(x=>!x.opc);
 const fotosRot=r=>!!r&&!relTem(r)&&!r.ocorrencia&&!r.avulso;
 // processo (SEI, Intranet ou GED), inclusive extra: 3 fotos obrigatórias; os outros atendimentos: 2 do serviço + endereço opcional
-const fotoSlots=r=>relTem(r)?REL_SLOTS:fotosRot(r)?ROT_SLOTS:[];
+// serviço que o fiscal encontrou já feito: 1 foto do local
+const JA_SLOTS=[{k:"ja",t:"Foto do local mostrando que o serviço já estava feito",tipo:"foto",janelaH:24,curto:"JÁ FEITO",dica:"local com o serviço já feito"}];
+const jaDe=r=>r?.jaExecutado||r?.osDia?.sv?.[r?.id]?.fim?.exec?.ja||"";
+const fotoSlots=r=>jaDe(r)?JA_SLOTS:relTem(r)?REL_SLOTS:fotosRot(r)?ROT_SLOTS:[];
 const fotosOk=r=>fotoObrig(r).every(x=>r.fotosFiscal?.[x.k]||r.relat?.midia?.[x.k]);
 const relMatSup=sup=>{ const u=Object.values(acesso||{}).find(x=>x.perfil==="supervisor"&&x.ativo&&x.sup===sup); return u?String(u.matricula||"").replace(/^m/i,""):""; };
 function relCarregar(r){ let R=r.relat||null; if(!R){ const ant=relCadeia(r).slice(0,-1).reverse().find(x=>x.relat); R=ant?{...ant.relat,ass:null}:{}; } relMidia={...(R.midia||{})};
-  { const ff=r.fotosFiscal; if(ff) REL_SLOTS.forEach(x=>{ if(!relMidia[x.k]&&ff[x.k]) relMidia[x.k]=ff[x.k]; }); }
+  { const ff=r.fotosFiscal; if(ff) relSlots().forEach(x=>{ if(!relMidia[x.k]&&ff[x.k]) relMidia[x.k]=ff[x.k]; }); }
   relTipo=r.tipo||""; $("#rlProc").value=R.processo||r.processo||""; $("#rlSist").value=R.sist||r.procSist||""; $("#rlPed").value=R.ped||r.ped||""; relIdUI();
   $("#rlParecer").value=R.parecer||r.parecer||""; $("#rlVist").value=R.vistoria||""; $("#rlSolic").value=R.solicitante||""; $("#rlArv").value=R.arvore||""; $("#rlGalho").value=R.galho||"";
   $("#rlMat").value=R.matricula||relMatSup(r.supervisao);
   $("#rlSig").innerHTML=sigBlocoHtml("rS",r.supervisao).replace("Supervisor que entrega","Supervisor responsável pelo serviço");
-  const h=$("#rlFotos"); h.innerHTML=midSecHtml(relMidia,true,REL_SLOTS,"Registro fotográfico – 3 fotos obrigatórias","Tire na hora pela câmera ou anexe a foto tirada no dia do serviço (antes de começar, durante e depois). As 3 fotos vão para o relatório."); midLigar(h,relMidia,true,REL_SLOTS); }
+  const h=$("#rlFotos"); if(relJa){ h.innerHTML=midSecHtml(relMidia,true,JA_SLOTS,"Registro fotográfico – serviço já executado (1 foto)","O fiscal encontrou o serviço já feito. A foto do local vai para o relatório, com o texto de quem executou."); midLigar(h,relMidia,true,JA_SLOTS); return; }
+  h.innerHTML=midSecHtml(relMidia,true,REL_SLOTS,"Registro fotográfico – 3 fotos obrigatórias","Tire na hora pela câmera ou anexe a foto tirada no dia do serviço (antes de começar, durante e depois). As 3 fotos vão para o relatório."); midLigar(h,relMidia,true,REL_SLOTS); }
 let relTipo="";
 function relIdUI(){ const pr=relTipo==="PROCESSO"; { const o=$("#rlFotoOpc"); if(o) o.hidden=!(pr&&$("#rlSist").value==="GED"); } $("#rlSistW").hidden=!pr; $("#rlProcLbl").textContent=pr?($("#rlSist").value?`Nº do ${$("#rlSist").value} (obrigatório)`:"Nº do processo (obrigatório)"):"Nº da O.S (obrigatório)"; }
 $("#rlSist").addEventListener("change",relIdUI);
@@ -3405,8 +3416,8 @@ const relEquipe=r=>{ const s=supOf(r.supervisao)||{}; const g=s.grupo||r.grupo||
 const REL_ITENS=["Poda de árvore (D<20cm ; H<5m).","Poda de árvore (DAP 20-40cm ; H 5-10m).","Poda de árvore (DAP 40-60cm ; H 10-15m).","Poda de árvore (DAP>60cm ; H>15m).","Extirpação de árvore (DAP 20-40cm ; H 5-10m).","Extirpação de árvore (DAP 40-60cm ; H 10-15m).","Extirpação de árvore (DAP>60cm ; H>15m).","Extirpação de árvore (DAP>200cm ; H>15m)."];
 const LOGO_PREF="data:image/jpeg;base64,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";
 const relAssTxt=a=>a&&a.em?`Documento assinado eletronicamente por ${a.nome}, ${a.cargo||"Supervisor"}, em ${dataBR(a.em)}, às ${new Date(a.em).toTimeString().slice(0,5)}, mediante senha pessoal de assinatura (matrícula ${a.mat||"—"}) no sistema Programação GPE – COMURG. Código verificador: ${a.cod||"—"}.`:"";
-function relDocHtml(r){ const R=r.relat||{}, q=relQtd(r), v=x=>x?esc(String(x)):"";
-  const naoExec=r.status==="NÃO"?(r.outraEquipe?outraTxt(r)+".":`Serviço não executado. Motivo: ${r.motivo||"—"}${r.proxData?` · remarcado para ${fmtD(r.proxData)}`:""}`)
+function relDocHtml(r){ const R=r.relat||{}, q=relQtd(r), v=x=>x?esc(String(x)):"", jaR=r.status==="NÃO"&&!!r.jaExecutado;
+  const naoExec=jaR?jaTxt(r)+".":r.status==="NÃO"?(r.outraEquipe?outraTxt(r)+".":`Serviço não executado. Motivo: ${r.motivo||"—"}${r.proxData?` · remarcado para ${fmtD(r.proxData)}`:""}`)
     :r.status==="PARCIAL"?`Executado parcialmente. Faltou: ${qtdTxtPlano(r.qtdRemarcada||{})||"—"}. Motivo: ${r.motivo||"—"}${r.proxData?` · restante remarcado para ${fmtD(r.proxData)}`:""}`:"";
   const fot=REL_SLOTS.map(x=>{ const u=midUrl(R.midia?.[x.k]); return `<td class="ft">${u?`<img src="${esc(u)}" alt="">`:""}</td>`; }).join("");
   return `<div class="rel"><style>
@@ -3444,10 +3455,10 @@ function relDocHtml(r){ const R=r.relat||{}, q=relQtd(r), v=x=>x?esc(String(x)):
    <tr><td colspan="2"><b>Data da Vistoria:</b> ${R.vistoria?fmtD(R.vistoria):""}</td></tr>
    <tr><td colspan="2"><b>Data da Execução do Serviço:</b> ${relExecTxt(r)}</td></tr></table>
   <p style="text-align:center;font-weight:700;font-size:13px;margin:18px 0 2px">REGISTRO FOTOGRÁFICO</p>
-  <table><tr><td class="h">ANTES</td><td class="h">DURANTE</td><td class="h">DEPOIS</td></tr><tr>${fot}</tr></table>
+  ${jaR?(()=>{ const u=midUrl(R.midia?.ja); return `<table><tr><td class="h">LOCAL DO SERVIÇO – SERVIÇO JÁ EXECUTADO</td></tr><tr><td class="ft" style="height:240px;width:100%">${u?`<img src="${esc(u)}" alt="" style="max-height:230px">`:""}</td></tr></table>`; })():`<table><tr><td class="h">ANTES</td><td class="h">DURANTE</td><td class="h">DEPOIS</td></tr><tr>${fot}</tr></table>`}
   ${R.ass?.em?`<div class="esig"><div class="i">${SELO_PNG?`<img src="${SELO_PNG}" alt="">`:SELO}</div><p>${esc(relAssTxt(R.ass))}</p></div>`:`<p style="text-align:center;font-size:11px;color:#9b1f18;margin:26px 0 0">Relatório ainda sem assinatura eletrônica do supervisor.</p>`}
   <div class="ass" style="margin-top:${R.ass?.em?"10px":"40px"}">${R.ass?.em?esc(R.ass.nome)+"<br>":""}ASSINATURA DO RESPONSÁVEL</div></div>`; }
-async function relPdf(r,btn){ await Promise.all(REL_SLOTS.map(x=>midCarregar(r.relat?.midia?.[x.k])));
+async function relPdf(r,btn){ await Promise.all([...REL_SLOTS,...JA_SLOTS].map(x=>midCarregar(r.relat?.midia?.[x.k])));
   await baixarFormPdf(btn,r.htmlFix?r.htmlFix(relDocHtml(r)):relDocHtml(r),`relatorio-servico-${(r.processo||r.tipo||"").replace(/[^A-Za-z0-9]+/g,"-")}-${r.dataExec||r.data}.pdf`.replace(/-+/g,"-"),"Relatório de serviço "+(r.processo||""),{umaFolha:true}); }
 // depois da baixa de O.S / processo: o relatório já está preenchido – baixar em PDF ou Word
 function relOferecer(id){ const r=relAcha(id); if(!r||!relLiberado(r)) return; const box=document.createElement("div"); box.className="sheet"; box.style.zIndex=40;
@@ -3470,10 +3481,10 @@ async function relDocx(r,btn){
   if(!downloads){ toast("Download não disponível aqui."); return; }
   const t0=btn.textContent; btn.disabled=true; btn.textContent="Gerando Word…";
   try{ await loadJSZip(); const R=r.relat||{}, q=relQtd(r);
-    await Promise.all(REL_SLOTS.map(x=>midCarregar(R.midia?.[x.k])));
+    await Promise.all([...REL_SLOTS,...JA_SLOTS].map(x=>midCarregar(R.midia?.[x.k]))); const jaR=r.status==="NÃO"&&!!r.jaExecutado;
     const bin=Uint8Array.from(atob(REL_DOCX_B64),c=>c.charCodeAt(0)); const zip=await JSZip.loadAsync(bin);
     let x=await zip.file("word/document.xml").async("string"), rels=await zip.file("word/_rels/document.xml.rels").async("string");
-    const naoExec=r.status==="NÃO"?(r.outraEquipe?outraTxt(r)+".":`Serviço não executado. Motivo: ${r.motivo||"—"}${r.proxData?` · remarcado para ${fmtD(r.proxData)}`:""}`):r.status==="PARCIAL"?`Executado parcialmente. Faltou: ${qtdTxtPlano(r.qtdRemarcada||{})||"—"}. Motivo: ${r.motivo||"—"}${r.proxData?` · restante remarcado para ${fmtD(r.proxData)}`:""}`:"";
+    const naoExec=jaR?jaTxt(r)+".":r.status==="NÃO"?(r.outraEquipe?outraTxt(r)+".":`Serviço não executado. Motivo: ${r.motivo||"—"}${r.proxData?` · remarcado para ${fmtD(r.proxData)}`:""}`):r.status==="PARCIAL"?`Executado parcialmente. Faltou: ${qtdTxtPlano(r.qtdRemarcada||{})||"—"}. Motivo: ${r.motivo||"—"}${r.proxData?` · restante remarcado para ${fmtD(r.proxData)}`:""}`:"";
     const V={PROCLBL:relId(r).lbl,PROC:relId(r).num+"   ·   PED Nº: "+(relId(r).ped||"—"),PARECER:relId(r).par,EQUIPE:relEquipe(r),SOLIC:R.solicitante||"",LOCAL:[r.bairro,r.logradouro].filter(Boolean).join(" — "),
       ARV:R.arvore||"",GALHO:R.galho||"",NAOEXEC:naoExec,OBS:r.obs||"",FISCAL:r.fiscal||"",SUPNOME:R.ass?.nome||nomeSupDe(r.supervisao)||"",ASSIN:R.ass?.em?relAssTxt(R.ass):"Relatório ainda sem assinatura eletrônica do supervisor.",MAT:R.matricula||"",VIST:R.vistoria?fmtD(R.vistoria):"",EXEC:relExecTxt(r)};
     ITENS.forEach((it,i)=>V["Q"+(i+1)]=+q[it.c]?String(q[it.c]).replace(".",","):"");
@@ -3481,7 +3492,8 @@ async function relDocx(r,btn){
     { const vaz=k=>{ const t=String(V[k]||"").trim(); return !t||t==="0"; };
       x=x.replace(/<w:tr[ >][\s\S]*?<\/w:tr>/g,tr=>{ const m=tr.match(/\{\{(Q\d|ARV|GALHO)\}\}/); if(m&&vaz(m[1])) return "";
         if(vaz("ARV")&&vaz("GALHO")&&/^\s*OUTROS\s*Quant\.?\s*$/.test(tr.replace(/<[^>]+>/g,""))) return ""; return tr; }); }
-    for(let i=0;i<REL_SLOTS.length;i++){ const k="FOTO"+(i+1), f=await relFotoJpg(midUrl(R.midia?.[REL_SLOTS[i].k])); let run="";
+    if(jaR){ x=x.replace(/<w:t>ANTES<\/w:t>/,"<w:t></w:t>").replace(/<w:t>DURANTE<\/w:t>/,"<w:t>SERVIÇO JÁ EXECUTADO</w:t>").replace(/<w:t>DEPOIS<\/w:t>/,"<w:t></w:t>"); }
+    for(let i=0;i<REL_SLOTS.length;i++){ const k="FOTO"+(i+1), f=await relFotoJpg(midUrl(jaR?(i===1?R.midia?.ja:null):R.midia?.[REL_SLOTS[i].k])); let run="";
       if(f){ const id="rIdGpeF"+(i+1), nm=`media/gpe_foto${i+1}.jpg`; zip.file("word/"+nm,f.buf); rels=rels.replace("</Relationships>",`<Relationship Id="${id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="${nm}"/></Relationships>`);
         const MW=1950000, MH=1350000, k2=Math.min(MW/f.w,MH/f.h), cx=Math.round(f.w*k2), cy=Math.round(f.h*k2);
         run=`<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="${900+i}" name="Foto ${i+1}"/><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="${900+i}" name="foto${i+1}.jpg"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${id}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>`; }
@@ -3768,16 +3780,17 @@ function setMotivo(m){ const opts=[...$("#motivo").options].map(o=>o.value); if(
 const MOT_OUTRA="Executado por outra equipe";
 const outraEq=()=>form.mode==="baixa"&&form.st==="NÃO"&&$("#motivo").value===MOT_OUTRA;
 // morador impediu: não remarca (não pede nova data)
-const MOT_MOR="Morador impediu";
-const semRemarcar=()=>form.mode==="baixa"&&(form.st==="NÃO"||form.st==="PARCIAL")&&$("#motivo").value===MOT_MOR;
+const MOT_MOR="Morador impediu", MOT_JA=["Já executado antes por outra equipe da COMURG","Executado por terceiro (não identificamos o executor)"];
+const semRemarcar=()=>form.mode==="baixa"&&(form.st==="NÃO"||form.st==="PARCIAL")&&($("#motivo").value===MOT_MOR||MOT_JA.includes($("#motivo").value));
 const remTxt=(r,pre)=>r.proxData?(pre||"remarcado p/ ")+fmtD(r.proxData):"não remarcado";
 const outraTxt=r=>{ const o=r.outraEquipe; if(!o) return ""; return `Executado por outra equipe: ${[o.sup==="OUTRA"?(o.outro||"outra equipe"):o.sup,o.equipe].filter(Boolean).join(" · ")}${o.data?" em "+fmtD(o.data):""}`; };
 function motivoUI(){ $("#motivoTxtW").hidden = $("#motivo").value!=="Outro";
+  try{ relSync(); }catch(e){}
   const oe=outraEq(), sr=semRemarcar(), pd=$("#proxData").closest("label"); if(pd){ pd.hidden=oe||sr; pd.parentElement.style.gridTemplateColumns=oe||sr?"1fr":""; } $("#remDica").hidden=oe||sr; if(sr) $("#proxData").value=""; $("#outraBox").hidden=!oe;
   if(oe){ const sel=$("#oeSup"), cur=sel.value; sel.innerHTML=`<option value="">Selecione…</option>${SUPS_ALL.filter(x=>x.id!==form.base?.supervisao).map(x=>`<option value="${esc(x.id)}">${esc(x.id)}</option>`).join("")}<option value="OUTRA">Outra (digitar)</option>`; sel.value=cur; }
   $("#oeOutroW").hidden=!(oe&&$("#oeSup").value==="OUTRA");
   const rb=$("#relBloq"); if(rb&&oe) rb.hidden=true;
-  if(sr) $("#naoNote").innerHTML = form.st==="PARCIAL" ? "Morador impediu: o que faltou <b>não é remarcado</b>." : "Morador impediu: o serviço <b>não é remarcado</b>. Abaixo, registre o <b>outro serviço que a equipe fez no dia</b>.";
+  if(sr){ const ja=MOT_JA.includes($("#motivo").value), q=ja?"O serviço já estava feito":"Morador impediu"; $("#naoNote").innerHTML = form.st==="PARCIAL" ? q+": o que faltou <b>não é remarcado</b>." : q+": o serviço <b>não é remarcado</b>. Abaixo, registre o <b>outro serviço que a equipe fez no dia</b>."; }
   else if(form.mode==="baixa"&&form.st==="NÃO") $("#naoNote").innerHTML = oe ? "Outra equipe já executou: o serviço programado <b>não é remarcado</b>. Abaixo, registre o <b>outro serviço que a equipe fez no dia</b> – se for O.S ou processo, o relatório de serviço sai para ele." : "O serviço programado será <b>remarcado</b> para a nova data. Abaixo, registre o <b>outro serviço que a equipe fez no dia</b>."; }
 $("#oeSup").onchange=()=>motivoUI();
 $("#motivo").onchange=()=>{ motivoUI(); if($("#motivo").value==="Outro") $("#motivoTxt").focus(); };
@@ -3953,20 +3966,29 @@ function geoUI(){ const g=form.geo||(form.base&&form.base.geo)||null, info=$("#g
   if(g){ info.innerHTML=`<span class="geo-ok">✓ Localização ${g.fonte==="gps"?"do GPS":"informada"}</span>: ${fmtCoord(g)}${g.prec?` · precisão ±${Math.round(g.prec)} m`:""}${g.em?` · ${new Date(g.em).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}`:""}`;
     mp.innerHTML=`<a class="maplink" href="${gpsUrl(g)}" target="_blank" rel="noopener">${PIN}Conferir no mapa</a>`; }
   else { info.textContent="Pegue a posição pelo GPS do aparelho no local do serviço."; mp.innerHTML=""; } }
+// GPS com precisão: fica lendo o sinal por até ~20 s (sem usar posição velha) e fica com a leitura mais precisa; para quando chega a ±15 m
+function gpsPreciso(o={}){ const alvo=o.alvo||15, max=o.max||20000, prog=o.prog||(()=>{});
+  return new Promise((ok,no)=>{ if(!navigator.geolocation) return no({code:9}); let best=null, fim=false, id=null;
+    const acaba=e=>{ if(fim) return; fim=true; clearTimeout(t); try{ navigator.geolocation.clearWatch(id); }catch(x){} if(best) ok(best); else no(e||{code:3}); };
+    const t=setTimeout(()=>acaba(),max);
+    id=navigator.geolocation.watchPosition(p=>{ const q={lat:p.coords.latitude,lng:p.coords.longitude,prec:Math.round(p.coords.accuracy||9999)};
+        if(!best||q.prec<best.prec) best=q; prog(best.prec); if(best.prec<=alvo) acaba(); },
+      e=>{ if(e&&e.code===1) return acaba(e); if(!best&&e&&e.code!==3) acaba(e); },
+      {enableHighAccuracy:true,maximumAge:0,timeout:max}); }); }
 function pegarGPS(auto){
   const btn=$("#geoBtn"), info=$("#geoInfo");
   if(!("geolocation" in navigator)){ if(!auto){ info.innerHTML=`<span class="geo-bad">Este aparelho não informa a localização.</span> Digite ou cole as coordenadas abaixo.`; } return; }
   btn.disabled=true; btn.textContent="Buscando sinal do GPS…";
-  navigator.geolocation.getCurrentPosition(pos=>{
+  gpsPreciso({prog:pr=>{ btn.textContent=`📍 Melhorando a precisão… ±${pr} m`; }}).then(pos=>{
     btn.disabled=false; btn.textContent="Atualizar GPS";
-    form.geo={lat:+pos.coords.latitude.toFixed(6), lng:+pos.coords.longitude.toFixed(6), prec:Math.round(pos.coords.accuracy||0), em:new Date().toISOString(), fonte:"gps"};
+    form.geo={lat:+pos.lat.toFixed(6), lng:+pos.lng.toFixed(6), prec:pos.prec, em:new Date().toISOString(), fonte:"gps"};
     $("#geoTxt").value=""; geoUI();
   }, err=>{
     btn.disabled=false; btn.textContent="Usar GPS do aparelho";
     if(auto) return;
     const msg=err&&err.code===1?"A localização foi bloqueada neste aparelho ou nesta tela.":err&&err.code===3?"O GPS demorou para responder.":"Não foi possível obter a localização.";
     info.innerHTML=`<span class="geo-bad">${msg}</span> Abra o Google Maps, toque e segure no local, copie as coordenadas e cole abaixo.`;
-  }, {enableHighAccuracy:true, timeout:15000, maximumAge:60000});
+  });
 }
 $("#geoBtn").onclick=()=>pegarGPS(false);
 $("#geoTxt").addEventListener("input",()=>{ const g=parseCoord($("#geoTxt").value); if(g){ form.geo={...g, fonte:"manual", em:new Date().toISOString()}; geoUI(); } });
@@ -4199,8 +4221,10 @@ $("#form").addEventListener("submit", async ev=>{
     if(m==="baixa"){ body.qtdPrevista = prevQ(base); body.receitaPrevista = receitaDe(body.qtdPrevista);
       if(endIncompleto(base)&&$("#bxLogr").value){ body.logradouro=$("#bxLogr").value; body.endCompletadoNaBaixa={em:now,por:nomeAutor()||""}; }
       if(relTem(base)&&form.st==="SIM"&&!ehFiscal()&&!fiscal) e.push("informe o fiscal de turma (sai no relatório de serviço)");
-      if(relTem(base)&&form.st==="SIM"&&!ehFiscal()) e.push(...relIdErros());
-      if(relTem(base)&&form.st==="SIM"&&!ehFiscal()){ if([...document.querySelectorAll("#rlFotos .midst")].some(x=>/enviando/.test(x.textContent))) e.push("espere terminar o envio das fotos do relatório");
+      const relFaz=relTem(base)&&!ehFiscal()&&(form.st==="SIM"||relJaB(base));
+      if(relFaz) e.push(...relIdErros());
+      if(relFaz){ if([...document.querySelectorAll("#rlFotos .midst")].some(x=>/enviando/.test(x.textContent))) e.push("espere terminar o envio das fotos do relatório");
+        else if(relJa){ if(!relMidia.ja) e.push("anexe a foto do local (serviço já executado) para o relatório"); }
         else if(fotosPede({...base,procSist:$("#rlSist").value||base.procSist})){ const f=REL_SLOTS.filter(x=>!relMidia[x.k]).map(x=>x.k); if(f.length) e.push("anexe as fotos do relatório que faltam: "+f.join(", ")+" (antes de começar, durante e depois do serviço)"); }
         body.relat=relLer();
         if(!e.length){ const qa=await assinante("rS",base.supervisao); if(qa.erro) e.push("assinatura do relatório: "+qa.erro);
@@ -4221,7 +4245,7 @@ $("#form").addEventListener("submit", async ev=>{
       body.motivo=MOT_OUTRA; body.outraEquipe={sup:os, outro:os==="OUTRA"?oo:"", equipe:$("#oeEq").value, data:od}; }
     if(m==="baixa" && form.st==="PARCIAL"){ const pv=prevQ(base); remQ={}; ITENS.forEach(i=>{const d=Math.round(((+pv[i.c]||0)-(+q[i.c]||0))*100)/100; if(d>0) remQ[i.c]=d}); if(!Object.keys(remQ).length) remQ=null; }
     body.proxData=""; if(!body.outraEquipe) body.motivo=""; body.substituto=null; body.semSubstituto=false; body.semRemarcar=false;
-    if(semRemarcar()){ body.motivo=MOT_MOR; body.semRemarcar=true; body.qtdRemarcada=form.st==="PARCIAL"?remQ:null; remQ=null; }
+    if(semRemarcar()){ body.motivo=$("#motivo").value; body.semRemarcar=true; if(MOT_JA.includes(body.motivo)&&!body.jaExecutado) body.jaExecutado=body.motivo===MOT_JA[0]?"comurg":"outro"; if(!MOT_JA.includes(body.motivo)){ delete body.jaExecutado; } body.qtdRemarcada=form.st==="PARCIAL"?remQ:null; remQ=null; }
     if(m==="baixa" && form.st==="NÃO"){
       const sem=$("#semSub").checked;
       let sub=null;
@@ -4317,7 +4341,7 @@ $("#form").addEventListener("submit", async ev=>{
   else if(m==="ocorr") toast(body.ocorrencia.impacto?.houve?"Atendimento registrado. "+body.ocorrencia.impacto.servicos.length+" serviço(s) da programação marcado(s) como afetado(s): dê a baixa deles na aba Serviços em abertas.":"Atendimento registrado.",6000);
   else if(m==="prog"&&body?.status==="VALIDAR") toast("Serviço fora de programação salvo. Ele vai para o gerente ou coordenador validar: só depois da validação entra na programação e na baixa.",7000);
   else toast(m==="prog" ? (base?"Programação corrigida.":extraMulti?`Programado em ${extraMulti.length+1} dias: de ${fmtD(body.data)} a ${fmtD(extraMulti[extraMulti.length-1].body.data)}.`:"Programado para "+fmtD(body.data)+".") : body.proxData ? (form.st==="PARCIAL"?"Baixa salva. O que faltou foi remarcado para ":"Baixa salva. Remarcado para ")+fmtD(body.proxData)+"." : "Baixa salva.");
-  if(m==="baixa"&&relTem(base)&&body?.status==="SIM"&&body?.relat?.ass&&downloads&&res!=="perm"&&res!=="quota") setTimeout(()=>relOferecer(id),400);
+  if(m==="baixa"&&relTem(base)&&(body?.status==="SIM"||body?.jaExecutado)&&body?.relat?.ass&&downloads&&res!=="perm"&&res!=="quota") setTimeout(()=>relOferecer(id),400);
   else if(m==="baixa"&&body?.substituto?.relat?.ass&&downloads&&res!=="perm"&&res!=="quota") setTimeout(()=>relOferecer(id+"~s"),400);
   if(m==="prog"){ const av=avisoContrato(id,body); if(av) setTimeout(()=>toast(av,7000),3100); }
   if(m==="prog"&&!base&&body?.extra&&res!=="perm"&&res!=="quota"&&body.supervisao&&body.data===diaOS(body.supervisao)&&osPodeIniciar(body.supervisao)) setTimeout(()=>extraOsOferecer(id,body.supervisao,body.equipe||""),500);
@@ -4813,7 +4837,7 @@ function montar(root) {
   }
   // ---------- GPS: melhor caminho a partir de onde a pessoa está, passando por todas as paradas da rota ----------
   const posAtual = () => new Promise((ok) => { if (!navigator.geolocation) return ok(null);
-    navigator.geolocation.getCurrentPosition((r) => ok({ lat: r.coords.latitude, lng: r.coords.longitude }), () => ok(null), { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }); });
+    (typeof gpsPreciso === "function" ? gpsPreciso({ max: 12000, alvo: 20 }) : Promise.reject()).then((r) => ok({ lat: r.lat, lng: r.lng }), () => ok(null)); });
   const custo = (seq, ini) => { let c = 0, cur = ini; seq.forEach((x) => { if (cur) c += Math.sqrt(dist(cur, x.g)); cur = x.g; }); return c; };
   function melhorCaminho(pts, ini) {
     let seq = vizinho(pts, ini);
@@ -6892,7 +6916,7 @@ function abrirFotosFiscal(r){
     const b=$("#ffOk"); b.disabled=true; b.textContent="Salvando…";
     // localização de cada foto nova (GPS do celular na hora de salvar)
     const geo={...geo0}, novas=S.filter(x=>m[x.k]&&!geo[x.k]);
-    if(novas.length){ b.textContent="Pegando a localização…"; let p=null; try{ p=await svGpsAgora(); }catch(x){ if(x&&x.code===1){ b.disabled=false; b.textContent="Salvar foto"; return erro("Libere a localização do celular para o app (o GPS é gravado junto com a foto)."); } }
+    if(novas.length){ b.textContent="Pegando a localização…"; let p=null; try{ p=await svGpsAgora(pr=>{ b.textContent=`📍 Precisão do GPS: ±${pr} m…`; }); }catch(x){ if(x&&x.code===1){ b.disabled=false; b.textContent="Salvar foto"; return erro("Libere a localização do celular para o app (o GPS é gravado junto com a foto)."); } }
       const em=new Date().toISOString(); novas.forEach(x=>geo[x.k]=p?{...p,em}:{sem:true,em}); b.textContent="Salvando…"; if(!p) toast("Não foi possível pegar o GPS agora: a foto foi salva sem a localização.",6000); }
     const fresh=todosGlobal().find(x=>x.id===r.id)||r, upd={...fresh}; delete upd.id; delete upd._fila;
     const fotos={}; S.forEach(x=>{ if(m[x.k]) fotos[x.k]=m[x.k]; });
@@ -10337,7 +10361,8 @@ function renderPend(){
   const nFis=fisFotosLista().length; if(nFis) box.insertAdjacentHTML("afterbegin",fisFotosHtml());
   const nFim=osFimGrupos().reduce((a,g)=>a+g.rs.length,0); if(nFim) box.insertAdjacentHTML("afterbegin",osFimHtml());
   const nRec=osNaoRecGrupos().length; if(nRec) box.insertAdjacentHTML("afterbegin",osNaoRecHtml());
-  const tot=n1+(pode("chk")?nbChk:0)+nFim+nRec; // fotos do fiscal são opcionais: aparecem na lista, mas não contam como pendência (nem tocam aviso)
+  const nJa=jaProvLista().length; if(nJa) box.insertAdjacentHTML("afterbegin",jaProvHtml());
+  const tot=n1+(pode("chk")?nbChk:0)+nFim+nRec+nJa; // fotos do fiscal são opcionais: aparecem na lista, mas não contam como pendência (nem tocam aviso)
   if(!tot) box.innerHTML=(canc?filtro+pendCancHtml([]):"")+(nFis?fisFotosHtml():"")+`<section class="alert ok"><h3>Tudo em dia</h3><p class="note" style="margin:0">Nenhuma pendência para você agora. Quando aparecer alguma, ela fica aqui e o número aparece no sino.</p></section>`;
   const tb=document.querySelector('nav.tabs button[data-v="pend"]'); if(tb) tb.innerHTML=ICO.pend+`<span class="tl">Pendências</span>`+(tot?`<span class="tbadge" aria-label="${tot} pendência(s)">${tot>99?"99+":tot}</span>`:"");
   window.__nPend=tot; try{ avisoSonoro(tot); avSomUI(); }catch(e){}
@@ -10422,6 +10447,15 @@ function osDiaTxt(g){ const o=g.os||{}, d=g.dia||hoje(), pv=g.rs.reduce((a,r)=>a
 function osFimGrupos(){ if(!sessao||!["supervisor","supervisor1"].includes(sessao.perfil)||!sessao.sup) return []; const G={};
   todosGlobal().filter(r=>r.osDia?.fim&&!r.arquivado&&(isProg(r)||baixaRevisar(r))&&r.supervisao===sessao.sup).forEach(r=>{ const k=r.osDia.num||r.osDia.em; (G[k]=G[k]||{os:r.osDia,rs:[]}).rs.push(r); });
   return Object.values(G).sort((a,b)=>(a.os.fim.em||"").localeCompare(b.os.fim.em||"")); }
+// serviço que o fiscal achou já feito por equipe da COMURG: avisa a equipe que fez (ou a gerência, se não souber qual) para dar a resposta e a baixa nos sistemas
+function jaProvLista(){ if(!sessao) return []; const sup=["supervisor","supervisor1"].includes(sessao.perfil)&&sessao.sup, ger=ehGerPerf(sessao.perfil);
+  return todosGlobal().filter(r=>r.jaExecutado==="comurg"&&r.jaProv&&!r.jaProv.ok&&!r.arquivado&&((sup&&r.jaSup===sessao.sup)||(ger&&(!r.jaSup||noEscopo(r.jaSup)||noEscopo(r.supervisao))))).sort((a,b)=>(a.data||"").localeCompare(b.data||"")); }
+function jaProvHtml(){ const L=jaProvLista(); if(!L.length) return "";
+  return `<section class="alert"><h3>🔁 Serviço feito sem registro (${L.length})</h3><p class="note" style="margin:0 0 6px">O fiscal chegou no local e o serviço <b>já estava feito por uma equipe da COMURG</b>. Quem fez precisa <b>providenciar a resposta e a baixa nos sistemas</b> (SEI, Intranet, GED, Urbantrim…).</p>
+    ${L.map(r=>`<div class="ckit" style="display:grid;gap:6px"><div><b>${esc(r.bairro||"")} — ${esc(r.logradouro||"")}</b><br><small class="note">${fmtD(r.data)} · ${esc(tipoTxt(r)||r.tipo||"")}${r.processo?" · nº "+esc(procNum(r)):""} · encontrado por ${esc(r.jaProv.por||"")} (${esc(r.supervisao||"")})<br>Equipe que fez: <b>${r.jaSup?esc(supNome(r.jaSup)):"não identificada – a gerência deve apurar"}</b></small></div><button type="button" class="btn pri" data-japrov="${esc(r.id)}" style="min-height:46px">✔ Resposta e baixa nos sistemas feitas</button></div>`).join("")}</section>`; }
+document.addEventListener("click",async e=>{ const b=e.target.closest("[data-japrov]"); if(!b) return; const r=todosGlobal().find(x=>x.id===b.dataset.japrov); if(!r) return;
+  b.disabled=true; const upd={...r}; delete upd.id; delete upd._fila; upd.jaProv={...(r.jaProv||{}),ok:{por:sessao.nome,uid:sessao.id,em:new Date().toISOString()}}; upd._acao=`${sessao.nome} informou que deu a resposta e a baixa nos sistemas do serviço já executado`;
+  const rs=await saveDoc(r.id,upd); if(rs==="ok"||rs==="fila"){ Object.assign(r,upd); toast("Registrado: resposta e baixa feitas."); try{ renderPend(); renderInicio(); }catch(x){} } else { b.disabled=false; toast("Não foi possível salvar agora."); } });
 // O.S enviada ao fiscal há mais de 30 minutos e ainda não recebida: avisa o supervisor da turma
 const OS_REC_MIN=30;
 function osNaoRecGrupos(){ if(!sessao||!["supervisor","supervisor1"].includes(sessao.perfil)||!sessao.sup) return []; const G={}, lim=Date.now()-OS_REC_MIN*6e4;
@@ -10727,10 +10761,10 @@ document.addEventListener("click",async e=>{ const b=e.target.closest("[data-fis
   if(await fisOsAtualiza(g,{start:quem},`Fiscal deu o START na O.S nº ${g.os.num} (começou a executar)`)) toast("Start registrado: O.S em execução."); else b.disabled=false; });
 // start e fim de cada serviço (endereço) da O.S, separadamente
 const svDe=(o,r)=>o?.sv?.[r.id]||{}, svIniciado=(o,r)=>!!(svDe(o,r).start||(o?.start&&!o?.porServ)), svFeito=(o,r)=>!!svDe(o,r).fim||r.status==="NÃO";
-// START só perto do endereço: GPS do fiscal x local do serviço (raio SV_RAIO m)
-const SV_RAIO=300;
+// START: registra o GPS do fiscal e a distância do endereço; acima de SV_RAIO m só avisa (não bloqueia)
+const SV_RAIO=500;
 const svDistM=(a,b)=>{ const R=6371000, t=x=>x*Math.PI/180, dLa=t(b.lat-a.lat), dLo=t(b.lng-a.lng), h=Math.sin(dLa/2)**2+Math.cos(t(a.lat))*Math.cos(t(b.lat))*Math.sin(dLo/2)**2; return 2*R*Math.asin(Math.sqrt(h)); };
-const svGpsAgora=()=>new Promise((ok,no)=>{ if(!navigator.geolocation) return no({code:9}); navigator.geolocation.getCurrentPosition(p=>ok({lat:p.coords.latitude,lng:p.coords.longitude,prec:Math.round(p.coords.accuracy||0)}),no,{enableHighAccuracy:true,timeout:20000,maximumAge:30000}); });
+const svGpsAgora=(prog)=>gpsPreciso({prog});
 const SV_GEO_K="gpe_sv_geo"; let svGeoC; try{ svGeoC=JSON.parse(localStorage.getItem(SV_GEO_K)||"{}"); }catch(e){ svGeoC={}; }
 async function svGeoBusca(q){ if(svGeoC[q]!==undefined) return svGeoC[q];
   const u="https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=br&viewbox=-49.45,-16.45,-49.05,-16.85&bounded=1&q="+encodeURIComponent(q);
@@ -10741,18 +10775,19 @@ async function svLocalDe(r){ if(r.geo&&isFinite(r.geo.lat)&&isFinite(r.geo.lng))
   for(const q of [via&&`${via}, ${b}, Goiânia, Goiás`, b&&`${b}, Goiânia, Goiás`].filter(Boolean)){ try{ const v=await svGeoBusca(q); if(v) return {...v,fonte:q.startsWith(via)?"endereço":"bairro"}; }catch(e){ return null; } }
   return null; }
 async function svConfereLocal(r,b){ const t0=b.textContent; b.disabled=true; b.textContent="📍 Conferindo sua localização…";
-  try{ let eu; try{ eu=await svGpsAgora(); }catch(err){ toast(err&&err.code===1?"Ative a localização (GPS) do celular para dar o START.":"Não foi possível pegar o GPS. Vá para céu aberto e tente de novo.",5000); return null; }
+  try{ let eu; try{ eu=await svGpsAgora(pr=>{ b.textContent=`📍 Melhorando a precisão… ±${pr} m`; }); }catch(err){ toast(err&&err.code===1?"Ative a localização (GPS) do celular para dar o START.":"Não foi possível pegar o GPS. Vá para céu aberto e tente de novo.",5000); return null; }
     const loc=await svLocalDe(r); if(!loc) return {lat:+eu.lat.toFixed(6),lng:+eu.lng.toFixed(6),prec:eu.prec,dist:null,conf:false};
     const d=Math.round(svDistM(eu,loc)), raio=SV_RAIO+(loc.fonte==="bairro"?700:0)+Math.min(eu.prec||0,150);
-    if(d>raio){ toast(`Você está a ${d>=1000?(d/1000).toFixed(1).replace(".",",")+" km":d+" m"} do endereço. Chegue ao local para dar o START.`,6000); return null; }
-    return {lat:+eu.lat.toFixed(6),lng:+eu.lng.toFixed(6),prec:eu.prec,dist:d,ref:loc.fonte,conf:true};
+    // longe do endereço (mais de 500 m): só avisa, não bloqueia o START; fica registrado onde o fiscal estava e a distância
+    if(d>raio) toast(`⚠️ Atenção: você está a ${d>=1000?(d/1000).toFixed(1).replace(".",",")+" km":d+" m"} do endereço do serviço. O START foi liberado, mas fica registrado que foi dado longe do local.`,7000);
+    return {lat:+eu.lat.toFixed(6),lng:+eu.lng.toFixed(6),prec:eu.prec,dist:d,ref:loc.fonte,conf:d<=raio};
   } finally { b.disabled=false; b.textContent=t0; } }
 // ao assinar a O.S, o que o fiscal informou (executado / parcial / não executado e quantidades) já vira a baixa; o supervisor revisa e completa
 async function fisBaixaAuto(g){ let n=0; const em=new Date().toISOString();
   for(const r of g.rs){ const fresh=todosGlobal().find(x=>x.id===r.id)||r, x=(r.osDia||fresh.osDia)?.sv?.[r.id]?.fim?.exec; if(!x||!isProg(fresh)) continue;
     const pq=prevQ(fresh), q={}; if(x.sit==="SIM") Object.assign(q,pq); else if(x.sit==="PARCIAL") ITENS.forEach(i=>{ const v=(+pq[i.c]||0)-(+x.falta?.[i.c]||0); if(v>0) q[i.c]=v; });
     const upd={...fresh,osDia:r.osDia||fresh.osDia}; delete upd.id; delete upd._fila;
-    upd.status=x.sit; upd.qtdPrevista=fresh.qtdPrevista||pq; upd.qtd=q; upd.dataExec=fresh.data; if(x.sit==="NÃO") upd.motivo=x.motivo||""; 
+    upd.status=x.sit; upd.qtdPrevista=fresh.qtdPrevista||pq; upd.qtd=q; upd.dataExec=fresh.data; if(x.sit==="NÃO") upd.motivo=x.motivo||""; if(x.ja){ upd.semRemarcar=true; upd.proxData=""; upd.jaExecutado=x.ja; upd.jaSup=x.jaSup||fresh.jaSup||""; upd.jaQuem=x.jaQuem||fresh.jaQuem||""; upd.obs=[fresh.obs,jaTxt({...upd,id:r.id}).toUpperCase()+(x.obs?" · "+x.obs:"")].filter(Boolean).join(" | "); } 
     const ob="Fiscal: "+[x.sit==="NÃO"?x.motivo:"",x.obs].filter(Boolean).join(" · "); if(ob.length>8) upd.obs=[fresh.obs,ob].filter(Boolean).join(" | ");
     upd.baixaFiscal={sit:x.sit,falta:x.falta||{},por:sessao.nome,uid:sessao.id,em};
     upd._acao=`Baixa lançada pelo fiscal ao finalizar a O.S: ${svExecTxt(x)} (aguardando revisão do supervisor)`;
@@ -10761,12 +10796,20 @@ async function fisBaixaAuto(g){ let n=0; const em=new Date().toISOString();
 const baixaRevisar=r=>!!r?.baixaFiscal&&!r.baixaFiscal.rev;
 // ao finalizar o serviço o fiscal informa se foi executado integralmente ou parcial (e quanto ficou a fazer)
 const SVX_MOT=["Chuva","Equipamento (veículo) quebrado","Rede elétrica (aguardando Equatorial)","Veículos estacionados / sem acesso","Morador impediu","Remanejado pela gerência (emergência)","Atendimento de galho / árvore caída","Endereço não localizado","Executado por outra equipe"];
-const svExecTxt=x=>{ if(!x) return ""; if(x.sit==="SIM") return "executado integralmente"; if(x.sit==="NÃO") return "NÃO EXECUTADO – "+(x.motivo||"")+(x.obs?" · "+x.obs:""); const f=ITENS.filter(i=>+x.falta?.[i.c]).map(i=>`${x.falta[i.c]} ${arv(+x.falta[i.c])} com ${itPorte(i)} (${i.c})`).join("; "); return "executado PARCIAL"+(f?" – ficou a fazer: "+f:"")+(x.obs?" · "+x.obs:""); };
-function svFimPerguntar(r){ return new Promise(res=>{ const pq=prevQ(r), its=ITENS.filter(i=>+pq[i.c]);
+const svExecTxt=x=>{ if(!x) return ""; if(x.ja) return "JÁ ESTAVA EXECUTADO – "+(x.ja==="comurg"?"feito antes por equipe da COMURG"+(x.jaSup?" ("+x.jaSup+")":" (equipe não identificada)"):(x.jaQuem?"executado por terceiro: "+x.jaQuem:"serviço executado por terceiros, não identificamos o executor"))+(x.obs?" · "+x.obs:""); if(x.sit==="SIM") return "executado integralmente"; if(x.sit==="NÃO") return "NÃO EXECUTADO – "+(x.motivo||"")+(x.obs?" · "+x.obs:""); const f=ITENS.filter(i=>+x.falta?.[i.c]).map(i=>`${x.falta[i.c]} ${arv(+x.falta[i.c])} com ${itPorte(i)} (${i.c})`).join("; "); return "executado PARCIAL"+(f?" – ficou a fazer: "+f:"")+(x.obs?" · "+x.obs:""); };
+function svFimPerguntar(r,op){ return new Promise(res=>{ const pq=prevQ(r), its=ITENS.filter(i=>+pq[i.c]), jaMid={};
   const box=document.createElement("div"); box.className="sheet"; box.style.zIndex=45;
   box.innerHTML=`<div class="panel" role="dialog" aria-label="Como ficou o serviço"><b style="font-family:var(--display);font-size:20px">Como ficou este serviço?</b>
     <p class="note" style="margin:0">${esc(r.bairro||"")} — ${esc(r.logradouro||"")}<br>Programado: ${esc(qtdTxtPlano(pq)||"—")}</p>
-    <div style="display:grid;gap:8px"><button type="button" class="btn start" data-svx="SIM" style="min-height:54px">✅ Executado integralmente</button><button type="button" class="btn sec" data-svx="PARCIAL" style="min-height:54px">◐ Executado parcial (ficou serviço a fazer)</button><button type="button" class="btn danger" data-svx="NÃO" style="min-height:54px">✖ Não executado</button></div>
+    <div style="display:grid;gap:8px"><button type="button" class="btn start" data-svx="SIM" style="min-height:54px">✅ Executado integralmente</button><button type="button" class="btn sec" data-svx="PARCIAL" style="min-height:54px">◐ Executado parcial (ficou serviço a fazer)</button><button type="button" class="btn danger" data-svx="NÃO" style="min-height:54px">✖ Não executado</button><button type="button" class="btn sec" data-svx="JA" style="min-height:54px">🔁 Cheguei e o serviço já estava feito</button></div>
+    <div id="svxJ" hidden style="display:grid;gap:8px"><p class="note" style="margin:0"><b>Quem fez o serviço antes?</b></p>
+      <label class="f"><select id="svxJQ"><option value="">Selecione…</option><option value="comurg">Uma equipe da COMURG</option><option value="outro">Terceiro (não foi a COMURG) / não sei quem fez</option></select></label>
+      <label class="f" id="svxJQuemL" hidden>Quem fez? (se souber – deixe em branco se não souber)<input id="svxJQuem" placeholder="Ex.: Equatorial, empresa contratada, morador"></label>
+      <label class="f" id="svxJSupL" hidden>Qual equipe da COMURG fez? (se souber)<select id="svxJSup"><option value="">Não sei qual equipe</option>${SUPS.filter(x=>x.id!==r.supervisao).map(x=>`<option value="${esc(x.id)}">${esc(supNome(x.id))}</option>`).join("")}</select></label>
+      <p class="note" id="svxJSupN" hidden style="margin:0">A equipe informada recebe um aviso para dar a resposta e a baixa nos sistemas. Se não souber, a gerência recebe o aviso.</p>
+      <div id="svxJMid">${midSecHtml(jaMid,true,JA_SLOTS,"Foto do local (obrigatória)","Tire 1 foto do local mostrando que o serviço já estava feito. Vai para o Histórico de execução com a localização.")}</div>
+      <label class="f">Observação (opcional)<textarea id="svxJObs" placeholder="Ex.: árvore já podada, galhos já recolhidos"></textarea></label>
+      <div class="err" id="svxJErr" hidden></div><button type="button" class="btn pri" data-svxjok="1">Confirmar e finalizar</button></div>
     <div id="svxN" hidden style="display:grid;gap:8px"><label class="f">Motivo (obrigatório)<select id="svxMot"><option value="">Selecione…</option>${SVX_MOT.map(t=>`<option>${esc(t)}</option>`).join("")}<option value="Outro">Outro (escrever)</option></select></label><label class="f">Explique o que aconteceu<textarea id="svxNObs" placeholder="Ex.: rede elétrica energizada sobre a árvore, aguardando Equatorial"></textarea></label><div class="err" id="svxNErr" hidden></div><button type="button" class="btn danger" data-svxnok="1">Confirmar não executado e finalizar</button></div>
     <div id="svxP" hidden style="display:grid;gap:8px"><p class="note" style="margin:0"><b>Quanto ficou a fazer (em haver)?</b> O supervisor vê isso na baixa.</p>
       ${its.map(i=>`<label class="f">${esc(itPorte(i))} (${i.c}) · programado ${pq[i.c]}<input type="number" inputmode="numeric" min="0" max="${+pq[i.c]}" data-svf="${i.c}" placeholder="quantas ficaram"></label>`).join("")}
@@ -10774,8 +10817,18 @@ function svFimPerguntar(r){ return new Promise(res=>{ const pq=prevQ(r), its=ITE
       <div class="err" id="svxErr" hidden></div><button type="button" class="btn pri" data-svxok="1">Confirmar parcial e finalizar</button></div>
     <button type="button" class="btn sec" data-svxx="1">Cancelar</button></div>`;
   document.body.appendChild(box); const fim=v=>{ box.remove(); res(v); };
+  midLigar(box.querySelector("#svxJMid"),jaMid,true,JA_SLOTS);
+  if(op?.ja) setTimeout(()=>box.querySelector('[data-svx="JA"]')?.click(),0); // veio do botão "já estava feito": abre direto nessa opção
+  box.querySelector("#svxJQ").onchange=e=>{ const c=e.target.value==="comurg"; box.querySelector("#svxJSupL").hidden=!c; box.querySelector("#svxJSupN").hidden=!c; box.querySelector("#svxJQuemL").hidden=e.target.value!=="outro"; };
   box.addEventListener("click",e=>{ if(e.target===box||e.target.closest("[data-svxx]")) return fim(null);
-    const x=e.target.closest("[data-svx]"); if(x){ if(x.dataset.svx==="SIM") return fim({sit:"SIM"}); box.querySelector("#svxP").hidden=x.dataset.svx!=="PARCIAL"; box.querySelector("#svxN").hidden=x.dataset.svx!=="NÃO"; const p=box.querySelector(x.dataset.svx==="NÃO"?"#svxN":"#svxP"); p.scrollIntoView({block:"center",behavior:"smooth"}); return; }
+    const x=e.target.closest("[data-svx]"); if(x){ if(x.dataset.svx==="SIM") return fim({sit:"SIM"}); box.querySelector("#svxP").hidden=x.dataset.svx!=="PARCIAL"; box.querySelector("#svxN").hidden=x.dataset.svx!=="NÃO"; box.querySelector("#svxJ").hidden=x.dataset.svx!=="JA"; const p=box.querySelector(x.dataset.svx==="NÃO"?"#svxN":x.dataset.svx==="JA"?"#svxJ":"#svxP"); p.scrollIntoView({block:"center",behavior:"smooth"}); return; }
+    if(e.target.closest("[data-svxjok]")){ (async()=>{ const q=box.querySelector("#svxJQ").value, er=box.querySelector("#svxJErr"), bt=box.querySelector("[data-svxjok]"), ero=t=>{ er.textContent="Falta: "+t; er.hidden=false; };
+      if(!q) return ero("diga quem fez o serviço antes.");
+      if([...box.querySelectorAll("#svxJMid .midst")].some(x=>/enviando|reduzindo/.test(x.textContent))) return ero("espere terminar o envio da foto.");
+      if(!jaMid.ja) return ero("tire a foto do local.");
+      const t0=bt.textContent; bt.disabled=true; let g=null; try{ g=await svGpsAgora(pr=>{ bt.textContent=`📍 Precisão do GPS: ±${pr} m…`; }); }catch(x){} bt.disabled=false; bt.textContent=t0;
+      const sp=q==="comurg"?box.querySelector("#svxJSup").value:"", jq=q==="outro"?(box.querySelector("#svxJQuem").value||"").trim().toUpperCase():"";
+      fim({sit:"NÃO",ja:q,jaSup:sp,jaQuem:jq,motivo:q==="comurg"?"Já executado antes por outra equipe da COMURG":"Executado por terceiro (não identificamos o executor)",obs:(box.querySelector("#svxJObs").value||"").trim().toUpperCase(),foto:jaMid.ja,geo:g?{...g,em:new Date().toISOString()}:{sem:true,em:new Date().toISOString()}}); })(); return; }
     if(e.target.closest("[data-svxnok]")){ const mt=box.querySelector("#svxMot").value, ob=(box.querySelector("#svxNObs").value||"").trim().toUpperCase(), er=box.querySelector("#svxNErr");
       if(!mt){ er.textContent="Falta: escolha o motivo."; er.hidden=false; return; } if(mt==="Outro"&&ob.length<5){ er.textContent="Falta: explique o motivo."; er.hidden=false; return; }
       return fim({sit:"NÃO",motivo:mt==="Outro"?ob:mt,obs:mt==="Outro"?"":ob}); }
@@ -10793,8 +10846,12 @@ document.addEventListener("click",async e=>{ const b=e.target.closest("[data-svs
     const gps=await svConfereLocal(r,b); if(!gps) return; quem.gps=gps;
     b.disabled=true; const patch={sv:{...(g.os.sv||{}),[rid]:{...ant,start:quem}}}; if(!g.os.start){ patch.start=quem; patch.porServ=true; }
     if(await fisOsAtualiza(g,patch,`Fiscal deu o START no serviço ${end} (O.S nº ${g.os.num})`)) toast(fotoSlots(r).length?`Start registrado. Tire a 1ª foto (${fotoSlots(r)[0].curto}).`:"Start registrado: serviço em execução."); else b.disabled=false; return; }
-  const ex=await svFimPerguntar(r); if(!ex) return; quem.exec=ex;
+  const ex=await svFimPerguntar(r,{ja:!!b.dataset.svja}); if(!ex) return; quem.exec=ex;
   if(ex.sit!=="NÃO"&&!fotosOk(r)) return toast(`Tire as ${fotoObrig(r).length} fotos deste serviço antes de finalizar.`);
+  if(ex.ja){ const foto=ex.foto, geo=ex.geo; delete ex.foto; delete ex.geo; quem.exec=ex;
+    const fresh=todosGlobal().find(x=>x.id===rid)||r, upd={...fresh}; delete upd.id; delete upd._fila; const ff={...(fresh.fotosFiscal||{})};
+    upd.fotosFiscal={...ff,ja:foto,geo:{...(ff.geo||{}),ja:geo},por:sessao.nome,uid:sessao.id,em:new Date().toISOString()}; upd.jaExecutado=ex.ja; upd.jaSup=ex.jaSup||""; upd.jaQuem=ex.jaQuem||""; if(ex.ja==="comurg") upd.jaProv={em:new Date().toISOString(),por:sessao.nome,fiscalSup:sessao.sup||r.supervisao};
+    upd._acao=`Fiscal encontrou o serviço já feito: ${svExecTxt(ex)}`; const rs=await saveDoc(rid,upd); if(rs!=="ok"&&rs!=="fila") return toast("Não foi possível salvar a foto agora. Tente de novo."); Object.assign(r,upd); }
   b.disabled=true; if(await fisOsAtualiza(g,{sv:{...(g.os.sv||{}),[rid]:{...ant,fim:quem}}},`Fiscal finalizou o serviço ${end} (O.S nº ${g.os.num}): ${svExecTxt(ex)}`)) toast(g.rs.every(x=>x.id===rid||svFeito(g.os,x))?"Serviço finalizado. Todos os serviços prontos: assine e finalize a O.S.":"Serviço finalizado. Passe para o próximo endereço."); else b.disabled=false; });
 // especificação do serviço na O.S do fiscal: endereço, tipo de local, serviço e a tabela de árvores por porte
 function osSpecHtml(r){ const pq=prevQ(r), its=ITENS.filter(i=>+pq[i.c]), tot=its.reduce((a,i)=>a+(+pq[i.c]||0),0), grupos=[["P","PODA"],["E","EXTIRPAÇÃO"]];
@@ -10823,7 +10880,7 @@ function renderInicioFiscal(h){
             if(!ini) return `<button type="button" class="btn start" data-svstart="${esc(r.id)}" ${pe?"disabled":""} style="min-height:52px">▶ START neste endereço</button>`;
             if(sv.fim) return `<small style="color:${sv.fim.exec?.sit==="NÃO"?"var(--bad)":sv.fim.exec?.sit==="PARCIAL"?"#8a5200":"var(--ok)"};font-weight:700">🏁 Serviço finalizado às ${hm(sv.fim.em)}${sv.fim.exec?" · "+esc(svExecTxt(sv.fim.exec)):""}</small>`;
             const fOk=fotosOk(r);
-            return `<small style="color:var(--ok);font-weight:700">🟢 Em execução${(sv.start||o.start)?" desde "+hm((sv.start||o.start).em):""}</small>`+(fOk?`<button type="button" class="btn start" data-svfim="${esc(r.id)}" style="min-height:52px">✅ FINALIZAR ESTE SERVIÇO</button>`:`<button type="button" class="btn sec" data-svfim="${esc(r.id)}" style="min-height:44px">✖ Não foi possível executar (informar)</button>`); })()}
+            return `<small style="color:var(--ok);font-weight:700">🟢 Em execução${(sv.start||o.start)?" desde "+hm((sv.start||o.start).em):""}</small>`+(fOk?`<button type="button" class="btn start" data-svfim="${esc(r.id)}" style="min-height:52px">✅ FINALIZAR ESTE SERVIÇO</button>`:`<button type="button" class="btn sec" data-svfim="${esc(r.id)}" style="min-height:44px">✖ Não foi possível executar (informar)</button>`)+`<button type="button" class="btn sec" data-svfim="${esc(r.id)}" data-svja="1" style="min-height:44px">🔁 Cheguei e já estava feito (só 1 foto)</button>`; })()}
           ${tem?(!fotosFisPode(r)&&!svIniciado(o,r)&&!r.relat?.ass?`<small>📷 Fotos: ${relTem(r)?"depois do <b>START</b> deste endereço":"depois de confirmar o recebimento"} (${S.map((x,i)=>(i+1)+" "+x.curto.toLowerCase()).join(" · ")})</small>`:fotosFisPode(r)?(()=>{ const SO=S.filter(x=>!x.opc), nx=SO.find(x=>!(r.fotosFiscal?.[x.k]||r.relat?.midia?.[x.k])); return nx?`<button type="button" class="btn pri" data-fotfis="${esc(r.id)}" style="min-height:52px">📷 Foto ${S.indexOf(nx)+1} de ${SO.length} · ${nx.curto} <small style="display:block;font:600 12px var(--body);opacity:.9">${nx.dica}</small></button>`:`<button type="button" class="btn sec" data-fotfis="${esc(r.id)}" style="min-height:48px">✅ ${n} foto${n>1?"s":""} registrada${n>1?"s":""} – ver${S.length>n?" / tirar mais uma (opcional)":""}</button>`; })():`<small>${r.relat?.ass?"✅ Relatório assinado pelo supervisor":n?`📷 Fotos ${n} de ${S.length}`:S===ROT_SLOTS?"Fotos não registradas":"Fotos: o supervisor anexa na baixa"}</small>`):``}</li>`; }).join("")}</ol></section>`; };
   h.innerHTML=`<p class="note" style="margin:0 0 2px">${sau},</p><h2 style="margin:0 0 4px">${esc((sessao.nome||"").split(" ").slice(0,2).join(" "))}</h2>
     <p class="note" style="margin:0 0 12px">Fiscal de turma · ${esc(sessao.sup||"")} · ${me.equipe?esc(me.equipe):"todas as equipes"}</p>
@@ -10880,7 +10937,7 @@ function renderInicio(){
   if(travado()&&(ehSup()||sessao.perfil==="supervisor1")&&podeEditarEscala(sessao.sup)&&!escCfg(sessao.sup)) av+=`<button type="button" class="inav warn" data-escala="${esc(sessao.sup)}">${ICO.form}<span><b>Cadastre a escala de trabalho da sua turma</b><small>Assim o app só cobra nos seus dias de trabalho</small></span><em>Cadastrar</em></button>`;
   const escHj=travado()&&escCfg(sessao.sup)?(trabalha(sessao.sup,hoje())?" · hoje: dia de trabalho":" · hoje: FOLGA"):"";
   h.innerHTML=`<div class="inhead"><span>${sau},</span><b>${esc(nome)}</b><small>${esc(onde)} · ${dsTxt}${escHj}${hj?` · ${hj} ${hj===1?"serviço programado":"serviços programados"} hoje`:""}</small></div>
-    ${(()=>{ let xa="";   { const nr=osNaoRecGrupos().length; if(nr) xa+=`<button type="button" class="inav bad" data-iv="pend">${ICO.alerta}<span><b>${nr} O.S ${nr===1?"enviada e não recebida":"enviadas e não recebidas"} pelo fiscal</b><small>Mais de 30 min sem confirmação (prazo máximo) · ligue para o fiscal ou troque</small></span><em>Ver</em></button>`; }   { const nx=extraAguardam().length; if(nx) xa+=`<button type="button" class="inav bad" data-exval="1">${ICO.alerta}<span><b>${nx} ${nx===1?"serviço fora de programação":"serviços fora de programação"} para validar</b><small>O supervisor lançou: assine para entrar na programação</small></span><em>Validar</em></button>`; }   { const ns=travado()?todos().filter(r=>r.status==="VALIDAR"&&!r.arquivado&&r.supervisao===sessao.sup).length:0; if(ns) xa+=`<div class="inav warn">${ICO.alerta}<span><b>${ns} ${ns===1?"serviço fora de programação aguardando":"serviços fora de programação aguardando"} validação</b><small>Só entra na programação e na baixa depois que o gerente ou o coordenador validar</small></span></div>`; }  return xa?`<div class="inavs">${xa}</div>`:""; })()}${INICIO_AVISOS?`<div class="inavs">${av}</div>`:""}${ehFiscal()?fisFotosHtml():osFimHtml()}
+    ${(()=>{ let xa="";   { const nj=jaProvLista().length; if(nj) xa+=`<button type="button" class="inav bad" data-iv="pend">${ICO.alerta}<span><b>${nj} ${nj===1?"serviço feito":"serviços feitos"} sem registro</b><small>O fiscal achou o serviço já executado pela equipe: dê a resposta e a baixa nos sistemas</small></span><em>Ver</em></button>`; }   { const nr=osNaoRecGrupos().length; if(nr) xa+=`<button type="button" class="inav bad" data-iv="pend">${ICO.alerta}<span><b>${nr} O.S ${nr===1?"enviada e não recebida":"enviadas e não recebidas"} pelo fiscal</b><small>Mais de 30 min sem confirmação (prazo máximo) · ligue para o fiscal ou troque</small></span><em>Ver</em></button>`; }   { const nx=extraAguardam().length; if(nx) xa+=`<button type="button" class="inav bad" data-exval="1">${ICO.alerta}<span><b>${nx} ${nx===1?"serviço fora de programação":"serviços fora de programação"} para validar</b><small>O supervisor lançou: assine para entrar na programação</small></span><em>Validar</em></button>`; }   { const ns=travado()?todos().filter(r=>r.status==="VALIDAR"&&!r.arquivado&&r.supervisao===sessao.sup).length:0; if(ns) xa+=`<div class="inav warn">${ICO.alerta}<span><b>${ns} ${ns===1?"serviço fora de programação aguardando":"serviços fora de programação aguardando"} validação</b><small>Só entra na programação e na baixa depois que o gerente ou o coordenador validar</small></span></div>`; }  return xa?`<div class="inavs">${xa}</div>`:""; })()}${INICIO_AVISOS?`<div class="inavs">${av}</div>`:""}${ehFiscal()?fisFotosHtml():osFimHtml()}
     <div class="inq">O QUE VOCÊ QUER FAZER?</div>
     <div class="intiles">${tiles.map(x=>`<button type="button" class="intile ${x.c||""}" data-iv="${x.v||""}" data-ia="${x.a||""}">${x.i}<span>${esc(x.t)}${x.sub?`<small class="insub">${esc(x.sub)}</small>`:""}</span></button>`).join("")}</div>`;
 }
