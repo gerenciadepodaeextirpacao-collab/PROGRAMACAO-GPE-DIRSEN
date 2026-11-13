@@ -3086,7 +3086,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.17e";
+const APP_VERSAO="2026.11.17g";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -5338,8 +5338,13 @@ function montar(root) {
     const cnt = (L) => { const o = { ja_executado: 0, nao_executado: 0 }; L.forEach((p) => { const e = vistEst(R(p)); if (e in o) o[e]++; }); return o; };
     const row = (L) => { const d = L.filter((p) => R(p).vistoriado); return { n: L.length, d: d.length, c: cnt(d) }; };
     const byReg = REGS.map((r) => Object.assign({ r }, row(P.filter((p) => p.regional === r)))).filter((x) => x.n);
-    const vs = [...new Set(D.map((p) => R(p).responsavel).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt"));
-    const byVist = vs.map((nm) => { const L = D.filter((p) => R(p).responsavel === nm); return Object.assign({ nm, ult: L.map((p) => R(p).data_vistoria).filter(Boolean).sort().pop() || "" }, row(L)); });
+    // por vistoriador: TODOS, sem exceção – conta todas as vistorias gravadas (mesmo de processo fora da lista), junta nomes escritos diferente
+    // e inclui quem tem rota indicada mas ainda não vistoriou nada
+    const nmN = (x) => String(x || "").trim().toUpperCase().replace(/\s+/g, " ");
+    const VV = {}, pega = (k) => (VV[k] = VV[k] || { nm: k, n: 0, d: 0, c: { ja_executado: 0, nao_executado: 0 }, ult: "", rota: 0 });
+    Object.values(VIST.regs || {}).forEach((r) => { if (!r) return; const rv = r.rota && r.rota.vistoriador; if (rv && !r.vistoriado) pega(nmN(rv)).rota++;
+      if (!r.vistoriado || (S.vdia && r.data_vistoria !== S.vdia)) return; const o = pega(nmN(r.responsavel) || "(SEM NOME)"), e = vistEst(r); o.n++; o.d++; if (e in o.c) o.c[e]++; if ((r.data_vistoria || "") > o.ult) o.ult = r.data_vistoria || ""; });
+    const byVist = Object.values(VV).filter((x) => !S.vdia || x.d).sort((a, b) => a.nm.localeCompare(b.nm, "pt"));
     const dias = {}; D.forEach((p) => { const k = R(p).data_vistoria || ""; (dias[k] = dias[k] || []).push(p); });
     const byDia = Object.keys(dias).sort().reverse().map((k) => ({ k, n: dias[k].length, c: cnt(dias[k]) }));
     const NE = D.filter((p) => vistEst(R(p)) === "nao_executado");
@@ -5385,7 +5390,7 @@ function montar(root) {
     const vMax = Math.max(1, ...vs.map((x) => (x.c.ja_executado || 0) + (x.c.nao_executado || 0)));
     const g2 = vs.length ? `<div class="vp-gl" style="display:flex;gap:14px;font-size:12.5px;color:var(--mu);margin:2px 0 10px"><span><i style="display:inline-block;width:11px;height:11px;border-radius:3px;background:${CJ};margin-right:5px;vertical-align:-1px"></i>Já executado</span><span><i style="display:inline-block;width:11px;height:11px;border-radius:3px;background:${CN};margin-right:5px;vertical-align:-1px"></i>Não executado</span></div>
       <div style="display:grid;gap:9px">${vs.map((x, i) => { const j = x.c.ja_executado || 0, nn = x.c.nao_executado || 0, t = j + nn;
-        return `<div style="display:grid;grid-template-columns:minmax(120px,34%) 1fr 44px;gap:10px;align-items:center"><span style="font-size:13.5px;line-height:1.25;overflow-wrap:anywhere"><b style="color:var(--mu);font-weight:600">${i + 1}º</b> ${esc(x.nm || "–")}</span>
+        return `<div style="display:grid;grid-template-columns:minmax(120px,34%) 1fr 44px;gap:10px;align-items:center"><span style="font-size:13.5px;line-height:1.25;overflow-wrap:anywhere"><b style="color:var(--mu);font-weight:600">${i + 1}º</b> ${esc(x.nm || "–")}${!t && x.rota ? ` <small style="color:var(--mu)">· ${x.rota} na rota, ainda sem vistoria</small>` : ""}</span>
           <span style="display:flex;height:22px;border-radius:6px;overflow:hidden;background:var(--bg)"><span title="Já executado: ${j}" style="width:${(j / vMax) * 100}%;background:${CJ};color:#fff;font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center">${j && j / vMax > 0.06 ? j : ""}</span><span title="Não executado: ${nn}" style="width:${(nn / vMax) * 100}%;background:${CN};color:#fff;font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center">${nn && nn / vMax > 0.06 ? nn : ""}</span></span>
           <b style="text-align:right;font-variant-numeric:tabular-nums">${t}</b></div>`; }).join("")}</div>` : `<p class="vp-msg">Nenhuma vistoria ainda.</p>`;
     // por regional (andamento)
@@ -5408,7 +5413,8 @@ function montar(root) {
     const topoH = `<div class="vp-gtop">${topo.map(([k, v]) => `<div><b>${v}</b><span>${k}</span></div>`).join("")}</div>`;
     const cards = [
       `<div class="vp-gc"><h4>Vistorias por dia</h4><p class="vp-gs">Últimos ${dias.length} dias com vistoria</p>${g1}</div>`,
-      `<div class="vp-gc" style="grid-column:1/-1"><h4>Vistorias por vistoriador / fiscal</h4><p class="vp-gs">Total de vistorias de cada um</p>${g2}</div>`,
+      `<div class="vp-gc" style="grid-column:1/-1"><h4>Vistorias por vistoriador / fiscal</h4><p class="vp-gs">${S.vdia ? `Vistorias feitas em <b>${fDia(S.vdia)}</b> · ${vs.length} pessoa${vs.length === 1 ? "" : "s"} · ${vs.reduce((a, x) => a + x.d, 0)} vistoria${vs.reduce((a, x) => a + x.d, 0) === 1 ? "" : "s"}` : `Geral: todos que fazem vistoria, sem exceção · ${vs.length} pessoas · ${vs.reduce((a, x) => a + x.d, 0)} vistorias`}</p>
+        <div class="vp-row" style="margin:0 0 8px"><button class="vp-opt" data-vdia="" aria-pressed="${!S.vdia}">Geral</button><button class="vp-opt" data-vdia="${hoje()}" aria-pressed="${S.vdia === hoje()}">Hoje</button><label class="vp-row" style="font-size:13px;color:var(--mu);font-weight:600">Dia <input type="date" id="vp-vdia" value="${esc(S.vdia || "")}" max="${hoje()}"></label></div>${g2}</div>`,
       `<div class="vp-gc"><h4>Andamento por regional</h4><p class="vp-gs">Processos vistoriados do total da regional</p>${g3}</div>`,
       `<div class="vp-gc"><h4>Fluxo dos processos</h4><p class="vp-gs">Da vistoria até a baixa no sistema</p>${g4}</div>`,
       `<div class="vp-gc"><h4>Por diretoria</h4><p class="vp-gs">Pelo apontamento dos fiscais: DIRSEN (PODA I e II) · DIROP (PODA III e IV)</p>${g5}</div>`];
@@ -5807,6 +5813,7 @@ function montar(root) {
     if (ds.pdftira) { S.pdfFila.splice(+ds.pdftira, 1); render(); return; }
     if (ds.pdfesc) { const x = S.pdfFila[+ds.pdfesc]; x.id = ds.pid; x.st = "ok"; render(); return; }
     if (ds.pmostra) { S.pmostra = ds.pmostra; S.lim = 40; render(); return; }
+    if (ds.vdia != null) { S.vdia = ds.vdia; render(); return; }
     if (ds.rsit) { S.rsit = ds.rsit; S.lim = 40; render(); return; }
     if (ds.indvist) { const sel = root.querySelector("#vp-rv-" + ds.indvist); const uid = sel ? sel.value : ""; if (!uid) { toast("Escolha o vistoriador"); return; } indicarRota(+ds.indvist, uid); return; }
     if (ds.geo) { localizar(); return; }
@@ -5852,6 +5859,7 @@ function montar(root) {
     if (t.id === "vp-hide") { S.hide = !t.checked; render(); return; }
     if (ds.rvsel !== undefined) { S.draft = S.draft || {}; S.draft[ds.rvsel] = t.value; if (t.value) indicarRota(+ds.rvsel, t.value); return; }
     if (t.id === "vp-rreg") { S.rreg = t.value; render(); return; }
+    if (t.id === "vp-vdia") { S.vdia = t.value || ""; render(); return; }
     if (ds.evsup) { S.ev = S.ev || {}; S.ev[ds.evsup] = Object.assign(S.ev[ds.evsup] || {}, { sup: t.value }); return; }
     if (ds.exdata) { S.ex[ds.exdata].data = t.value; return; }
     if (ds.exfoto) { const file = t.files && t.files[0]; if (!file) return; if (!/^image\//.test(file.type)) { toast("Escolha uma foto"); return; }
