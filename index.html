@@ -3086,7 +3086,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.17g";
+const APP_VERSAO="2026.11.17j";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -5097,9 +5097,6 @@ function montar(root) {
     const com = S.proc.filter((p) => docLinks(R(p)).length).length, n = S.proc.length;
     const fila = S.pdfFila || [];
     let h = `<div class="vp-kpis"><div class="vp-kpi"><b>${com}<small style="font-size:16px;color:var(--mu)"> / ${n}</small></b><span>Processos com PDF</span><em>${n - com} ainda sem PDF</em></div></div>
-    <div class="vp-card" style="padding:14px;display:flex;flex-direction:column;gap:8px"><b style="font-size:18px">Enviar vários PDFs de uma vez</b>
-    <p class="vp-msg">Escolha os PDFs (pode selecionar vários). O app liga cada arquivo ao processo pelo <b>número no nome do arquivo</b> (SEI, GED, O.S, PED ou nº do processo). Se o processo ainda não está no app, ele <b>lê o PDF</b> (nº, endereço, bairro, quantidades) e <b>cadastra sozinho</b>; o que faltar, você completa. Ex.: <code>24.17.000002489-7.pdf</code>, <code>GED 0004957-2024.pdf</code>, <code>OS 1787257.pdf</code>.</p>
-    <label class="vp-btn vp-filebtn vp-pri">📂 Escolher os PDFs<input type="file" accept="application/pdf,.pdf" multiple data-pdflote="1"></label></div>
     ${S.novo ? novoHtml() : `<button class="vp-btn" data-nvabrir="1" style="align-self:flex-start">➕ Cadastrar processo manualmente (com PDF ou link)</button>`}${resumoManualHtml()}`;
     if (fila.length) {
       const lim = window.GPE_NETLIFY ? 50 : 15;
@@ -5139,6 +5136,36 @@ function montar(root) {
       <table style="width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:12px"><thead><tr><th style="${th}">Total por pessoa</th><th style="${th};text-align:right">Qtd.</th></tr></thead><tbody>${tp.map(([nm, q]) => `<tr><td style="${td}">${esc(nm)}</td><td style="${td};text-align:right"><b>${q}</b></td></tr>`).join("")}</tbody></table>
       <table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr><th style="${th}">Dia</th><th style="${th}">Quem lançou</th><th style="${th};text-align:right">Qtd.</th></tr></thead><tbody>${linhas}</tbody>
       <tfoot><tr><td colspan="2" style="${td};background:#e3ece0"><b>Total</b></td><td style="${td};background:#e3ece0;text-align:right"><b>${L.length}</b></td></tr></tfoot></table></div></div>`; }
+  // ----- controle das baixas (no sistema e no Urbantrim): quantidade por dia e por quem baixou -----
+  const CTL = { bx: { tit: "Resumo dos baixados no sistema", doc: "RESUMO DOS BAIXADOS NO SISTEMA", sub: "BAIXAS NO SEI / INTRANET / GED · QUANTIDADE POR DIA E POR PESSOA", arq: "baixados-no-sistema", campo: "baixa" },
+    urb: { tit: "Resumo dos baixados no Urbantrim", doc: "RESUMO DOS BAIXADOS NO URBANTRIM", sub: "BAIXAS NO URBANTRIM · QUANTIDADE POR DIA E POR PESSOA", arq: "baixados-no-urbantrim", campo: "urb_baixa" } };
+  const ctlItens = (k) => { const f = CTL[k].campo; return S.proc.map((p) => ({ p, b: R(p)[f] })).filter((x) => x.b && (x.b.data || x.b.em)).map((x) => ({ ...x, dia: String(x.b.data || x.b.em).slice(0, 10), por: String(x.b.por || "—").toUpperCase() })); };
+  const ctlAgr = (L) => { const dias = {}, pessoas = {}; L.forEach((x) => { const d = (dias[x.dia] = dias[x.dia] || {}); d[x.por] = (d[x.por] || 0) + 1; pessoas[x.por] = (pessoas[x.por] || 0) + 1; }); return { dias, tp: Object.entries(pessoas).sort((a, b) => b[1] - a[1]) }; };
+  const fdD = (d) => d.slice(8, 10) + "/" + d.slice(5, 7) + "/" + d.slice(0, 4), dwD = (d) => ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"][new Date(d + "T12:00").getDay()];
+  function ctlHtml(k) { const C = CTL[k], L = ctlItens(k); if (!L.length) return ""; const { dias, tp } = ctlAgr(L); S.ctlAb = S.ctlAb || {};
+    const linhas = Object.keys(dias).sort().reverse().map((d) => { const P = Object.entries(dias[d]).sort((a, b) => b[1] - a[1]), tot = P.reduce((a, x) => a + x[1], 0);
+      return P.map(([nm, q], i) => `<tr${i === 0 ? ' style="border-top:2px solid var(--line,#ddd)"' : ""}>${i === 0 ? `<td rowspan="${P.length}" style="white-space:nowrap;vertical-align:top"><b>${fdD(d)}</b> <small>${dwD(d)}</small><br><small>${tot} no dia</small></td>` : ""}<td>${esc(nm)}</td><td style="text-align:right"><b>${q}</b></td></tr>`).join(""); }).join("");
+    return `<details class="vp-card" style="padding:10px 14px"${S.ctlAb[k] ? " open" : ""} data-ctlab="${k}"><summary><b>📊 ${C.tit}</b> <span class="vp-msg">${L.length} ${L.length === 1 ? "processo" : "processos"} · ${Object.keys(dias).length} ${Object.keys(dias).length === 1 ? "dia" : "dias"} · ${tp.length} ${tp.length === 1 ? "pessoa" : "pessoas"}</span></summary>
+      <p class="vp-msg" style="margin:8px 0 4px"><b>Total por pessoa:</b> ${tp.map(([nm, q]) => `${esc(nm)} <b>${q}</b>`).join(" · ")}</p>
+      <div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:14px"><thead><tr><th style="text-align:left">Dia da baixa</th><th style="text-align:left">Quem baixou</th><th style="text-align:right">Qtd.</th></tr></thead><tbody>${linhas}</tbody>
+      <tfoot><tr style="border-top:2px solid var(--line,#ddd)"><td colspan="2"><b>Total</b></td><td style="text-align:right"><b>${L.length}</b></td></tr></tfoot></table></div>
+      <div class="vp-row" style="margin-top:8px"><button class="vp-btn" data-ctlxls="${k}">⬇ Baixar em Excel (CSV)</button><button class="vp-btn" data-ctlpdf="${k}">📄 Baixar em PDF</button><button class="vp-btn" data-ctlimg="${k}">🖼 Baixar em imagem</button></div></details>`; }
+  function ctlDoc(k) { const C = CTL[k], L = ctlItens(k), { dias, tp } = ctlAgr(L);
+    const td = "padding:5px 8px;border:1px solid #d5dbd3", th = td + ";background:#1f6b3a;color:#fff;text-align:left";
+    const linhas = Object.keys(dias).sort().reverse().map((d) => { const P = Object.entries(dias[d]).sort((a, b) => b[1] - a[1]), tot = P.reduce((a, x) => a + x[1], 0);
+      return P.map(([nm, q], i) => `<tr>${i === 0 ? `<td rowspan="${P.length}" style="${td};vertical-align:top;white-space:nowrap"><b>${fdD(d)}</b> ${dwD(d)}<br><span style="color:#5b6a5f">${tot} no dia</span></td>` : ""}<td style="${td}">${esc(nm)}</td><td style="${td};text-align:right"><b>${q}</b></td></tr>`).join(""); }).join("");
+    return `<div class="fdoc lx"><style>${typeof FDOC_CSS !== "undefined" ? FDOC_CSS : ""}</style><div class="r-body">${typeof fhead === "function" ? fhead(C.doc, C.sub) : "<h2>" + C.tit + "</h2>"}
+      <p style="margin:10px 0 6px;font-size:13px"><b>${L.length}</b> processos · <b>${Object.keys(dias).length}</b> dias · <b>${tp.length}</b> ${tp.length === 1 ? "pessoa" : "pessoas"} · gerado em ${new Date().toLocaleString("pt-BR").slice(0, 17)}</p>
+      <table style="width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:12px"><thead><tr><th style="${th}">Total por pessoa</th><th style="${th};text-align:right">Qtd.</th></tr></thead><tbody>${tp.map(([nm, q]) => `<tr><td style="${td}">${esc(nm)}</td><td style="${td};text-align:right"><b>${q}</b></td></tr>`).join("")}</tbody></table>
+      <table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr><th style="${th}">Dia da baixa</th><th style="${th}">Quem baixou</th><th style="${th};text-align:right">Qtd.</th></tr></thead><tbody>${linhas}</tbody>
+      <tfoot><tr><td colspan="2" style="${td};background:#e3ece0"><b>Total</b></td><td style="${td};background:#e3ece0;text-align:right"><b>${L.length}</b></td></tr></tfoot></table></div></div>`; }
+  async function ctlXls(k) { const C = CTL[k], L = ctlItens(k).sort((a, b) => a.dia.localeCompare(b.dia)); if (!L.length) return;
+    const q = (v) => { const t = String(v == null ? "" : v); return /[;"\n\r]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
+    const cab = k === "bx" ? ["Dia da baixa", "Quem baixou", "Sistema", "Nº documento", "Processo", "GED", "Endereço", "Setor", "Regional", "Situação da vistoria", "Registrado em"] : ["Dia da baixa", "Quem baixou", "ID no Urbantrim", "Processo", "GED", "Endereço", "Setor", "Regional", "Situação da vistoria", "Registrado em"];
+    const lin = L.map((x) => { const p = x.p, b = x.b, base = [p.processo, p.ged || "", p.endereco, p.setor, cap(p.regional), EST[vistEst(R(p))][0], fHora(b.em)];
+      return (k === "bx" ? [fDia(x.dia), x.por, b.sistema === "INTRANET" ? "Intranet" : b.sistema || "", b.doc || ""] : [fDia(x.dia), x.por, b.id || ""]).concat(base).map(q).join(";"); });
+    const blob = new Blob(["\ufeff" + [cab.join(";")].concat(lin).join("\r\n")], { type: "text/csv;charset=utf-8" }), nome = C.arq + "-" + hoje() + ".csv";
+    try { if (typeof downloads !== "undefined" && downloads && downloads.save) await downloads.save({ filename: nome, data: blob }); else { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nome; document.body.appendChild(a); a.click(); a.remove(); } toast("Planilha baixada: " + nome); } catch (e) { toast("Não foi possível baixar"); } }
   // ----- resumo dos cadastros manuais: quantidade por dia e por quem lançou -----
   function resumoManualHtml() {
     const L = Object.entries(VIST.regs || {}).filter(([k, r]) => k.startsWith("m_") && r && r.manual && !r.manual.removido && r.manual.em).map(([k, r]) => ({ dia: String(r.manual.em).slice(0, 10), por: (r.manual.por || "—").toUpperCase() }));
@@ -5451,6 +5478,7 @@ function montar(root) {
     <div class="vp-kpi"><b style="color:var(--lf)">${c.ja_executado}</b><span>Já executados</span><em>com foto que comprova</em></div>
     <div class="vp-kpi"><b style="color:var(--bk)">${c.nao_executado}</b><span>Não executados</span><em>${A.byEq.map((x) => x.n + " " + x.q).join(" · ")}</em></div></div>
     ${graficos(A)}
+    ${ctlHtml("bx")}${ctlHtml("urb")}
     <h3>Vistorias realizadas</h3>
     <div class="vp-row">${[["all", "Todas", d], ["ja_executado", "Já executado", c.ja_executado], ["nao_executado", "Não executado", c.nao_executado], ["semenv", "Não executado sem envio", A.D.filter((p) => R(p).situacao === "nao_executado" && !R(p).envio).length], ["urbcad", "⚠ Cadastrar no Urbantrim", A.D.filter(faltaUrb).length], ["env", "Enviados para execução", A.D.filter((p) => R(p).envio && !R(p).execucao).length], ["exe", "Executados pela turma", A.D.filter((p) => R(p).execucao).length], ["semb", "Aguardando baixa no sistema", A.D.filter(aguardaBx).length], ["urbbx", "Aguardando baixa no Urbantrim", A.D.filter(aguardaUrbBx).length], ["urbok", "Baixados no Urbantrim", A.D.filter((p) => !!R(p).urb_baixa).length], ["bx", "Baixados no sistema", A.D.filter((p) => R(p).baixa).length]].map(([k, t, q]) => `<button class="vp-chip" data-rsit="${k}" aria-pressed="${(S.rsit || "all") === k}"${k === "urbcad" && q ? ' style="border-color:#e0a39b;background:#fdecea;color:#8a1c12"' : ""}>${t}<small>${q}</small></button>`).join("")}</div>
     <div class="vp-ctl"><label class="vp-f">Regional<select id="vp-rreg"><option value="">Todas</option>${REGS.map((r) => `<option value="${r}"${S.rreg === r ? " selected" : ""}>${cap(r)}</option>`).join("")}</select></label>
@@ -5751,7 +5779,7 @@ function montar(root) {
     const a = e.target.closest("a[data-gpsa]"); if (!a || !root.contains(a)) return;
     try { const ro = rotasDe(S.cur)[+a.dataset.gpsa]; if (!ro) return; const pend = visiveis(ro).filter((p) => !R(p).vistoriado); const L = linksGps(ordemGps(pend)); const u = L[+a.dataset.k || 0]; if (u) a.href = u; } catch (x) {}
   });
-  root.addEventListener("toggle", (e) => { if (e.target && e.target.matches && e.target.matches("[data-resman]")) S.resManAberto = e.target.open; }, true);
+  root.addEventListener("toggle", (e) => { if (e.target && e.target.matches && e.target.matches("[data-resman]")) S.resManAberto = e.target.open; if (e.target && e.target.matches && e.target.matches("[data-ctlab]")) { S.ctlAb = S.ctlAb || {}; S.ctlAb[e.target.dataset.ctlab] = e.target.open; } }, true);
   root.addEventListener("click", async (e) => {
     const t = e.target.closest("button"); if (!t || !root.contains(t)) return;
     const ds = t.dataset;
@@ -5801,6 +5829,9 @@ function montar(root) {
     if (ds.pdflimpar) { S.pdfFila = []; render(); return; }
     if (ds.nvabrir) { novoForm(null); render(); return; }
     if (ds.nvfila) { const i = +ds.nvfila; novoForm({ file: S.pdfFila[i].file, idx: i, lido: S.pdfFila[i].lido }); S.pdfNaoAberto = 1; render(); root.querySelector("#vp-nv-endereco")?.scrollIntoView({ block: "center" }); return; }
+    if (ds.ctlxls) { await ctlXls(ds.ctlxls); return; }
+    if (ds.ctlpdf) { await baixarFormPdf(t, ctlDoc(ds.ctlpdf), CTL[ds.ctlpdf].arq + "-" + hoje() + ".pdf", CTL[ds.ctlpdf].tit); return; }
+    if (ds.ctlimg) { await baixarDocImg(t, ctlDoc(ds.ctlimg), CTL[ds.ctlimg].arq + "-" + hoje() + ".png"); return; }
     if (ds.resmanpdf) { await baixarFormPdf(t, resumoManualDoc(), "cadastros-manuais-" + new Date().toISOString().slice(0, 10) + ".pdf", "Resumo dos cadastros manuais"); return; }
     if (ds.resmanimg) { await baixarDocImg(t, resumoManualDoc(), "cadastros-manuais-" + new Date().toISOString().slice(0, 10) + ".png"); return; }
     if (ds.resmanxls) { const L = Object.entries(VIST.regs || {}).filter(([k, r]) => k.startsWith("m_") && r && r.manual && !r.manual.removido && r.manual.em).map(([k, r]) => r.manual).sort((a, b) => String(a.em).localeCompare(String(b.em)));
