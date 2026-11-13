@@ -3086,7 +3086,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.17j";
+const APP_VERSAO="2026.11.17k";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -5597,18 +5597,27 @@ function montar(root) {
       <div class="vp-row"><button class="vp-btn vp-warn" data-evenviar="${p.id}">📤 Enviar para execução</button>${x.edit ? `<button class="vp-btn" data-evx="${p.id}">Cancelar</button>` : ""}</div></div>`;
   }
   // formulário da execução: data, quantidades executadas e as 3 fotos que vão para o relatório de serviço
+  // rascunho da execução: fotos já enviadas + data/quantidade/obs ficam gravados no processo (não perde ao minimizar o app)
+  const rascDe = (id) => { const r = R(S.proc.find((q) => q.id === id) || { id }); return r.exec_rasc && r.exec_rasc.uid === meuId() ? r.exec_rasc : null; };
+  const exNovo = (id) => { const g = rascDe(id); const fotos = {}; if (g && g.fotos) Object.entries(g.fotos).forEach(([k, v]) => { if (v) fotos[k] = { path: v, preview: fotoUrl(v) }; });
+    return { data: (g && g.data) || hoje(), obs: (g && g.obs) || "", fotos, qtd: Object.assign({}, (g && g.qtd) || {}) }; };
+  const _rascT = {};
+  async function rascSalvar(id) { const x = (S.ex || {})[id]; if (!x) return; const fotos = {}; REL_SLOTS.forEach((sl) => { const f = x.fotos[sl.k]; if (f && f.path) fotos[sl.k] = f.path; });
+    await gravar([id], { exec_rasc: { fotos, data: x.data || hoje(), qtd: x.qtd || {}, obs: x.obs || "", por: usuario(), uid: meuId(), em: new Date().toISOString() } }); }
+  const rascDepois = (id) => { clearTimeout(_rascT[id]); _rascT[id] = setTimeout(() => rascSalvar(id).catch(() => {}), 1500); };
   function execForm(p) {
     const x = S.ex[p.id], ocup = !!S.busy["ex" + p.id];
-    const nf = REL_SLOTS.filter((sl) => x.fotos[sl.k]).length, temQ = QK().some((c) => +x.qtd[c] > 0);
+    const nf = REL_SLOTS.filter((sl) => x.fotos[sl.k]).length, temQ = QK().some((c) => +x.qtd[c] > 0), salvando = REL_SLOTS.some((sl) => x.fotos[sl.k] && x.fotos[sl.k].enviando);
     return `<label class="vp-row" style="font-size:13px;color:var(--mu);font-weight:600">Executado em <input type="date" id="vp-exd-${p.id}" data-exdata="${p.id}" value="${esc(x.data || hoje())}" max="${hoje()}"></label>
       <span class="vp-lab">Fotos do serviço (vão para o relatório de serviço)</span>
-      <div class="vp-row" style="gap:6px;flex-wrap:nowrap;align-items:stretch">${REL_SLOTS.map((sl) => { const f = x.fotos[sl.k]; return `<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;text-align:center"><b style="font-size:12px">${sl.curto}</b>${f ? `<img src="${f.preview}" alt="${sl.curto}" style="width:100%;height:90px;object-fit:cover;border-radius:6px">` : `<span class="vp-msg" style="font-size:11px;min-height:40px">${esc(sl.dica)}</span>`}<label class="vp-btn vp-filebtn${f ? "" : " vp-pri"}" style="padding:6px 4px;font-size:12px;justify-content:center">${f ? "Trocar" : "📷 Foto"}<input type="file" accept="image/*" capture="environment" data-exfoto="${p.id}" data-k="${sl.k}"></label></div>`; }).join("")}</div>
+      <div class="vp-row" style="gap:6px;flex-wrap:nowrap;align-items:stretch">${REL_SLOTS.map((sl) => { const f = x.fotos[sl.k]; return `<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;text-align:center"><b style="font-size:12px">${sl.curto}</b>${f ? `<img src="${esc(f.preview)}" alt="${sl.curto}" style="width:100%;height:90px;object-fit:cover;border-radius:6px"><span class="vp-msg" style="font-size:11px;color:${f.enviando ? "var(--bk)" : "var(--lf)"}">${f.enviando ? "⏳ salvando…" : f.path ? "✔ salva" : ""}</span>` : `<span class="vp-msg" style="font-size:11px;min-height:40px">${esc(sl.dica)}</span>`}<label class="vp-btn vp-filebtn${f ? "" : " vp-pri"}" style="padding:6px 4px;font-size:12px;justify-content:center">${f ? "Trocar" : "📷 Foto"}<input type="file" accept="image/*" capture="environment" data-exfoto="${p.id}" data-k="${sl.k}"></label></div>`; }).join("")}</div>
+      <span class="vp-msg">📌 Cada foto é <b>salva na hora</b>: pode tirar uma, sair do app e voltar depois para tirar a outra.</span>
       ${nf < 3 ? `<span class="vp-need">Faltam ${3 - nf} foto${3 - nf === 1 ? "" : "s"}: antes, durante e depois são obrigatórias. Tire no dia do serviço.</span>` : ""}
       <span class="vp-lab">Quantidade executada (sai no relatório) · processo prevê ${p.qtd_poda} poda e ${p.qtd_extirpacao} extirpação</span>
       <div class="vp-rgrid" style="margin-top:0">${ITENS.map((it) => `<label style="display:flex;flex-direction:column;gap:2px;font-size:12px"><span>${esc(it.d)}</span><input type="number" min="0" step="1" inputmode="numeric" id="vp-exq-${p.id}-${it.c.replace(/\./g, "_")}" data-exq="${p.id}" data-c="${it.c}" value="${esc(x.qtd[it.c] || "")}" placeholder="0"></label>`).join("")}</div>
       ${temQ ? "" : `<span class="vp-need">Informe a quantidade executada em pelo menos um item.</span>`}
       <input type="text" id="vp-exo-${p.id}" data-exobs="${p.id}" value="${esc(x.obs || "")}" placeholder="Observação (opcional)">
-      <div class="vp-row"><button class="vp-btn vp-pri" data-exok="${p.id}" ${nf < 3 || !temQ || ocup ? "disabled" : ""}>${ocup ? "Enviando as fotos…" : "✅ Confirmar: serviço executado"}</button><button class="vp-btn" data-excancel="${p.id}">Cancelar</button></div>`;
+      <div class="vp-row"><button class="vp-btn vp-pri" data-exok="${p.id}" ${nf < 3 || !temQ || ocup || salvando ? "disabled" : ""}>${ocup ? "Enviando…" : salvando ? "Salvando a foto…" : "✅ Confirmar: serviço executado"}</button><button class="vp-btn" data-excancel="${p.id}">Fechar (fica salvo)</button></div>`;
   }
   function execTurma() {
     const fis = pode.fis(), sup = sessao.sup, eu = meuId();
@@ -5627,7 +5636,7 @@ function montar(root) {
       h += L.map((p, i) => { const r = R(p), ef = r.envio_fiscal, x = (S.ex || {})[p.id], fx = (S.fx || {})[p.id];
         let acao;
         if (x) acao = execForm(p);
-        else if (fis) acao = `<div class="vp-row"><button class="vp-btn vp-pri" data-exabrir="${p.id}">✅ Registrar a execução (3 fotos)</button></div>`;
+        else if (fis) { const g = rascDe(p.id), ns = g && g.fotos ? Object.values(g.fotos).filter(Boolean).length : 0; acao = `<div class="vp-row"><button class="vp-btn vp-pri" data-exabrir="${p.id}">${g ? `▶ Continuar o registro (${ns} de 3 fotos salvas)` : "✅ Registrar a execução (3 fotos)"}</button></div>`; }
         else if (ef && !fx) acao = `<div class="vp-row"><span class="vp-sp vp-env">📲 Com o fiscal ${esc(ef.nome)}</span><span class="vp-msg">desde ${fHora(ef.em)}</span></div><div class="vp-row"><button class="vp-btn" data-fxtroca="${p.id}">Trocar o fiscal</button><button class="vp-btn" data-exabrir="${p.id}">Registrar a execução eu mesmo</button></div>`;
         else { const pad = (fx && fx.uid) || (ef && ef.uid) || (FIS.length === 1 ? FIS[0].id : "");
           acao = FIS.length ? `<span class="vp-lab">Destinar a um fiscal da turma para executar</span><select id="vp-fx-${p.id}" data-fxsel="${p.id}"><option value="">— Escolher o fiscal —</option>${FIS.map((f) => `<option value="${esc(f.id)}"${pad === f.id ? " selected" : ""}>${esc(f.nome)}${f.equipe ? " · " + esc(f.equipe.toLowerCase()) : " · todas as equipes"}</option>`).join("")}</select>
@@ -5651,7 +5660,7 @@ function montar(root) {
       const fotos = {};
       for (const sl of REL_SLOTS) { const f = x.fotos[sl.k]; if (f.path) { fotos[sl.k] = f.path; continue; } try { f.path = await midEnviar(sl, f.file); } catch (e) { throw new Error(sl.curto + ": " + midErro(e)); } fotos[sl.k] = f.path; }
       const ef = r.envio_fiscal, fiscal = pode.fis() ? usuario() : ef ? ef.nome : "";
-      if (await gravar([id], { execucao: { data: x.data || hoje(), obs: (x.obs || "").trim(), fotos, qtd, fiscal, sup: (r.envio && r.envio.sup) || "", por: usuario(), uid: meuId(), em: new Date().toISOString() } })) {
+      if (await gravar([id], { exec_rasc: null, execucao: { data: x.data || hoje(), obs: (x.obs || "").trim(), fotos, qtd, fiscal, sup: (r.envio && r.envio.sup) || "", por: usuario(), uid: meuId(), em: new Date().toISOString() } })) {
         Object.values(x.fotos).forEach((f) => f && f.preview && URL.revokeObjectURL(f.preview)); delete S.ex[id]; toast("Execução registrada: o relatório de serviço já está no Resumo da coordenação"); }
     } catch (e) { toast("Não foi possível salvar: " + (e && e.message || e)); }
     finally { delete S.busy["ex" + id]; render(); }
@@ -5802,7 +5811,7 @@ function montar(root) {
     if (ds.evx) { delete S.ev[ds.evx]; render(); return; }
     if (ds.evcancel) { if (t.dataset.arm !== "1") { t.dataset.arm = "1"; t.textContent = "Toque de novo para cancelar"; setTimeout(() => { if (t.isConnected) { t.dataset.arm = ""; render(); } }, 4000); return; } if (await gravar([ds.evcancel], { envio: null, envio_fiscal: null })) toast("Envio cancelado"); return; }
     if (ds.exdesfaz) { if (t.dataset.arm !== "1") { t.dataset.arm = "1"; t.textContent = "Toque de novo para desfazer"; setTimeout(() => { if (t.isConnected) { t.dataset.arm = ""; render(); } }, 4000); return; } if (await gravar([ds.exdesfaz], { execucao: null })) toast("Execução desfeita"); return; }
-    if (ds.exabrir) { S.ex = S.ex || {}; S.ex[ds.exabrir] = { data: hoje(), obs: "", fotos: {}, qtd: {} }; render(); return; }
+    if (ds.exabrir) { S.ex = S.ex || {}; S.ex[ds.exabrir] = exNovo(ds.exabrir); render(); return; }
     if (ds.fxtroca) { S.fx = S.fx || {}; S.fx[ds.fxtroca] = {}; render(); return; }
     if (ds.fxx) { delete S.fx[ds.fxx]; render(); return; }
     if (ds.fxenviar) { const id = ds.fxenviar, sel = root.querySelector("#vp-fx-" + cssId(id)), uid = sel ? sel.value : ""; if (!uid) { toast("Escolha o fiscal"); return; } const u = acesso[uid] || {};
@@ -5892,9 +5901,14 @@ function montar(root) {
     if (t.id === "vp-rreg") { S.rreg = t.value; render(); return; }
     if (t.id === "vp-vdia") { S.vdia = t.value || ""; render(); return; }
     if (ds.evsup) { S.ev = S.ev || {}; S.ev[ds.evsup] = Object.assign(S.ev[ds.evsup] || {}, { sup: t.value }); return; }
-    if (ds.exdata) { S.ex[ds.exdata].data = t.value; return; }
+    if (ds.exdata) { S.ex[ds.exdata].data = t.value; rascDepois(ds.exdata); return; }
     if (ds.exfoto) { const file = t.files && t.files[0]; if (!file) return; if (!/^image\//.test(file.type)) { toast("Escolha uma foto"); return; }
-      const x = S.ex[ds.exfoto], o = x.fotos[ds.k]; if (o && o.preview) URL.revokeObjectURL(o.preview); x.fotos[ds.k] = { file, preview: URL.createObjectURL(file) }; render(); return; }
+      const id = ds.exfoto, k = ds.k, sl = REL_SLOTS.find((z) => z.k === k), x = S.ex[id], o = x.fotos[k]; if (o && o.preview && /^blob:/.test(o.preview)) URL.revokeObjectURL(o.preview);
+      const f = (x.fotos[k] = { file, preview: URL.createObjectURL(file), enviando: 1 }); render();
+      // tira e já salva: envia a foto na hora e grava no rascunho do processo
+      try { f.path = await midEnviar(sl, file); delete f.enviando; await rascSalvar(id); toast(sl.curto + ": foto salva"); }
+      catch (e) { if (x.fotos[k] === f) delete x.fotos[k]; toast("Não foi possível salvar a foto: " + midErro(e)); }
+      render(); return; }
     if (ds.bxdata) { S.bx = S.bx || {}; S.bx[ds.bxdata] = Object.assign(S.bx[ds.bxdata] || {}, { data: t.value }); return; }
     if (t.id === "vp-preg") { S.preg = t.value; S.lim = 40; render(); return; }
     if (ds.pdflote) { let fs = [...(t.files || [])].filter((f) => /\.pdf$/i.test(f.name)); if (!fs.length) { toast("Escolha arquivos PDF"); return; }
@@ -5934,8 +5948,8 @@ function montar(root) {
           clearTimeout(S._regT); if (S.novo.setor.trim().length >= 3) S._regT = setTimeout(async () => { const n = S.novo; if (!n || (n.regional && !n._regAuto)) return; const g2 = await regionalGeo(n); if (S.novo !== n || (n.regional && !n._regAuto)) return; const sel2 = document.getElementById("vp-nv-regional"), av2 = document.getElementById("vp-nv-regav");
             if (g2) { n.regional = g2; n._regAuto = true; if (sel2) sel2.value = g2; if (av2) av2.textContent = "✓ regional achada pelo mapa (" + cap(g2) + "). Confira."; } else if (av2) av2.textContent = "Não achei a regional: escolha na lista."; }, 1200); } } }
     if (ds.ed && S.ed && ds.ed !== "regional") S.ed[ds.ed] = t.value;
-    if (ds.exobs && S.ex && S.ex[ds.exobs]) S.ex[ds.exobs].obs = t.value;
-    if (ds.exq && S.ex && S.ex[ds.exq]) { const x = S.ex[ds.exq], tinha = QK().some((c) => +x.qtd[c] > 0); x.qtd[ds.c] = t.value; if (tinha !== QK().some((c) => +x.qtd[c] > 0)) render(); }
+    if (ds.exobs && S.ex && S.ex[ds.exobs]) { S.ex[ds.exobs].obs = t.value; rascDepois(ds.exobs); }
+    if (ds.exq && S.ex && S.ex[ds.exq]) { const x = S.ex[ds.exq], tinha = QK().some((c) => +x.qtd[c] > 0); x.qtd[ds.c] = t.value; rascDepois(ds.exq); if (tinha !== QK().some((c) => +x.qtd[c] > 0)) render(); }
     if (ds.bxdoc) { S.bx = S.bx || {}; S.bx[ds.bxdoc] = Object.assign(S.bx[ds.bxdoc] || {}, { doc: t.value }); }
     if (t.id === "vp-pq") { S.pq = t.value; S.lim = 40; render(); return; }
     if (ds.fobs) S.f[ds.fobs].obs = t.value;
