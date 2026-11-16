@@ -1605,7 +1605,7 @@ body.sofiscal nav.tabs{display:none!important}
       <div id="areaLinhas" class="arealin"></div>
       <button type="button" class="btn sec" id="areaAdd" hidden style="min-height:44px">+ Adicionar outro ID</button>
       <small class="note" style="font-weight:400" id="areaHint">Copie o ID da área cadastrado no URBANTRIM.</small></div>
-    <label class="f" id="sistWrap" hidden>Processo SEI ou GED? (obrigatório)<select id="procSist"><option value="">Selecione…</option><option value="SEI">SEI</option><option value="GED">GED</option></select></label>
+    <label class="f" id="sistWrap" hidden>Processo SEI ou INTRANET? (obrigatório)<select id="procSist"><option value="">Selecione…</option><option value="SEI">SEI</option><option value="INTRANET">INTRANET</option><option value="GED">GED</option></select></label>
     <label class="f" id="procWrap" hidden><span id="procLbl">Nº do processo</span><input id="processo" placeholder="Ex.: 26.30.000010607-1"></label>
     <label class="f" id="solWrap" hidden>Nome do solicitante (obrigatório – sai no relatório)<input id="solic" placeholder="Nome de quem pediu o serviço" autocomplete="off"></label>
     <label class="f" id="pedWrap" hidden>Nº do PED (se houver)<input id="ped" placeholder="Nº do PED"></label>
@@ -1643,7 +1643,7 @@ body.sofiscal nav.tabs{display:none!important}
     <div class="step">Relatório de serviço <b>(O.S / processo)</b></div>
     <p class="note" id="relSubNota" hidden style="margin:0;color:var(--brand)"><b>Este relatório é do serviço feito no lugar</b> (o O.S / processo informado em "Serviço feito no lugar"). Anexe as 3 fotos e assine.</p>
     <p class="note" style="margin:0">O relatório no modelo da GPE é preenchido sozinho com os dados da baixa (equipe, local, itens executados, motivo, observação, supervisor e data). Complete o que falta abaixo; o PDF fica no detalhe do serviço.</p>
-    <div class="row2"><label class="f" id="rlSistW" hidden>Processo SEI ou GED? (obrigatório)<select id="rlSist"><option value="">Selecione…</option><option value="SEI">SEI</option><option value="GED">GED</option></select></label>
+    <div class="row2"><label class="f" id="rlSistW" hidden>Processo SEI, INTRANET ou GED? (obrigatório)<select id="rlSist"><option value="">Selecione…</option><option value="SEI">SEI</option><option value="INTRANET">INTRANET</option><option value="GED">GED</option></select></label>
       <label class="f"><span id="rlProcLbl">Nº da O.S (obrigatório)</span><input id="rlProc" autocomplete="off" placeholder="Número"></label></div>
     <label class="f">Nº do PED (se houver)<input id="rlPed" autocomplete="off" placeholder="Nº do PED"></label>
     <div class="row2"><label class="f">Parecer técnico nº (se houver)<input id="rlParecer" autocomplete="off" placeholder="Ex.: 123/2026"></label>
@@ -3090,7 +3090,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.17u";
+const APP_VERSAO="2026.11.17w";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -3309,7 +3309,7 @@ const relJaB=b=>!!b&&relTem(b)&&form?.mode==="baixa"&&form.st==="NÃO"&&(!!b.jaE
 const relSlots=()=>relJa?JA_SLOTS:REL_SLOTS; // executado na totalidade e assinado pelo supervisor
 const ehFiscal=()=>sessao?.perfil==="fiscal";
 // fotos (antes, durante, depois) só são exigidas na O.S (Intranet) e no processo SEI; processo GED segue o mesmo fluxo, sem fotos
-const fotosPede=r=>!!r&&relTem(r)&&(r.tipo==="O.S"||(r.tipo==="PROCESSO"&&(r.procSist||"SEI")==="SEI"));
+const fotosPede=r=>!!r&&relTem(r)&&(r.tipo==="O.S"||(r.tipo==="PROCESSO"&&["SEI","INTRANET"].includes(r.procSist||"SEI"))); // SEI e Intranet: 3 fotos obrigatórias
 // acessos do fiscal de turma, ativados / desativados pelo administrador (documento "perm_fiscal" da coleção assinaturas)
 const FIS_PERMS=[
   {k:"fotos",t:"O.S recebidas e fotos do serviço",d:"Ver as O.S que o supervisor enviou e anexar as fotos antes, durante e depois (sempre ativo).",fixo:1},
@@ -3416,7 +3416,7 @@ $("#rlSist").addEventListener("change",relIdUI);
 // serviço feito no lugar: o nº digitado lá acompanha o relatório
 document.addEventListener("input",e=>{ if(e.target.id==="s_processo"&&relAlvo==="sub") $("#rlProc").value=e.target.value.trim().toUpperCase(); });
 // identificação do relatório: O.S → nº da O.S; processo → SEI ou GED e o número; PED e parecer quando houver
-const relIdErros=()=>{ const e=[]; if(relTipo==="PROCESSO"&&!$("#rlSist").value) e.push("relatório: informe se o processo é SEI ou GED"); if(!$("#rlProc").value.trim()) e.push(relTipo==="PROCESSO"?"relatório: informe o nº do processo":"relatório: informe o nº da O.S"); if(!$("#rlSolic").value.trim()) e.push("relatório: informe o nome do solicitante do serviço"); return e; };
+const relIdErros=()=>{ const e=[]; if(relTipo==="PROCESSO"&&!$("#rlSist").value) e.push("relatório: informe se o processo é SEI ou INTRANET"); if(!$("#rlProc").value.trim()) e.push(relTipo==="PROCESSO"?"relatório: informe o nº do processo":"relatório: informe o nº da O.S"); if(!$("#rlSolic").value.trim()) e.push("relatório: informe o nome do solicitante do serviço"); return e; };
 const relId=(r)=>{ const R=r.relat||{}, pr=r.tipo==="PROCESSO", sist=R.sist||r.procSist||""; return {lbl:pr?`PROCESSO ${sist||""} Nº`.replace("  "," "):"O.S Nº", num:R.processo||r.processo||"", ped:R.ped||r.ped||"", par:R.parecer||r.parecer||""}; };
 function relLer(){ return {processo:$("#rlProc").value.trim().toUpperCase(), sist:relTipo==="PROCESSO"?$("#rlSist").value:"", ped:$("#rlPed").value.trim().toUpperCase(), parecer:$("#rlParecer").value.trim().toUpperCase(), vistoria:$("#rlVist").value, solicitante:$("#rlSolic").value.trim().toUpperCase(),
   arvore:$("#rlArv").value.trim(), galho:$("#rlGalho").value.trim(), matricula:$("#rlMat").value.trim(), midia:{...relMidia}, em:new Date().toISOString()}; }
@@ -3544,8 +3544,8 @@ function equipeOpts(){ const s=supOf(form.sup); const o3=$("#equipe").querySelec
   if(o3){ o3.hidden=o3.disabled=!!(s&&s.grupo==="PODA I"); if(o3.disabled&&$("#equipe").value==="3ª EQUIPE") $("#equipe").value="1ª EQUIPE"; }
   if(form.mode==="prog"&&!form.base) eqVtSync("eq"); }
 $("#s_tipo").addEventListener("change",sProcUI); $("#s_tipo").addEventListener("change",()=>{ try{ relSync(); }catch(e){} });
-const TIPO_LBL={"O.S":"PROCESSO INTRANET","PROCESSO":"PROCESSO SEI"}; // nomes mostrados na escolha do tipo de local
-chipRow($("#tipoChips"), TIPOS.map(t=>({v:t,h:esc(TIPO_LBL[t]||t)})), v=>{form.tipo=v;setPressed($("#tipoChips"),v);if(v==="PROCESSO"&&!$("#procSist").value)$("#procSist").value="SEI";if(!temProc(v)){$("#processo").value="";$("#solic").value="";$("#parecer").value="";$("#ped").value="";}if(v!=="PROCESSO")$("#procSist").value="";if(!TIPOS_180.has(v))$("#areaId").value="";procUI();servUI();checaDup()});
+const TIPO_LBL={"O.S":"PROCESSO INTRANET","PROCESSO":"PROCESSO"}; // um botão só "PROCESSO"; embaixo escolhe SEI ou INTRANET (INTRANET grava como O.S, como antes) // nomes mostrados na escolha do tipo de local
+chipRow($("#tipoChips"), TIPOS.map(t=>({v:t,h:esc(TIPO_LBL[t]||t)})), v=>{if(v==="PROCESSO"&&$("#procSist").value==="INTRANET") v="O.S"; form.tipo=v;setPressed($("#tipoChips"),v);if(v==="PROCESSO"&&!$("#procSist").value)$("#procSist").value="SEI";if(!temProc(v)){$("#processo").value="";$("#solic").value="";$("#parecer").value="";$("#ped").value="";}if(!temProc(v))$("#procSist").value="";if(!TIPOS_180.has(v))$("#areaId").value="";procUI();servUI();checaDup()});
 // serviço a executar: pode marcar vários; grava junto, separado por " + " (ex.: "PODA DE MANUTENÇÃO + EXTIRPAÇÃO")
 const servSel=new Set();
 $("#servChips").innerHTML=SERVICOS.map(x=>`<button type="button" class="chip" data-sv="${esc(x)}" aria-pressed="false">${x==="OUTRO"?"Outro (especificar)":esc(x.charAt(0)+x.slice(1).toLowerCase())}</button>`).join("");
@@ -3591,8 +3591,13 @@ function servCarregar(v){ servSel.clear(); const outros=[]; String(v||"").split(
 const temProc=t=>t==="O.S"||t==="PROCESSO";
 // nº do processo com o sistema (SEI / GED) e o PED, para mostrar
 const procNum=r=>`${r.tipo==="PROCESSO"&&r.procSist?r.procSist+" ":""}${r.processo||""}${r.ped?" · PED nº "+r.ped:""}`;
-function procUI(){ const tem=temProc(form.tipo); $("#procWrap").hidden=!(tem||$("#processo").value.trim()); $("#solWrap").hidden=!(tem||$("#solic").value.trim()); $("#parWrap").hidden=!(tem||$("#parecer").value.trim()); $("#pedWrap").hidden=!(tem||$("#ped").value.trim()); $("#sistWrap").hidden=form.tipo!=="PROCESSO";
+function procUI(){ const tem=temProc(form.tipo);
+  { const bo=[...$("#tipoChips").querySelectorAll("button")].find(b=>(b.dataset.v||b.value)==="O.S"), bp=[...$("#tipoChips").querySelectorAll("button")].find(b=>(b.dataset.v||b.value)==="PROCESSO");
+    if(bo) bo.hidden=true; if(bp) bp.setAttribute("aria-pressed",String(tem)); if(form.tipo==="O.S") $("#procSist").value="INTRANET"; else if(form.tipo==="PROCESSO"&&$("#procSist").value==="INTRANET") form.tipo="O.S";
+    const og=$("#procSist").querySelector('option[value="GED"]'); if(og) og.hidden=$("#procSist").value!=="GED"; } $("#procWrap").hidden=!(tem||$("#processo").value.trim()); $("#solWrap").hidden=!(tem||$("#solic").value.trim()); $("#parWrap").hidden=!(tem||$("#parecer").value.trim()); $("#pedWrap").hidden=!(tem||$("#ped").value.trim()); $("#sistWrap").hidden=!tem;
   $("#procLbl").textContent = form.tipo==="O.S" ? "Nº do processo Intranet / O.S (obrigatório)" : form.tipo==="PROCESSO" ? "Nº do processo (obrigatório)" : "Nº do processo / O.S (registrado antes)"; }
+// SEI ou INTRANET: INTRANET vira o tipo "O.S" (processo Intranet), SEI/GED o tipo "PROCESSO"
+document.addEventListener("change",e=>{ if(e.target.id!=="procSist"||!temProc(form.tipo)) return; form.tipo=e.target.value==="INTRANET"?"O.S":"PROCESSO"; procUI(); try{ servUI(); checaDup(); modeUI(); }catch(x){} });
 function sProcUI(){ const w=$("#s_procWrap"); if(!w) return; const t=$("#s_tipo").value; if(!temProc(t)&&document.activeElement===$("#s_tipo")) $("#s_processo").value="";
   w.hidden=!(temProc(t)||$("#s_processo").value.trim()); $("#s_procLbl").textContent=t==="O.S"?"Nº da O.S":"Nº do processo"; }
 
@@ -4181,7 +4186,7 @@ $("#form").addEventListener("submit", async ev=>{
       if(!/(^|[\s,\/(])(R\.|AV\.|AL\.|ROD\.|TV\.|ESTR\.)\s*[A-Z0-9ÀÁÂÃÉÊÍÓÔÕÚÇ]/.test(abrevEnd($("#e_comp").value))) e.push("praça: informe a outra rua no complemento (ex.: ESQ. C/ R. 5)"); }
     if(!endLivre){ if(!$("#e_via").value) e.push("escolha o tipo de via (R., AV., AL.…)"); if(!$("#e_nome").value.trim()) e.push("informe o nome ou número da via"); }
     { const ee=erroEnd(common.logradouro,"logradouro"); if(ee&&!(endLivre&&/comece pelo tipo de via/.test(ee))) e.push(ee); }
-    if(!common.tipo) e.push("escolha o tipo de local"); if(common.tipo==="O.S"&&!common.processo) e.push("informe o nº da O.S"); if(common.tipo==="PROCESSO"&&!common.procSist) e.push("informe se o processo é SEI ou GED"); if(temProc(common.tipo)&&form.mode!=="baixa"&&!common.solicitante) e.push("informe o nome do solicitante (sai no relatório)"); if(common.tipo==="PROCESSO"&&!common.processo) e.push("informe o nº do processo");
+    if(!common.tipo) e.push("escolha o tipo de local"); if(common.tipo==="O.S"&&!common.processo) e.push("informe o nº da O.S"); if(common.tipo==="PROCESSO"&&!common.procSist) e.push("informe se o processo é SEI ou INTRANET"); if(temProc(common.tipo)&&form.mode!=="baixa"&&!common.solicitante) e.push("informe o nome do solicitante (sai no relatório)"); if(common.tipo==="PROCESSO"&&!common.processo) e.push("informe o nº do processo");
     if(TIPOS_SERV.has(common.tipo)&&servSel.has("OUTRO")&&!$("#servOutro").value.trim()) e.push("escreva qual é o outro serviço");
     else if(TIPOS_SERV.has(common.tipo)&&!common.servico) e.push("marque o serviço a executar (ex.: poda de manutenção) – pode marcar mais de um");
   }
