@@ -3108,7 +3108,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.18k";
+const APP_VERSAO="2026.11.18m";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -4863,6 +4863,8 @@ function montar(root) {
   // já executado (constatado na vistoria) e executado pela turma: também precisam de baixa no Urbantrim
   const precisaUrbBx = (p) => vistEst(R(p)) === "ja_executado" || !!R(p).execucao;
   const aguardaUrbBx = (p) => precisaUrbBx(p) && !R(p).urb_baixa;
+  // conferência: processo com baixa (sistema ou Urbantrim) mas a vistoria diz "não executado" e a turma não executou → conferir
+  const bxIncoerente = (p) => !precisaUrbBx(p) && (!!R(p).baixa || !!R(p).urb_baixa);
   const dono = (p) => R(p).rota || null;
   const minha = (p) => { const d = dono(p); return !!d && d.uid === meuId(); };
   const deOutro = (p) => { const d = dono(p); return !!d && d.uid !== meuId(); };
@@ -5470,7 +5472,7 @@ function montar(root) {
   function faltaUrb(p) { const r = R(p); return r.situacao === "nao_executado" && !r.envio && !r.execucao && p.urbantrim !== "sim"; }
   function listaResumo() {
     const term = (S.rq || "").trim().toLowerCase();
-    return S.proc.filter((p) => R(p).vistoriado && (S.rsit === "all" || !S.rsit || (S.rsit === "urb" ? (R(p).urbantrim || {}).st === "pend" && vistEst(R(p)) === "nao_executado" : S.rsit === "semenv" ? R(p).situacao === "nao_executado" && !R(p).envio : S.rsit === "urbcad" ? faltaUrb(p) : S.rsit === "env" ? !!R(p).envio && !R(p).execucao : S.rsit === "exe" ? !!R(p).execucao : S.rsit === "semb" ? aguardaBx(p) : S.rsit === "urbbx" ? aguardaUrbBx(p) : S.rsit === "urbok" ? !!R(p).urb_baixa : S.rsit === "bx" ? !!R(p).baixa : vistEst(R(p)) === S.rsit)) && (!S.rreg || p.regional === S.rreg)
+    return S.proc.filter((p) => R(p).vistoriado && (S.rsit === "all" || !S.rsit || (S.rsit === "urb" ? (R(p).urbantrim || {}).st === "pend" && vistEst(R(p)) === "nao_executado" : S.rsit === "semenv" ? R(p).situacao === "nao_executado" && !R(p).envio : S.rsit === "urbcad" ? faltaUrb(p) : S.rsit === "env" ? !!R(p).envio && !R(p).execucao : S.rsit === "exe" ? !!R(p).execucao : S.rsit === "semb" ? aguardaBx(p) : S.rsit === "urbbx" ? aguardaUrbBx(p) : S.rsit === "bxinc" ? bxIncoerente(p) : S.rsit === "urbok" ? !!R(p).urb_baixa : S.rsit === "bx" ? !!R(p).baixa : vistEst(R(p)) === S.rsit)) && (!S.rreg || p.regional === S.rreg)
       && (!term || buscaOk([p.processo, p.endereco, p.setor, p.ged, R(p).responsavel, R(p).equipamento, R(p).observacao].join(" "), term)))
       .sort((a, b) => ((R(b).data_vistoria || "") + (R(b).atualizado_em || "")).localeCompare((R(a).data_vistoria || "") + (R(a).atualizado_em || "")));
   }
@@ -5568,7 +5570,7 @@ function montar(root) {
     ${graficos(A)}
     ${ctlHtml("bx")}${ctlHtml("urb")}${c1311Html()}${typeof isGerente === "function" && isGerente() ? urbImpHtml() : ""}
     <h3>Vistorias realizadas</h3>
-    <div class="vp-row">${[["all", "Todas", d], ["ja_executado", "Já executado", c.ja_executado], ["nao_executado", "Não executado", c.nao_executado], ["semenv", "Não executado sem envio", A.D.filter((p) => R(p).situacao === "nao_executado" && !R(p).envio).length], ["urbcad", "⚠ Cadastrar no Urbantrim", A.D.filter(faltaUrb).length], ["env", "Enviados para execução", A.D.filter((p) => R(p).envio && !R(p).execucao).length], ["exe", "Executados pela turma", A.D.filter((p) => R(p).execucao).length], ["semb", "Aguardando baixa no sistema", A.D.filter(aguardaBx).length], ["urbbx", "Aguardando baixa no Urbantrim", A.D.filter(aguardaUrbBx).length], ["urbok", "Baixados no Urbantrim", A.D.filter((p) => !!R(p).urb_baixa).length], ["bx", "Baixados no sistema", A.D.filter((p) => R(p).baixa).length]].map(([k, t, q]) => `<button class="vp-chip" data-rsit="${k}" aria-pressed="${(S.rsit || "all") === k}"${k === "urbcad" && q ? ' style="border-color:#e0a39b;background:#fdecea;color:#8a1c12"' : ""}>${t}<small>${q}</small></button>`).join("")}</div>
+    <div class="vp-row">${[["all", "Todas", d], ["ja_executado", "Já executado", c.ja_executado], ["nao_executado", "Não executado", c.nao_executado], ["semenv", "Não executado sem envio", A.D.filter((p) => R(p).situacao === "nao_executado" && !R(p).envio).length], ["urbcad", "⚠ Cadastrar no Urbantrim", A.D.filter(faltaUrb).length], ["env", "Enviados para execução", A.D.filter((p) => R(p).envio && !R(p).execucao).length], ["exe", "Executados pela turma", A.D.filter((p) => R(p).execucao).length], ["semb", "Aguardando baixa no sistema", A.D.filter(aguardaBx).length], ["urbbx", "Aguardando baixa no Urbantrim", A.D.filter(aguardaUrbBx).length], ["urbok", "Baixados no Urbantrim", A.D.filter((p) => !!R(p).urb_baixa).length], ...(A.D.some(bxIncoerente) ? [["bxinc", "⚠ Baixado mas consta não executado", A.D.filter(bxIncoerente).length]] : []), ["bx", "Baixados no sistema", A.D.filter((p) => R(p).baixa).length]].map(([k, t, q]) => `<button class="vp-chip" data-rsit="${k}" aria-pressed="${(S.rsit || "all") === k}"${k === "urbcad" && q ? ' style="border-color:#e0a39b;background:#fdecea;color:#8a1c12"' : ""}>${t}<small>${q}</small></button>`).join("")}</div>
     <div class="vp-ctl"><label class="vp-f">Regional<select id="vp-rreg"><option value="">Todas</option>${REGS.map((r) => `<option value="${r}"${S.rreg === r ? " selected" : ""}>${cap(r)}</option>`).join("")}</select></label>
     <label class="vp-f vp-grow">Buscar<input type="search" id="vp-rq" value="${esc(S.rq || "")}" placeholder="Processo, rua, vistoriador"></label></div>
     <div class="vp-row" style="margin:4px 0 8px"><button class="vp-btn vp-pri" data-planilha="1">⬇ Baixar em Excel: ${esc(SIT_NOME[S.rsit || "all"] || "Todas")} (${L.length})</button><span class="vp-msg">baixa a lista da situação escolhida acima${S.rreg ? " · regional " + cap(S.rreg) : ""}${S.rq ? " · busca \"" + esc(S.rq) + "\"" : ""}</span></div>
@@ -5576,7 +5578,8 @@ function montar(root) {
     ${L.length ? `<section class="vp-card"><ol>${L.slice(0, S.lim).map((p) => { const r = R(p), u = r.urbantrim || {};
       const aberto = S.rab && S.rab[p.id];
       const linha = `<button class="vp-rrow" data-rab="${p.id}" aria-expanded="${!!aberto}"><span class="vp-rdt">${fDia(r.data_vistoria)}</span>${estPill(r)}<span class="vp-rproc">${esc(p.processo)}${r.baixa ? ` <span class="vp-sp vp-env" style="font-family:inherit">✔ baixado ${esc(r.baixa.sistema)} ${fDia(r.baixa.data)}</span>` : ""}${r.situacao === "nao_executado" ? (r.execucao ? ` <span class="vp-sp vp-s-ja_executado" style="font-family:inherit">✔ executado ${fDia(r.execucao.data)}${r.execucao.fotos ? " · relatório" : ""}</span>` : r.envio ? ` <span class="vp-sp vp-s-nao_executado" style="font-family:inherit">📤 ${esc(r.envio.sup)}${r.envio_fiscal ? " › 📲 fiscal" : ""}</span>` : "") : ""}</span><span class="vp-rend">${esc(p.endereco)}</span>${faltaUrb(p) ? `<span class="vp-msg" style="color:#8a1c12;font-weight:700">⚠ Cadastrar no Urbantrim antes de enviar para execução</span>` : ""}<span class="vp-msg">${cap(p.regional)} · ${esc(r.responsavel || "–")}</span>${p.qtd_poda || p.qtd_extirpacao || p.qtd_destocamento ? `<span class="vp-row" style="gap:6px;margin-top:2px">${qtdPills(p)}${p.qtd_destocamento ? `<span class="vp-pill">${p.qtd_destocamento} destoca</span>` : ""}</span>` : ""}<span class="vp-rseta">${aberto ? "▲" : "▼"}</span></button>`;
-      if (!aberto) return `<li class="vp-rli">${linha}</li>`;
+      // "Cadastrar no Urbantrim": botão direto na lista, sem precisar abrir
+      if (!aberto) return `<li class="vp-rli">${linha}${faltaUrb(p) && podeUrbMarcar() ? `<div class="vp-row" style="padding:0 14px 10px"><button class="vp-btn vp-pri" data-urbok="${p.id}" style="padding:6px 12px;font-size:13px">✔ Já cadastrei no Urbantrim</button></div>` : ""}</li>`;
       return `<li class="vp-rli vp-ropen">${linha}<div class="vp-rdet">
         <div class="vp-row"><span class="vp-msg">Vistoria em <b>${fDia(r.data_vistoria)}</b> · ${esc(r.responsavel || "–")}</span></div>
         ${linhaProc(p)}
@@ -5608,7 +5611,7 @@ function montar(root) {
     if (A.byVist.length) { L.push("", "POR VISTORIADOR"); A.byVist.forEach((x) => L.push(`- ${x.nm}: ${x.d} vistorias`)); }
     return L.join("\n");
   }
-  const SIT_NOME = { all: "Todas", ja_executado: "Já executado", nao_executado: "Não executado", semenv: "Não executado sem envio", urbcad: "Cadastrar no Urbantrim", urb: "Falta Urbantrim", env: "Enviados para execução", exe: "Executados pela turma", semb: "Aguardando baixa no sistema", bx: "Baixados no sistema", urbbx: "Aguardando baixa no Urbantrim", urbok: "Baixados no Urbantrim" };
+  const SIT_NOME = { all: "Todas", ja_executado: "Já executado", nao_executado: "Não executado", semenv: "Não executado sem envio", urbcad: "Cadastrar no Urbantrim", urb: "Falta Urbantrim", env: "Enviados para execução", exe: "Executados pela turma", semb: "Aguardando baixa no sistema", bx: "Baixados no sistema", urbbx: "Aguardando baixa no Urbantrim", urbok: "Baixados no Urbantrim", bxinc: "Baixado mas consta não executado" };
   // planilha (CSV, abre no Excel) com TODAS as informações de cada vistoria da lista filtrada
   async function baixarPlanilha() {
     const L = listaResumo(); if (!L.length) { toast("Nenhuma vistoria com esse filtro"); return; }
@@ -5616,7 +5619,7 @@ function montar(root) {
     const q = (v) => { const t = String(v == null ? "" : v); return /[;"\n\r]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
     const linhas = L.map((p) => { const r = R(p), u = r.urbantrim || {}; return [fDia(r.data_vistoria), EST[vistEst(r)][0], p.processo, p.ged, parecerTxt(p.parecer), p.ano || "", p.endereco, p.setor, cap(p.regional), p.qtd_poda, p.qtd_extirpacao, p.qtd_destocamento, r.responsavel || "", r.foto_path ? fotoAbrir(r.foto_path) : "", r.equipamento || "", r.observacao || "", docUrl(r) || "", (r.rota && r.rota.vistoriador) || "", fHora(r.atualizado_em), r.atualizado_por || "", precisaUrbBx(p) ? (r.urb_baixa ? "baixado" : "falta baixar") : "", r.urb_baixa ? fDia(r.urb_baixa.data) : "", r.urb_baixa ? r.urb_baixa.por || "" : "", r.baixa ? (r.baixa.sistema === "INTRANET" ? "Intranet" : r.baixa.sistema) : "não baixado", r.baixa ? fDia(r.baixa.data) : "", r.baixa ? r.baixa.por || "" : "", r.baixa ? r.baixa.doc || "" : "", r.envio ? supNome(r.envio.sup) : "", r.envio ? fHora(r.envio.em) : "", r.envio ? r.envio.por || "" : "", r.execucao ? fDia(r.execucao.data) : "", r.execucao ? r.execucao.por || "" : "", r.envio_fiscal ? r.envio_fiscal.nome || "" : "", r.execucao ? qtdExecTxt(r.execucao.qtd) : "", ...REL_SLOTS.map((sl) => r.execucao && r.execucao.fotos && r.execucao.fotos[sl.k] ? fotoAbrir(r.execucao.fotos[sl.k]) : "")].map(q).join(";"); });
     const csv = "\ufeff" + [cab.join(";")].concat(linhas).join("\r\n");
-    const nome = `vistorias-${{ all: "todas", ja_executado: "ja-executados", nao_executado: "nao-executados", urb: "falta-urbantrim", urbcad: "cadastrar-no-urbantrim", urbbx: "aguardando-baixa-urbantrim", urbok: "baixados-no-urbantrim", semb: "aguardando-baixa", bx: "baixados", semenv: "nao-executados-sem-envio", env: "enviados-para-execucao", exe: "executados-pela-turma" }[S.rsit || "all"]}-${hoje()}.csv`;
+    const nome = `vistorias-${{ all: "todas", ja_executado: "ja-executados", nao_executado: "nao-executados", urb: "falta-urbantrim", urbcad: "cadastrar-no-urbantrim", urbbx: "aguardando-baixa-urbantrim", urbok: "baixados-no-urbantrim", bxinc: "baixado-mas-nao-executado", semb: "aguardando-baixa", bx: "baixados", semenv: "nao-executados-sem-envio", env: "enviados-para-execucao", exe: "executados-pela-turma" }[S.rsit || "all"]}-${hoje()}.csv`;
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     try { if (typeof downloads !== "undefined" && downloads && downloads.save) { await downloads.save({ filename: nome, data: blob }); } else { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nome; document.body.appendChild(a); a.click(); a.remove(); }
       toast(`Planilha com ${L.length} vistorias baixada`); } catch (e) { toast("Não foi possível baixar: " + (e && e.message || e)); }
@@ -5676,14 +5679,15 @@ function montar(root) {
   }
   // Urbantrim: já executado não precisa lançar; para executar, o processo tem que estar cadastrado no Urbantrim
   const urbOk = (p) => p.urbantrim === "sim";
+  const podeUrbMarcar = () => pode.coord() || ehCadastrador() || (pode.resumo() && pode.lancar()); // quem cadastra no Urbantrim sinaliza no app
   const urbHtml = (p) => urbOk(p) ? `<span class="vp-msg" style="color:#1f6b3a">✔ Cadastrado no Urbantrim${R(p).urb_cad ? ` (informado por ${esc(R(p).urb_cad.por || "–")} em ${fHora(R(p).urb_cad.em)})` : ""}</span>`
-    : `<div class="vp-need" style="background:#fdecea;border-color:#f3b8b2;color:#8a1c12">⚠ <b>Para executar, o processo tem que estar cadastrado no Urbantrim.</b> ${p.urbantrim === "nao" ? "Ele foi marcado como fora do Urbantrim." : "Ainda não foi informado se está no Urbantrim."} Cadastre no Urbantrim e depois toque abaixo.${pode.coord() ? `<div class="vp-row" style="margin-top:6px"><button class="vp-btn vp-pri" data-urbok="${p.id}">✔ Já cadastrei no Urbantrim</button></div>` : ""}</div>`;
+    : `<div class="vp-need" style="background:#fdecea;border-color:#f3b8b2;color:#8a1c12">⚠ <b>Para executar, o processo tem que estar cadastrado no Urbantrim.</b> ${p.urbantrim === "nao" ? "Ele foi marcado como fora do Urbantrim." : "Ainda não foi informado se está no Urbantrim."} Cadastre no Urbantrim e depois toque abaixo.${podeUrbMarcar() ? `<div class="vp-row" style="margin-top:6px"><button class="vp-btn vp-pri" data-urbok="${p.id}">✔ Já cadastrei no Urbantrim</button></div>` : ""}</div>`;
   function envioHtml(p) {
     const r = R(p), e = r.envio, ef = r.envio_fiscal, x = (S.ev || {})[p.id] || {};
     if (r.execucao) return execFeitaHtml(p, true);
     if (e && !x.edit) return `<div class="vp-vb" style="border-color:var(--bk)"><div class="vp-row"><span class="vp-sp vp-s-nao_executado">📤 Enviado para execução</span><span><b>${esc(supNome(e.sup))}</b> em ${fHora(e.em)} por ${esc(e.por || "–")}</span></div>
       <span class="vp-msg">${ef ? `📲 O supervisor repassou ao fiscal <b>${esc(ef.nome)}</b> em ${fHora(ef.em)}. Aguardando a execução e as 3 fotos.` : "Aguardando o supervisor repassar ao fiscal."}</span>${pode.coord() ? `<div class="vp-row"><button class="vp-btn" data-evedit="${p.id}">Trocar a supervisão</button><button class="vp-btn" data-evcancel="${p.id}">Cancelar envio</button></div>` : ""}</div>`;
-    if (!pode.coord()) return `<div class="vp-msg">Ainda não enviado para execução.</div>`;
+    if (!pode.coord()) return !urbOk(p) && podeUrbMarcar() ? `<div class="vp-vb">${urbHtml(p)}</div>` : `<div class="vp-msg">Ainda não enviado para execução.</div>`;
     const sups = SUPS.filter((q) => noEscopo(q.id));
     if (!urbOk(p)) return `<div class="vp-vb"><span class="vp-lab">Enviar para uma supervisão executar</span>${urbHtml(p)}</div>`;
     return `<div class="vp-vb"><span class="vp-lab">Enviar para uma supervisão executar</span>${urbHtml(p)}
