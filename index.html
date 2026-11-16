@@ -3108,7 +3108,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.18j";
+const APP_VERSAO="2026.11.18k";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -5516,11 +5516,13 @@ function montar(root) {
     const dirSup = (sup) => { if (!sup) return ""; if (sup === LOT_DIROP) return "DIROP"; if (sup === LOT_DIRSEN) return "DIRSEN"; const g = (supOf(sup) || {}).grupo; return g === "PODA III" || g === "PODA IV" ? "DIROP" : g === "PODA I" || g === "PODA II" ? "DIRSEN" : ""; };
     const dirUid = (uid) => { const u = uid && acesso && acesso[uid]; if (!u) return ""; const a = areaAcesso(u); return a === "dirop" ? "DIROP" : a === "dirsen" ? "DIRSEN" : ""; };
     const dirExec = (r) => { const e = r.execucao || {}, f = r.envio_fiscal || {}; return dirUid(f.uid) || dirUid(e.uid) || dirSup(e.sup) || dirSup((r.envio || {}).sup) || ""; };
-    const DIRS = ["DIRSEN", "DIROP"], ZD = { vist: 0, exe: 0, bx: 0 }, porDir = {}; [...DIRS, ""].forEach((k) => (porDir[k] = { ...ZD }));
-    D.forEach((p) => { const r = R(p); const dv = dirUid(r.resp_uid); porDir[dv].vist++; if (r.execucao) { const de = dirExec(r); porDir[de].exe++; if (r.baixa) porDir[de].bx++; } });
+    const DIRS = ["DIRSEN", "DIROP"], ZD = { vist: 0, exe: 0, bx: 0, ubx: 0 }, porDir = {}; [...DIRS, ""].forEach((k) => (porDir[k] = { ...ZD }));
+    D.forEach((p) => { const r = R(p); const dv = dirUid(r.resp_uid); porDir[dv].vist++; const de = r.execucao ? dirExec(r) : dv; if (r.execucao) porDir[de].exe++;
+      // baixados: todos os que têm baixa (já executado na vistoria → diretoria de quem vistoriou; executado pela turma → diretoria da turma)
+      if (r.baixa) porDir[de].bx++; if (r.urb_baixa) porDir[de].ubx++; });
     const lider = DIRS.map((k) => [k, porDir[k].bx]).sort((a, b) => b[1] - a[1]);
     const g5 = `${lider[0][1] ? `<p class="vp-msg" style="margin:0 0 8px"><b>${lider[0][1] === lider[1][1] ? "Empate em baixas" : lider[0][0] + " deu mais baixas"}</b> · DIRSEN ${porDir.DIRSEN.bx} · DIROP ${porDir.DIROP.bx}</p>` : ""}` +
-      colunas(["Vistorias", "Executados", "Baixados"], [{ n: "DIRSEN", c: CJ, v: [porDir.DIRSEN.vist, porDir.DIRSEN.exe, porDir.DIRSEN.bx] }, { n: "DIROP", c: CN, v: [porDir.DIROP.vist, porDir.DIROP.exe, porDir.DIROP.bx] }].concat(porDir[""].vist || porDir[""].exe ? [{ n: "Sem diretoria", c: CM, v: [porDir[""].vist, porDir[""].exe, porDir[""].bx] }] : []), {});
+      colunas(["Vistorias", "Executados pela turma", "Baixados no sistema", "Baixados no Urbantrim"], [{ n: "DIRSEN", c: CJ, v: [porDir.DIRSEN.vist, porDir.DIRSEN.exe, porDir.DIRSEN.bx, porDir.DIRSEN.ubx] }, { n: "DIROP", c: CN, v: [porDir.DIROP.vist, porDir.DIROP.exe, porDir.DIROP.bx, porDir.DIROP.ubx] }].concat(porDir[""].vist || porDir[""].exe || porDir[""].bx || porDir[""].ubx ? [{ n: "Sem diretoria", c: CM, v: [porDir[""].vist, porDir[""].exe, porDir[""].bx, porDir[""].ubx] }] : []), {});
     // valores no topo
     const topo = [["Processos", n], ["Vistoriados", D.length + ` <small>(${pct(D.length, n)}%)</small>`], ["Já executados", A.c.ja_executado], ["Não executados", A.c.nao_executado], ["Executados pela turma", D.filter((p) => R(p).execucao).length], ["Baixados no sistema", D.filter((p) => R(p).baixa).length], ["Baixados no Urbantrim", D.filter((p) => R(p).urb_baixa).length], ["Falta baixar no Urbantrim", `<span style="color:var(--bk)">${D.filter(aguardaUrbBx).length}</span>`], ["Falta baixar no sistema", `<span style="color:var(--bk)">${D.filter(aguardaBx).length}</span>`]];
     const topoH = `<div class="vp-gtop">${topo.map(([k, v]) => `<div><b>${v}</b><span>${k}</span></div>`).join("")}</div>`;
