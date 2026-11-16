@@ -3108,7 +3108,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.18m";
+const APP_VERSAO="2026.11.18n";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -5531,13 +5531,24 @@ function montar(root) {
     const cards = [
       `<div class="vp-gc"><h4>Vistorias por dia</h4><p class="vp-gs">Últimos ${dias.length} dias com vistoria</p>${g1}</div>`,
       `<div class="vp-gc" style="grid-column:1/-1"><h4>Vistorias por vistoriador / fiscal</h4><p class="vp-gs">${S.vdia ? `Vistorias feitas em <b>${fDia(S.vdia)}</b> · ${vs.length} pessoa${vs.length === 1 ? "" : "s"} · ${vs.reduce((a, x) => a + x.d, 0)} vistoria${vs.reduce((a, x) => a + x.d, 0) === 1 ? "" : "s"}` : `Geral: todos que fazem vistoria, sem exceção · ${vs.length} pessoas · ${vs.reduce((a, x) => a + x.d, 0)} vistorias`}</p>
-        <div class="vp-row" style="margin:0 0 8px"><button class="vp-opt" data-vdia="" aria-pressed="${!S.vdia}">Geral</button><button class="vp-opt" data-vdia="${hoje()}" aria-pressed="${S.vdia === hoje()}">Hoje</button><label class="vp-row" style="font-size:13px;color:var(--mu);font-weight:600">Dia <input type="date" id="vp-vdia" value="${esc(S.vdia || "")}" max="${hoje()}"></label></div>${g2}</div>`,
+        <div class="vp-row" style="margin:0 0 8px"><button class="vp-opt" data-vdia="" aria-pressed="${!S.vdia}">Geral</button><button class="vp-opt" data-vdia="${hoje()}" aria-pressed="${S.vdia === hoje()}">Hoje</button><label class="vp-row" style="font-size:13px;color:var(--mu);font-weight:600">Dia <input type="date" id="vp-vdia" value="${esc(S.vdia || "")}" max="${hoje()}"></label>${vs.length ? `<button class="vp-btn" data-vistpdf="1">📄 Baixar relatório em PDF</button>` : ""}</div>${g2}</div>`,
       `<div class="vp-gc"><h4>Andamento por regional</h4><p class="vp-gs">Processos vistoriados do total da regional</p>${g3}</div>`,
       `<div class="vp-gc"><h4>Fluxo dos processos</h4><p class="vp-gs">Da vistoria até a baixa no sistema</p>${g4}</div>`,
       `<div class="vp-gc"><h4>Por diretoria</h4><p class="vp-gs">Pelo apontamento dos fiscais: DIRSEN (PODA I e II) · DIROP (PODA III e IV)</p>${g5}</div>`];
     if (partes) return [topoH, `<div class="vp-gr">${cards.join("")}</div>`];
     return `<div class="vp-row" style="justify-content:space-between;align-items:center"><h3 style="margin:0">Gráficos</h3><div class="vp-row"><button class="vp-btn vp-pri" data-grafpdf="1">📄 Baixar gráficos em PDF</button><button class="vp-btn" data-grafimg="1">🖼 Baixar gráficos em imagem</button></div></div>${topoH}<div class="vp-gr">${cards.join("")}</div>`;
   }
+  // relatório em PDF: vistorias por vistoriador / fiscal (respeita o filtro Geral / Hoje / Dia)
+  function vistPessoaDoc() {
+    const A = agg(), vs = [...A.byVist].sort((a, b) => b.d - a.d), tot = vs.reduce((a, x) => a + x.d, 0), tj = vs.reduce((a, x) => a + x.c.ja_executado, 0), tn = vs.reduce((a, x) => a + x.c.nao_executado, 0);
+    const td = "padding:5px 8px;border:1px solid #d5dbd3", th = td + ";background:#1f6b3a;color:#fff;text-align:left", r = ";text-align:right";
+    const lin = vs.map((x, i) => `<tr><td style="${td}${r}">${i + 1}º</td><td style="${td}">${esc(x.nm)}</td><td style="${td}${r}">${x.c.ja_executado}</td><td style="${td}${r}">${x.c.nao_executado}</td><td style="${td}${r}"><b>${x.d}</b></td><td style="${td}${r}">${tot ? Math.round((x.d * 100) / tot) : 0}%</td><td style="${td}">${x.ult ? fDia(x.ult) : "—"}</td></tr>`).join("");
+    const sub = S.vdia ? "VISTORIAS FEITAS EM " + fDia(S.vdia) : "GERAL – TODAS AS VISTORIAS";
+    return `<div class="fdoc lx"><style>${FDOC_CSS}</style><div class="r-body">${fhead("VISTORIAS POR VISTORIADOR / FISCAL", sub)}
+      <p style="margin:10px 0 6px;font-size:13px"><b>${vs.length}</b> ${vs.length === 1 ? "pessoa" : "pessoas"} · <b>${tot}</b> vistorias · <b>${tj}</b> já executado · <b>${tn}</b> não executado</p>
+      <table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr><th style="${th}${r}">#</th><th style="${th}">Vistoriador / fiscal</th><th style="${th}${r}">Já executado</th><th style="${th}${r}">Não executado</th><th style="${th}${r}">Total</th><th style="${th}${r}">%</th><th style="${th}">Última vistoria</th></tr></thead><tbody>${lin}</tbody>
+      <tfoot><tr><td colspan="2" style="${td};background:#e3ece0"><b>Total</b></td><td style="${td};background:#e3ece0${r}"><b>${tj}</b></td><td style="${td};background:#e3ece0${r}"><b>${tn}</b></td><td style="${td};background:#e3ece0${r}"><b>${tot}</b></td><td style="${td};background:#e3ece0${r}">100%</td><td style="${td};background:#e3ece0"></td></tr></tfoot></table>
+      <p class="rod">Documento gerado pelo sistema Programação GPE em ${dataBR(new Date().toISOString())} às ${horaAgora()}.</p></div></div>`; }
   // relatório gráfico das vistorias (PDF A4 ou imagem PNG), sempre no tema claro
   function grafDocHtml() {
     const A = agg(), n = A.P.length, d = A.D.length, c = A.c;
@@ -6033,6 +6044,7 @@ function montar(root) {
     if (ds.nvabrir) { novoForm(null); render(); return; }
     if (ds.nvfila) { const i = +ds.nvfila; novoForm({ file: S.pdfFila[i].file, idx: i, lido: S.pdfFila[i].lido }); S.pdfNaoAberto = 1; render(); root.querySelector("#vp-nv-endereco")?.scrollIntoView({ block: "center" }); return; }
     if (ds.ctlxls) { await ctlXls(ds.ctlxls); return; }
+    if (ds.vistpdf) { await baixarFormPdf(t, vistPessoaDoc(), "vistorias-por-vistoriador-" + (S.vdia || "geral") + "-" + hoje() + ".pdf", "📄 Baixar relatório em PDF"); return; }
     if (ds.ctlpdf) { await baixarFormPdf(t, ctlDoc(ds.ctlpdf), CTL[ds.ctlpdf].arq + "-" + hoje() + ".pdf", CTL[ds.ctlpdf].tit); return; }
     if (ds.ctlimg) { await baixarDocImg(t, ctlDoc(ds.ctlimg), CTL[ds.ctlimg].arq + "-" + hoje() + ".png"); return; }
     if (ds.resmanpdf) { await baixarFormPdf(t, resumoManualDoc(), "cadastros-manuais-" + new Date().toISOString().slice(0, 10) + ".pdf", "Resumo dos cadastros manuais"); return; }
