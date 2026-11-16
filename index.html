@@ -2848,6 +2848,9 @@ const histLista=()=>{ const d1=HIST.dia||hoje(), d0=HIST.dia?HIST.dia:HIST.per==
     .sort((a,b)=>(b.data||"").localeCompare(a.data||"")||(histHora(b)||"").localeCompare(histHora(a)||"")); };
 const histHora=r=>{ const sv=r.osDia?.sv?.[r.id]; return (sv?.start||r.osDia?.start)?.em||r.fotosFiscal?.em||""; };
 const histMapa=g=>g&&g.lat!=null?`https://www.google.com/maps?q=${g.lat},${g.lng}`:"";
+// O.S sem fiscal (o supervisor fez o papel de fiscal): o supervisor da equipe (ou a gerência) pode anexar as fotos da galeria
+const supGalPode=r=>!!r?.osDia?.semFiscal&&!r.arquivado&&!!db&&!jaDe(r)&&fotoSlots(r).length>0&&(isGerente()||(["supervisor","supervisor1"].includes(sessao?.perfil)&&r.supervisao===sessao.sup))&&fotoObrig(r).some(x=>!(r.fotosFiscal?.[x.k]||r.relat?.midia?.[x.k]));
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-supgal]"); if(!b) return; const r=todosGlobal().find(x=>x.id===b.dataset.supgal); if(r) abrirFotosFiscal(r,true); });
 function histCard(r){ const ff=r.fotosFiscal||{}, G=ff.geo||{}, sv=r.osDia?.sv?.[r.id]||{}, h0=histHora(r), hf=sv.fim?.em||"", S=fotoSlots(r), k=stKey(r), fis=ff.por||r.osDia?.fiscal?.nome||(r.osDia?.semFiscal?"supervisor (sem fiscal)":"");
   return `<article class="hs-c${relTem(r)?" hs-p":""}"><div class="hs-tx"><b>${esc(r.supervisao||"")}${r.equipe?" · "+esc(r.equipe):""} <em class="hs-st hs-${esc(histSit(r))}">${histSitTxt(r)}${isProg(r)?" · aguardando baixa":""}</em></b>
     <span><b>DATA</b> ${fmtD(r.data)} (${diaDe(r.data)})</span>
@@ -2856,9 +2859,9 @@ function histCard(r){ const ff=r.fotosFiscal||{}, G=ff.geo||{}, sv=r.osDia?.sv?.
     <span><b>PROCESSO</b> ${r.processo?esc(procNum(r)):"—"}</span>
     <span><b>ENDEREÇO</b> ${esc(r.logradouro||"")}${r.bairro?" – "+esc(r.bairro):""}</span>
     ${r.obs?`<span><b>OBS</b> ${esc(r.obs)}</span>`:""}
-    <span><b>FISCAL</b> ${esc(fis||"—")}${r.osDia?.num?" · O.S nº "+esc(r.osDia.num):""}</span><span class="hs-dl"><button type="button" class="btn sec" data-hsdl="pdf" data-hsid="${esc(r.id)}">📄 PDF</button><button type="button" class="btn sec" data-hsdl="img" data-hsid="${esc(r.id)}">🖼 Imagem</button></span></div>
+    <span><b>FISCAL</b> ${esc(fis||"—")}${r.osDia?.num?" · O.S nº "+esc(r.osDia.num):""}</span><span class="hs-dl"><button type="button" class="btn sec" data-hsdl="pdf" data-hsid="${esc(r.id)}">📄 PDF</button><button type="button" class="btn sec" data-hsdl="img" data-hsid="${esc(r.id)}">🖼 Imagem</button>${supGalPode(r)?`<button type="button" class="btn pri" data-supgal="${esc(r.id)}">🖼 Anexar fotos da galeria</button>`:""}</span></div>
     <div class="hs-fs">${S.map(x=>{ const f=ff[x.k]||r.relat?.midia?.[x.k], g=G[x.k]; if(!f&&x.opc) return ""; if(!f) return `<div class="hs-f hs-sem"><span>${esc(x.curto)}<br>sem foto</span></div>`;
-      return `<figure class="hs-f"><img data-hsfoto="${esc(r.id)}|${x.k}" alt="foto ${esc(x.curto)}"><figcaption><b>${g?.em?hm(g.em):""}</b> ${g?.em?fmtD(iso(new Date(g.em))):""}<br>${esc(x.curto)} · ${esc(r.logradouro||"")}${r.bairro?" – "+esc(r.bairro):""}<br>${g&&g.lat!=null?`📍 ${g.lat.toFixed(6)}, ${g.lng.toFixed(6)}${g.prec?" (±"+g.prec+" m)":""}`:relTem(r)?"":"📍 sem localização"}</figcaption>${histMapa(g)?`<a href="${histMapa(g)}" target="_blank" rel="noopener">Localização e verificação: ver no mapa</a>`:""}</figure>`; }).join("")}</div></article>`; }
+      return `<figure class="hs-f"><img data-hsfoto="${esc(r.id)}|${x.k}" alt="foto ${esc(x.curto)}"><figcaption><b>${g?.em?hm(g.em):""}</b> ${g?.em?fmtD(iso(new Date(g.em))):""}<br>${esc(x.curto)} · ${esc(r.logradouro||"")}${r.bairro?" – "+esc(r.bairro):""}<br>${g&&g.lat!=null?`📍 ${g.lat.toFixed(6)}, ${g.lng.toFixed(6)}${g.prec?" (±"+g.prec+" m)":""}`:g?.galeria?"🖼 anexada da galeria pelo supervisor":relTem(r)?"":"📍 sem localização"}</figcaption>${histMapa(g)?`<a href="${histMapa(g)}" target="_blank" rel="noopener">Localização e verificação: ver no mapa</a>`:""}</figure>`; }).join("")}</div></article>`; }
 // PDF / imagem do histórico (prestação de contas): um serviço ou todos os da lista filtrada (ex.: o dia)
 function histDocHtml(L,tit){ const nw="white-space:normal;text-align:left;word-break:break-word;overflow-wrap:anywhere;", td=nw+"padding:4px 8px;border:1px solid #d5dbd3;font-size:11px;vertical-align:top", th=nw+"padding:4px 8px;border:1px solid #d5dbd3;font-size:10.5px;background:#eef3ec;color:#24402c;font-weight:700;width:130px";
   const bloco=r=>{ const ff=r.fotosFiscal||{}, G=ff.geo||{}, sv=r.osDia?.sv?.[r.id]||{}, h0=histHora(r), hf=sv.fim?.em||"", S=fotoSlots(r), fis=ff.por||r.osDia?.fiscal?.nome||"", x=sv.fim?.exec;
@@ -3108,7 +3111,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.18n";
+const APP_VERSAO="2026.11.18u";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -3664,6 +3667,7 @@ const difDias=(a,b)=>Math.round((new Date(a+"T12:00")-new Date(b+"T12:00"))/864e
 const trabalhaEsc=(e,dia)=>{ if(!dia) return true; if((e.folgas||[]).includes(dia)) return false;
   if(e.tipo==="semana") return (e.dias||[]).includes(new Date(dia+"T12:00").getDay());
   const t=Math.max(1,+e.trab||1), f=Math.max(0,+e.folga||0), c=t+f; if(!e.base||!f) return true; const r=((difDias(dia,e.base)%c)+c)%c; return r<t; };
+const folgaMsg=(sup,d)=>sup&&d&&escCfg(sup)&&!trabalha(sup,d)?`${diaDe(d)} ${fmtDs(d)} é folga da ${supNome(sup)||sup} pela escala de trabalho – escolha um dia de trabalho`:"";
 const folgaHoje=sup=>!!escCfg(sup)&&!trabalhaEsc(escCfg(sup),hoje());
 const trabalha=(sup,dia)=>{ const e=escCfg(sup); if(e) return trabalhaEsc(e,dia); if(!ESCALA_ATIVA) return true; const n=+String(dia||"").slice(8,10); if(!n) return true; return (n%2===1)===(parDe(sup)==="impar"); };
 function renderEscala(){
@@ -4259,6 +4263,8 @@ $("#form").addEventListener("submit", async ev=>{
     if(m==="baixa"){ body.qtdPrevista = prevQ(base); body.receitaPrevista = receitaDe(body.qtdPrevista);
       if(endIncompleto(base)&&$("#bxLogr").value){ body.logradouro=$("#bxLogr").value; body.endCompletadoNaBaixa={em:now,por:nomeAutor()||""}; }
       if(relTem(base)&&form.st==="SIM"&&!ehFiscal()&&!fiscal) e.push("informe o fiscal de turma (sai no relatório de serviço)");
+      // O.S de rotina enviada a um fiscal: só dá baixa (executado / parcial) depois que o fiscal anexar as fotos do serviço
+      if((form.st==="SIM"||form.st==="PARCIAL")&&!outraEq()&&base.osDia&&!base.osDia.semFiscal&&fotoSlots(base)===ROT_SLOTS&&!fotosOk(base)){ const fz=fotoObrig(base).filter(x=>!(base.fotosFiscal?.[x.k]||base.relat?.midia?.[x.k])).map(x=>x.curto); e.push(`o fiscal ${base.osDia.fiscal?.nome||"da O.S"} ainda não anexou as fotos do serviço (falta: ${fz.join(", ")}). A baixa só é aceita depois das fotos do fiscal`); }
       const relFaz=relTem(base)&&!ehFiscal()&&(form.st==="SIM"||relJaB(base));
       if(relFaz) e.push(...relIdErros());
       if(relFaz){ if([...document.querySelectorAll("#rlFotos .midst")].some(x=>/enviando/.test(x.textContent))) e.push("espere terminar o envio das fotos do relatório");
@@ -4315,6 +4321,7 @@ $("#form").addEventListener("submit", async ev=>{
       const lim=remLimite(ref);
       if(!prox) e.push(form.st==="PARCIAL"?"informe a nova data para o que faltou":"informe a nova data (remarcação)"); else if(prox<=ref || prox<hoje()) e.push("a nova data precisa ser depois de "+fmtD(ref>hoje()?ref:hoje()));
       else if(prox>lim) e.push("a remarcação pode ser no máximo 3 semanas para frente (até "+fmtD(lim)+")");
+      else if(folgaMsg(base.supervisao,prox)) e.push("nova data: "+folgaMsg(base.supervisao,prox));
       if($("#motivo").value==="Outro"&&!mot) e.push("digite o motivo"); else if(!mot) e.push(form.st==="PARCIAL"?"informe o motivo de não ter terminado":"informe o motivo da não execução");
       Object.assign(body,{proxData:prox, motivo:mot, qtdRemarcada:remQ});
       if(!e.length){
@@ -6239,10 +6246,14 @@ const CHK_META={"PODA I":2,"PODA II":4};
 function chkDia(c){ if(!c?.data) return ""; if(supOf(c.supervisao)?.turno!=="NOTURNO") return c.data; const em=c.entrega?.em?new Date(c.entrega.em):null;
   if(em&&!isNaN(em)&&iso(em)===c.data&&em.getHours()<12){ const x=new Date(c.data+"T12:00"); x.setDate(x.getDate()-1); return iso(x); } return c.data; }
 // equipamentos que a turma costuma usar (programação e checklists dos últimos 30 dias) – para dizer o prefixo que falta
+// equipamento de outra poda (ex.: VAN 4042.5 é da PODA IV) não é cobrado de turma de outra poda
+const eqOutraPoda=(v,t)=>{ const e=equipLista().find(x=>x.v===v); if(e?.reserva) return false; const g=e?.pod||(typeof EQUIP_DIROP!=="undefined"?EQUIP_DIROP:[]).find(x=>x[0]===v)?.[1]; return !!g&&!new RegExp("^"+g+"\\b").test(String(t||"")); };
+const vansDa=t=>[...($("#viatura")?.options||[])].map(o=>o.value).filter(v=>/^VAN/.test(v)&&!eqOutraPoda(v,t));
 function chkEsperados(t,d){ const x=new Date(d+"T12:00"); x.setDate(x.getDate()-30); const ini=iso(x), S=new Set();
   todosGlobal().filter(r=>r.supervisao===t&&!r.arquivado&&r.viatura&&(r.data||"")>=ini&&(r.data||"")<=d).forEach(r=>S.add(r.viatura));
   chks.filter(c=>c.supervisao===t&&c.viatura&&(c.data||"")>=ini).forEach(c=>S.add(c.viatura));
-  if(/^PODA II\b/.test(t)&&![...S].some(v=>/^VAN/.test(v))) [...($("#viatura")?.options||[])].map(o=>o.value).filter(v=>/^VAN/.test(v)).forEach(v=>S.add(v)); // PODA II sempre tem a van
+  [...S].forEach(v=>{ if(eqOutraPoda(v,t)) S.delete(v); });
+  if(/^PODA II\b/.test(t)&&![...S].some(v=>/^VAN/.test(v))) vansDa(t).forEach(v=>S.add(v)); // PODA II sempre tem a van
   return [...S].filter(v=>v!=="SKAY"&&v!=="SKY").sort(); }
 function chkFaltam(t,d,feitos){ return chkEsperados(t,d).filter(v=>!feitos.includes(v)); } // equipamentos por turma em cada período (PODA II: 3 + van)
 const chkMeta=sup=>CHK_META[supOf(sup)?.grupo]||2;
@@ -6251,7 +6262,7 @@ const chkMeta=sup=>CHK_META[supOf(sup)?.grupo]||2;
 const chkSaiu=r=>!(r.status==="NÃO"&&r.semSubstituto);
 function chkEsp(t,d){ const vts=[...new Set(todosGlobal().filter(r=>r.supervisao===t&&r.data===d&&!r.arquivado&&!r.ocorrencia&&!r.avulso&&r.viatura&&chkSaiu(r)).map(r=>r.viatura==="SKAY"||r.viatura==="SKY"?"SKY 5074.0":r.viatura))];
   if(!vts.length) return {meta:chkMeta(t),lista:null};
-  if(/^PODA II\b/.test(supOf(t)?.grupo||"")&&!vts.some(v=>/^VAN/.test(v))) [...($("#viatura")?.options||[])].map(o=>o.value).filter(v=>/^VAN/.test(v)).forEach(v=>vts.push(v));
+  if(/^PODA II\b/.test(supOf(t)?.grupo||"")&&!vts.some(v=>/^VAN/.test(v))) vansDa(t).forEach(v=>vts.push(v));
   return {meta:vts.length,lista:vts.sort()}; }
 function chkCota(t,d,lst){ const feitos=[...new Set((lst||chks).filter(c=>c.supervisao===t&&chkDia(c)===d).map(c=>c.viatura))], E=chkEsp(t,d);
   const faltam=feitos.length>=E.meta?[]:(E.lista?E.lista.filter(v=>!feitos.includes(v)):chkFaltam(t,d,feitos)); return {feitos,meta:E.meta,faltam}; }
@@ -7185,14 +7196,14 @@ function fisFotosHtml(){ const L=fisFotosLista(); if(!L.length) return "";
   return `<section class="alert" style="margin:0 0 10px"><h3>📷 Fotos das O.S / processos (${L.length})</h3><p class="note" style="margin:0 0 6px">Ao executar O.S ou processo, você pode anexar as fotos <b>antes, durante e depois</b>: elas vão direto para o relatório de serviço. É opcional – se não registrar, o supervisor anexa na baixa e completa o resto.</p>
     ${L.map(r=>{ const S=fotoSlots(r), n=S.filter(x=>r.fotosFiscal?.[x.k]).length; return `<button type="button" class="btn sec" data-fotfis="${esc(r.id)}" style="width:100%;text-align:left;justify-content:flex-start;min-height:52px;margin-top:6px;white-space:normal;line-height:1.25">📷 <span><b>${fmtDs(r.data)} · ${esc(relTem(r)?(r.tipo==="O.S"?"O.S":"Processo")+" "+procNum(r):tipoTxt(r)||r.tipo||"Serviço")}</b><br><small>${esc(r.bairro||"")} — ${esc(r.logradouro||"")} · fotos ${n} de ${S.filter(x=>!x.opc).length}</small></span></button>`; }).join("")}</section>`; }
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-fotfis]"); if(!b) return; const r=todosGlobal().find(x=>x.id===b.dataset.fotfis); if(r) abrirFotosFiscal(r); });
-function abrirFotosFiscal(r){
-  const host=$("#sheetHost"), m={...(r.fotosFiscal||{})}, S=fotoSlots(r), rot=S===ROT_SLOTS, geo0={...(m.geo||{})}; delete m.por; delete m.uid; delete m.em; delete m.geo;
+function abrirFotosFiscal(r,gal){
+  const host=$("#sheetHost"), m={...(r.fotosFiscal||{})}, S=gal?fotoSlots(r).map(x=>({...x,galeria:true,janelaH:48})):fotoSlots(r), rot=fotoSlots(r)===ROT_SLOTS, geo0={...(m.geo||{})}; if(gal) S.forEach(x=>{ if(!m[x.k]&&r.relat?.midia?.[x.k]) m[x.k]=r.relat.midia[x.k]; }); delete m.por; delete m.uid; delete m.em; delete m.geo;
   // fotos em ordem: a próxima só libera depois da anterior (antes → durante → depois)
-  const ffSlots=rot?S:S.filter((x,i)=>i===0||m[S[i-1].k]), ffTrav=S.filter(x=>!ffSlots.includes(x));
+  const ffSlots=(rot||gal)?S:S.filter((x,i)=>i===0||m[S[i-1].k]), ffTrav=S.filter(x=>!ffSlots.includes(x));
   host.innerHTML=`<div class="sheet" id="sh"><div class="panel" role="dialog" aria-label="Fotos do serviço">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:22px">Fotos do serviço</b><button type="button" class="btn sec" id="ffX" style="min-height:40px;padding:0 14px">Fechar</button></div>
     <p class="note" style="margin:0"><b>${esc(relTem(r)?(r.tipo==="O.S"?"O.S":"Processo")+" "+procNum(r):tipoTxt(r)||r.tipo||"Serviço")}</b> · ${esc(r.bairro||"")} — ${esc(r.logradouro||"")} · ${esc(r.equipe||"")}</p>
-    <div id="ffMid">${midSecHtml(m,true,ffSlots,rot?"Registro fotográfico – execução":"Registro fotográfico – O.S / processo",rot?"Duas fotos <b>do serviço</b> obrigatórias, tiradas na hora, no local: <b>1</b> a equipe executando e <b>2</b> outro ângulo ou o serviço concluído. A <b>3ª foto, do ENDEREÇO</b> (placa da rua), é opcional. Ao salvar, o app grava junto a <b>localização (GPS)</b>, a data e a hora. Pode tirar <b>a qualquer momento antes de finalizar a O.S</b>: tire uma, salve, tire outra, salve. Essas fotos não vão para relatório: ficam no <b>Histórico de execução</b>.":"Uma foto em cada momento do serviço, na ordem: <b>1 ANTES</b> (logo depois do start: a árvore por completo, sem equipe e sem servidor), <b>2 DURANTE</b> (as equipes e o maquinário executando) e <b>3 DEPOIS</b> (serviço concluído: galhos cortados e picados e o local limpo, sem servidor e sem maquinário). Salve e volte na O.S para a próxima foto. As fotos vão para o relatório de serviço que o supervisor assina.")}</div>
+    <div id="ffMid">${midSecHtml(m,true,ffSlots,gal?"Fotos do serviço – O.S sem fiscal":rot?"Registro fotográfico – execução":"Registro fotográfico – O.S / processo",gal?"Esta O.S foi feita <b>sem fiscal</b> (o supervisor fez o papel de fiscal). Você pode <b>tirar a foto</b> ou <b>anexar da galeria</b> do celular. Toque em <b>Salvar foto</b> ao terminar.":rot?"Duas fotos <b>do serviço</b> obrigatórias, tiradas na hora, no local: <b>1</b> a equipe executando e <b>2</b> outro ângulo ou o serviço concluído. A <b>3ª foto, do ENDEREÇO</b> (placa da rua), é opcional. Ao salvar, o app grava junto a <b>localização (GPS)</b>, a data e a hora. Pode tirar <b>a qualquer momento antes de finalizar a O.S</b>: tire uma, salve, tire outra, salve. Essas fotos não vão para relatório: ficam no <b>Histórico de execução</b>.":"Uma foto em cada momento do serviço, na ordem: <b>1 ANTES</b> (logo depois do start: a árvore por completo, sem equipe e sem servidor), <b>2 DURANTE</b> (as equipes e o maquinário executando) e <b>3 DEPOIS</b> (serviço concluído: galhos cortados e picados e o local limpo, sem servidor e sem maquinário). Salve e volte na O.S para a próxima foto. As fotos vão para o relatório de serviço que o supervisor assina.")}</div>
     ${ffTrav.length?`<div class="fftrav">${ffTrav.map(x=>`<p>🔒 <b>${esc(x.t)}</b><br><small>Libera depois da foto ${S.indexOf(x)}.</small></p>`).join("")}</div>`:""}
     <div class="err" id="ffErr" hidden></div>
     <div class="actions" style="grid-template-columns:1fr;margin:0"><button type="button" class="btn pri" id="ffOk">Salvar foto</button></div>
@@ -7206,13 +7217,15 @@ function abrirFotosFiscal(r){
     const b=$("#ffOk"); b.disabled=true; b.textContent="Salvando…";
     // localização de cada foto nova (GPS do celular na hora de salvar)
     const geo={...geo0}, novas=S.filter(x=>m[x.k]&&!geo[x.k]);
-    if(novas.length){ b.textContent="Pegando a localização…"; let p=null; try{ p=await svGpsAgora(pr=>{ b.textContent=`📍 Precisão do GPS: ±${pr} m…`; }); }catch(x){ if(x&&x.code===1){ b.disabled=false; b.textContent="Salvar foto"; return erro("Libere a localização do celular para o app (o GPS é gravado junto com a foto)."); } }
+    if(novas.length&&gal){ const em=new Date().toISOString(); novas.forEach(x=>geo[x.k]={sem:true,galeria:true,em}); }
+    else if(novas.length){ b.textContent="Pegando a localização…"; let p=null; try{ p=await svGpsAgora(pr=>{ b.textContent=`📍 Precisão do GPS: ±${pr} m…`; }); }catch(x){ if(x&&x.code===1){ b.disabled=false; b.textContent="Salvar foto"; return erro("Libere a localização do celular para o app (o GPS é gravado junto com a foto)."); } }
       const em=new Date().toISOString(); novas.forEach(x=>geo[x.k]=p?{...p,em}:{sem:true,em}); b.textContent="Salvando…"; if(!p) toast("Não foi possível pegar o GPS agora: a foto foi salva sem a localização.",6000); }
     const fresh=todosGlobal().find(x=>x.id===r.id)||r, upd={...fresh}; delete upd.id; delete upd._fila;
     const fotos={}; S.forEach(x=>{ if(m[x.k]) fotos[x.k]=m[x.k]; });
-    upd.fotosFiscal={...fotos,geo,por:sessao.nome,uid:sessao.id,em:new Date().toISOString()}; upd._acao=`Fiscal registrou as fotos do serviço (${n} de ${S.length})`;
+    upd.fotosFiscal={...fotos,geo,por:sessao.nome,uid:sessao.id,em:new Date().toISOString()}; upd._acao=gal?`Supervisor (O.S sem fiscal) anexou as fotos do serviço da galeria (${n} de ${S.length})`:`Fiscal registrou as fotos do serviço (${n} de ${S.length})`;
     const res=await saveDoc(r.id,upd); if(res!=="ok"&&res!=="fila"){ b.disabled=false; b.textContent="Salvar foto"; return erro("Não foi possível salvar agora. Tente de novo."); }
     close(); try{ renderInicio(); renderPend(); }catch(x){}
+    if(gal){ try{ renderHist(); }catch(x){} toast("Fotos anexadas. Ficam no Histórico de execução."); return; }
     const nOb=S.filter(x=>!x.opc&&m[x.k]).length, okOb=nOb===S.filter(x=>!x.opc).length;
     const fimB=okOb?(document.querySelector(`[data-svfim="${CSS.escape(r.id)}"]`)||document.querySelector("[data-fisfim]")):null; if(fimB) fimB.scrollIntoView({behavior:"smooth",block:"center"});
     toast(okOb?(fimB?"Última foto salva. Agora toque em FINALIZAR ESTE SERVIÇO.":rot?"Fotos salvas com a localização. Ficam no Histórico de execução.":"3 fotos salvas. Elas entram no relatório quando o supervisor der a baixa."):`Foto salva (${n} de ${S.filter(x=>!x.opc).length}). Volte na O.S para a foto ${n+1} – ${S[n].curto}.`);
@@ -7433,7 +7446,11 @@ $("#kgSup").innerHTML=optTurmas(); $("#kgSup").value=meuSup()||"";
 const EQUIP_BASE=[...$("#viatura").options].map(o=>({v:o.value,tipo:o.value.split(" ")[0],ger:"DIRSEN",reserva:/reserva/i.test(o.textContent),ativo:true}));
 // equipamentos da PODA III e PODA IV (diurno e noturno), informados pela gerência em 10/11/2026
 const EQUIP_DIROP=[["SPLINTER 5068.6","PODA III"],["SPLINTER 5070.6","PODA III"],["SPLINTER 5069.6","PODA IV"],["SPLINTER 5067.6","PODA IV"],["SKY 5072.6","PODA IV"],["VAN 4042.5","PODA IV"]];
-const equipLista=()=>{ const d=assins?.equip_lista; const L=Array.isArray(d?.itens)?d.itens:EQUIP_BASE; if(d?.dirop1) return L;
+// poda de cada equipamento da DIRSEN, confirmada pela gerência em 16/11/2026 (vale para todas as turmas da poda: A e B, diurno e noturno)
+const EQUIP_DIRSEN_POD={"SPLINTER 5063.6":"PODA II","SPLINTER 5064.6":"PODA II","SKY 5073.0":"PODA II","VAN 4051.5":"PODA II","SPLINTER 5065.6":"PODA I","SPLINTER 5066.6":"PODA I"};
+const equipLista=()=>equipPodPadrao(equipLista0());
+const equipPodPadrao=L=>L.map(x=>!x.reserva&&!x.pod&&!x.sup&&!x.grp&&EQUIP_DIRSEN_POD[x.v]?{...x,pod:EQUIP_DIRSEN_POD[x.v]}:x);
+const equipLista0=()=>{ const d=assins?.equip_lista; const L=Array.isArray(d?.itens)?d.itens:EQUIP_BASE; if(d?.dirop1) return L;
   const M=JSON.parse(JSON.stringify(L)); EQUIP_DIROP.forEach(([v,pod])=>{ const x=M.find(e=>e.v===v), o={ger:"DIROP",pod,sup:"",grp:"",reserva:false}; if(x) Object.assign(x,o); else M.push({v,tipo:v.split(" ")[0],...o,ativo:true}); }); return M; };
 const equipGerVis=()=>{ const e=escopoG(); return !e?null:e===ESC_DIROP?"DIROP":"DIRSEN"; };
 const GER_EQ={DIRSEN:"Gerência de Poda e Extirpação - DIRSEN",DIROP:"Gerência de Poda e Extirpação - DIROP"};
@@ -7451,12 +7468,17 @@ const eqTipoDe=vt=>{ if(!vt) return ""; const x=(typeof equipLista==="function"?
 const podeEquip=()=>isAdm()||isGerente();
 let EQ_TAB="lista";
 function abrirEquip(){ if(!podeEquip()) return; const host=$("#sheetHost"), g=equipGerVis();
-  const L=equipLista().map((x,i)=>({...x,i})).filter(x=>!g||x.ger===g);
+  // organizado por poda: poda/turma do cadastro; sem cadastro, a poda que mais usou o equipamento na programação (últimos 60 dias)
+  const ini60=iso(new Date(Date.now()-60*864e5)), uso={}; todosGlobal().forEach(r=>{ if(!r.viatura||(r.data||"")<ini60||r.arquivado) return; const gp=supOf(r.supervisao)?.grupo; if(!gp) return; (uso[r.viatura]=uso[r.viatura]||{})[gp]=(uso[r.viatura][gp]||0)+1; });
+  const podaDe=x=>{ if(x.reserva) return {p:"RESERVA"}; const p=x.pod||(x.sup&&supOf(x.sup)?.grupo)||x.grp; if(p) return {p}; const u=Object.entries(uso[x.v]||{}).sort((a,b)=>b[1]-a[1])[0]; return u?{p:u[0],uso:1}:{p:"",uso:0}; };
+  const ORD=["PODA I","PODA II","PODA III","PODA IV"], oP=p=>{ if(p==="RESERVA") return 5; const k=ORD.indexOf(p); return k<0?9:k; };
+  const L=equipLista().map((x,i)=>({...x,i,...(()=>{ const d=podaDe(x); return {pg:d.p,pgUso:d.uso}; })()})).filter(x=>!g||x.ger===g).sort((a,b)=>oP(a.pg)-oP(b.pg)||String(a.pg).localeCompare(String(b.pg))||(a.reserva?1:0)-(b.reserva?1:0)||a.v.localeCompare(b.v));
+  const eqCab=(p,n,j)=>`<h4 style="margin:${j?"14px":"4px"} 0 2px;padding:6px 10px;border-radius:8px;background:var(--sunk);font-family:var(--display);font-size:17px">${p==="RESERVA"?"RESERVA – qualquer poda":p?esc(p):"Sem poda definida"} <small style="font-weight:600;color:var(--muted)">${n}${!p?" · toque em Editar e escolha a poda":""}</small></h4>${n||!p?"":`<p class="note" style="margin:0 10px">Nenhum equipamento cadastrado nesta poda.</p>`}`;
   host.innerHTML=`<div class="sheet" id="sh"><div class="panel" role="dialog" aria-label="Equipamentos">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:22px">Equipamentos</b><button type="button" class="btn sec" id="eqX" style="min-height:44px;padding:0 14px">Fechar</button></div>
     <p class="note" style="margin:0">Equipamentos que aparecem na programação, na O.S, no checklist e no comunicado de defeito. ${g?`Você vê os equipamentos da <b>${g}</b>.`:"Os da <b>DIRSEN</b> aparecem só para o gerente Victor e as turmas PODA I e II; os da <b>DIROP</b>, só para o gerente Pedro e as turmas PODA III e IV."}</p>
     <div class="actabs" role="tablist"><button type="button" role="tab" data-eqtab="lista" aria-selected="${EQ_TAB!=="novo"}">🚚 Equipamentos cadastrados <small>${L.length}</small></button><button type="button" role="tab" data-eqtab="novo" aria-selected="${EQ_TAB==="novo"}">➕ Cadastrar equipamento</button></div>
-    <div class="list" id="eqTabL" ${EQ_TAB==="novo"?"hidden":""}>${L.length?L.map(x=>`<div class="item" style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><div><b>${esc(x.v)}</b>${x.reserva?` <span class="pill PROGRAMADO">reserva</span>`:""}<div class="note">${esc(GER_EQ[x.ger]||x.ger)}${x.sup?" · "+esc(x.sup):x.pod?" · "+esc(x.pod):x.reserva?(x.grp?" · reserva da "+esc(x.grp):` · <b style="color:var(--warn)">reserva sem poda definida (editar)</b>`):" · sem turma definida"}${x.ativo===false?` · <b style="color:var(--bad)">desativado</b>`:""}</div></div>
+    <div class="list" id="eqTabL" ${EQ_TAB==="novo"?"hidden":""}>${L.length?L.map((x,j)=>(j===0||L[j-1].pg!==x.pg?ORD.filter(o=>oP(o)<oP(x.pg)&&(j===0||oP(o)>oP(L[j-1].pg))&&(!g||(g==="DIROP")===ESC_DIROP.includes(o))).map(o=>eqCab(o,0,j)).join("")+eqCab(x.pg,L.filter(y=>y.pg===x.pg).length,j):"")+(j===L.length-1&&oP(x.pg)<3?ORD.filter(o=>oP(o)>oP(x.pg)&&(!g||(g==="DIROP")===ESC_DIROP.includes(o))).map(o=>eqCab(o,0,1)).join(""):"").replace(/^/,"")+`<div class="item" style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><div><b>${esc(x.v)}</b>${x.reserva?` <span class="pill PROGRAMADO">reserva</span>`:""}<div class="note">${esc(GER_EQ[x.ger]||x.ger)}${x.sup?" · "+esc(x.sup):x.pod?" · "+esc(x.pod):x.reserva?" · trabalha em qualquer poda quando precisar":x.pgUso?" · usado pela "+esc(x.pg)+" na programação":" · sem turma definida"}${x.ativo===false?` · <b style="color:var(--bad)">desativado</b>`:""}</div></div>
       <div style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn sec" style="min-height:40px;font-size:13px" data-eqed="${x.i}">Editar</button><button type="button" class="btn sec" style="min-height:40px;font-size:13px" data-eqat="${x.i}">${x.ativo===false?"Reativar":"Desativar"}</button><button type="button" class="btn danger" style="min-height:40px;font-size:13px" data-eqdel="${x.i}">Excluir</button></div></div>`).join(""):`<p class="note">Nenhum equipamento cadastrado.</p>`}</div>
     <section class="card" style="margin:0" id="eqForm" ${EQ_TAB==="novo"?"":"hidden"}><div class="step" id="eqTit">Cadastrar equipamento</div>
       <div class="row2"><label class="f">Tipo<select id="eqTipo">${[["SPLINTER","SPLINTER – cesto aéreo 10 m"],["SKY","SKY – cesto aéreo 17 m"],["CAMINHÃO TRITURADOR","CAMINHÃO TRITURADOR"],["VAN","VAN"],["MUNCK","MUNCK"],["TRATOR","TRATOR"],["OUTRO","OUTRO"]].map(([v,t])=>`<option value="${v}">${t}</option>`).join("")}</select></label>
@@ -7469,7 +7491,7 @@ function abrirEquip(){ if(!podeEquip()) return; const host=$("#sheetHost"), g=eq
   host.querySelectorAll("[data-eqtab]").forEach(b=>b.onclick=()=>{ if(b.dataset.eqtab==="novo"&&eqEdit>=0){ EQ_TAB="novo"; return abrirEquip(); } eqTab(b.dataset.eqtab); });
   // supervisão: o administrador vê as 16 turmas (PODA I a IV); o gerente só as da sua gerência. Escolher a turma acerta a gerência sozinho.
   const supOpts=()=>{ const v0=$("#eqSup").value, op=x=>`<option value="${esc(x.id)}">${esc(x.id)}${x.enc?" – "+esc(x.enc):""}</option>`;
-    const grs=g?[g]:["DIRSEN","DIROP"]; $("#eqSup").innerHTML=`<option value="">Selecione a poda…</option>`+grs.map(G=>{ const P=G==="DIROP"?ESC_DIROP:ESC_DIRSEN; return `<optgroup label="${esc(GER_EQ[G])}">${P.map(gr=>`<option value="pod:${esc(gr)}">${esc(gr)}</option>`).join("")}</optgroup>`; }).join(""); // equipamento é compartilhado: só a referência da poda
+    const grs=g?[g]:["DIRSEN","DIROP"]; $("#eqSup").innerHTML=`<option value="">Selecione a poda…</option><option value="res:">RESERVA – trabalha em qualquer poda quando precisar</option>`+grs.map(G=>{ const P=G==="DIROP"?ESC_DIROP:ESC_DIRSEN; return `<optgroup label="${esc(GER_EQ[G])}">${P.map(gr=>`<option value="pod:${esc(gr)}">${esc(gr)}</option>`).join("")}</optgroup>`; }).join(""); // equipamento é compartilhado: só a referência da poda
     if([...$("#eqSup").options].some(o=>o.value===v0)) $("#eqSup").value=v0; };
   supOpts();
   const grDe=sp=>/^(res|pod):/.test(sp)?sp.slice(4):supOf(sp)?.grupo;
@@ -7482,7 +7504,7 @@ function abrirEquip(){ if(!podeEquip()) return; const host=$("#sheetHost"), g=eq
     const ed=e.target.closest("[data-eqed]");
     if(ed){ const x=I[+ed.dataset.eqed], tipos=[...$("#eqTipo").options].map(o=>o.value); eqEdit=+ed.dataset.eqed;
       const t=tipos.includes(x.tipo)&&x.v.startsWith(x.tipo+" ")?x.tipo:"OUTRO"; $("#eqTipo").value=t; $("#eqPref").value=t==="OUTRO"?x.v:x.v.slice(t.length+1);
-      if(!g) $("#eqGer").value=x.ger||"DIRSEN"; supOpts(); $("#eqSup").value=x.pod?"pod:"+x.pod:x.grp?"pod:"+x.grp:x.sup&&supOf(x.sup)?.grupo?"pod:"+supOf(x.sup).grupo:"";
+      if(!g) $("#eqGer").value=x.ger||"DIRSEN"; supOpts(); $("#eqSup").value=x.reserva?"res:":x.pod?"pod:"+x.pod:x.grp?"pod:"+x.grp:x.sup&&supOf(x.sup)?.grupo?"pod:"+supOf(x.sup).grupo:"";
       $("#eqTit").textContent="Editar "+x.v; $("#eqAdd").textContent="Salvar alterações"; $("#eqCanc").hidden=false; erro(""); eqTab("novo"); $("#eqForm").scrollIntoView({behavior:"smooth",block:"start"}); return; }
     if(at){ const x=I[+at.dataset.eqat]; x.ativo=x.ativo===false; return grava(I,`${x.v} ${x.ativo?"reativado":"desativado"}.`); }
     if(dl){ if(dl.dataset.armed!=="1"){ dl.dataset.armed="1"; dl.textContent="Confirmar"; return; } const x=I.splice(+dl.dataset.eqdel,1)[0]; return grava(I,`${x.v} excluído.`); } };
@@ -7491,8 +7513,8 @@ function abrirEquip(){ if(!podeEquip()) return; const host=$("#sheetHost"), g=eq
   $("#eqAdd").onclick=()=>{ const t=$("#eqTipo").value, p=$("#eqPref").value.trim().toUpperCase(); if(!p) return erro("Informe o prefixo.");
     const v=(t==="OUTRO"?p:t+" "+p).replace(/\s+/g," "), I=JSON.parse(JSON.stringify(equipLista()));
     if(I.some((x,k)=>x.v===v&&k!==eqEdit)) return erro("Esse equipamento já está cadastrado.");
-    const sv=$("#eqSup").value; if(!sv) return erro("Escolha a poda: PODA I, II, III ou IV.");
-    const res=sv.startsWith("res:"), pd=sv.startsWith("pod:"), sp=res||pd?"":sv, grp=res?sv.slice(4):"", pod=pd?sv.slice(4):"";
+    const sv=$("#eqSup").value; if(!sv) return erro("Escolha a poda (PODA I, II, III ou IV) ou RESERVA.");
+    const res=sv.startsWith("res:"), pd=sv.startsWith("pod:"), sp=res||pd?"":sv, grp="", pod=pd?sv.slice(4):"";
     if(eqEdit>=0){ const x=I[eqEdit]; Object.assign(x,{v,tipo:t,ger:g||$("#eqGer").value,sup:sp,grp,pod,reserva:res}); return grava(I,`${v} atualizado.`); }
     I.push({v,tipo:t,ger:g||$("#eqGer").value,sup:sp,grp,pod,reserva:res,ativo:true}); grava(I,`${v} cadastrado.`); }; }
 // ===== funcionários de cada turma (para o fiscal montar a equipe do dia) =====
@@ -7956,6 +7978,7 @@ function detalhe(r, abrirAdiar=false, soVer=false){
     const nd=$("#adData").value, mot=$("#adMot").value;
     if(!nd||nd===r.data||nd<hoje()){toast("Escolha uma nova data a partir de hoje.");return}
     if(!mot){toast("Escolha o motivo da remarcação.");return}
+    if(folgaMsg(r.supervisao,nd)){toast(folgaMsg(r.supervisao,nd)+".",6000);return}
     const now=new Date().toISOString();
     const body={...r, data:nd, dia:diaDe(nd), semana:semanaDe(nd), historico:[...(r.historico||[]),{de:r.data,para:nd,motivo:mot,em:now,por:myId||null}], atualizadoEm:now, atualizadoPor:myId||null};
     delete body.id; delete body._fila;
@@ -11031,6 +11054,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-fiseq]");
 // finalizar a O.S: o fiscal assina com a senha de assinatura (1ª vez: 654321)
 document.addEventListener("click",async e=>{ const b=e.target.closest("[data-fisfim]"); if(!b||sessao?.perfil!=="fiscal") return;
   const g=fisOsGrupos(30).find(x=>(x.os.num||x.os.em)===b.dataset.fisfim); if(!g) return toast("O.S não encontrada."); if(g.os.fim) return;
+  { const sf=g.rs.filter(r=>{ const x=g.os.sv?.[r.id]?.fim?.exec; return fotoSlots(r).length&&x?.sit!=="NÃO"&&!x?.ja&&!fotosOk(r); }); if(sf.length) return toast(`Faltam as fotos de ${sf.length} serviço${sf.length>1?"s":""} (${sf.map(r=>r.logradouro||r.bairro||"").join("; ")}). Anexe antes de finalizar a O.S.`,7000); }
   const box=document.createElement("div"); box.className="sheet"; box.style.zIndex=30;
   box.innerHTML=`<div class="panel" role="dialog" aria-label="Finalizar a O.S"><b style="font-family:var(--display);font-size:22px">Finalizar a O.S nº ${esc(g.os.num||"")}</b>
     <p class="note" style="margin:0">As 3 fotos estão anexadas. Assine para finalizar: a O.S vai para 📁 Controle de O.S e o supervisor já pode dar a baixa.</p>
