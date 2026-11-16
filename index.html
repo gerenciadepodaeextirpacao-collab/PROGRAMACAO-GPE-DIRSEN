@@ -1571,6 +1571,7 @@ body.sofiscal nav.tabs{display:none!important}
       <label class="ck"><input type="checkbox" id="ocRede"> Atingiu rede elétrica</label>
       <label class="ck"><input type="checkbox" id="ocDano"> Danos a veículo ou imóvel</label>
     </div>
+    <div id="ocFotos" style="margin-top:10px"></div>
   </section>
 
   <section class="card" id="secLocal">
@@ -1606,6 +1607,7 @@ body.sofiscal nav.tabs{display:none!important}
       <small class="note" style="font-weight:400" id="areaHint">Copie o ID da área cadastrado no URBANTRIM.</small></div>
     <label class="f" id="sistWrap" hidden>Processo SEI ou GED? (obrigatório)<select id="procSist"><option value="">Selecione…</option><option value="SEI">SEI</option><option value="GED">GED</option></select></label>
     <label class="f" id="procWrap" hidden><span id="procLbl">Nº do processo</span><input id="processo" placeholder="Ex.: 26.30.000010607-1"></label>
+    <label class="f" id="solWrap" hidden>Nome do solicitante (obrigatório – sai no relatório)<input id="solic" placeholder="Nome de quem pediu o serviço" autocomplete="off"></label>
     <label class="f" id="pedWrap" hidden>Nº do PED (se houver)<input id="ped" placeholder="Nº do PED"></label>
     <label class="f" id="parWrap" hidden>Nº do parecer técnico (se houver)<input id="parecer" placeholder="Ex.: 123/2026"></label>
   </section>
@@ -1646,7 +1648,7 @@ body.sofiscal nav.tabs{display:none!important}
     <label class="f">Nº do PED (se houver)<input id="rlPed" autocomplete="off" placeholder="Nº do PED"></label>
     <div class="row2"><label class="f">Parecer técnico nº (se houver)<input id="rlParecer" autocomplete="off" placeholder="Ex.: 123/2026"></label>
       <label class="f">Data da vistoria<input type="date" id="rlVist"></label></div>
-    <label class="f">Solicitante do serviço (nome)<input id="rlSolic" autocomplete="off" placeholder="Nome de quem pediu o serviço"></label>
+    <label class="f">Solicitante do serviço (nome) *<input id="rlSolic" autocomplete="off" placeholder="Nome de quem pediu o serviço"></label>
     <div class="row2"><label class="f">Árvore caída (quant.)<input id="rlArv" inputmode="numeric" placeholder="0"></label>
       <label class="f">Galho caído (quant.)<input id="rlGalho" inputmode="numeric" placeholder="0"></label></div>
     <label class="f">Matrícula do supervisor responsável<input id="rlMat" autocomplete="off" autocapitalize="none" placeholder="Ex.: 450235-01"></label>
@@ -2316,6 +2318,7 @@ function applyPerms(){ try{ equipAplicar(); }catch(e){}
   $("#testeBtn").hidden=!isGerente(); $("#testeBtn").setAttribute("aria-pressed",String(modoTeste())); barTeste();
   const tabs=[...document.querySelectorAll("nav.tabs button")];
   tabs.forEach(b=>b.hidden = ehVictor() ? false : PERF_ABAIXO.includes(per) ? !abaOn(per,b.dataset.v) : abaPadraoOculta(per,b.dataset.v));
+  if(editProgFlag(acesso?.[sessao?.id])) tabs.forEach(b=>{ if(b.dataset.v==="form"||b.dataset.v==="lista") b.hidden=false; }); // pode editar a programação: Programar + Lista
   { const rb=tabs.find(b=>b.dataset.v==="resumo"), db_=tabs.find(b=>b.dataset.v==="dash"); window.__dashOk=!!rb&&!rb.hidden&&per!=="fiscal"; if(db_) db_.hidden=true; /* o Dashboard fica dentro do Painel (botões Painel | Dashboard) */ if(curView==="dash"&&!window.__dashOk) show("inicio"); } // Dashboard: mesmo acesso do Painel
   function abaPadraoOculta(per,v){ const b={dataset:{v}}; return (b.dataset.v==="upd" && !ehGerPerf(per)) || (b.dataset.v==="orc" && !["admin","gerencia","gerencia_op","fiscal"].includes(per)) || (per==="fiscal" && b.dataset.v!=="inicio" && b.dataset.v!=="mais" && !fisAbas().has(b.dataset.v)) || (per==="diretoria" && (b.dataset.v==="form"||b.dataset.v==="campo"||b.dataset.v==="oc")) || (per==="supervisor" && b.dataset.v==="resumo") || (per==="supervisor1" && !SUP1_ABAS.has(b.dataset.v)); }
   if(PERF_ABAIXO.includes(per)&&PERM_ABAS.some(x=>x.k===curView)&&!abaOn(per,curView)) show("inicio");
@@ -2820,7 +2823,7 @@ const histExec=r=>!!histSit(r);
 const jaTxt=r=>{ const j=jaDe(r); if(!j) return ""; if(j!=="comurg"){ const qm=r.jaQuem||r.osDia?.sv?.[r.id]?.fim?.exec?.jaQuem; return qm?"Serviço já executado anteriormente por terceiro: "+qm:"Serviço executado por terceiros – não identificamos o executor"; } const sp=r.jaSup||r.osDia?.sv?.[r.id]?.fim?.exec?.jaSup; return "Serviço já executado anteriormente por equipe da COMURG"+(sp?" – "+supNome(sp):" (equipe não identificada)"); };
 const histSitTxt=r=>{ const h=histSit(r); return h==="JA"?jaTxt(r):h==="SIM"?"Executado":"Parcial"; };
 const histLista=()=>{ const d1=HIST.dia||hoje(), d0=HIST.dia?HIST.dia:HIST.per==="tudo"?"":(()=>{ const d=new Date(hoje()+"T12:00"); d.setDate(d.getDate()-(+HIST.per-1)); return iso(d); })(), q=semAcento(HIST.q||"").toUpperCase(), qe=semAcento(HIST.end||"").toUpperCase().replace(/[^A-Z0-9 ]/g," ").split(/\s+/).filter(Boolean);
-  return todosGlobal().filter(r=>!r.arquivado&&!r.ocorrencia&&r.supervisao&&fotoSlots(r).length&&histExec(r)&&(travado()?r.supervisao===sessao.sup:noEscopo(r.supervisao))&&(!HIST.sup||r.supervisao===HIST.sup)&&(!d0||(r.data||"")>=d0)&&(r.data||"")<=d1
+  return todosGlobal().filter(r=>!r.arquivado&&(!r.ocorrencia||OC_SLOTS.some(x=>r.fotosFiscal?.[x.k]))&&r.supervisao&&fotoSlots(r).length&&histExec(r)&&(travado()?r.supervisao===sessao.sup:noEscopo(r.supervisao))&&(!HIST.sup||r.supervisao===HIST.sup)&&(!d0||(r.data||"")>=d0)&&(r.data||"")<=d1
     &&(!HIST.tipo||(HIST.tipo==="rot"?fotosRot(r):relTem(r)))&&(!HIST.fot||(HIST.fot==="com"?histFotos(r)>0:histFotos(r)===0))&&(!HIST.st||histSit(r)===HIST.st)
     &&(!qe.length||(()=>{ const t=semAcento([r.logradouro,r.bairro].join(" ")).toUpperCase().replace(/[^A-Z0-9 ]/g," "); return qe.every(w=>t.includes(w)); })())
     &&(!q||semAcento([r.supervisao,r.equipe,tipoTxt(r),r.servico,r.processo,r.fotosFiscal?.por,r.osDia?.fiscal?.nome,r.osDia?.num].join(" ")).toUpperCase().includes(q)))
@@ -2965,6 +2968,7 @@ function abrirAcessos(){
         <label class="f">Nome<input data-ednome value="${esc(u.nome)}"></label></div>
         <label class="f">WhatsApp (com DDD)<input data-edzap inputmode="tel" value="${esc(zapFmt(u.zap))}" placeholder="(00) 00000-0000" maxlength="15"></label>
         <label class="ck"><input type="checkbox" data-edcobra ${cobraFlag(u)?"checked":""}><span>💬 Pode cobrar no WhatsApp as turmas da ${cobraTxt(u.sup)}</span></label>
+        <label class="ck"><input type="checkbox" data-edprog ${editProgFlag(u)||ehGerPerf(u.perfil)?"checked":""} ${ehGerPerf(u.perfil)?"disabled":""}><span>✏ Pode editar a programação (lançar, corrigir e editar serviços das turmas da área dele)${ehGerPerf(u.perfil)?" – gerente já pode":""}</span></label>
         <div class="row2"><label class="f">Perfil<select data-edperf>${cargoOpts(cargoK(u),podeCriarAdm())}</select></label>
         <label class="f" data-edsupw>${lotRot(u.perfil)}<select data-edsup>${lotOpts(u.perfil,u.sup)}</select></label></div>
         ${isAdm()?`<label class="ck"><input type="checkbox" data-edtreino ${u.treino?"checked":""}><span>🎓 Pode usar o <b>Modo treinamento</b> (só o administrador liga e desliga)</span></label>`:""}
@@ -3048,10 +3052,10 @@ const acErro=e=>{ const m=String(e?.message||e||""); return /gerente|acessos|per
       const dupM=acharMat(matricula,id); if(dupM){toast("A matrícula "+matricula+" já é de "+dupM[1].nome+".");return}
       if(id===sessao?.id && !ehGerPerf(perfil)){toast("Você não pode tirar o seu próprio perfil de gerente.");return}
       const zr=box.querySelector("[data-edzap]").value, zap=zapNorm(zr); if(zr.trim()&&!zap){toast("WhatsApp inválido: use DDD + número, ex.: (62) 99999-1234.");return}
-      const cobra=!!box.querySelector("[data-edcobra]")?.checked;
+      const cobra=!!box.querySelector("[data-edcobra]")?.checked, editProg=!!box.querySelector("[data-edprog]")?.checked;
       const equipe=perfil==="fiscal"?(box.querySelector("[data-edeq]")?.value||""):"";
       const turmas=[...box.querySelectorAll("[data-edturma]:checked")].map(c=>c.dataset.edturma);
-      const extraT=isAdm()?{treino:!!box.querySelector("[data-edtreino]")?.checked}:{}; await salvar(id,{...extraT,nome,matricula,perfil,cargo,sup,zap,cobra,equipe,turmas},nome+" atualizado.");
+      const extraT=isAdm()?{treino:!!box.querySelector("[data-edtreino]")?.checked}:{}; await salvar(id,{...extraT,nome,matricula,perfil,cargo,sup,zap,cobra,editProg,equipe,turmas},nome+" atualizado.");
       if(id===sessao?.id){sessao={...sessao,nome};ls.set("gpe_sessao",sessao);applyPerms()}
       return;}
     const dl=e.target.closest("[data-del]"); if(dl){const id=dl.dataset.del, u=acesso[id];
@@ -3086,7 +3090,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.17k";
+const APP_VERSAO="2026.11.17u";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -3379,6 +3383,11 @@ const REL_SLOTS=[
   {k:"durante",t:"2 · DURANTE: as equipes e o maquinário executando o serviço",tipo:"foto",galeria:true,janelaH:24,curto:"DURANTE",dica:"equipe e máquinas trabalhando"},
   {k:"depois",t:"3 · DEPOIS: serviço concluído – galhos cortados e picados e o local limpo, sem servidor e sem maquinário",tipo:"foto",galeria:true,janelaH:24,curto:"DEPOIS",dica:"serviço concluído, local limpo"}];
 let relMidia={};
+// registro emergencial: 2 fotos obrigatórias (como encontrou e como ficou)
+const OC_SLOTS=[{k:"ocAntes",t:"Como encontrou (galho / árvore caída)",tipo:"foto",curto:"ANTES",dica:"galho ou árvore caída no local"},{k:"ocDepois",t:"Como ficou (local liberado)",tipo:"foto",curto:"DEPOIS",dica:"local limpo e liberado"}];
+let ocMidia={};
+function ocFotosUI(r){ const h=$("#ocFotos"); if(!h) return; ocMidia={}; const ff=r?.fotosFiscal||{}; OC_SLOTS.forEach(x=>{ if(ff[x.k]) ocMidia[x.k]=ff[x.k]; });
+  h.innerHTML=midSecHtml(ocMidia,true,OC_SLOTS,"Fotos do atendimento – 2 obrigatórias","Tire na hora: uma de como encontrou e outra do local liberado. Cada foto é salva assim que é tirada."); midLigar(h,ocMidia,true,OC_SLOTS); }
 // O.S de rotina (entre-pistas, praças, áreas públicas…): 2 fotos com a localização; não vão para relatório, vão para o Histórico de execução
 const ROT_SLOTS=[
   {k:"rot1",t:"1 · SERVIÇO: a equipe executando o serviço no local",tipo:"foto",janelaH:24,curto:"SERVIÇO 1",dica:"equipe executando no local"},
@@ -3390,13 +3399,13 @@ const fotosRot=r=>!!r&&!relTem(r)&&!r.ocorrencia&&!r.avulso;
 // serviço que o fiscal encontrou já feito: 1 foto do local
 const JA_SLOTS=[{k:"ja",t:"Foto do local mostrando que o serviço já estava feito",tipo:"foto",janelaH:24,curto:"JÁ FEITO",dica:"local com o serviço já feito"}];
 const jaDe=r=>r?.jaExecutado||r?.osDia?.sv?.[r?.id]?.fim?.exec?.ja||"";
-const fotoSlots=r=>jaDe(r)?JA_SLOTS:relTem(r)?REL_SLOTS:fotosRot(r)?ROT_SLOTS:[];
+const fotoSlots=r=>r?.ocorrencia?OC_SLOTS:jaDe(r)?JA_SLOTS:relTem(r)?REL_SLOTS:fotosRot(r)?ROT_SLOTS:[];
 const fotosOk=r=>fotoObrig(r).every(x=>r.fotosFiscal?.[x.k]||r.relat?.midia?.[x.k]);
 const relMatSup=sup=>{ const u=Object.values(acesso||{}).find(x=>x.perfil==="supervisor"&&x.ativo&&x.sup===sup); return u?String(u.matricula||"").replace(/^m/i,""):""; };
 function relCarregar(r){ let R=r.relat||null; if(!R){ const ant=relCadeia(r).slice(0,-1).reverse().find(x=>x.relat); R=ant?{...ant.relat,ass:null}:{}; } relMidia={...(R.midia||{})};
   { const ff=r.fotosFiscal; if(ff) relSlots().forEach(x=>{ if(!relMidia[x.k]&&ff[x.k]) relMidia[x.k]=ff[x.k]; }); }
   relTipo=r.tipo||""; $("#rlProc").value=R.processo||r.processo||""; $("#rlSist").value=R.sist||r.procSist||""; $("#rlPed").value=R.ped||r.ped||""; relIdUI();
-  $("#rlParecer").value=R.parecer||r.parecer||""; $("#rlVist").value=R.vistoria||""; $("#rlSolic").value=R.solicitante||""; $("#rlArv").value=R.arvore||""; $("#rlGalho").value=R.galho||"";
+  $("#rlParecer").value=R.parecer||r.parecer||""; $("#rlVist").value=R.vistoria||""; $("#rlSolic").value=R.solicitante||r.solicitante||""; $("#rlArv").value=R.arvore||""; $("#rlGalho").value=R.galho||"";
   $("#rlMat").value=R.matricula||relMatSup(r.supervisao);
   $("#rlSig").innerHTML=sigBlocoHtml("rS",r.supervisao).replace("Supervisor que entrega","Supervisor responsável pelo serviço");
   const h=$("#rlFotos"); if(relJa){ h.innerHTML=midSecHtml(relMidia,true,JA_SLOTS,"Registro fotográfico – serviço já executado (1 foto)","O fiscal encontrou o serviço já feito. A foto do local vai para o relatório, com o texto de quem executou."); midLigar(h,relMidia,true,JA_SLOTS); return; }
@@ -3407,7 +3416,7 @@ $("#rlSist").addEventListener("change",relIdUI);
 // serviço feito no lugar: o nº digitado lá acompanha o relatório
 document.addEventListener("input",e=>{ if(e.target.id==="s_processo"&&relAlvo==="sub") $("#rlProc").value=e.target.value.trim().toUpperCase(); });
 // identificação do relatório: O.S → nº da O.S; processo → SEI ou GED e o número; PED e parecer quando houver
-const relIdErros=()=>{ const e=[]; if(relTipo==="PROCESSO"&&!$("#rlSist").value) e.push("relatório: informe se o processo é SEI ou GED"); if(!$("#rlProc").value.trim()) e.push(relTipo==="PROCESSO"?"relatório: informe o nº do processo":"relatório: informe o nº da O.S"); return e; };
+const relIdErros=()=>{ const e=[]; if(relTipo==="PROCESSO"&&!$("#rlSist").value) e.push("relatório: informe se o processo é SEI ou GED"); if(!$("#rlProc").value.trim()) e.push(relTipo==="PROCESSO"?"relatório: informe o nº do processo":"relatório: informe o nº da O.S"); if(!$("#rlSolic").value.trim()) e.push("relatório: informe o nome do solicitante do serviço"); return e; };
 const relId=(r)=>{ const R=r.relat||{}, pr=r.tipo==="PROCESSO", sist=R.sist||r.procSist||""; return {lbl:pr?`PROCESSO ${sist||""} Nº`.replace("  "," "):"O.S Nº", num:R.processo||r.processo||"", ped:R.ped||r.ped||"", par:R.parecer||r.parecer||""}; };
 function relLer(){ return {processo:$("#rlProc").value.trim().toUpperCase(), sist:relTipo==="PROCESSO"?$("#rlSist").value:"", ped:$("#rlPed").value.trim().toUpperCase(), parecer:$("#rlParecer").value.trim().toUpperCase(), vistoria:$("#rlVist").value, solicitante:$("#rlSolic").value.trim().toUpperCase(),
   arvore:$("#rlArv").value.trim(), galho:$("#rlGalho").value.trim(), matricula:$("#rlMat").value.trim(), midia:{...relMidia}, em:new Date().toISOString()}; }
@@ -3440,7 +3449,7 @@ function relDocHtml(r){ const R=r.relat||{}, q=relQtd(r), v=x=>x?esc(String(x)):
    ${(()=>{ const I=relId(r); return `<tr class="pr"><td colspan="3"><span style="display:inline-block;width:40%">${esc(I.lbl)}: <span style="font-weight:400">${v(I.num)}</span></span><span style="display:inline-block;width:25%">PED Nº: <span style="font-weight:400">${v(I.ped)}</span></span>PARECER TÉCNICO Nº: <span style="font-weight:400">${v(I.par)}</span></td></tr>`; })()}
    <tr><td class="k">EQUIPE:</td><td colspan="2" class="c">${esc(relEquipe(r))}</td></tr>
    <tr><td class="k">FISCAL DE TURMA:</td><td colspan="2" class="c">${esc(r.fiscal||"")}</td></tr>
-   <tr><td class="k">SOLICITANTE SERVIÇO:</td><td colspan="2"><b>Nome:</b> ${v(R.solicitante)}</td></tr>
+   <tr><td class="k">SOLICITANTE SERVIÇO:</td><td colspan="2"><b>Nome:</b> ${v(R.solicitante||r.solicitante)}</td></tr>
    <tr><td class="k">LOCAL DO SERVIÇO:</td><td colspan="2">${esc([r.bairro,r.logradouro].filter(Boolean).join(" — "))}</td></tr>
    ${(()=>{ // só os itens que tiveram quantidade executada (poupa espaço na folha)
      const L=REL_ITENS.map((t,i)=>[i,t]).filter(([i])=>+q[ITENS[i].c]), O=[["Árvore caída",R.arvore],["Galho caído",R.galho]].filter(([,x])=>x&&String(x).trim()&&String(x).trim()!=="0");
@@ -3485,7 +3494,7 @@ async function relDocx(r,btn){
     const bin=Uint8Array.from(atob(REL_DOCX_B64),c=>c.charCodeAt(0)); const zip=await JSZip.loadAsync(bin);
     let x=await zip.file("word/document.xml").async("string"), rels=await zip.file("word/_rels/document.xml.rels").async("string");
     const naoExec=jaR?jaTxt(r)+".":r.status==="NÃO"?(r.outraEquipe?outraTxt(r)+".":`Serviço não executado. Motivo: ${r.motivo||"—"}${r.proxData?` · remarcado para ${fmtD(r.proxData)}`:""}`):r.status==="PARCIAL"?`Executado parcialmente. Faltou: ${qtdTxtPlano(r.qtdRemarcada||{})||"—"}. Motivo: ${r.motivo||"—"}${r.proxData?` · restante remarcado para ${fmtD(r.proxData)}`:""}`:"";
-    const V={PROCLBL:relId(r).lbl,PROC:relId(r).num+"   ·   PED Nº: "+(relId(r).ped||"—"),PARECER:relId(r).par,EQUIPE:relEquipe(r),SOLIC:R.solicitante||"",LOCAL:[r.bairro,r.logradouro].filter(Boolean).join(" — "),
+    const V={PROCLBL:relId(r).lbl,PROC:relId(r).num+"   ·   PED Nº: "+(relId(r).ped||"—"),PARECER:relId(r).par,EQUIPE:relEquipe(r),SOLIC:R.solicitante||r.solicitante||"",LOCAL:[r.bairro,r.logradouro].filter(Boolean).join(" — "),
       ARV:R.arvore||"",GALHO:R.galho||"",NAOEXEC:naoExec,OBS:r.obs||"",FISCAL:r.fiscal||"",SUPNOME:R.ass?.nome||nomeSupDe(r.supervisao)||"",ASSIN:R.ass?.em?relAssTxt(R.ass):"Relatório ainda sem assinatura eletrônica do supervisor.",MAT:R.matricula||"",VIST:R.vistoria?fmtD(R.vistoria):"",EXEC:relExecTxt(r)};
     ITENS.forEach((it,i)=>V["Q"+(i+1)]=+q[it.c]?String(q[it.c]).replace(".",","):"");
     // Word também só com os itens que tiveram quantidade (poupa espaço)
@@ -3536,7 +3545,7 @@ function equipeOpts(){ const s=supOf(form.sup); const o3=$("#equipe").querySelec
   if(form.mode==="prog"&&!form.base) eqVtSync("eq"); }
 $("#s_tipo").addEventListener("change",sProcUI); $("#s_tipo").addEventListener("change",()=>{ try{ relSync(); }catch(e){} });
 const TIPO_LBL={"O.S":"PROCESSO INTRANET","PROCESSO":"PROCESSO SEI"}; // nomes mostrados na escolha do tipo de local
-chipRow($("#tipoChips"), TIPOS.map(t=>({v:t,h:esc(TIPO_LBL[t]||t)})), v=>{form.tipo=v;setPressed($("#tipoChips"),v);if(v==="PROCESSO"&&!$("#procSist").value)$("#procSist").value="SEI";if(!temProc(v)){$("#processo").value="";$("#parecer").value="";$("#ped").value="";}if(v!=="PROCESSO")$("#procSist").value="";if(!TIPOS_180.has(v))$("#areaId").value="";procUI();servUI();checaDup()});
+chipRow($("#tipoChips"), TIPOS.map(t=>({v:t,h:esc(TIPO_LBL[t]||t)})), v=>{form.tipo=v;setPressed($("#tipoChips"),v);if(v==="PROCESSO"&&!$("#procSist").value)$("#procSist").value="SEI";if(!temProc(v)){$("#processo").value="";$("#solic").value="";$("#parecer").value="";$("#ped").value="";}if(v!=="PROCESSO")$("#procSist").value="";if(!TIPOS_180.has(v))$("#areaId").value="";procUI();servUI();checaDup()});
 // serviço a executar: pode marcar vários; grava junto, separado por " + " (ex.: "PODA DE MANUTENÇÃO + EXTIRPAÇÃO")
 const servSel=new Set();
 $("#servChips").innerHTML=SERVICOS.map(x=>`<button type="button" class="chip" data-sv="${esc(x)}" aria-pressed="false">${x==="OUTRO"?"Outro (especificar)":esc(x.charAt(0)+x.slice(1).toLowerCase())}</button>`).join("");
@@ -3582,7 +3591,7 @@ function servCarregar(v){ servSel.clear(); const outros=[]; String(v||"").split(
 const temProc=t=>t==="O.S"||t==="PROCESSO";
 // nº do processo com o sistema (SEI / GED) e o PED, para mostrar
 const procNum=r=>`${r.tipo==="PROCESSO"&&r.procSist?r.procSist+" ":""}${r.processo||""}${r.ped?" · PED nº "+r.ped:""}`;
-function procUI(){ const tem=temProc(form.tipo); $("#procWrap").hidden=!(tem||$("#processo").value.trim()); $("#parWrap").hidden=!(tem||$("#parecer").value.trim()); $("#pedWrap").hidden=!(tem||$("#ped").value.trim()); $("#sistWrap").hidden=form.tipo!=="PROCESSO";
+function procUI(){ const tem=temProc(form.tipo); $("#procWrap").hidden=!(tem||$("#processo").value.trim()); $("#solWrap").hidden=!(tem||$("#solic").value.trim()); $("#parWrap").hidden=!(tem||$("#parecer").value.trim()); $("#pedWrap").hidden=!(tem||$("#ped").value.trim()); $("#sistWrap").hidden=form.tipo!=="PROCESSO";
   $("#procLbl").textContent = form.tipo==="O.S" ? "Nº do processo Intranet / O.S (obrigatório)" : form.tipo==="PROCESSO" ? "Nº do processo (obrigatório)" : "Nº do processo / O.S (registrado antes)"; }
 function sProcUI(){ const w=$("#s_procWrap"); if(!w) return; const t=$("#s_tipo").value; if(!temProc(t)&&document.activeElement===$("#s_tipo")) $("#s_processo").value="";
   w.hidden=!(temProc(t)||$("#s_processo").value.trim()); $("#s_procLbl").textContent=t==="O.S"?"Nº da O.S":"Nº do processo"; }
@@ -3694,8 +3703,8 @@ function dataUI(){const v=$("#data").value;$("#dia").value=diaDe(v);$("#semana")
 /* ---------- regra: a programação é feita numa semana para execução na semana seguinte; pronta até quinta da semana anterior ---------- */
 function domDe(d){ const x=new Date(d); x.setHours(12,0,0,0); x.setDate(x.getDate()-x.getDay()); return x; }
 // próxima semana = domingo a sábado seguinte (começa no domingo); dias de trabalho de domingo a sábado, pela escala da turma; prazo = quinta da semana atual
-function proxSemInfo(){ const domAtual=domDe(new Date()), dom=new Date(domAtual); dom.setDate(dom.getDate()+7);
-  const qui=new Date(domAtual); qui.setDate(qui.getDate()+4); const dias=[...Array(7)].map((_,i)=>{const x=new Date(dom);x.setDate(dom.getDate()+i);return iso(x)});
+function proxSemInfo(off=0){ const domAtual=domDe(new Date()), dom=new Date(domAtual); dom.setDate(dom.getDate()+7*(1+off)); // off: semanas para trás (-) ou para frente (+)
+  const qui=new Date(domAtual); qui.setDate(qui.getDate()+4+7*off); const dias=[...Array(7)].map((_,i)=>{const x=new Date(dom);x.setDate(dom.getDate()+i);return iso(x)});
   return {ini:iso(dom), seg:dias[0], sem:semanaDe(iso(dom)), qui:iso(qui), dias, atrasado:hoje()>iso(qui), cobra:hoje()>=iso(qui)}; } // cobrança da programação da semana seguinte só a partir de quinta
 function proxSemTurma(sup,P){ const dias=P.dias.filter(x=>trabalha(sup,x)); const L=todosGlobal?todosGlobal():todos();
   const feitos=dias.filter(x=>L.some(r=>r.supervisao===sup&&r.data===x&&!r.avulso&&!r.arquivado&&!r.ocorrencia));
@@ -3761,7 +3770,8 @@ function avisoDataUI(){ const el=$("#dataAviso"); if(!el) return; const v=$("#da
   if(mostra) el.textContent=`Data não permitida: a programação é sempre para a próxima semana (${P.sem}ª semana, de ${periodoSem(P.sem)}). Escolha uma data a partir de ${fmtD(P.ini)}.`; }
 function renderProxSem(){
   const host=$("#proxSem"); if(!host) return; if(!sessao){ host.innerHTML=""; return; }
-  const P=proxSemInfo(), sups0=travado()?SUPS.filter(x=>x.id===sessao.sup):SUPS; if(!sups0.length){ host.innerHTML=""; return; }
+  const off=window._pxOff||0, P=proxSemInfo(off), sups0=travado()?SUPS.filter(x=>x.id===sessao.sup):SUPS; if(!sups0.length){ host.innerHTML=""; return; }
+  const P0=proxSemInfo(0), passada=P.ini<P0.ini, executada=P.ini<=hoje();
   const DIRS={DIRSEN:["PODA I","PODA II"],DIROP:["PODA III","PODA IV"]}, temAmbas=Object.values(DIRS).every(gs=>sups0.some(x=>gs.includes(x.grupo)));
   let fd=temAmbas?ls.get("gpe_pxdir",""):""; if(fd&&!DIRS[fd]) fd="";
   const sups=fd?sups0.filter(x=>DIRS[fd].includes(x.grupo)):sups0;
@@ -3769,11 +3779,13 @@ function renderProxSem(){
   const R=sups.map(x=>({sup:x.id,...proxSemTurma(x.id,P)})), prontas=R.filter(r=>r.ok).length, todas=prontas===R.length;
   const cls=todas?"ok":P.atrasado?"bad":"warn";
   const quiTxt=`quinta-feira, ${fmtD(P.qui)}`;
+  const nav=`<div class="pxf" role="group" aria-label="Escolher a semana"><button type="button" class="chip" data-pxoff="${off-1}">◀ ${P.sem-1>0?P.sem-1+"ª":"anterior"}</button>${off?`<button type="button" class="chip" data-pxoff="0" aria-pressed="true">↺ Voltar para a ${P0.sem}ª</button>`:""}<button type="button" class="chip" data-pxoff="${off+1}">${P.sem+1}ª ▶</button></div>`;
   host.innerHTML=`<section class="pxs ${cls}" style="margin-top:12px"><div class="pxh"><b>Programação da ${P.sem}ª semana</b><span>${periodoSem(P.sem)}</span></div>
-    ${filtro}<p class="note" style="margin:0">A programação é feita nesta semana para execução na semana seguinte e tem que estar <b>pronta até ${quiTxt}</b>.${todas?" ✔ Tudo pronto.":P.atrasado?" <b>Prazo vencido.</b>":P.cobra?" <b>Hoje é o prazo.</b>":" A cobrança nas Pendências começa na quinta."}</p>
-    <div class="pxl">${R.map(r=>`<span class="${r.ok?"ok":P.atrasado?"bad":"warn"}" title="${r.falta.length?"Falta: "+r.falta.map(x=>diaDe(x)+" "+fmtDs(x)).join(", "):"Todos os dias programados"}">${esc(r.sup)} · <b>${r.feitos.length} de ${r.dias.length} dias</b>${r.ok?" ✔":P.atrasado?" · ATRASADA":""}</span>`).join("")}</div></section>`;
+    ${nav}${filtro}<p class="note" style="margin:0">${off===0?`A programação é feita nesta semana para execução na semana seguinte e tem que estar <b>pronta até ${quiTxt}</b>.${todas?" ✔ Tudo pronto.":P.atrasado?" <b>Prazo vencido.</b>":P.cobra?" <b>Hoje é o prazo.</b>":" A cobrança nas Pendências começa na quinta."}`:executada?`Semana ${passada&&P.dias[6]<hoje()?"já executada":"em execução"}: dias programados por turma.${todas?" ✔ Todas as turmas tinham programação.":""}`:`Semana futura: o que já foi programado até agora.${todas?" ✔ Tudo pronto.":""}`}</p>
+    <div class="pxl">${R.map(r=>`<span class="${r.ok?"ok":P.atrasado?"bad":"warn"}" title="${r.falta.length?"Falta: "+r.falta.map(x=>diaDe(x)+" "+fmtDs(x)).join(", "):"Todos os dias programados"}">${esc(r.sup)} · <b>${r.feitos.length} de ${r.dias.length} dias</b>${r.ok?" ✔":P.atrasado&&off===0?" · ATRASADA":""}</span>`).join("")}</div></section>`;
 }
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-pxdir]"); if(!b) return; ls.set("gpe_pxdir",b.dataset.pxdir); renderProxSem(); });
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-pxoff]"); if(!b) return; window._pxOff=+b.dataset.pxoff||0; renderProxSem(); });
 $("#data").onchange=dataUI;
 function lerMotivo(){ const v=$("#motivo").value; return v==="Outro" ? $("#motivoTxt").value.trim() : v; }
 function setMotivo(m){ const opts=[...$("#motivo").options].map(o=>o.value); if(!m){$("#motivo").value="";$("#motivoTxt").value=""} else if(opts.includes(m)&&m!=="Outro"){$("#motivo").value=m;$("#motivoTxt").value=""} else {$("#motivo").value="Outro";$("#motivoTxt").value=m==="Outro"?"":m} motivoUI(); }
@@ -3893,7 +3905,7 @@ function modeUI(){
 function lembrar(){ const t=ls.get("gpe_turma",{}); ls.set("gpe_turma",{...t,sup:form.sup||t.sup,equipe:$("#equipe").value,viatura:$("#viatura").value,fiscal:($("#fiscal").value||$("#fiscalN").value||t.fiscal||"")}) }
 function limpar(mode="prog", keep={}){
   form.mode=mode; form.tipo=""; servCarregar(""); form.st=""; form.pctModo="qtd"; form.pcts={}; if($("#pctItens")) $("#pctItens").innerHTML=""; if($("#mdDias")) $("#mdDias").value=1; if($("#pctVal")) $("#pctVal").value=""; form.base=null; form.geo=null; form.geoAuto=false; if($("#geoTxt")) $("#geoTxt").value="";
-  ["bairro","logradouro","processo","parecer","ped","procSist","areaId","proxData","motivo","motivoTxt","obs","s_bairro","s_logradouro","s_processo","s_tipo","s_data","dataExec"].forEach(id=>$("#"+id).value=""); bairroCarregar("bairro",""); bairroCarregar("s_bairro",""); try{servUI()}catch(e){}
+  ["bairro","logradouro","processo","solic","parecer","ped","procSist","areaId","proxData","motivo","motivoTxt","obs","s_bairro","s_logradouro","s_processo","s_tipo","s_data","dataExec"].forEach(id=>$("#"+id).value=""); bairroCarregar("bairro",""); bairroCarregar("s_bairro",""); try{servUI()}catch(e){}
   $("#semSub").checked=false; form.extraModo=false; try{ $("#extraChk").checked=false; ["extraOrigem","extraOutro","extraJust","extraJustSel"].forEach(id=>$("#"+id).value=""); $("#extraValid").dataset.k=""; $("#extraValid").innerHTML=""; }catch(e){}
   form.okSemItens=false; form.oc=""; ["ocHora","ocOrigem","ocProt","ocQtd"].forEach(id=>$("#"+id).value=""); ["ocVia","ocRede","ocDano"].forEach(id=>$("#"+id).checked=false); setPressed($("#ocChips"),""); $("#ocQLbl").textContent="Quantidade";
   writeQ("q_",{}, $("#qtdMain")); writeQ("s_",{}, $("#qtdSub")); showPrev({});
@@ -3911,7 +3923,7 @@ $("#cancelEdit").onclick=()=>{ const back=form.mode!=="prog", oc=form.mode==="oc
 function fillCommon(r){ try{ const x=r?.extra; $("#extraChk").checked=!!x; form.extraModo=!!x; $("#extraOrigem").value=x?([...$("#extraOrigem").options].some(o=>o.value===x.origem)?x.origem:"Outro"):""; $("#extraOutro").value=x&&![...$("#extraOrigem").options].some(o=>o.value===x.origem)?x.origem:""; { const js=$("#extraJustSel"), ok=x&&x.justSel&&[...js.options].some(o=>o.value===x.justSel); js.value=x?(ok?x.justSel:"Outra"):""; $("#extraJust").value=x?(ok?(x.justComp||""):(x.just||"")):""; } }catch(e){}
   form.sup=r.supervisao||""; $("#equipe").value=r.equipe||"1ª EQUIPE"; $("#viatura").value=(r.viatura==="SKAY"||r.viatura==="SKY")?"SKY 5074.0":(r.viatura||"SPLINTER 5063.6");
   $("#data").value=r.data||""; dataUI(); if(r.semana)$("#semana").value=r.semana+"ª";
-  bairroCarregar("bairro",r.bairro||""); endCarregar("e_", r.logradouro||""); form.tipo=r.tipo||""; $("#processo").value=r.processo||""; $("#parecer").value=r.parecer||""; $("#ped").value=r.ped||""; $("#procSist").value=r.procSist||""; $("#areaId").value=r.areaId||""; servCarregar(r.servico);
+  bairroCarregar("bairro",r.bairro||""); endCarregar("e_", r.logradouro||""); form.tipo=r.tipo||""; $("#processo").value=r.processo||""; $("#solic").value=r.solicitante||""; $("#parecer").value=r.parecer||""; $("#ped").value=r.ped||""; $("#procSist").value=r.procSist||""; $("#areaId").value=r.areaId||""; servCarregar(r.servico);
   $("#obs").value=r.obs||"";
   setPressed($("#supChips"),form.sup); setPressed($("#tipoChips"),form.tipo); procUI();
 }
@@ -3930,6 +3942,7 @@ function abrirOcorr(r){
   else { const d=new Date(); $("#ocHora").value=String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); $("#dataExec").value=hoje(); }
   form.st="SIM"; setPressed($("#stChips"),"SIM");
   const im=r?.ocorrencia?.impacto; form.impHouve = im ? !!im.houve : undefined; form.impSel={}; (im?.servicos||[]).forEach(s=>form.impSel[s.id]=s.efeito);
+  ocFotosUI(r);
   modeUI(); show("form",true,"oc"); scrollTo(0,0);
 }
 const EFEITO={ATRASO:"Atrasou, mas foi concluído",PARCIAL:"Ficou parcial (o resto será remarcado)",NAO:"Não foi executado (será remarcado)"};
@@ -4150,13 +4163,14 @@ $("#form").addEventListener("submit", async ev=>{
     supervisao:form.sup, encarregado:sup.enc||"", grupo:sup.grupo||"", turno:sup.turno||"",
     equipe:$("#equipe").value, viatura:$("#viatura").value,
     data:$("#data").value, dia:$("#dia").value, semana:parseInt($("#semana").value)||semanaDe($("#data").value),
-    bairro:$("#bairro").value.trim().toUpperCase(), logradouro:abrevEnd($("#logradouro").value), tipo:form.tipo, servico:servLer(), processo:$("#processo").value.trim(), parecer:temProc(form.tipo)?$("#parecer").value.trim().toUpperCase():"", ped:temProc(form.tipo)?$("#ped").value.trim().toUpperCase():"", procSist:form.tipo==="PROCESSO"?$("#procSist").value:"", areaId:TIPOS_180.has(form.tipo)?(areaLer(),areaLista($("#areaId").value).slice(0,form.tipo==="ENTRE-PISTA"?99:1).join(", ")):"" };
+    bairro:$("#bairro").value.trim().toUpperCase(), logradouro:abrevEnd($("#logradouro").value), tipo:form.tipo, servico:servLer(), processo:$("#processo").value.trim(), solicitante:temProc(form.tipo)?$("#solic").value.trim().toUpperCase():"", parecer:temProc(form.tipo)?$("#parecer").value.trim().toUpperCase():"", ped:temProc(form.tipo)?$("#ped").value.trim().toUpperCase():"", procSist:form.tipo==="PROCESSO"?$("#procSist").value:"", areaId:TIPOS_180.has(form.tipo)?(areaLer(),areaLista($("#areaId").value).slice(0,form.tipo==="ENTRE-PISTA"?99:1).join(", ")):"" };
   if(m!=="baixa"){
     if(!common.supervisao) e.push("escolha a supervisão");
     if(m==="prog"&&common.supervisao&&(!base||base.equipe!==common.equipe||base.viatura!==common.viatura)){ const ev=eqVtErro(common.supervisao,common.equipe,common.viatura); if(ev) e.push(ev); }
     if(ehExtra()){ if(!$("#extraOrigem").value) e.push("serviço extra: informe quem enviou / determinou"); else if($("#extraOrigem").value==="Outro"&&!$("#extraOutro").value.trim()) e.push("serviço extra: digite quem enviou");
       if(!$("#extraJustSel").value) e.push("serviço extra: escolha a justificativa"); else if($("#extraJustSel").value==="Outra"&&$("#extraJust").value.trim().length<10) e.push("serviço extra: escreva a justificativa (mínimo 10 letras)"); if(common.data&&common.data<hoje()) e.push("serviço extra: a data não pode ser antes de hoje"); }
-    if(m==="prog"&&!ehExtra()&&common.data&&(!base||base.data!==common.data)){ const P=proxSemInfo(); if(common.data<P.ini) e.push(`a programação é sempre para a próxima semana: escolha uma data a partir de ${diaDe(P.ini)} ${fmtD(P.ini)} (${P.sem}ª semana). Não é permitido programar para a semana atual nem para datas passadas`); }
+    // gerente / administrador corrigindo uma programação já lançada pode pôr qualquer data (conserta data lançada por engano)
+    if(m==="prog"&&!ehExtra()&&common.data&&(!base||base.data!==common.data)&&!(base&&isGerente())){ const P=proxSemInfo(); if(common.data<P.ini) e.push(`a programação é sempre para a próxima semana: escolha uma data a partir de ${diaDe(P.ini)} ${fmtD(P.ini)} (${P.sem}ª semana). Não é permitido programar para a semana atual nem para datas passadas`); }
     if(m==="prog"&&common.supervisao&&common.data&&escCfg(common.supervisao)&&!trabalha(common.supervisao,common.data)) e.push(`${diaDe(common.data)} ${fmtDs(common.data)} é folga da ${common.supervisao} pela escala de trabalho – programe num dia de trabalho`);
     if(m==="prog" ? errDataProg(common.data) : errDataExec(common.data)) e.push(m==="prog"?"informe uma data programada válida":"a data da execução não pode ser futura nem ter ano errado");
     const endProc=temProc(common.tipo)&&m==="prog"; // processo / O.S: pode programar sem QD., LT. e número (completa na baixa)
@@ -4167,7 +4181,7 @@ $("#form").addEventListener("submit", async ev=>{
       if(!/(^|[\s,\/(])(R\.|AV\.|AL\.|ROD\.|TV\.|ESTR\.)\s*[A-Z0-9ÀÁÂÃÉÊÍÓÔÕÚÇ]/.test(abrevEnd($("#e_comp").value))) e.push("praça: informe a outra rua no complemento (ex.: ESQ. C/ R. 5)"); }
     if(!endLivre){ if(!$("#e_via").value) e.push("escolha o tipo de via (R., AV., AL.…)"); if(!$("#e_nome").value.trim()) e.push("informe o nome ou número da via"); }
     { const ee=erroEnd(common.logradouro,"logradouro"); if(ee&&!(endLivre&&/comece pelo tipo de via/.test(ee))) e.push(ee); }
-    if(!common.tipo) e.push("escolha o tipo de local"); if(common.tipo==="O.S"&&!common.processo) e.push("informe o nº da O.S"); if(common.tipo==="PROCESSO"&&!common.procSist) e.push("informe se o processo é SEI ou GED"); if(common.tipo==="PROCESSO"&&!common.processo) e.push("informe o nº do processo");
+    if(!common.tipo) e.push("escolha o tipo de local"); if(common.tipo==="O.S"&&!common.processo) e.push("informe o nº da O.S"); if(common.tipo==="PROCESSO"&&!common.procSist) e.push("informe se o processo é SEI ou GED"); if(temProc(common.tipo)&&form.mode!=="baixa"&&!common.solicitante) e.push("informe o nome do solicitante (sai no relatório)"); if(common.tipo==="PROCESSO"&&!common.processo) e.push("informe o nº do processo");
     if(TIPOS_SERV.has(common.tipo)&&servSel.has("OUTRO")&&!$("#servOutro").value.trim()) e.push("escreva qual é o outro serviço");
     else if(TIPOS_SERV.has(common.tipo)&&!common.servico) e.push("marque o serviço a executar (ex.: poda de manutenção) – pode marcar mais de um");
   }
@@ -4203,6 +4217,7 @@ $("#form").addEventListener("submit", async ev=>{
     const q = usaPct ? pctQ(prevQ(base),pcts) : execOk ? readQ("q_") : {};
     if(execOk && m!=="ocorr" && !Object.keys(q).length) e.push("lance as quantidades executadas");
     if(m==="ocorr" && !form.oc) e.push("marque se é galho caído ou árvore caída");
+    if(m==="ocorr"){ if([...document.querySelectorAll("#ocFotos .midst")].some(x=>/enviando|reduzindo/.test(x.textContent))) e.push("espere terminar o envio das fotos"); else { const f=OC_SLOTS.filter(x=>!ocMidia[x.k]).map(x=>x.curto.toLowerCase()); if(f.length) e.push("tire as 2 fotos do atendimento (falta: "+f.join(" e ")+")"); } }
     { const g=m==="ocorr"?quedaRegra(form.oc,""):m==="prog"?"":quedaRegra("",servLer()), q=readQ("q_"); if(g&&ITENS.some(i=>i.g!==g&&+q[i.c])) e.push(g==="E"?"árvore caída é faturada como EXTIRPAÇÃO: tire o item de poda (DAP até 20 cm não tem item de extirpação no contrato)":"galho caído é faturado como PODA: tire o item de extirpação"); }
     if(m==="ocorr" && form.sup && impCands().length){ if(form.impHouve===undefined) e.push("informe se a emergência afetou a programação do dia");
       else if(form.impHouve && !impCands().some(r=>form.impSel?.[r.id])) e.push("marque qual serviço programado foi afetado (ou responda “Não afetou”)"); }
@@ -4231,6 +4246,7 @@ $("#form").addEventListener("submit", async ev=>{
           else { const em=new Date().toISOString(); body.relat.ass={...qa,em}; body.relat.ass.cod=await codVerif({id:base.id,processo:base.processo||"",uid:qa.uid,em,st:form.st,q:body.qtd||{}}); } } } }
     if(m==="ocorr"){ body.avulso=true; body.origem=base?.origem||"app"; body.autor=base?.autor||myId||null; body.criadoEm=base?.criadoEm||now; body.qtdPrevista={};
       body.dataExec=common.data; body.status="SIM";
+      { const ff={...(base?.fotosFiscal||{})}; OC_SLOTS.forEach(x=>{ if(ocMidia[x.k]) ff[x.k]=ocMidia[x.k]; }); body.fotosFiscal={...ff,por:ff.por||sessao.nome,uid:ff.uid||sessao.id,em:ff.em||now}; }
       body.ocorrencia={tipo:form.oc, hora:$("#ocHora").value, origem:$("#ocOrigem").value, protocolo:$("#ocProt").value.trim(), qtd:parseInt($("#ocQtd").value)||1, via:$("#ocVia").checked, rede:$("#ocRede").checked, danos:$("#ocDano").checked};
       const cands=impCands(); body.ocorrencia.impacto = !cands.length ? {houve:false, semProg:true, servicos:[]}
         : {houve:!!form.impHouve, servicos: form.impHouve ? cands.filter(r=>form.impSel?.[r.id]).map(r=>({id:r.id, efeito:form.impSel[r.id], local:r.bairro+" — "+r.logradouro, equipe:r.equipe||""})) : []}; }
@@ -4598,6 +4614,20 @@ function montar(root) {
     const gv = vistGerVis(); return _base.concat(man).map(ED).map((p) => ((VIST.regs || {})[p.id] || {}).urb_cad ? { ...p, urbantrim: "sim" } : p).filter((p) => !gv || (p.ger || "DIRSEN") === gv); };
   function carregar() { VIST.iniciar(); S.proc = todosProc(); listas(); S.erro = ""; S.carregando = !VIST.pronto; if (!VIST.pronto) setTimeout(() => { VIST.iniciar(); if (S.carregando && VIST.pronto) { S.carregando = false; S.reg = VIST.regs; render(); } }, 1500); render(); }
   function aoVivo() { VIST.ouvir(() => { S.reg = VIST.regs; S.rotas = VIST.rotas; const n0 = S.proc.length; S.proc = todosProc(); if (S.proc.length !== n0) _idx = null; S.carregando = false; if (VIST.erro) S.erro = VIST.erro; if (!root.hidden && root.offsetParent !== null) render(); }); S.reg = VIST.regs; S.rotas = VIST.rotas; }
+  // falha de internet (não é recusa do banco): tenta de novo e, se não der, guarda no celular e envia sozinho depois
+  const ehRede = (e) => /failed to fetch|networkerror|load failed|network request failed|timeout|timed out|offline|err_internet|err_network|fetch/i.test(String(e && e.message || e || "")) && !/colecao_valida|row-level|violates|permission|policy/i.test(String(e && e.message || e || ""));
+  const FILA_K = "gpe_vist_fila";
+  const filaLer = () => { try { return JSON.parse(localStorage.getItem(FILA_K) || "[]"); } catch (e) { return []; } };
+  const filaGrava = (L) => { try { localStorage.setItem(FILA_K, JSON.stringify(L)); } catch (e) {} };
+  let _filaRodando = false;
+  async function filaEnviar() { if (_filaRodando || !db) return; const L = filaLer(); if (!L.length) return; _filaRodando = true; const resto = [];
+    try { for (const it of L) { try { const ref = db.collection(VIST_COL).doc(it.id); let fr = null; try { fr = (await ref.get()).data(); } catch (e) { if (ehRede(e)) throw e; }
+          const d = JSON.parse(JSON.stringify(Object.assign({ processo_id: it.id }, fr || {}, it.campos, { atualizado_em: it.em, atualizado_por: it.por })));
+          if (fr && fr.atualizado_em && fr.atualizado_em > it.em) Object.assign(d, { atualizado_em: fr.atualizado_em }); await ref.set(d); S.reg[it.id] = d; }
+        catch (e) { resto.push(it); if (ehRede(e)) { resto.push(...L.slice(L.indexOf(it) + 1)); break; } } } }
+    finally { filaGrava(resto); _filaRodando = false; }
+    if (resto.length < L.length) { S.erroGrav = resto.length ? S.erroGrav : ""; toast(`✔ ${L.length - resto.length} vistoria(s) guardada(s) no celular foram enviadas`); render(); } }
+  try { window.addEventListener("online", () => setTimeout(filaEnviar, 1500)); setInterval(filaEnviar, 30000); setTimeout(filaEnviar, 5000); } catch (e) {}
   async function gravar(ids, campos) {
     if (!db) { toast("Sem conexão com o banco."); return false; }
     const antes = {}; ids.forEach((id) => (antes[id] = S.reg[id]));
@@ -4609,9 +4639,13 @@ function montar(root) {
     // grava por cima da versão MAIS NOVA do banco (não da cópia deste aparelho): um celular desatualizado
     // não apaga o que outro gravou (ex.: a rota indicada para o vistoriador sumia quando outro aparelho salvava a localização)
     const ref = (id) => db.collection(VIST_COL).doc(id);
+    const tenta = async (fn) => { let ult; for (const ms of [0, 1500, 4000]) { if (ms) await new Promise((r) => setTimeout(r, ms)); try { return await fn(); } catch (e) { ult = e; if (!ehRede(e)) throw e; } } throw ult; };
     try { for (const id of ids) { try { const fr = typeof ref(id).get === "function" ? (await ref(id).get()).data() : null; if (fr && typeof fr === "object") novos[id] = JSON.parse(JSON.stringify(Object.assign({ processo_id: id }, fr, typeof campos === "function" ? campos(id) : campos, { atualizado_em: agora, atualizado_por: usuario() }))); } catch (e) {}
-        await ref(id).set(novos[id]); if (!S.reg[id] || S.reg[id].atualizado_em < agora) S.reg[id] = novos[id]; } if (S.erroGrav) { S.erroGrav = ""; } render(); return true; }
-    catch (e) { ids.forEach((id) => { if (antes[id]) S.reg[id] = antes[id]; else delete S.reg[id]; }); render(); const m = String(e && e.message || e || "");
+        await tenta(() => ref(id).set(novos[id])); if (!S.reg[id] || S.reg[id].atualizado_em < agora) S.reg[id] = novos[id]; } if (S.erroGrav) { S.erroGrav = ""; } render(); return true; }
+    catch (e) { if (ehRede(e)) { // sem internet: guarda no celular (não perde) e envia sozinho quando a conexão voltar
+        const L = filaLer(); ids.forEach((id) => L.push({ id, campos: JSON.parse(JSON.stringify(typeof campos === "function" ? campos(id) : campos)), em: agora, por: usuario() })); filaGrava(L);
+        S.erroGrav = "📶 Sem internet agora: a vistoria ficou guardada neste celular e será enviada sozinha quando a conexão voltar (pode continuar trabalhando)."; render(); toast("Sem internet: vistoria guardada no celular"); return true; }
+      ids.forEach((id) => { if (antes[id]) S.reg[id] = antes[id]; else delete S.reg[id]; }); render(); const m = String(e && e.message || e || "");
       S.erroGrav = (/colecao_valida|row-level|violates|permission|policy/i.test(m) ? "O banco recusou a gravação da vistoria. Rode o GPE-VISTORIA-2.sql no Supabase (SQL Editor › colar › Run) e atualize o app." : "Não foi possível salvar a vistoria.") + " Erro do banco: " + m; render();
       toast("Não foi possível salvar: " + m); return false; }
   }
@@ -5161,9 +5195,9 @@ function montar(root) {
       <tfoot><tr><td colspan="2" style="${td};background:#e3ece0"><b>Total</b></td><td style="${td};background:#e3ece0;text-align:right"><b>${L.length}</b></td></tr></tfoot></table></div></div>`; }
   async function ctlXls(k) { const C = CTL[k], L = ctlItens(k).sort((a, b) => a.dia.localeCompare(b.dia)); if (!L.length) return;
     const q = (v) => { const t = String(v == null ? "" : v); return /[;"\n\r]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
-    const cab = k === "bx" ? ["Dia da baixa", "Quem baixou", "Sistema", "Nº documento", "Processo", "GED", "Endereço", "Setor", "Regional", "Situação da vistoria", "Registrado em"] : ["Dia da baixa", "Quem baixou", "ID no Urbantrim", "Processo", "GED", "Endereço", "Setor", "Regional", "Situação da vistoria", "Registrado em"];
+    const cab = k === "bx" ? ["Dia da baixa", "Quem baixou", "Sistema", "Nº documento", "Processo", "GED", "Endereço", "Setor", "Regional", "Situação da vistoria", "Registrado em"] : ["Dia da baixa", "Quem baixou", "Assinado", "Processo", "GED", "Endereço", "Setor", "Regional", "Situação da vistoria", "Registrado em"];
     const lin = L.map((x) => { const p = x.p, b = x.b, base = [p.processo, p.ged || "", p.endereco, p.setor, cap(p.regional), EST[vistEst(R(p))][0], fHora(b.em)];
-      return (k === "bx" ? [fDia(x.dia), x.por, b.sistema === "INTRANET" ? "Intranet" : b.sistema || "", b.doc || ""] : [fDia(x.dia), x.por, b.id || ""]).concat(base).map(q).join(";"); });
+      return (k === "bx" ? [fDia(x.dia), x.por, b.sistema === "INTRANET" ? "Intranet" : b.sistema || "", b.doc || ""] : [fDia(x.dia), x.por, b.ass ? "sim (senha)" : ""]).concat(base).map(q).join(";"); });
     const blob = new Blob(["\ufeff" + [cab.join(";")].concat(lin).join("\r\n")], { type: "text/csv;charset=utf-8" }), nome = C.arq + "-" + hoje() + ".csv";
     try { if (typeof downloads !== "undefined" && downloads && downloads.save) await downloads.save({ filename: nome, data: blob }); else { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nome; document.body.appendChild(a); a.click(); a.remove(); } toast("Planilha baixada: " + nome); } catch (e) { toast("Não foi possível baixar"); } }
   // ----- resumo dos cadastros manuais: quantidade por dia e por quem lançou -----
@@ -5234,6 +5268,25 @@ function montar(root) {
     if (!o.processo && nomeArq) { const nm = nomeArq.replace(/\.pdf$/i, ""); o.processo = (nm.match(/(\d{2}\.\d{2}\.\s*\d{5,}\s*-\s*\d)/) || nm.match(/(GED\W{0,3}\d{4,8}\s*[-\/ ]\s*\d{2,4})/i) || [])[1] || ""; }
     o.regional = o.setor || o.endereco ? regionalDe(locJunta(o.stipo, o.setor), o.endereco + " " + o.setor) : "";
     return o; }
+  // nome do solicitante no texto do processo / parecer técnico: "Interessado:", "Requerente:", "Solicitante:"…
+  function pdfSolic(txt) { const T = String(txt || "");
+    const rx = [/(?:INTERESSAD[OA]S?|REQUERENTE|SOLICITANTE|REQUERIDO POR|SOLICITADO POR|NOME DO (?:REQUERENTE|SOLICITANTE|INTERESSADO))\s*[:\-–]\s*([^\n]{3,90})/i, /\bNOME\s*[:\-–]\s*([^\n]{3,90})/i];
+    for (const r of rx) { const m = T.match(r); if (!m) continue; let v = m[1].replace(/\s*(?:CPF|RG|CNPJ|ENDERE[CÇ]O|TELEFONE|FONE|E-?MAIL|CEP|ASSUNTO|PROCESSO)\b.*$/i, "").replace(/[\s,;.:–-]+$/, "").trim();
+      if (v.length >= 3 && /[A-Za-zÀ-ú]{2}/.test(v) && !/^\d/.test(v)) return v.toUpperCase().slice(0, 80); }
+    return ""; }
+  // ao escolher o PDF no cadastro: lê e preenche o que estiver vazio (solicitante, nº, GED, parecer, endereço, bairro)
+  async function novoLerPdf(fl) { const n = S.novo; if (!n || !fl) return; n._lendo = 1; render(); let achou = [];
+    try { const tx = await pdfTexto(fl, 8); if (S.novo !== n) return;
+      if (tx.replace(/\s/g, "").length < 40) { toast("PDF escaneado (sem texto): preencha o solicitante na mão"); return; }
+      const c = pdfCampos(tx, fl.name), sol = pdfSolic(tx);
+      if (sol && !String(n.solicitante || "").trim()) { n.solicitante = sol; achou.push("solicitante"); }
+      [["processo", "nº"], ["ged", "GED"], ["parecer", "parecer"], ["ano", ""]].forEach(([k, l]) => { if (c[k] && !String(n[k] || "").trim()) { n[k] = c[k]; if (l) achou.push(l); } });
+      if (c.e_nome && !n.e_nome && !String(n.endereco || "").trim()) { ["e_tipo", "e_nome", "e_num", "e_qd", "e_lt", "e_comp"].forEach((k) => { if (c[k]) n[k] = c[k]; }); n.endereco = endJunta(n); achou.push("endereço"); }
+      if (c.setor && !String(n.setor || "").trim()) { n.setor = c.setor; if (c.stipo) n.stipo = c.stipo; achou.push("bairro"); if (!n.regional || n._regAuto) { const rg = regionalDe(locJunta(n.stipo, n.setor), n.endereco); if (rg) { n.regional = rg; n._regAuto = true; } } }
+      ["po", "ex", "de"].forEach((k) => { if (c[k] && !+n[k]) n[k] = c[k]; });
+      toast(achou.length ? "Li o PDF e preenchi: " + achou.join(", ") + ". Confira." : "Não achei o nome do solicitante no PDF: preencha na mão.");
+    } catch (e) { toast("Não consegui ler o PDF: preencha na mão"); }
+    finally { if (S.novo === n) { delete n._lendo; render(); } } }
   // regional pelo mapa: acha o bairro/rua no mapa e vê a regional dos processos mais perto
   async function regionalGeo(c) { const set = setorBusca(locJunta(c.stipo, c.setor)), rua = ruaBusca(c.endereco); let g = null;
     for (const q of [set && rua ? `${rua}, ${set}, Goiânia, Goiás` : "", set ? `${set}, Goiânia, Goiás` : "", rua ? `${rua}, Goiânia, Goiás` : ""].filter(Boolean)) { try { g = await nominatim(q); } catch (e) { g = null; } if (g) break; }
@@ -5268,15 +5321,16 @@ function montar(root) {
     const ged = ((nome.match(/GED\W{0,3}(\d{4,8}\s*[-\/ ]\s*\d{2,4})/i) || [])[1] || "").replace(/\s+/g, "");
     const ano = ((nome.match(/(?:GED\W{0,3}\d{4,8}\s*[-\/ ]\s*|\b)(20\d{2})\b/) || [])[1]) || (num.match(/^(\d{2})\./) ? "20" + num.slice(0, 2) : "");
     const setor = nome.replace(num, "").replace(/^[\s_.-]+|[\s_.-]+$/g, "").replace(/\(\d+\)/g, "").trim();
-    S.novo = { file: pref && pref.file || null, filaIdx: pref ? pref.idx : null, processo: num.trim(), ged, parecer: "", endereco: "", setor, regional: S.preg || "", ano, po: "", ex: "", de: "", link: "" };
+    S.novo = { file: pref && pref.file || null, filaIdx: pref ? pref.idx : null, processo: num.trim(), ged, parecer: "", solicitante: "", endereco: "", setor, regional: S.preg || "", ano, po: "", ex: "", de: "", link: "" };
     const L = pref && pref.lido; if (L && !L.vazio) { S.novo.setor = ""; Object.keys(L).forEach((k) => { if (L[k]) S.novo[k] = L[k]; }); if (L.regional) S.novo._regAuto = true; S.novo._doPdf = 1; } }
   // ✏️ editar as informações de um processo (coordenação para cima)
-  function edAbrir(p) { S.ed = { id: p.id, processo: p.processo || "", ged: p.ged || "", parecer: p.parecer && p.parecer !== "SEM NUMERO" ? p.parecer : "", ano: p.ano ? String(p.ano) : "", endereco: p.endereco || "", setor: locNome(p.setor), stipo: locTipoDe(p.setor), regional: p.regional || "", po: String(p.qtd_poda || 0), ex: String(p.qtd_extirpacao || 0), de: String(p.qtd_destocamento || 0), loc: p.loc || "", urb: p.urbantrim || "" }; }
+  function edAbrir(p) { S.ed = { id: p.id, solicitante: solicDe(p), processo: p.processo || "", ged: p.ged || "", parecer: p.parecer && p.parecer !== "SEM NUMERO" ? p.parecer : "", ano: p.ano ? String(p.ano) : "", endereco: p.endereco || "", setor: locNome(p.setor), stipo: locTipoDe(p.setor), regional: p.regional || "", po: String(p.qtd_poda || 0), ex: String(p.qtd_extirpacao || 0), de: String(p.qtd_destocamento || 0), loc: p.loc || "", urb: p.urbantrim || "" }; }
   function edHtml(p) { const n = S.ed;
     const inp = (k, ph, extra) => `<input type="text" id="vp-ed-${k}" data-ed="${k}" value="${esc(n[k] || "")}" placeholder="${ph}" ${extra || ""}>`;
     return `<div class="vp-vb" style="border-color:var(--lf);display:flex;flex-direction:column;gap:8px"><b>✏️ Editar as informações do processo</b>
       <label class="vp-f">Nº do processo *${inp("processo", "Ex.: 25.30.000012368-0 ou GED 0000663-2024")}</label>
       <div class="vp-ctl"><label class="vp-f vp-grow">GED${inp("ged", "0000663-2024")}</label><label class="vp-f vp-grow">Parecer técnico${inp("parecer", "Ex.: 1031/2025")}</label><label class="vp-f" style="width:90px">Ano${inp("ano", "2024", 'inputmode="numeric"')}</label></div>
+      <label class="vp-f">Nome do solicitante *${inp("solicitante", "Nome de quem pediu o serviço (sai no relatório)")}</label>${n._lendo ? `<span class="vp-msg">📖 lendo o PDF para achar o solicitante…</span>` : ""}
       <label class="vp-f">Endereço *${inp("endereco", "Rua, número, quadra, lote")}</label>
       <div class="vp-ctl"><label class="vp-f">Tipo *<select id="vp-ed-stipo" data-ed="stipo"><option value="">Escolher…</option>${LOC_TIPOS.map((x) => `<option${(n.stipo || locTipoDe(n.setor)) === x ? " selected" : ""}>${x}</option>`).join("")}</select></label><label class="vp-f vp-grow">Nome do setor / bairro${inp("setor", "Ex.: Marista")}</label>
       <label class="vp-f">Regional *<select id="vp-ed-regional" data-ed="regional">${REGN.map((r) => `<option value="${r}"${n.regional === r ? " selected" : ""}>${cap(r)}</option>`).join("")}</select></label></div>
@@ -5289,12 +5343,14 @@ function montar(root) {
   async function edSalvar(id) {
     const n = S.ed; if (!n || S.busy.ed) return;
     if (!n.processo.trim()) { toast("Informe o nº do processo"); return; }
+    if (!String(n.solicitante || "").trim()) { toast("Informe o nome do solicitante"); return; }
     if (!n.endereco.trim()) { toast("Informe o endereço"); return; }
     if (n.setor.trim() && !n.stipo && !locTipoDe(n.setor)) { toast("Escolha o tipo: setor, bairro, vila…"); return; }
     const edicao = { processo: n.processo.trim(), ged: n.ged.trim(), parecer: n.parecer.trim(), ano: n.ano.trim(), endereco: n.endereco.trim(), setor: locJunta(n.stipo, n.setor), regional: n.regional, po: +n.po || 0, ex: +n.ex || 0, de: +n.de || 0, loc: n.loc.trim(), urbantrim: n.urb || "", por: usuario(), uid: meuId(), em: new Date().toISOString() };
     S.busy.ed = 1; render();
     const p0 = S.proc.find((q) => q.id === id) || {}, mudou = edicao.endereco !== p0.endereco || edicao.setor !== p0.setor;
-    try { if (await gravar([id], mudou ? { edicao, geo: null } : { edicao })) { S.ed = null; S.proc = todosProc(); _idx = null; toast("Informações atualizadas"); } }
+    const solicitante = String(n.solicitante || "").trim().toUpperCase();
+    try { if (await gravar([id], mudou ? { edicao, solicitante, geo: null } : { edicao, solicitante })) { S.ed = null; S.proc = todosProc(); _idx = null; toast("Informações atualizadas"); } }
     finally { delete S.busy.ed; render(); }
   }
   function novoHtml() { const n = S.novo; if (!n) return ""; const gSel = !vistGerVis();
@@ -5303,6 +5359,7 @@ function montar(root) {
       <p class="vp-msg">Para processo que não veio no relatório. Ele entra na regional escolhida, aparece nas rotas e no Resumo como os outros.</p>
       <label class="vp-f">Nº do processo (SEI, GED, O.S ou PED) *${inp("processo", "Ex.: 25.30.000012368-0 ou GED 0000663-2024")}</label>
       <div class="vp-ctl"><label class="vp-f vp-grow">GED${inp("ged", "0000663-2024")}</label><label class="vp-f vp-grow">Parecer técnico${inp("parecer", "Ex.: 1031/2025")}</label><label class="vp-f" style="width:90px">Ano${inp("ano", "2024", 'inputmode="numeric"')}</label></div>
+      <label class="vp-f">Nome do solicitante *${inp("solicitante", "Nome de quem pediu o serviço (sai no relatório)")}</label>${n._lendo ? `<span class="vp-msg">📖 lendo o PDF para achar o solicitante…</span>` : ""}
       <span class="vp-lab">Endereço *</span>
       <div class="vp-ctl"><label class="vp-f">Tipo *<select id="vp-nv-e_tipo" data-nv="e_tipo"><option value="">Escolher…</option>${LOG_TIPOS.map((x) => `<option${n.e_tipo === x ? " selected" : ""}>${x}</option>`).join("")}</select></label><label class="vp-f vp-grow">Nome da rua / avenida *${inp("e_nome", "Ex.: C-182 ou T-25")}</label></div>
       <div class="vp-ctl"><label class="vp-f" style="width:90px">Número${inp("e_num", "S/N", 'inputmode="numeric"')}</label><label class="vp-f" style="width:90px">Quadra${inp("e_qd", "Ex.: 12")}</label><label class="vp-f" style="width:90px">Lote${inp("e_lt", "Ex.: 3")}</label><label class="vp-f vp-grow">Complemento / esquina${inp("e_comp", "Ex.: esq. c/ Rua C-39")}</label></div>
@@ -5318,6 +5375,7 @@ function montar(root) {
   async function novoSalvar() {
     const n = S.novo; if (!n || S.busy.nv) return;
     if (!n.processo.trim()) { toast("Informe o nº do processo"); return; }
+    if (!String(n.solicitante || "").trim()) { toast("Informe o nome do solicitante"); return; }
     if (!n.endereco.trim()) { toast("Informe o endereço"); return; }
     if (!n.e_tipo) { toast("Escolha o tipo do endereço: rua, avenida…"); return; }
     if (!n.setor.trim()) { toast("Informe o nome do setor / bairro"); return; }
@@ -5329,7 +5387,7 @@ function montar(root) {
     S.busy.nv = 1; render();
     try {
       const id = "m_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-      const doc = { processo_id: id, manual: { processo: n.processo.trim(), ged: n.ged.trim(), parecer: n.parecer.trim(), endereco: n.endereco.trim().toUpperCase(), setor: locJunta(n.stipo, n.setor), regional: n.regional, ano: n.ano.trim(), po: +n.po || 0, ex: +n.ex || 0, de: +n.de || 0, ger: vistGerVis() || (n.ger === "DIROP" ? "DIROP" : "DIRSEN"), urbantrim: n.urb || "", por: usuario(), uid: meuId(), em: new Date().toISOString() } };
+      const doc = { processo_id: id, solicitante: String(n.solicitante || "").trim().toUpperCase(), manual: { processo: n.processo.trim(), solicitante: String(n.solicitante || "").trim().toUpperCase(), ged: n.ged.trim(), parecer: n.parecer.trim(), endereco: n.endereco.trim().toUpperCase(), setor: locJunta(n.stipo, n.setor), regional: n.regional, ano: n.ano.trim(), po: +n.po || 0, ex: +n.ex || 0, de: +n.de || 0, ger: vistGerVis() || (n.ger === "DIROP" ? "DIROP" : "DIRSEN"), urbantrim: n.urb || "", por: usuario(), uid: meuId(), em: new Date().toISOString() } };
       if (link) doc.proc_link = link;
       if (n.file) { if (!assets) throw new Error("envio de PDF não liberado neste acesso; use o link"); const up = await assets.upload(n.file, { type: "application/pdf" }); doc.proc_pdf = { id: up.id, url: up.url || "", nome: n.file.name, em: new Date().toISOString(), por: usuario() }; }
       if (await gravar([id], doc)) {
@@ -5499,7 +5557,7 @@ function montar(root) {
         </div>
         ${docLinks(r).length ? `<div class="vp-doc">${docLinks(r).map(([k, u2]) => `<a class="vp-btn" href="${esc(u2)}" target="_blank" rel="noopener">${k === "pdf" ? "📄 PDF do processo" : "🔗 Link do processo"}</a>`).join("")}</div>` : ""}
         <div class="vp-msg" style="margin-top:4px">Registrado em ${fHora(r.atualizado_em)}${r.atualizado_por ? " por " + esc(r.atualizado_por) : ""}${r.rota && r.rota.vistoriador ? " · rota indicada para " + esc(r.rota.vistoriador) : ""}</div>
-        ${r.situacao === "ja_executado" && r.foto_path ? (r.ass && r.ass.em ? `<span class="vp-msg" style="margin-top:6px">✍ Assinado eletronicamente por <b>${esc(r.ass.nome)}</b> em ${fHora(r.ass.em)} · código ${esc(r.ass.cod || "")}</span>` : r.resp_uid === meuId() ? `${assBloco(p)}<div class="vp-row"><button class="vp-btn vp-pri" data-vassinar="${p.id}">✍ Assinar o relatório</button></div>` : `<span class="vp-need" style="margin-top:6px">Relatório ainda sem a assinatura do vistoriador ${esc(r.responsavel || "")}: ele assina ao abrir este processo no Resumo ou ao corrigir a vistoria.</span>`) : ""}${r.situacao === "ja_executado" && r.foto_path ? `<span class="vp-lab" style="margin-top:6px">Relatório de serviço (para responder no SEI / Intranet)</span><div class="vp-row"><button class="vp-btn vp-pri" data-vrelpdf="${p.id}">📄 Baixar em PDF</button><button class="vp-btn" data-vreldocx="${p.id}">📝 Baixar em Word</button></div>` : ""}
+        ${r.situacao === "ja_executado" && r.foto_path ? (r.ass && r.ass.em ? `<span class="vp-msg" style="margin-top:6px">✍ Assinado eletronicamente por <b>${esc(r.ass.nome)}</b> em ${fHora(r.ass.em)} · código ${esc(r.ass.cod || "")}</span>` : r.resp_uid === meuId() ? `${assBloco(p)}<div class="vp-row"><button class="vp-btn vp-pri" data-vassinar="${p.id}">✍ Assinar o relatório</button></div>` : `<span class="vp-need" style="margin-top:6px">Relatório ainda sem a assinatura do vistoriador ${esc(r.responsavel || "")}: ele assina ao abrir este processo no Resumo ou ao corrigir a vistoria.</span>`) : ""}${r.situacao === "ja_executado" && r.foto_path ? `<span class="vp-lab" style="margin-top:6px">Relatório de serviço (para responder no SEI / Intranet)</span>${solicBloco(p)}<div class="vp-row"><button class="vp-btn vp-pri" data-vrelpdf="${p.id}">📄 Baixar em PDF</button><button class="vp-btn" data-vreldocx="${p.id}">📝 Baixar em Word</button></div>` : ""}
         <div class="vp-row" style="margin-top:6px">${r.foto_path ? `<button class="vp-btn" data-baixafoto="${p.id}">⬇ Baixar a foto</button>` : ""}<button class="vp-btn" data-rab="${p.id}">Fechar</button></div>
         ${r.situacao === "nao_executado" ? envioHtml(p) : ""}
         ${baixaHtml(p)}
@@ -5523,9 +5581,9 @@ function montar(root) {
   // planilha (CSV, abre no Excel) com TODAS as informações de cada vistoria da lista filtrada
   async function baixarPlanilha() {
     const L = listaResumo(); if (!L.length) { toast("Nenhuma vistoria com esse filtro"); return; }
-    const cab = ["Data da vistoria", "Situação", "Processo", "GED", "Parecer", "Ano", "Endereço", "Setor", "Regional", "Poda", "Extirpação", "Destocamento", "Vistoriador", "Foto (link)", "Equipamento", "Observação", "PDF do processo", "Vistoriador indicado", "Registrado em", "Registrado por", "Baixa no Urbantrim", "Data da baixa no Urbantrim", "ID no Urbantrim (baixa)", "Baixa no sistema", "Data da baixa", "Baixa feita por", "Nº documento da baixa", "Enviado para a supervisão", "Enviado em", "Enviado por", "Executado pela turma em", "Execução informada por", "Repassado ao fiscal", "Quantidade executada", "Foto antes", "Foto durante", "Foto depois"];
+    const cab = ["Data da vistoria", "Situação", "Processo", "GED", "Parecer", "Ano", "Endereço", "Setor", "Regional", "Poda", "Extirpação", "Destocamento", "Vistoriador", "Foto (link)", "Equipamento", "Observação", "PDF do processo", "Vistoriador indicado", "Registrado em", "Registrado por", "Baixa no Urbantrim", "Data da baixa no Urbantrim", "Baixa no Urbantrim feita por", "Baixa no sistema", "Data da baixa", "Baixa feita por", "Nº documento da baixa", "Enviado para a supervisão", "Enviado em", "Enviado por", "Executado pela turma em", "Execução informada por", "Repassado ao fiscal", "Quantidade executada", "Foto antes", "Foto durante", "Foto depois"];
     const q = (v) => { const t = String(v == null ? "" : v); return /[;"\n\r]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
-    const linhas = L.map((p) => { const r = R(p), u = r.urbantrim || {}; return [fDia(r.data_vistoria), EST[vistEst(r)][0], p.processo, p.ged, parecerTxt(p.parecer), p.ano || "", p.endereco, p.setor, cap(p.regional), p.qtd_poda, p.qtd_extirpacao, p.qtd_destocamento, r.responsavel || "", r.foto_path ? fotoAbrir(r.foto_path) : "", r.equipamento || "", r.observacao || "", docUrl(r) || "", (r.rota && r.rota.vistoriador) || "", fHora(r.atualizado_em), r.atualizado_por || "", precisaUrbBx(p) ? (r.urb_baixa ? "baixado" : "falta baixar") : "", r.urb_baixa ? fDia(r.urb_baixa.data) : "", r.urb_baixa ? r.urb_baixa.id || "" : "", r.baixa ? (r.baixa.sistema === "INTRANET" ? "Intranet" : r.baixa.sistema) : "não baixado", r.baixa ? fDia(r.baixa.data) : "", r.baixa ? r.baixa.por || "" : "", r.baixa ? r.baixa.doc || "" : "", r.envio ? supNome(r.envio.sup) : "", r.envio ? fHora(r.envio.em) : "", r.envio ? r.envio.por || "" : "", r.execucao ? fDia(r.execucao.data) : "", r.execucao ? r.execucao.por || "" : "", r.envio_fiscal ? r.envio_fiscal.nome || "" : "", r.execucao ? qtdExecTxt(r.execucao.qtd) : "", ...REL_SLOTS.map((sl) => r.execucao && r.execucao.fotos && r.execucao.fotos[sl.k] ? fotoAbrir(r.execucao.fotos[sl.k]) : "")].map(q).join(";"); });
+    const linhas = L.map((p) => { const r = R(p), u = r.urbantrim || {}; return [fDia(r.data_vistoria), EST[vistEst(r)][0], p.processo, p.ged, parecerTxt(p.parecer), p.ano || "", p.endereco, p.setor, cap(p.regional), p.qtd_poda, p.qtd_extirpacao, p.qtd_destocamento, r.responsavel || "", r.foto_path ? fotoAbrir(r.foto_path) : "", r.equipamento || "", r.observacao || "", docUrl(r) || "", (r.rota && r.rota.vistoriador) || "", fHora(r.atualizado_em), r.atualizado_por || "", precisaUrbBx(p) ? (r.urb_baixa ? "baixado" : "falta baixar") : "", r.urb_baixa ? fDia(r.urb_baixa.data) : "", r.urb_baixa ? r.urb_baixa.por || "" : "", r.baixa ? (r.baixa.sistema === "INTRANET" ? "Intranet" : r.baixa.sistema) : "não baixado", r.baixa ? fDia(r.baixa.data) : "", r.baixa ? r.baixa.por || "" : "", r.baixa ? r.baixa.doc || "" : "", r.envio ? supNome(r.envio.sup) : "", r.envio ? fHora(r.envio.em) : "", r.envio ? r.envio.por || "" : "", r.execucao ? fDia(r.execucao.data) : "", r.execucao ? r.execucao.por || "" : "", r.envio_fiscal ? r.envio_fiscal.nome || "" : "", r.execucao ? qtdExecTxt(r.execucao.qtd) : "", ...REL_SLOTS.map((sl) => r.execucao && r.execucao.fotos && r.execucao.fotos[sl.k] ? fotoAbrir(r.execucao.fotos[sl.k]) : "")].map(q).join(";"); });
     const csv = "\ufeff" + [cab.join(";")].concat(linhas).join("\r\n");
     const nome = `vistorias-${{ all: "todas", ja_executado: "ja-executados", nao_executado: "nao-executados", urb: "falta-urbantrim", urbcad: "cadastrar-no-urbantrim", urbbx: "aguardando-baixa-urbantrim", urbok: "baixados-no-urbantrim", semb: "aguardando-baixa", bx: "baixados", semenv: "nao-executados-sem-envio", env: "enviados-para-execucao", exe: "executados-pela-turma" }[S.rsit || "all"]}-${hoje()}.csv`;
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
@@ -5548,7 +5606,7 @@ function montar(root) {
     const obs = [`Vistoria de processo em ${fDia(r.data_vistoria)}${r.responsavel ? " (" + r.responsavel + ")" : ""}: serviço encontrado não executado · equipamento ${r.equipamento || "–"}.`, r.observacao ? "Obs. da vistoria: " + r.observacao : "", x.obs ? "Obs. da execução: " + x.obs : ""].filter(Boolean).join(" ");
     return { id: "vist-" + p.id, tipo: "PROCESSO", procSist: sistemaDe(p), processo: p.processo, supervisao: sup, equipe: (fu && fu.equipe) || "", fiscal: x.fiscal || ef.nome || "",
       bairro: p.setor || "", logradouro: p.endereco || "", status: "SIM", data: x.data, dataExec: x.data, obs, qtd: x.qtd || {},
-      relat: { processo: p.processo, sist: sistemaDe(p), ped: "", parecer: parecerTxt(p.parecer), vistoria: r.data_vistoria || "", solicitante: "", arvore: "", galho: "", matricula: (x.ass && x.ass.mat) || relMatSup(sup), midia: x.fotos || {}, ass: x.ass && x.ass.em ? { ...x.ass } : null } };
+      relat: { processo: p.processo, sist: sistemaDe(p), ped: "", parecer: parecerTxt(p.parecer), vistoria: r.data_vistoria || "", solicitante: solicDe(p), arvore: "", galho: "", matricula: (x.ass && x.ass.mat) || relMatSup(sup), midia: x.fotos || {}, ass: x.ass && x.ass.em ? { ...x.ass } : null } };
   }
   // serviço que a vistoria encontrou JÁ EXECUTADO: relatório com a foto da vistoria; no lugar da data de execução vai a data da vistoria
   function relRecJa(p) {
@@ -5556,7 +5614,7 @@ function montar(root) {
     const obs = [`Vistoria de processo em ${fDia(dv)}${r.responsavel ? " (" + r.responsavel + ")" : ""}: serviço constatado já executado no local, conforme foto da vistoria.`, `Quantidade do processo: ${p.qtd_poda} poda · ${p.qtd_extirpacao} extirpação${p.qtd_destocamento ? " · " + p.qtd_destocamento + " destocamento" : ""}.`, r.observacao ? "Obs. da vistoria: " + r.observacao : ""].filter(Boolean).join(" ");
     return { id: "vist-" + p.id, tipo: "PROCESSO", procSist: sistemaDe(p), processo: p.processo, supervisao: "", equipe: "", fiscal: "",
       bairro: p.setor || "", logradouro: p.endereco || "", status: "SIM", data: dv, dataExec: dv, obs, qtd: {},
-      relat: { processo: p.processo, sist: sistemaDe(p), ped: "", parecer: parecerTxt(p.parecer), vistoria: dv, solicitante: "", arvore: "", galho: "", matricula: (r.ass && r.ass.mat) || String(((acesso || {})[r.resp_uid] || {}).matricula || "").replace(/^m/i, ""), midia: { durante: r.foto_path }, ass: r.ass && r.ass.em ? { ...r.ass } : { nome: r.responsavel || "" } },
+      relat: { processo: p.processo, sist: sistemaDe(p), ped: "", parecer: parecerTxt(p.parecer), vistoria: dv, solicitante: solicDe(p), arvore: "", galho: "", matricula: (r.ass && r.ass.mat) || String(((acesso || {})[r.resp_uid] || {}).matricula || "").replace(/^m/i, ""), midia: { durante: r.foto_path }, ass: r.ass && r.ass.em ? { ...r.ass } : { nome: r.responsavel || "" } },
       htmlFix: (h) => h.replace("<b>Data da Execução do Serviço:</b>", "<b>" + ROT_JA + "</b>").replace("Assinatura do Supervisor Responsável Pelo Serviço:", "Vistoriador responsável pela constatação:")
         .replace(/<table><tr><td class="h">ANTES<\/td>[\s\S]*?<\/table>/, `<table><tr><td class="h" style="text-align:center">FOTO DA VISTORIA – SERVIÇO JÁ EXECUTADO</td></tr><tr><td class="ft" style="height:300px"><img src="${esc(midUrl(r.foto_path) || "")}" alt="" style="max-height:290px"></td></tr></table>`)
         .replace(/<p style="text-align:center;font-size:11px;color:#9b1f18[^>]*>[^<]*<\/p>/, "").replace("ASSINATURA DO RESPONSÁVEL", "ASSINATURA DO VISTORIADOR"),
@@ -5567,6 +5625,12 @@ function montar(root) {
   // o supervisor da turma que executou assina o relatório de serviço (gerente e administrador também podem)
   const execSup = (p) => { const r = R(p); return (r.envio && r.envio.sup) || (r.execucao && r.execucao.sup) || ""; };
   const podeAssExec = (p) => !!sessao && !soLeitura() && (isGerente() || (sessao.perfil === "supervisor" && sessao.sup === execSup(p)) || (typeof podeAssinar === "function" && sessao.sup === execSup(p) && sessao.perfil !== "fiscal" && podeAssinar(sessao.id, "rel")));
+  // nome do solicitante: obrigatório em todo relatório de serviço
+  const solicDe = (p) => String(R(p).solicitante || p.solicitante || (R(p).manual && R(p).manual.solicitante) || "").trim();
+  function solicBloco(p) { const sv = solicDe(p), ed = (S.solEd || {})[p.id];
+    if (sv && !ed) return `<div class="vp-row" style="margin-top:6px"><span class="vp-msg">Solicitante: <b>${esc(sv)}</b></span><button class="vp-btn" data-soled="${p.id}" style="padding:4px 10px;font-size:12px">Corrigir</button></div>`;
+    return `<div class="vp-vb" style="border-color:var(--bk);margin-top:6px"><span class="vp-lab">Solicitante do serviço (obrigatório no relatório)</span><input type="text" id="vp-sol-${p.id}" value="${esc(sv)}" placeholder="Nome de quem pediu o serviço" autocomplete="off">
+      <div class="vp-row"><button class="vp-btn vp-pri" data-solsalvar="${p.id}">Salvar solicitante</button>${ed ? `<button class="vp-btn" data-solx="${p.id}">Cancelar</button>` : ""}</div>${sv ? "" : `<span class="vp-need">Informe o nome do solicitante para baixar o relatório.</span>`}</div>`; }
   function execAssHtml(p) { const x = R(p).execucao || {};
     if (x.ass && x.ass.em) return `<span class="vp-msg" style="color:#1f6b3a">✍ Assinado eletronicamente por <b>${esc(x.ass.nome)}</b>${x.ass.cargo ? " (" + esc(x.ass.cargo) + ")" : ""} em ${fHora(x.ass.em)} · código ${esc(x.ass.cod || "")}</span>`;
     if (podeAssExec(p)) return `<div class="vp-vb" style="border-color:var(--bk)"><b>✍ Assinar o relatório de serviço</b><span class="vp-msg">O relatório só vale com a assinatura do supervisor. Assina como <b>${esc(usuario())}</b>${matDe(acesso && acesso[meuId()] || {}) ? " · matrícula " + esc(matDe(acesso[meuId()])) : ""}.</span><div class="vp-sigf"><input type="text" name="username" autocomplete="username" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">${sigFormHtml(pxAss("x" + p.id), meuId())}</div><div class="vp-row"><button class="vp-btn vp-pri" data-vassexec="${p.id}">✍ Assinar o relatório</button></div></div>`;
@@ -5576,7 +5640,7 @@ function montar(root) {
     return `<div class="vp-vb" style="border-color:var(--lf)"><div class="vp-row"><span class="vp-sp vp-s-ja_executado">✔ Executado</span><span><b>${esc(supNome(e.sup || x.sup || ""))}</b> em <b>${fDia(x.data)}</b>${x.fiscal ? " · fiscal " + esc(x.fiscal) : ""}${x.por ? " · registrado por " + esc(x.por) : ""}</span></div>
       ${x.fotos ? fotos3(x.fotos) : ""}${x.qtd && qtdExecTxt(x.qtd) ? `<div class="vp-msg">Executado: <b>${esc(qtdExecTxt(x.qtd))}</b></div>` : ""}${x.obs ? `<div class="vp-msg">Obs.: ${esc(x.obs)}</div>` : ""}
       ${x.fotos ? execAssHtml(p) : ""}
-      ${x.fotos ? `<span class="vp-lab">Relatório de serviço (para responder no SEI / Intranet)</span><div class="vp-row"><button class="vp-btn vp-pri" data-vrelpdf="${p.id}">📄 Baixar em PDF</button><button class="vp-btn" data-vreldocx="${p.id}">📝 Baixar em Word</button></div>` : ""}
+      ${x.fotos ? `<span class="vp-lab">Relatório de serviço (para responder no SEI / Intranet)</span>${solicBloco(p)}<div class="vp-row"><button class="vp-btn vp-pri" data-vrelpdf="${p.id}">📄 Baixar em PDF</button><button class="vp-btn" data-vreldocx="${p.id}">📝 Baixar em Word</button></div>` : ""}
       ${comBotoes && pode.coord() ? `<div class="vp-row"><button class="vp-btn" data-exdesfaz="${p.id}">Desfazer execução</button></div>` : ""}</div>`;
   }
   // Urbantrim: já executado não precisa lançar; para executar, o processo tem que estar cadastrado no Urbantrim
@@ -5600,10 +5664,10 @@ function montar(root) {
   // rascunho da execução: fotos já enviadas + data/quantidade/obs ficam gravados no processo (não perde ao minimizar o app)
   const rascDe = (id) => { const r = R(S.proc.find((q) => q.id === id) || { id }); return r.exec_rasc && r.exec_rasc.uid === meuId() ? r.exec_rasc : null; };
   const exNovo = (id) => { const g = rascDe(id); const fotos = {}; if (g && g.fotos) Object.entries(g.fotos).forEach(([k, v]) => { if (v) fotos[k] = { path: v, preview: fotoUrl(v) }; });
-    return { data: (g && g.data) || hoje(), obs: (g && g.obs) || "", fotos, qtd: Object.assign({}, (g && g.qtd) || {}) }; };
+    return { data: (g && g.data) || hoje(), obs: (g && g.obs) || "", solic: g && g.solic != null ? g.solic : null, fotos, qtd: Object.assign({}, (g && g.qtd) || {}) }; };
   const _rascT = {};
   async function rascSalvar(id) { const x = (S.ex || {})[id]; if (!x) return; const fotos = {}; REL_SLOTS.forEach((sl) => { const f = x.fotos[sl.k]; if (f && f.path) fotos[sl.k] = f.path; });
-    await gravar([id], { exec_rasc: { fotos, data: x.data || hoje(), qtd: x.qtd || {}, obs: x.obs || "", por: usuario(), uid: meuId(), em: new Date().toISOString() } }); }
+    await gravar([id], { exec_rasc: { fotos, data: x.data || hoje(), qtd: x.qtd || {}, obs: x.obs || "", solic: x.solic != null ? x.solic : null, por: usuario(), uid: meuId(), em: new Date().toISOString() } }); }
   const rascDepois = (id) => { clearTimeout(_rascT[id]); _rascT[id] = setTimeout(() => rascSalvar(id).catch(() => {}), 1500); };
   function execForm(p) {
     const x = S.ex[p.id], ocup = !!S.busy["ex" + p.id];
@@ -5673,11 +5737,12 @@ function montar(root) {
   async function vRel(id, btn, word) { const p = S.proc.find((q) => q.id === id); if (!p || !(R(p).execucao || (R(p).situacao === "ja_executado" && R(p).foto_path))) return; const rec = relRec(p); try { if (word) await relDocx(rec, btn); else await relPdf(rec, btn); } catch (e) { toast("Não foi possível gerar o relatório"); } }
   // baixa do processo no sistema (SEI / Intranet / GED): quem dá a baixa informa o sistema e a data
   function urbBxHtml(p) { const r = R(p), u = r.urb_baixa, x = (S.ubx || {})[p.id] || {}; if (!precisaUrbBx(p)) return "";
-    if (u && !x.edit) return `<div class="vp-vb" style="border-color:var(--lf)"><div class="vp-row"><span class="vp-sp vp-env">✔ Baixado no Urbantrim</span><span>em <b>${fDia(u.data)}</b> por <b>${esc(u.por || "–")}</b>${u.id ? ` · ID ${esc(u.id)}` : ""}</span></div>${pode.lancar() ? `<div class="vp-row"><button class="vp-btn" data-ubxedit="${p.id}">Corrigir</button><button class="vp-btn" data-ubxdesfaz="${p.id}">Desfazer baixa no Urbantrim</button></div>` : ""}</div>`;
+    if (u && !x.edit) return `<div class="vp-vb" style="border-color:var(--lf)"><div class="vp-row"><span class="vp-sp vp-env">✔ Baixado no Urbantrim</span><span>em <b>${fDia(u.data)}</b> por <b>${esc(u.por || "–")}</b>${u.ass ? " · ✍ assinado" : ""}${u.id ? ` · ID ${esc(u.id)}` : ""}</span></div>${pode.lancar() ? `<div class="vp-row"><button class="vp-btn" data-ubxedit="${p.id}">Corrigir</button><button class="vp-btn" data-ubxdesfaz="${p.id}">Desfazer baixa no Urbantrim</button></div>` : ""}</div>`;
     if (!pode.lancar()) return `<div class="vp-msg">Baixa no Urbantrim: ainda não informada.</div>`;
     return `<div class="vp-vb"><span class="vp-lab">Baixa no Urbantrim</span><span class="vp-msg">${vistEst(r) === "ja_executado" ? "Constatado na vistoria que já estava executado" : "Executado pela turma"}: dê a baixa também no <b>Urbantrim</b>.</span>
       <label class="vp-row" style="font-size:13px;color:var(--mu);font-weight:600">Data da baixa no Urbantrim <input type="date" id="vp-ubxd-${p.id}" data-ubxdata="${p.id}" value="${esc(x.data || (u && u.data) || hoje())}" max="${hoje()}"></label>
-      <input type="text" id="vp-ubxn-${p.id}" data-ubxid="${p.id}" value="${esc(x.id != null ? x.id : (u && u.id) || (r.urbantrim && r.urbantrim.id) || "")}" placeholder="ID no Urbantrim (opcional)">
+      <span class="vp-msg">✍ Quem dá a baixa: <b>${esc(usuario())}</b> – assine com a sua senha do app</span>
+      <input type="password" id="vp-ubxn-${p.id}" data-ubxsenha="${p.id}" autocomplete="current-password" inputmode="numeric" placeholder="Sua senha (assinatura)">
       <div class="vp-row"><button class="vp-btn vp-pri" data-ubxsalvar="${p.id}">✅ Informar baixa no Urbantrim</button>${x.edit ? `<button class="vp-btn" data-ubxcancel="${p.id}">Cancelar</button>` : ""}</div></div>`; }
   function baixaHtml(p) { return baixaSisHtml(p) + urbBxHtml(p); }
   function baixaSisHtml(p) {
@@ -5816,6 +5881,11 @@ function montar(root) {
     if (ds.fxx) { delete S.fx[ds.fxx]; render(); return; }
     if (ds.fxenviar) { const id = ds.fxenviar, sel = root.querySelector("#vp-fx-" + cssId(id)), uid = sel ? sel.value : ""; if (!uid) { toast("Escolha o fiscal"); return; } const u = acesso[uid] || {};
       if (await gravar([id], { envio_fiscal: { uid, nome: u.nome || "", em: new Date().toISOString(), por: usuario(), por_uid: meuId() } })) { if (S.fx) delete S.fx[id]; toast("Enviado ao fiscal " + (u.nome || "")); } return; }
+    if (ds.solsalvar) { const id = ds.solsalvar, i = root.querySelector("#vp-sol-" + cssId(id)), v = String((i && i.value) || "").trim().toUpperCase(); if (!v) { toast("Escreva o nome do solicitante"); i && i.focus(); return; }
+      if (await gravar([id], { solicitante: v })) { if (S.solEd) delete S.solEd[id]; toast("Solicitante salvo"); render(); } return; }
+    if (ds.soled) { S.solEd = S.solEd || {}; S.solEd[ds.soled] = 1; render(); return; }
+    if (ds.solx) { if (S.solEd) delete S.solEd[ds.solx]; render(); return; }
+    if ((ds.vrelpdf || ds.vreldocx) && !solicDe(S.proc.find((q) => q.id === (ds.vrelpdf || ds.vreldocx)) || {})) { toast("Informe o nome do solicitante antes de baixar o relatório"); const i = root.querySelector("#vp-sol-" + cssId(ds.vrelpdf || ds.vreldocx)); i && i.focus(); return; }
     if (ds.vrelpdf) { vRel(ds.vrelpdf, t, false); return; }
     if (ds.vreldocx) { vRel(ds.vreldocx, t, true); return; }
     if (ds.excancel) { delete S.ex[ds.excancel]; render(); return; }
@@ -5827,8 +5897,12 @@ function montar(root) {
       const baixa = { sistema: x.sis || (r.baixa && r.baixa.sistema) || sistemaDe(p), data: x.data || (r.baixa && r.baixa.data) || hoje(), doc: String(x.doc != null ? x.doc : (r.baixa && r.baixa.doc) || "").trim(), por: usuario(), uid: meuId(), em: new Date().toISOString() };
       if (await gravar([id], { baixa })) { if (S.bx) delete S.bx[id]; toast(`Baixa no ${baixa.sistema === "INTRANET" ? "Intranet" : baixa.sistema} registrada em ${fDia(baixa.data)}`); } return; }
     if (ds.ubxsalvar) { const id = ds.ubxsalvar, r = R(S.proc.find((q) => q.id === id)), x = (S.ubx || {})[id] || {}, dI = root.querySelector("#vp-ubxd-" + cssId(id)), nI = root.querySelector("#vp-ubxn-" + cssId(id));
-      const urb_baixa = { data: (dI && dI.value) || x.data || hoje(), id: String((nI && nI.value) || "").trim().toUpperCase(), por: usuario(), uid: meuId(), em: new Date().toISOString() };
+      const urb_baixa = { data: (dI && dI.value) || x.data || hoje(), por: usuario(), uid: meuId(), em: new Date().toISOString(), ass: true };
       if (urb_baixa.data > hoje()) { toast("A data não pode ser futura"); return; }
+      // assinatura: confere a senha de quem está logado
+      const sn = String((nI && nI.value) || ""); if (!sn) { toast("Assine com a sua senha para dar a baixa"); nI && nI.focus(); return; }
+      t.disabled = true; let ok = false; try { ok = typeof senhaConfere === "function" && await senhaConfere(meuId(), sn); } catch (e) {} t.disabled = false;
+      if (!ok) { toast("Senha não confere. A baixa não foi registrada."); if (nI) { nI.value = ""; nI.focus(); } return; }
       if (await gravar([id], { urb_baixa })) { if (S.ubx) delete S.ubx[id]; toast(`Baixa no Urbantrim registrada em ${fDia(urb_baixa.data)}`); } return; }
     if (ds.ubxedit) { S.ubx = S.ubx || {}; S.ubx[ds.ubxedit] = { edit: 1 }; render(); return; }
     if (ds.ubxcancel) { if (S.ubx) delete S.ubx[ds.ubxcancel]; render(); return; }
@@ -5923,7 +5997,7 @@ function montar(root) {
       toast(`${fila.filter((x) => x.st === "ok").length} processos com PDF encontrado · ${nN} sem processo${nN ? ": lendo os PDFs para cadastrar…" : ""}`); if (nN) pdfLerFila(); return; }
     if (ds.nv && S.novo) { S.novo[ds.nv] = t.value; if (ds.nv === "regional") { S.novo._regAuto = false; render(); } return; }
     if (ds.ed && S.ed) { S.ed[ds.ed] = t.value; return; }
-    if (ds.nvpdf) { const fl = t.files && t.files[0]; if (!fl) return; if (!/\.pdf$/i.test(fl.name)) { toast("Escolha um arquivo PDF"); return; } S.novo.file = fl; render(); return; }
+    if (ds.nvpdf) { const fl = t.files && t.files[0]; if (!fl) return; if (!/\.pdf$/i.test(fl.name)) { toast("Escolha um arquivo PDF"); return; } S.novo.file = fl; render(); novoLerPdf(fl); return; }
     if (t.id === "vp-psobre") { S.pdfSobre = t.checked; render(); return; }
     if (ds.pdfmanual !== undefined) { const x = S.pdfFila[+ds.pdfmanual]; x.manual = t.value; const r = acharProc(t.value); if (r.st === "nao") { toast("Processo não encontrado com esse número"); return; } const id = r.st === "ok" ? r.id : r.ids[0]; Object.assign(x, { id, st: "ok", ja: !!docLinks(R({ id })).length }); toast("Ligado ao processo " + procDe(id).processo); render(); return; }
     if (ds.fdt) { S.f[ds.fdt].data = t.value; render(); return; }
@@ -7719,7 +7793,7 @@ function detalhe(r, abrirAdiar=false, soVer=false){
     ${(!isProg(r)&&relTem(r)&&r.status==="SIM"&&!r.relat?.ass)?`<p class="note" style="margin:4px 0 0">🔒 Relatório de serviço: aguardando a <b>assinatura do supervisor</b>${ehFiscal()?"":" – toque em Corrigir baixa, confira os dados e as fotos e assine"}.</p>`:""}${(!isProg(r)&&relTem(r)&&r.status!=="SIM"&&!r.outraEquipe)?`<p class="note" style="margin:4px 0 0">🔒 Relatório de serviço: liberado só quando o serviço for executado na totalidade${r.remarcadaPara?(()=>{const nx=todosGlobal().find(x=>x.id===r.remarcadaPara);return nx?` – o restante está programado para ${fmtD(nx.data)}${nx.status==="SIM"?" (já concluído: o relatório está nessa baixa)":""}`:"";})():""}.</p>`:""}${(!isProg(r)&&relLiberado(r)&&downloads)?`<div class="row2" style="margin-top:4px"><button type="button" class="btn sec" data-relpdf="${esc(r.id)}">📄 Relatório (PDF)</button><button type="button" class="btn sec" data-reldocx="${esc(r.id)}">📝 Relatório (Word)</button></div>`:""}${(relSubTemRec(r)&&downloads)?`<p class="note" style="margin:6px 0 0">Relatório do serviço feito no lugar: <b>${esc(r.substituto.tipo)} ${esc(r.substituto.processo||"")}</b> · ${esc(r.substituto.bairro||"")}</p><div class="row2" style="margin-top:4px"><button type="button" class="btn sec" data-relpdf="${esc(r.id)}~s">📄 Relatório (PDF)</button><button type="button" class="btn sec" data-reldocx="${esc(r.id)}~s">📝 Relatório (Word)</button></div>`:""}
     ${detOsHtml(r)}
     ${fotosFisHtml(r)}
-    ${(!r.ocorrencia&&!r.avulso&&!r._fila&&!r.arquivado&&(isGerente()||(!soVer&&isProg(r)&&isGer())))?`<button type="button" class="btn sec" id="shProg">✏ ${isGerente()?"Editar programação (gerente)":"Corrigir programação (gerência)"}</button>`:""}
+    ${(!r.ocorrencia&&!r.avulso&&!r._fila&&!r.arquivado&&(podeEditProg()&&noEscopo(r.supervisao)||isGerente()||(!soVer&&isProg(r)&&isGer())))?`<button type="button" class="btn sec" id="shProg">✏ ${isGerente()?"Editar programação (gerente)":podeEditProg()?"Editar programação":"Corrigir programação (gerência)"}</button>`:""}
     ${(!r.ocorrencia&&!r._fila&&!r.arquivado&&isGerente()&&!soLeitura())?`<button type="button" class="btn sec" id="shTransf">🔁 Executado por outra turma – transferir</button>`:""}
     ${(soVer||soLeitura()||r.arquivado)?`${soVer&&isProg(r)&&!soLeitura()&&!r.arquivado?`<button type="button" class="btn pri" id="shBaixa" style="min-height:52px;font-size:16px">${r.ocorrencia?"Registrar atendimento":"✔ Dar baixa"}</button>`:""}<button type="button" class="btn sec" id="shClose">Fechar</button>${(soVer&&isGerente()&&!r._fila&&db&&!r.arquivado)?`<button type="button" class="btn danger" id="shDel">${isProg(r)?"Excluir programação":"Excluir lançamento"} (gerente)</button>`:""}`:`<div class="actions" style="grid-template-columns:1fr 1fr">
       ${isProg(r)?`<button type="button" class="btn pri" id="shBaixa">Dar baixa</button>`:`<button type="button" class="btn pri" id="shEdit">Corrigir baixa</button>`}
@@ -9329,6 +9403,9 @@ const CHK_OBRIG_DIAS=7;
 const CHK_OBRIG_INI="2026-10-28"; // obrigatório a partir do turno NOTURNO que começou em 28/10/2026 às 18h (entregue em 29/10); o diurno de 28/10 não conta
 // quem cobra no WhatsApp: Poda I e II = o gerente (Victor) e quem tiver "pode cobrar" em Acessos (Cleomar); Poda III e IV = o gerente e o gerente operacional DIROP (Pedro)
 const GRP_COBRA_DIRSEN=new Set(["PODA I","PODA II"]);
+// "Pode editar a programação" (Acessos): edita qualquer serviço programado das turmas da sua área, como o gerente
+const editProgFlag=u=>!!u&&u.editProg===true;
+const podeEditProg=()=>!!sessao&&!soLeitura()&&(isGerente()||editProgFlag(acesso?.[sessao.id]));
 const cobraFlag=u=>!!u&&(u.cobra===true||(u.cobra!==false&&/^CLEOMAR\b/i.test(u.nome||"")));
 const cobraTxt=sup=>{ const e=sup?escopoLot(sup):escopoG(); return e===ESC_DIROP?"Poda III e IV":e===ESC_DIRSEN?"Poda I e II":"gerência da pessoa"; };
 const podeCobrarSup=sup=>{ if(!sessao||travado()||soLeitura()) return false; if(isGerente()) return noEscopo(sup); return noEscopo(sup)&&cobraFlag(acesso?.[sessao.id]); };
@@ -10318,7 +10395,8 @@ function navAjustar(){
   tabs.forEach(b=>{ b.hidden=!fixos.includes(b.dataset.v); b.style.order=String(NAV_PRIO.indexOf(b.dataset.v)+1); });
   w.querySelector('[data-v="inicio"]').style.order="-2"; w.querySelector('[data-v="pend"]').style.order="-1";
   const pendB=w.querySelector('[data-v="pend"]'), semPend=(sessao?.perfil==="fiscal"&&!fisAbas().has("pend"))||(PERF_ABAIXO.includes(sessao?.perfil)&&!abaOn(sessao.perfil,"pend")); pendB.hidden=semPend; w.querySelector('[data-v="mais"]').style.order="99";
-  const semMais=sessao?.perfil==="gerencia_op"||(sessao?.perfil==="fiscal"&&!NAV_MAIS.length); // gerente DIROP (Pedro) não tem a aba Mais; fiscal só se tiver algo nela
+  if(sessao?.perfil==="gerencia_op") NAV_MAIS=NAV_MAIS.filter(v=>v==="lista"); // gerente DIROP (Pedro): o Mais só com a Lista, para achar e editar a programação
+  const semMais=(sessao?.perfil==="gerencia_op"&&!NAV_MAIS.length)||(sessao?.perfil==="fiscal"&&!NAV_MAIS.length);
   w.querySelector('[data-v="mais"]').hidden=semMais;
   w.style.gridTemplateColumns=`repeat(${fixos.length+(semMais?2:3)-(semPend?1:0)},1fr)`; w.classList.remove("t6"); w.classList.add("nav5");
 }
@@ -10329,7 +10407,7 @@ function irPara(v,acao){
   if(acao==="chkNovo") setTimeout(()=>{ document.querySelector('[data-kt="lista"]')?.click(); $("#kNovo")?.click(); },60);
   if(acao==="man") setTimeout(()=>{ document.querySelector('[data-kt="man"]')?.click(); setTimeout(()=>$("#kManut")?.click(),60); },60);
 }
-function abrirMais(){ if(sessao?.perfil==="gerencia_op"||(sessao?.perfil==="fiscal"&&!NAV_MAIS.length)) return;
+function abrirMais(){ if((sessao?.perfil==="gerencia_op"||sessao?.perfil==="fiscal")&&!NAV_MAIS.length) return;
   const host=$("#sheetHost");
   const itens=NAV_MAIS.map(v=>({k:"v:"+v,t:VIEW_NOME[v],i:ICO[v]}));
   if(isGerente()&&!sessao?.porGerente) itens.push({k:"a:zerar",t:"Zerar dados de teste",i:ICO.alerta});
