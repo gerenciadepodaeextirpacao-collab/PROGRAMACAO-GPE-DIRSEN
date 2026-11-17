@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="author" content="Victor Ricardo Porto Alcântara">
-<meta name="description" content="Programação GPE — programação, baixa da execução, quedas e painel da Gerência de Poda e Extirpação (DIRSEN/COMURG).">
+<meta name="description" content="GPE Gestão — programação, baixa da execução, quedas e painel da Gerência de Poda e Extirpação (DIRSEN/COMURG).">
 <!-- fora do Claude (Netlify): camada que liga o app às funções do Netlify; dentro do Claude ela não é usada -->
 <!-- Modo treinamento (Mais › Modo treinamento): usa dados de exemplo só neste aparelho, sem tocar no app de verdade -->
 <script>/* o modo treinamento foi retirado do app (17/11/2026): quem estava no treino volta para a conta de verdade */try{ if(localStorage.getItem("gpe_treino")==="1"){ const r=localStorage.getItem("gpe_sessao_real"); localStorage.removeItem("gpe_sessao"); if(r) localStorage.setItem("gpe_sessao",r); } ["gpe_treino","gpe_treino_auto","gpe_treino_db","gpe_sessao_real","gpe_treino_saiu"].forEach(k=>localStorage.removeItem(k)); try{ indexedDB.deleteDatabase("gpe_treino_midia"); }catch(e){} }catch(e){} window.GPE_TREINO_ON=false; document.write('<script src="camada-gpe.js"><\/script>');</script>
-<title>Programação GPE</title>
+<meta name="apple-mobile-web-app-title" content="GPE Gestão"><meta name="application-name" content="GPE Gestão"><title>GPE Gestão</title>
 <meta name="color-scheme" content="light">
 <script>/* tema: claro por padrão; o botão 🌙 liga o modo escuro (fica guardado neste aparelho) */try{const H=document.documentElement,T=()=>{ let v="light"; try{ v=localStorage.getItem("gpe_tema")==="escuro"?"escuro":"light"; }catch(e){} return v; },L=()=>{ const v=T(); if(H.getAttribute("data-theme")!==v) H.setAttribute("data-theme",v); const m=document.querySelector('meta[name="color-scheme"]'); if(m) m.content=v==="escuro"?"dark":"light"; };L();new MutationObserver(L).observe(H,{attributes:true,attributeFilter:["data-theme"]});window.gpeTemaAplicar=L;}catch(e){}</script>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -1275,7 +1275,7 @@ body.sofiscal nav.tabs{display:none!important}
 
 <div id="login" class="login" hidden>
   <div class="lg-box">
-    <img class="lg-logo" id="lgLogo" alt="COMURG — Companhia de Urbanização de Goiânia"><div class="lg-name"><b>Programação GPE</b><span>Gerência de Poda e Extirpação – DIRSEN</span></div>
+    <img class="lg-logo" id="lgLogo" alt="COMURG — Companhia de Urbanização de Goiânia"><div class="lg-name"><b>GPE Gestão</b><span>Gerência de Poda e Extirpação – DIRSEN</span></div>
     <p class="lg-frase">“Programação sem execução não entrega resultado!”</p>
     <form id="lgForm" novalidate>
       <div id="lgMain" class="lg-sec">
@@ -1318,7 +1318,7 @@ body.sofiscal nav.tabs{display:none!important}
 
 <header class="top"><div class="wrap">
   <img class="hlogo" id="hLogo" alt="COMURG">
-  <div class="logo">COMURG<small>Programação GPE · Poda e Extirpação – DIRSEN</small></div>
+  <div class="logo">COMURG<small>GPE Gestão · Poda e Extirpação – DIRSEN</small></div>
   <div class="sync" id="sync"><span class="dot" id="dot"></span><span id="syncTxt">Conectando…</span><button id="flushBtn" hidden>Enviar</button></div>
   <button type="button" id="recarregarBtn" aria-label="Atualizar a página" title="Atualizar a página"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button>
 </div><div class="brandbar"></div></header>
@@ -1720,7 +1720,7 @@ body.sofiscal nav.tabs{display:none!important}
 
 </main>
 
-<footer class="devby devfoot">Programação GPE · <span id="verRod"></span> · Desenvolvido por <b>Victor Ricardo Porto Alcântara</b></footer>
+<footer class="devby devfoot">GPE Gestão · <span id="verRod"></span> · Desenvolvido por <b>Victor Ricardo Porto Alcântara</b></footer>
 <nav class="tabs"><div class="wrap">
   <button type="button" data-v="form" aria-current="page">Programar</button>
   <button type="button" data-v="campo">Serviços em aberto</button>
@@ -2042,7 +2042,7 @@ function renderLogin(){
   const temGer=lista.some(([,u])=>u.perfil==="gerencia");
   if(!temGer){
     if(canAdmin){ lgShow("lgSetup"); }
-    else { $("#lgWaitTxt").innerHTML="<b>Acesso não liberado.</b><br>Para usar o Programação GPE você precisa ter o link <b>e</b> estar cadastrado pela Gerência de Poda e Extirpação – DIRSEN. Peça à gerência para liberar o seu acesso."; lgShow("lgWait"); }
+    else { $("#lgWaitTxt").innerHTML="<b>Acesso não liberado.</b><br>Para usar o GPE Gestão você precisa ter o link <b>e</b> estar cadastrado pela Gerência de Poda e Extirpação – DIRSEN. Peça à gerência para liberar o seu acesso."; lgShow("lgWait"); }
     return;
   }
   if(!$("#lgMat").value) $("#lgMat").value=ls.get("gpe_ultmat","");
@@ -2731,7 +2731,7 @@ function refazTurmas(){ const keep=(sel,html)=>{ const el=$(sel); if(!el) return
   keep("#rGrp",`<option value="">${escopoG()?escopoG().join(" + "):"Todas as podas"}</option>`+GRUPOS.map(g=>`<option>${g}</option>`).join(""));
   const h=$("#supChips"); if(h){ const on=h.onclick; h.innerHTML=SUPS.map(s=>`<button type="button" class="chip" data-v="${esc(s.id)}" aria-pressed="false">${esc(s.id)}<small>${esc(s.enc)}</small></button>`).join(""); h.onclick=on; }
   const wp=$("#whoPerfil"); if(wp&&sessao){ const g=travado()?null:escopoG(); wp.innerHTML=esc(cargoNome(acesso?.[sessao.id]||sessao)||"")+(travado()&&sessao.sup?" · "+esc(sessao.sup):"")+`<span class="escbadge">${travado()?"só a sua turma":g?"vê "+g.join(" e "):"visão geral · todas as podas"}</span>`+(sessao.porGerente?`<span class="escbadge gerkey">🔑 entrou com a senha do gerente ${esc(sessao.porGerente.nome.split(" ")[0])}</span>`:""); }
-  const lg=document.querySelector("header .logo small"); if(lg) lg.textContent=escDirop()?"Programação GPE · Poda e Extirpação – DIROP":"Programação GPE · Poda e Extirpação – DIRSEN";
+  const lg=document.querySelector("header .logo small"); if(lg) lg.textContent=escDirop()?"GPE Gestão · Poda e Extirpação – DIROP":"GPE Gestão · Poda e Extirpação – DIRSEN";
   if(escopoG()&&ls.get("gpe_sup","")&&!noEscopo(ls.get("gpe_sup",""))) ls.set("gpe_sup","");
 }
 function barTeste(){ let b=document.getElementById("testeBar"); if(modoTeste()){ if(!b){ b=document.createElement("div"); b.id="testeBar"; b.className="testebar"; document.body.prepend(b); } b.textContent="🧪 MODO TESTE DO GERENTE · você pode preencher tudo e assinar por qualquer supervisão · assinaturas marcadas como TESTE"; } else if(b) b.remove(); }
@@ -2902,7 +2902,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.20d";
+const APP_VERSAO="2026.11.20e";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -3050,7 +3050,7 @@ async function baixarDeploy(i){
     const txt=await r.text(); await downloads.save({filename:d.nome, data:new Blob([txt],{type:d.tipo})}); toast(d.nome+" pronto. Veja os downloads do aparelho."); }
   catch(e){ console.error(e); toast("Não foi possível baixar "+d.nome+" ("+(e?.message||"erro")+"). Use o pacote .zip que o Claude manda na conversa.",7000); }
 }
-function changelogMd(){ return "# Programação GPE — o que mudou\n\nVersão atual: "+APP_VERSAO+"\n\n"+VERSOES.map(v=>"## "+v.v+" ("+v.d+")\n\n"+v.itens.map(t=>"- "+t).join("\n")).join("\n\n")+"\n"; }
+function changelogMd(){ return "# GPE Gestão — o que mudou\n\nVersão atual: "+APP_VERSAO+"\n\n"+VERSOES.map(v=>"## "+v.v+" ("+v.d+")\n\n"+v.itens.map(t=>"- "+t).join("\n")).join("\n\n")+"\n"; }
 async function baixarTudo(btn){
   if(!downloads){ toast("Download indisponível nesta visualização."); return; }
   const t0=btn?.innerHTML; if(btn){ btn.disabled=true; btn.innerHTML="<span>Preparando o pacote…</span>"; }
@@ -3266,7 +3266,7 @@ const ROMANO={"PODA I":"I","PODA II":"II","PODA III":"III","PODA IV":"IV"};
 const relEquipe=r=>{ const s=supOf(r.supervisao)||{}; const g=s.grupo||r.grupo||"", t=(s.turno||r.turno||""); return `Poda e Extirpação ${ROMANO[g]||g.replace(/^PODA\s*/,"")} ${t.charAt(0)+t.slice(1).toLowerCase()}`.trim()+(r.equipe?` – ${r.equipe.toLowerCase()}`:""); };
 const REL_ITENS=["Poda de árvore (D<20cm ; H<5m).","Poda de árvore (DAP 20-40cm ; H 5-10m).","Poda de árvore (DAP 40-60cm ; H 10-15m).","Poda de árvore (DAP>60cm ; H>15m).","Extirpação de árvore (DAP 20-40cm ; H 5-10m).","Extirpação de árvore (DAP 40-60cm ; H 10-15m).","Extirpação de árvore (DAP>60cm ; H>15m).","Extirpação de árvore (DAP>200cm ; H>15m)."];
 const LOGO_PREF="data:image/jpeg;base64,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";
-const relAssTxt=a=>a&&a.em?`Documento assinado eletronicamente por ${a.nome}, ${a.cargo||"Supervisor"}, em ${dataBR(a.em)}, às ${new Date(a.em).toTimeString().slice(0,5)}, mediante senha pessoal de assinatura (matrícula ${a.mat||"—"}) no sistema Programação GPE – COMURG. Código verificador: ${a.cod||"—"}.`:"";
+const relAssTxt=a=>a&&a.em?`Documento assinado eletronicamente por ${a.nome}, ${a.cargo||"Supervisor"}, em ${dataBR(a.em)}, às ${new Date(a.em).toTimeString().slice(0,5)}, mediante senha pessoal de assinatura (matrícula ${a.mat||"—"}) no sistema GPE Gestão – COMURG. Código verificador: ${a.cod||"—"}.`:"";
 function relDocHtml(r){ const R=r.relat||{}, q=relQtd(r), v=x=>x?esc(String(x)):"", jaR=r.status==="NÃO"&&!!r.jaExecutado;
   const naoExec=jaR?jaTxt(r)+".":r.status==="NÃO"?(r.outraEquipe?outraTxt(r)+".":`Serviço não executado. Motivo: ${r.motivo||"—"}${r.proxData?` · remarcado para ${fmtD(r.proxData)}`:""}`)
     :r.status==="PARCIAL"?`Executado parcialmente. Faltou: ${qtdTxtPlano(r.qtdRemarcada||{})||"—"}. Motivo: ${r.motivo||"—"}${r.proxData?` · restante remarcado para ${fmtD(r.proxData)}`:""}`:"";
@@ -5382,13 +5382,13 @@ function montar(root) {
       <p style="margin:10px 0 6px;font-size:13px"><b>${vs.length}</b> ${vs.length === 1 ? "pessoa" : "pessoas"} · <b>${tot}</b> vistorias · <b>${tj}</b> já executado · <b>${tn}</b> não executado</p>
       <table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr><th style="${th}${r}">#</th><th style="${th}">Vistoriador / fiscal</th><th style="${th}${r}">Já executado</th><th style="${th}${r}">Não executado</th><th style="${th}${r}">Total</th><th style="${th}${r}">%</th><th style="${th}">Última vistoria</th></tr></thead><tbody>${lin}</tbody>
       <tfoot><tr><td colspan="2" style="${td};background:#e3ece0"><b>Total</b></td><td style="${td};background:#e3ece0${r}"><b>${tj}</b></td><td style="${td};background:#e3ece0${r}"><b>${tn}</b></td><td style="${td};background:#e3ece0${r}"><b>${tot}</b></td><td style="${td};background:#e3ece0${r}">100%</td><td style="${td};background:#e3ece0"></td></tr></tfoot></table>
-      <p class="rod">Documento gerado pelo sistema Programação GPE em ${dataBR(new Date().toISOString())} às ${horaAgora()}.</p></div></div>`; }
+      <p class="rod">Documento gerado pelo sistema GPE Gestão em ${dataBR(new Date().toISOString())} às ${horaAgora()}.</p></div></div>`; }
   // relatório gráfico das vistorias (PDF A4 ou imagem PNG), sempre no tema claro
   function grafDocHtml() {
     const A = agg(), n = A.P.length, d = A.D.length, c = A.c;
     const vars = "--bg:#f3f5f1;--sf:#fff;--ink:#18221b;--mu:#5b6a5f;--ln:#d9e0d8;--lf:#1f6b3a;--lfs:#e2efe5;--bk:#8a5a2b;--bks:#f4e9dc;color-scheme:light;font-size:13px;gap:10px";
     const kp = `<div class="vp-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px"><div class="vp-kpi"><b>${d}<small style="font-size:14px;color:var(--mu)"> / ${n}</small></b><span>Vistoriados</span><em>${pct(d, n)}% · ${A.hj} hoje</em></div><div class="vp-kpi"><b>${c.ja_executado}</b><span>Já executados</span><em>com foto</em></div><div class="vp-kpi"><b>${c.nao_executado}</b><span>Não executados</span><em>${A.byEq.map((x) => x.n + " " + x.q).join(" · ")}</em></div><div class="vp-kpi"><b>${A.D.filter((p) => R(p).baixa).length}</b><span>Baixados</span><em>no sistema</em></div></div>`;
-    return `<div class="fdoc"><style>${FDOC_CSS}.vp.vp-print .vp-gr,.vp.vp-print .vp-gc{--gj:#2a78d6;--gn:#eb6834}.vp.vp-print .vp-gc{break-inside:avoid;--gj:#2a78d6;--gn:#eb6834}.vp.vp-print .vp-cw{overflow:visible}.vp.vp-print .vp-kpi b{font-size:24px}.vp.vp-print .vp-gr{grid-template-columns:repeat(2,minmax(0,1fr))!important}.vp.vp-print .vp-gtop{grid-template-columns:repeat(6,minmax(0,1fr))!important}</style><div class="r-body vp vp-print" style="${vars}">${fhead("RELATÓRIO GRÁFICO DAS VISTORIAS DE PROCESSO", "SITUAÇÃO EM " + new Date().toLocaleDateString("pt-BR"))}${graficos(A, true).join("")}<p class="rod">Documento gerado pelo sistema Programação GPE em ${dataBR(new Date().toISOString())} às ${horaAgora()} · desenvolvido por Victor Ricardo Porto Alcântara.</p></div></div>`;
+    return `<div class="fdoc"><style>${FDOC_CSS}.vp.vp-print .vp-gr,.vp.vp-print .vp-gc{--gj:#2a78d6;--gn:#eb6834}.vp.vp-print .vp-gc{break-inside:avoid;--gj:#2a78d6;--gn:#eb6834}.vp.vp-print .vp-cw{overflow:visible}.vp.vp-print .vp-kpi b{font-size:24px}.vp.vp-print .vp-gr{grid-template-columns:repeat(2,minmax(0,1fr))!important}.vp.vp-print .vp-gtop{grid-template-columns:repeat(6,minmax(0,1fr))!important}</style><div class="r-body vp vp-print" style="${vars}">${fhead("RELATÓRIO GRÁFICO DAS VISTORIAS DE PROCESSO", "SITUAÇÃO EM " + new Date().toLocaleDateString("pt-BR"))}${graficos(A, true).join("")}<p class="rod">Documento gerado pelo sistema GPE Gestão em ${dataBR(new Date().toISOString())} às ${horaAgora()} · desenvolvido por Victor Ricardo Porto Alcântara.</p></div></div>`;
   }
   async function baixarGrafVist(tipo, btn) {
     if (!downloads) { toast("Download não disponível aqui."); return; }
@@ -6171,7 +6171,7 @@ const ASS_COL="assinaturas"; let assins={}; // uid -> {salt,hash,nome,em}
 const dataBR=iso=>{const d=new Date(iso);return String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+d.getFullYear()};
 const cargoDe=u=>(cargoNome(u)||"Supervisor")+(u?.sup?" – "+u.sup:"");
 const SELO=`<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="24" r="20" fill="none" stroke="#005f27" stroke-width="3"/><circle cx="32" cy="24" r="15" fill="#0d880b"/><path d="M25 24.5l5 5L40 19" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><rect x="44" y="31" width="14" height="11" rx="2" fill="#f37020"/><path d="M47.5 31v-3a3.5 3.5 0 0 1 7 0v3" fill="none" stroke="#f37020" stroke-width="2.4"/><text x="32" y="53" text-anchor="middle" font-size="8" font-weight="700" fill="#005f27" font-family="Arial,sans-serif">assinatura</text><text x="32" y="62" text-anchor="middle" font-size="8" font-weight="700" fill="#005f27" font-family="Arial,sans-serif">eletrônica</text></svg>`;
-const assinHtml=(t,a)=>a&&a.em?`<div class="sigsei">${t||a.teste?`<span class="sl">${esc(t||"")}${a.teste?`<span class="tagteste">🧪 ASSINATURA DE TESTE</span>`:""}</span>`:""}<div class="sgb"><div class="sgi">${SELO}</div><p>Documento assinado eletronicamente por <b>${esc(a.nome)}</b>, <b>${esc(a.cargo||(a.sup?"Supervisor – "+a.sup:"Supervisor"))}</b>, em ${dataBR(a.em)}, às ${new Date(a.em).toTimeString().slice(0,5)}, mediante senha pessoal de assinatura (matrícula ${esc(a.mat||"—")}) no sistema Programação GPE – COMURG.${a.cod?`<small>Código verificador: <b>${esc(a.cod)}</b>${a.como?" · "+esc(a.como):""}</small>`:""}</p></div></div>`:"";
+const assinHtml=(t,a)=>a&&a.em?`<div class="sigsei">${t||a.teste?`<span class="sl">${esc(t||"")}${a.teste?`<span class="tagteste">🧪 ASSINATURA DE TESTE</span>`:""}</span>`:""}<div class="sgb"><div class="sgi">${SELO}</div><p>Documento assinado eletronicamente por <b>${esc(a.nome)}</b>, <b>${esc(a.cargo||(a.sup?"Supervisor – "+a.sup:"Supervisor"))}</b>, em ${dataBR(a.em)}, às ${new Date(a.em).toTimeString().slice(0,5)}, mediante senha pessoal de assinatura (matrícula ${esc(a.mat||"—")}) no sistema GPE Gestão – COMURG.${a.cod?`<small>Código verificador: <b>${esc(a.cod)}</b>${a.como?" · "+esc(a.como):""}</small>`:""}</p></div></div>`:"";
 const opHtml=o=>o?`<div class="sigsei"><span class="sl">Operador que encerrou o turno</span><p class="note" style="margin:0"><b style="color:var(--ink)">${esc(o.nome)}</b> · matrícula ${esc(o.mat||"—")} · identificado pelo supervisor na entrega.</p></div>`:"";
 const codVerif=async(obj)=>(await hashPin("gpe-verif",JSON.stringify(obj))).slice(0,10).toUpperCase();
 // bloco de senha: quem ainda não tem senha de assinatura cria ali mesmo (confirmando a senha de entrar)
@@ -6840,7 +6840,7 @@ let SELO_PNG="";
 async function seloPng(){ if(SELO_PNG) return SELO_PNG; const svg=SELO.replace("<svg ",'<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" ');
   const img=new Image(); img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg); await img.decode();
   const cv=document.createElement("canvas"); cv.width=256; cv.height=256; const x=cv.getContext("2d"); x.fillStyle="#fff"; x.fillRect(0,0,256,256); x.drawImage(img,0,0,256,256); SELO_PNG=cv.toDataURL("image/png"); return SELO_PNG; }
-const fsig=(t,a)=>a&&a.em?`<div><div class="sl">${esc(t)}${a.teste?` <span style="background:#f59e0b;color:#1a1a1a;font-weight:800;padding:1px 6px;border-radius:4px">ASSINATURA DE TESTE – SEM VALIDADE</span>`:""}</div><div class="sg"><div class="i">${SELO_PNG?`<img src="${SELO_PNG}" alt="">`:SELO}</div><p>Documento assinado eletronicamente por <b>${esc(a.nome)}</b>, <b>${esc(a.cargo||"Supervisor")}</b>, em ${dataBR(a.em)}, às ${new Date(a.em).toTimeString().slice(0,5)}, mediante senha pessoal de assinatura (matrícula ${esc(a.mat||"—")}) no sistema Programação GPE – COMURG.${a.cod?`<small>Código verificador: <b>${esc(a.cod)}</b>${a.como?" · "+esc(a.como):""}</small>`:""}</p></div></div>`:"";
+const fsig=(t,a)=>a&&a.em?`<div><div class="sl">${esc(t)}${a.teste?` <span style="background:#f59e0b;color:#1a1a1a;font-weight:800;padding:1px 6px;border-radius:4px">ASSINATURA DE TESTE – SEM VALIDADE</span>`:""}</div><div class="sg"><div class="i">${SELO_PNG?`<img src="${SELO_PNG}" alt="">`:SELO}</div><p>Documento assinado eletronicamente por <b>${esc(a.nome)}</b>, <b>${esc(a.cargo||"Supervisor")}</b>, em ${dataBR(a.em)}, às ${new Date(a.em).toTimeString().slice(0,5)}, mediante senha pessoal de assinatura (matrícula ${esc(a.mat||"—")}) no sistema GPE Gestão – COMURG.${a.cod?`<small>Código verificador: <b>${esc(a.cod)}</b>${a.como?" · "+esc(a.como):""}</small>`:""}</p></div></div>`:"";
 const fhead=(t1,t2)=>`<div class="fh"><img src="${LOGO_FULL}" alt="COMURG"><div class="tt"><div class="org">Companhia de Urbanização de Goiânia – COMURG · Gerência de Poda e Extirpação – DIRSEN</div><h1>${t1}</h1><h2>${t2}</h2></div></div><div class="band"></div>`;
 function chkDocHtml(c){
   const kv=(a,b,c2,d)=>`<tr><td class="k">${a}</td><td>${b}</td><td class="k">${c2}</td><td>${d}</td></tr>`;
@@ -6852,13 +6852,13 @@ function chkDocHtml(c){
   const s5=`<div><p class="sec">5. Declaração</p><p class="leg">${c.declaracao?"( X ) ":""}${esc(CHK_DECL)}</p></div>`;
   const fotos=chkSlotsDe(c).filter(x=>x.tipo==="foto");
   const sfot=`<div><p class="sec">Registro fotográfico</p><div class="fgrid">${fotos.map(x=>{const u=midUrl(c.midia?.[x.k]);return `<div class="fcel">${u?`<img src="${esc(u)}" alt="">`:`<div class="fsem">Sem foto</div>`}<span>${esc(x.t)}</span></div>`}).join("")}</div>
-    <p class="leg" style="margin:6px 0 0">Vídeo 360° ${ehVan(c.viatura)?"da van":"do cesto"}: ${c.midia?.video360?"anexado no sistema Programação GPE (assista pelo app, abrindo este checklist).":"não anexado."}</p></div>`;
+    <p class="leg" style="margin:6px 0 0">Vídeo 360° ${ehVan(c.viatura)?"da van":"do cesto"}: ${c.midia?.video360?"anexado no sistema GPE Gestão (assista pelo app, abrindo este checklist).":"não anexado."}</p></div>`;
   const ass=`<div><p class="sec">Assinaturas – entrega e recebimento do equipamento</p>
     </div>
     ${fsig("Supervisor que entregou o turno",c.entrega)}
     <div><table>${kv("Horário de encerramento",esc(c.hora||""),"Data",fmtD(c.data))}</table></div>
     <div><div class="sl">Recebimento do turno (supervisor)</div>${chkRecebido(c)?(c.recebe.ciencia?`<p class="leg" style="margin:0 0 4px">( X ) Declaro que recebi o equipamento e tomei ciência das condições registradas neste checklist.</p>`:"")+fsig("",c.recebe).replace('<div class="sl"></div>','')+(c.recebe.obs?`<div class="box" style="margin-top:6px"><b>Ressalva no recebimento:</b> ${esc(c.recebe.obs)}</div>`:""):chkRecusado(c)?`<div class="pend"><b>RECEBIMENTO RECUSADO.</b> Motivo: ${esc(c.recusa.motivo||"")}</div>`+fsig("Supervisor que recusou o recebimento",c.recusa)+(c.validacao?.em?`<div class="sl" style="margin-top:6px">Validação do coordenador</div><table><tr><td class="k" style="width:30%">Decisão</td><td>${esc(VAL_TXT[c.validacao.decisao]||c.validacao.decisao)}</td></tr><tr><td class="k">Situação verificada / providência</td><td>${esc(c.validacao.obs||"")}</td></tr></table>`+fsig("Coordenador que validou",c.validacao):`<div class="pend">Aguardando a validação do coordenador.</div>`):`<div class="pend">Aguardando assinatura de recebimento${c.recebe?.sup?" – "+esc(c.recebe.sup):""}.</div>`}</div>`;
-  return `<div class="fdoc"><style>${FDOC_CSS}</style><div class="r-body">${fhead("CHECKLIST DIÁRIO DE INSPEÇÃO PÓS-OPERACIONAL","CESTO AÉREO")}<div>${cab}</div>${s1}${s2}${s3}${s4}${sfot}${s5}${ass}<p class="rod">Documento gerado pelo sistema Programação GPE em ${dataBR(new Date().toISOString())} às ${horaAgora()} · desenvolvido por Victor Ricardo Porto Alcântara.</p></div></div>`;
+  return `<div class="fdoc"><style>${FDOC_CSS}</style><div class="r-body">${fhead("CHECKLIST DIÁRIO DE INSPEÇÃO PÓS-OPERACIONAL","CESTO AÉREO")}<div>${cab}</div>${s1}${s2}${s3}${s4}${sfot}${s5}${ass}<p class="rod">Documento gerado pelo sistema GPE Gestão em ${dataBR(new Date().toISOString())} às ${horaAgora()} · desenvolvido por Victor Ricardo Porto Alcântara.</p></div></div>`;
 }
 function manDocHtml(m){
   const kv=(a,b,c2,d)=>`<tr><td class="k">${a}</td><td>${b}</td><td class="k">${c2}</td><td>${d}</td></tr>`;
@@ -6879,8 +6879,8 @@ function manDocHtml(m){
     <div><p class="sec">6. Assinatura</p>${fsig("Supervisor",m.assin)}<table style="margin-top:4px">${kv("Data",fmtD(m.data),"Horário",esc(m.hora||""))}</table></div>
     <div><p class="sec">7. Retorno à atividade</p>${ret.volta==="SIM"?`<table>${kv("Data do retorno",fmtD(ret.data),"Horário",esc(ret.hora||"—"))}${kv("KM no retorno",esc(ret.km||"—"),"Liberado para operar",esc(ret.liberado||"SIM"))}${kv("Reserva devolvido",m.reserva==="SIM"?esc(ret.reservaDevolvida||"—"):"N/A","","")}</table><div class="box" style="margin-top:6px"><b>Serviço executado:</b> ${esc(ret.servico||ret.obs||"—")}${ret.obs&&ret.servico?`<br><b>Observação:</b> ${esc(ret.obs)}`:""}</div>`:`<div class="pend">Equipamento ainda em manutenção – retorno não registrado.</div>`}${m.retAssin?fsig("Supervisor que registrou o retorno à atividade",m.retAssin):""}</div>
     <div><p class="sec">Registro do defeito</p>${(()=>{ const fs=manSlots(m.midia).filter(x=>x.tipo==="foto"&&m.midia?.[x.k]); return fs.length?`<div class="fgrid m">${fs.map(x=>{const u=midUrl(m.midia?.[x.k]);return `<div class="fcel">${u?`<img src="${esc(u)}" alt="">`:`<div class="fsem">Foto indisponível</div>`}<span>${esc(x.t.replace(" (opcional)",""))}</span></div>`}).join("")}</div>`:`<p class="leg" style="margin:4px 0 0">Sem fotos (opcionais).</p>`; })()}
-    <p class="leg" style="margin:6px 0 0">Vídeos do defeito: ${manVids(m.midia)?manVids(m.midia)+" anexado"+(manVids(m.midia)>1?"s":"")+" no sistema Programação GPE (assista pelo app, abrindo esta comunicação).":"não anexado."}</p></div>
-    <p class="rod">Documento gerado pelo sistema Programação GPE em ${dataBR(new Date().toISOString())} às ${horaAgora()} · desenvolvido por Victor Ricardo Porto Alcântara.</p></div></div>`;
+    <p class="leg" style="margin:6px 0 0">Vídeos do defeito: ${manVids(m.midia)?manVids(m.midia)+" anexado"+(manVids(m.midia)>1?"s":"")+" no sistema GPE Gestão (assista pelo app, abrindo esta comunicação).":"não anexado."}</p></div>
+    <p class="rod">Documento gerado pelo sistema GPE Gestão em ${dataBR(new Date().toISOString())} às ${horaAgora()} · desenvolvido por Victor Ricardo Porto Alcântara.</p></div></div>`;
 }
 async function baixarFormPdf(btn,html,nome,label,opx){
   if(!downloads){ toast("Download não disponível aqui."); return; }
@@ -7301,7 +7301,7 @@ async function baixarGrafPdf(btn){
   const filtro=`${esc(sup.options[sup.selectedIndex]?.text||"Todas as turmas")} · ${esc(vt.options[vt.selectedIndex]?.text||"Todos os equipamentos")} · ${esc(per.options[per.selectedIndex]?.text||"")} até ${fmtD(fim)}`;
   const vars=Object.entries(KG_CLARO).map(([k,v])=>`--${k}:${v}`).join(";")+";--card-grad:linear-gradient(180deg,#fff,#f6f8f4);--sh-1:0 1px 2px rgba(22,35,26,.12);color-scheme:light";
   const css=`.fdoc .gp .dkpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.fdoc .gp .dk{background:#fff;border:1px solid #c9d1c4;border-radius:10px;padding:9px 11px;position:relative;overflow:hidden}.fdoc .gp .dk b{font-size:22px}.fdoc .gp .dcard{background:#fff;border:1px solid #c9d1c4;border-radius:10px;padding:10px 12px}.fdoc .gp .mtab table{min-width:0!important;font-size:10.5px}.fdoc .gp .mtab th,.fdoc .gp .mtab td{padding:4px 5px;border:0;border-bottom:1px solid #e3e8e0;white-space:normal}.fdoc .gp .dv{width:100%;height:auto}.fdoc .gp .drow{font-size:11.5px}`;
-  const html=`<div class="fdoc" style="${vars}"><style>${FDOC_CSS}${css}</style><div class="r-body">${fhead("GRÁFICOS DA MANUTENÇÃO DOS EQUIPAMENTOS","COMUNICAÇÃO DE DEFEITO E RETORNO À ATIVIDADE")}<p class="leg" style="margin:0"><b>Filtros:</b> ${filtro}</p>${partes.map(x=>`<div class="gp">${kgCoresFixas(x)}</div>`).join("")}<p class="rod">Documento gerado pelo sistema Programação GPE em ${dataBR(new Date().toISOString())} às ${horaAgora()} · desenvolvido por Victor Ricardo Porto Alcântara.</p></div></div>`;
+  const html=`<div class="fdoc" style="${vars}"><style>${FDOC_CSS}${css}</style><div class="r-body">${fhead("GRÁFICOS DA MANUTENÇÃO DOS EQUIPAMENTOS","COMUNICAÇÃO DE DEFEITO E RETORNO À ATIVIDADE")}<p class="leg" style="margin:0"><b>Filtros:</b> ${filtro}</p>${partes.map(x=>`<div class="gp">${kgCoresFixas(x)}</div>`).join("")}<p class="rod">Documento gerado pelo sistema GPE Gestão em ${dataBR(new Date().toISOString())} às ${horaAgora()} · desenvolvido por Victor Ricardo Porto Alcântara.</p></div></div>`;
   await baixarFormPdf(btn,html,`graficos-manutencao-${fim}.pdf`,"Gráficos da manutenção · até "+fmtD(fim));
 }
 
@@ -7700,7 +7700,7 @@ function listaDocHtml(rows,agr,det,ftxt,sub){
       return `<div class="eqc"><div class="gh">COMPOSIÇÃO DA EQUIPE<span>${mb.length} pessoa${mb.length===1?"":"s"}</span></div><table><thead><tr><th style="width:28px">#</th><th>Nome</th><th>Função</th></tr></thead><tbody>${mb.map((m,i)=>`<tr><td>${i+1}</td><td><b>${esc(m.nome)}</b></td><td>${esc(m.funcao)}</td></tr>`).join("")}</tbody></table></div>`; })()}
     ${det?grupos.map(g=>`<div><div class="gh">${esc(g.k)}<span>${g.rs.length} serviço${g.rs.length===1?"":"s"} · ${brl(g.rs.reduce((a,r)=>a+val(r),0))}</span></div>${lxCard(g.rs[0])}</div>`+g.rs.slice(1).map(lxCard).join("")).join(""):""}
     ${det?"":grupos.map(g=>`<div class="grp"><div class="gh">${esc(g.k)}<span>${g.rs.length} serviço${g.rs.length===1?"":"s"} · ${brl(g.rs.reduce((a,r)=>a+val(r),0))}</span></div>${det?g.rs.map(lxCard).join(""):`<table><thead><tr><th>${agr==="dia"?"Equipe":"Data / equipe"}</th>${agr==="turma"?"":"<th>Turma</th>"}<th>Local</th><th>Tipo / serviço</th><th>Árvores</th><th>Situação</th><th style="text-align:right">Valor</th></tr></thead><tbody>${g.rs.map(linha).join("")}</tbody></table>`}</div>`).join("")}
-    <p class="rod">Documento gerado pelo sistema Programação GPE em ${dataBR(new Date().toISOString())} às ${horaAgora()} · desenvolvido por Victor Ricardo Porto Alcântara.</p></div></div>`;
+    <p class="rod">Documento gerado pelo sistema GPE Gestão em ${dataBR(new Date().toISOString())} às ${horaAgora()} · desenvolvido por Victor Ricardo Porto Alcântara.</p></div></div>`;
 }
 // formato detalhado: cada serviço aberto, como no detalhe do app (com as caixas de poda e extirpação)
 const LXD_CSS=`.lx .card{border:1px solid #c9d1c4;border-radius:10px;margin-top:6px;overflow:hidden;break-inside:avoid}
@@ -7770,7 +7770,7 @@ async function listaImg(btn,sel){
     const blob=await new Promise(ok=>cv.toBlob(ok,"image/png")), nome=sel?sel.nome+".png":lxNome("png"), f=new File([blob],nome,{type:"image/png"});
     // baixa a imagem direto no aparelho; só abre o compartilhar se o download não estiver disponível
     let ok=false; if(downloads){ try{ await downloads.save({filename:nome,data:blob}); ok=true; toast("Imagem baixada: "+nome); }catch(e){ if(e?.code==="cancelled"||e?.code==="declined") return; } }
-    if(!ok){ try{ if(navigator.canShare&&navigator.canShare({files:[f]})){ await navigator.share({files:[f],text:"Ordem de serviço – Programação GPE"}); return; } }catch(e){ if(e?.name==="AbortError") return; } toast("Download não disponível aqui."); }
+    if(!ok){ try{ if(navigator.canShare&&navigator.canShare({files:[f]})){ await navigator.share({files:[f],text:"Ordem de serviço – GPE Gestão"}); return; } }catch(e){ if(e?.name==="AbortError") return; } toast("Download não disponível aqui."); }
   }catch(e){ console.error(e); if(e?.message==="load") toast("Sem internet para montar a imagem."); else if(e?.code!=="cancelled"&&e?.code!=="declined") toast("Não foi possível gerar a imagem."); }
   finally{ btn.disabled=false; btn.textContent=t; }
 }
@@ -8252,7 +8252,7 @@ function buildReport(){
     <div class="r-title">Relatório de Programação e Execução</div>
     <div class="r-sub">${esc(periodo)} · ${esc(escopo)}</div></div><img class="r-logo" src="${LOGO_FULL}" alt="COMURG"></div>
   <div class="r-band"></div>
-  <div class="r-meta"><span>Gerado em <b>${now.toLocaleDateString("pt-BR")} às ${now.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</b></span><span>Fonte <b>app Programação GPE</b></span><span>Serviços no recorte <b>${rows.length}</b></span>${late.length?`<span>Sem baixa <b>${late.length}</b></span>`:""}</div>
+  <div class="r-meta"><span>Gerado em <b>${now.toLocaleDateString("pt-BR")} às ${now.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</b></span><span>Fonte <b>app GPE Gestão</b></span><span>Serviços no recorte <b>${rows.length}</b></span>${late.length?`<span>Sem baixa <b>${late.length}</b></span>`:""}</div>
   <div class="r-body">
     <div class="kpi-r blk">
       <div class="k hl"><span>Cumprimento</span><b>${cump===null?"—":cump+"%"}</b><i>executados ÷ programados vencidos</i></div>
@@ -8513,7 +8513,7 @@ async function rptPdf(html, label, op={}){
     const H=paginarRpt(host.firstElementChild), sc=pdfEscala(op.escala,H); // imagem muito grande falha no celular: reduz a escala em relatórios longos
     const w=html2pdf().set({margin:PDF_MARG,image:{type:"jpeg",quality:op.qualidade||.95},html2canvas:{scale:sc,backgroundColor:op.fundo||"#fcfcfb",logging:false,scrollX:0,scrollY:0,x:0,y:0,useCORS:true,windowWidth:op.janela||1280,...(op.janela?{width:op.janela}:{}),onclone:repaginarCopia},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css"]}}).from(host.firstElementChild).toPdf();
     const pdf=await w.get("pdf"); const n=pdf.internal.getNumberOfPages();
-    for(let i=1;i<=n;i++){pdf.setPage(i);pdf.setFontSize(8);pdf.setTextColor(110);pdf.text(`Programação GPE · ${label} · página ${i} de ${n}`,105,288,{align:"center"});pdf.setFontSize(7);pdf.text("Desenvolvido por Victor Ricardo Porto Alcântara",105,292,{align:"center"})}
+    for(let i=1;i<=n;i++){pdf.setPage(i);pdf.setFontSize(8);pdf.setTextColor(110);pdf.text(`GPE Gestão · ${label} · página ${i} de ${n}`,105,288,{align:"center"});pdf.setFontSize(7);pdf.text("Desenvolvido por Victor Ricardo Porto Alcântara",105,292,{align:"center"})}
     return pdf.output("blob");
   } finally { host.remove(); window.scrollTo(sx,sy); scs.forEach(([el,t])=>el.scrollTop=t); }
 }
@@ -8528,7 +8528,7 @@ async function rptPdfMulti(htmls, label, op={}){
     let w=html2pdf().set(opt(Math.max(...Hs))).from(hosts[0].firstElementChild).toPdf();
     for(let i=1;i<hosts.length;i++){ const el=hosts[i].firstElementChild; w=w.get("pdf").then(pdf=>{pdf.addPage();}).from(el).toContainer().toCanvas().toPdf(); if(op.prog) w=w.then(()=>op.prog(i+1,hosts.length)); }
     const pdf=await w.get("pdf"); const n=pdf.internal.getNumberOfPages();
-    for(let i=1;i<=n;i++){pdf.setPage(i);pdf.setFontSize(8);pdf.setTextColor(110);pdf.text(`Programação GPE · ${label} · página ${i} de ${n}`,105,288,{align:"center"});pdf.setFontSize(7);pdf.text("Desenvolvido por Victor Ricardo Porto Alcântara",105,292,{align:"center"})}
+    for(let i=1;i<=n;i++){pdf.setPage(i);pdf.setFontSize(8);pdf.setTextColor(110);pdf.text(`GPE Gestão · ${label} · página ${i} de ${n}`,105,288,{align:"center"});pdf.setFontSize(7);pdf.text("Desenvolvido por Victor Ricardo Porto Alcântara",105,292,{align:"center"})}
     return pdf.output("blob");
   } finally { hosts.forEach(h=>h.remove()); window.scrollTo(sx,sy); }
 }
@@ -8624,7 +8624,7 @@ const XL=(()=>{
         rows+=`</row>`;}
       const cols=S.widths.length?`<cols>${S.widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join("")}</cols>`:"";
       const pane=S.freeze?`<pane${S.freeze.c?` xSplit="${S.freeze.c}"`:""}${S.freeze.r?` ySplit="${S.freeze.r}"`:""} topLeftCell="${ref(S.freeze.r||0,S.freeze.c||0)}" activePane="${S.freeze.r&&S.freeze.c?"bottomRight":S.freeze.r?"bottomLeft":"topRight"}" state="frozen"/>`:"";
-      return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetPr>${S.tab?`<tabColor rgb="FF${S.tab}"/>`:""}<pageSetUpPr fitToPage="1"/></sheetPr><dimension ref="A1:${ref(S.maxR,S.maxC)}"/><sheetViews><sheetView workbookViewId="0" showGridLines="0">${pane}</sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/>${cols}<sheetData>${rows}</sheetData>${S.filter?`<autoFilter ref="${S.filter}"/>`:""}${merges.length?`<mergeCells count="${merges.length}">${merges.map(m=>`<mergeCell ref="${m}"/>`).join("")}</mergeCells>`:""}<pageMargins left="0.4" right="0.4" top="0.5" bottom="0.5" header="0.3" footer="0.3"/><pageSetup paperSize="9" orientation="${S.landscape?"landscape":"portrait"}" fitToWidth="1" fitToHeight="0"/><headerFooter><oddFooter>&amp;L&amp;8Programação GPE&amp;R&amp;8Página &amp;P de &amp;N</oddFooter></headerFooter></worksheet>`;
+      return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetPr>${S.tab?`<tabColor rgb="FF${S.tab}"/>`:""}<pageSetUpPr fitToPage="1"/></sheetPr><dimension ref="A1:${ref(S.maxR,S.maxC)}"/><sheetViews><sheetView workbookViewId="0" showGridLines="0">${pane}</sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/>${cols}<sheetData>${rows}</sheetData>${S.filter?`<autoFilter ref="${S.filter}"/>`:""}${merges.length?`<mergeCells count="${merges.length}">${merges.map(m=>`<mergeCell ref="${m}"/>`).join("")}</mergeCells>`:""}<pageMargins left="0.4" right="0.4" top="0.5" bottom="0.5" header="0.3" footer="0.3"/><pageSetup paperSize="9" orientation="${S.landscape?"landscape":"portrait"}" fitToWidth="1" fitToHeight="0"/><headerFooter><oddFooter>&amp;L&amp;8GPE Gestão&amp;R&amp;8Página &amp;P de &amp;N</oddFooter></headerFooter></worksheet>`;
     };
     return S;
   }
@@ -8634,7 +8634,7 @@ const XL=(()=>{
     const files=[
       {name:"[Content_Types].xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${sheets.map((s,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join("")}<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>`},
       {name:"_rels/.rels",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>`},
-      {name:"docProps/core.xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>Programação GPE</dc:title><dc:creator>Victor Ricardo Porto Alcântara</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">${new Date().toISOString().slice(0,19)}Z</dcterms:created></cp:coreProperties>`},
+      {name:"docProps/core.xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>GPE Gestão</dc:title><dc:creator>Victor Ricardo Porto Alcântara</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">${new Date().toISOString().slice(0,19)}Z</dcterms:created></cp:coreProperties>`},
       {name:"xl/workbook.xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><bookViews><workbookView activeTab="0"/></bookViews><sheets>${sheets.map((s,i)=>`<sheet name="${x(s.name)}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join("")}</sheets>${names?`<definedNames>${names}</definedNames>`:""}<calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>`},
       {name:"xl/_rels/workbook.xml.rels",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${sheets.map((s,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join("")}<Relationship Id="rId${sheets.length+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`},
       ...sheets.map((s,i)=>({name:`xl/worksheets/sheet${i+1}.xml`,data:s.xml()})),
@@ -8801,7 +8801,7 @@ function planilhaGPE(){
   const head=(ws,ncol,titulo)=>{
     ws.set(0,0,titulo,S.title).fill(0,1,ncol-1,S.title).merge(0,0,0,ncol-1).h(0,34);
     ws.set(1,0,`COMURG · Gerência de Poda e Extirpação – DIRSEN · ${periodo} · ${escopo}`,S.sub).fill(1,1,ncol-1,S.sub).merge(1,0,1,ncol-1).h(1,20);
-    ws.set(2,0,`Gerado em ${now.toLocaleDateString("pt-BR")} às ${now.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})} por ${sessao?.nome||"—"} · app Programação GPE`,S.meta).fill(2,1,ncol-1,S.meta).merge(2,0,2,ncol-1).h(2,16);
+    ws.set(2,0,`Gerado em ${now.toLocaleDateString("pt-BR")} às ${now.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})} por ${sessao?.nome||"—"} · app GPE Gestão`,S.meta).fill(2,1,ncol-1,S.meta).merge(2,0,2,ncol-1).h(2,16);
   };
   const section=(ws,r,ncol,t)=>{ws.set(r,0,t,S.sec).fill(r,1,ncol-1,S.secFill).h(r,22);};
   const sheets=[];
@@ -9083,7 +9083,7 @@ async function msgImagem(r){
   const y0=y; ops.forEach(f=>f()); const fim=y; const h=fim-top+10;
   x.fillStyle=C.bg; x.fillRect(0,top,W,h+40); rr(P,top,CW,h,24,C.card,C.line); y=y0; ops.forEach(f=>f());
   y=top+h+30;
-  x.textAlign="center"; x.fillStyle=C.mut; x.font=`500 22px ${BODY}`; x.fillText(`Gerado pelo app Programação GPE em ${dataBR(new Date().toISOString())} às ${horaAgora()}`,W/2,y+10); x.font=`500 19px ${BODY}`; x.fillText("Desenvolvido por Victor Ricardo Porto Alcântara",W/2,y+38); y+=28; y+=40;
+  x.textAlign="center"; x.fillStyle=C.mut; x.font=`500 22px ${BODY}`; x.fillText(`Gerado pelo app GPE Gestão em ${dataBR(new Date().toISOString())} às ${horaAgora()}`,W/2,y+10); x.font=`500 19px ${BODY}`; x.fillText("Desenvolvido por Victor Ricardo Porto Alcântara",W/2,y+38); y+=28; y+=40;
   const out=document.createElement("canvas"); out.width=W; out.height=y; out.getContext("2d").drawImage(cv,0,0); return out;
 }
 const cvBlob=cv=>new Promise(ok=>cv.toBlob(ok,"image/png"));
@@ -9149,7 +9149,7 @@ function resumoTexto(d){
   d.quebra.forEach(([n,t])=>L.push(`    • ${n} ${t}`));
   if(d.turmas.length>1){ L.push("","*Por turma* _(previsto · executado · pendente)_");
     d.turmas.forEach(t=>L.push(`${t.rf>0?"🔸":"✅"} ${t.s.id}: ${brlS(t.rp)} · ${brlS(t.re)} · ${brlS(t.rf)}`)); }
-  L.push("",`_Gerado em ${dataBR(new Date().toISOString())} às ${horaAgora()} · app Programação GPE_`);
+  L.push("",`_Gerado em ${dataBR(new Date().toISOString())} às ${horaAgora()} · app GPE Gestão_`);
   return L.join("\n");
 }
 async function resumoImagem(d){
@@ -9193,7 +9193,7 @@ async function resumoImagem(d){
       x.textAlign="left"; x.fillStyle=C.ink; fit(t.s.id,cols[1]-150-P-32,26,700,DISP); x.fillText(t.s.id,P+32,yy+40);
       x.textAlign="right"; x.font=`600 24px ${BODY}`; x.fillStyle=C.prev; x.fillText(brlS(t.rp),cols[1],yy+40); x.fillStyle=C.ok; x.fillText(brlS(t.re),cols[2],yy+40); x.fillStyle=t.rf?C.bad:C.mut; x.fillText(brlS(t.rf),cols[3],yy+40); });
     y=top+h+20; }
-  x.textAlign="center"; x.fillStyle=C.mut; x.font=`500 22px ${BODY}`; x.fillText(`Gerado pelo app Programação GPE em ${dataBR(new Date().toISOString())} às ${horaAgora()}`,W/2,y+40); x.font=`500 19px ${BODY}`; x.fillText("Desenvolvido por Victor Ricardo Porto Alcântara",W/2,y+72);
+  x.textAlign="center"; x.fillStyle=C.mut; x.font=`500 22px ${BODY}`; x.fillText(`Gerado pelo app GPE Gestão em ${dataBR(new Date().toISOString())} às ${horaAgora()}`,W/2,y+40); x.font=`500 19px ${BODY}`; x.fillText("Desenvolvido por Victor Ricardo Porto Alcântara",W/2,y+72);
   const out=document.createElement("canvas"); out.width=W; out.height=y+100; const ox=out.getContext("2d"); ox.fillStyle=C.bg; ox.fillRect(0,0,W,y+100); ox.drawImage(cv,0,0); return out;
 }
 function abrirZapResumo(){
@@ -9252,7 +9252,7 @@ function preOsTexto(m){
   const vids=Object.keys(m.midia||{}).filter(k=>/^videoDef\d*$/.test(k)&&m.midia[k]).map(k=>midLink(m.midia[k])).filter(Boolean);
   const fots=["defeito1","defeito2"].map(k=>midLink(m.midia?.[k])).filter(Boolean);
   if(vids.length||fots.length){ L.push(""); vids.forEach((u,i)=>L.push(`🎥 Vídeo ${i+1} do defeito: ${u}`)); fots.forEach((u,i)=>L.push(`📷 Foto ${i+1} do defeito: ${u}`)); }
-  L.push("","Pré-ordem gerada pelo app Programação GPE para agilizar a identificação do defeito.");
+  L.push("","Pré-ordem gerada pelo app GPE Gestão para agilizar a identificação do defeito.");
   return L.join("\n");
 }
 async function preOsImagem(m){
@@ -9275,7 +9275,7 @@ async function preOsImagem(m){
   ops.push(()=>{ x.fillStyle="#56655a"; x.font=`600 22px ${BODY}`; x.fillText("VÍDEO / FOTOS",IN,y+22); y+=34; x.fillStyle="#16231a"; x.font=`500 28px ${BODY}`; x.fillText(`${nv} vídeo(s) do defeito${window.GPE_NETLIFY?" – links na mensagem":" – assistir no app"}`,IN,y+28); y+=48; });
   const y0=y; ops.forEach(f=>f()); const h=y-top+10; x.fillStyle="#eef1ec"; x.fillRect(0,top,W,h+40);
   x.beginPath(); x.roundRect(P,top,W-2*P,h,24); x.fillStyle="#fff"; x.fill(); x.strokeStyle="#c9d1c4"; x.lineWidth=2; x.stroke(); y=y0; ops.forEach(f=>f());
-  y=top+h+34; x.textAlign="center"; x.fillStyle="#56655a"; x.font=`500 22px ${BODY}`; x.fillText(`Gerada pelo app Programação GPE em ${dataBR(new Date().toISOString())} às ${horaAgora()}`,W/2,y); x.font=`500 19px ${BODY}`; x.fillText("Desenvolvido por Victor Ricardo Porto Alcântara",W/2,y+28); y+=62;
+  y=top+h+34; x.textAlign="center"; x.fillStyle="#56655a"; x.font=`500 22px ${BODY}`; x.fillText(`Gerada pelo app GPE Gestão em ${dataBR(new Date().toISOString())} às ${horaAgora()}`,W/2,y); x.font=`500 19px ${BODY}`; x.fillText("Desenvolvido por Victor Ricardo Porto Alcântara",W/2,y+28); y+=62;
   const out=document.createElement("canvas"); out.width=W; out.height=y; out.getContext("2d").drawImage(cv,0,0); return out;
 }
 async function preOsMarcar(m,como){
@@ -9397,7 +9397,7 @@ async function txtImagem(txt){
   y+=30; x.beginPath(); x.roundRect(P-8,y,W-2*P+16,corpoH+50,24); x.fillStyle=C.card; x.fill(); x.strokeStyle=C.line; x.lineWidth=2; x.stroke(); y+=25;
   linhas.forEach(l=>{ if(l.gap){ y+=18; return; } const hh=l.cab?LH+10:LH; if(l.cab){ x.fillStyle="#e2f2e6"; x.fillRect(P+8,y+4,W-2*P-16,hh-6); }
     l.w.forEach(sg=>{ x.font=fnt(sg,SZ); x.fillStyle=l.cab?C.brand:sg.i?C.mut:C.ink; x.fillText(sg.t,P+20+l.ind+sg.x,y+(l.cab?37:32)); }); y+=hh; });
-  y+=50; x.textAlign="center"; x.fillStyle=C.mut; x.font=`500 22px ${BODY}`; x.fillText(`Gerado pelo app Programação GPE em ${dataBR(new Date().toISOString())} às ${horaAgora()}`,W/2,y+30); x.font=`500 19px ${BODY}`; x.fillText("Desenvolvido por Victor Ricardo Porto Alcântara",W/2,y+60);
+  y+=50; x.textAlign="center"; x.fillStyle=C.mut; x.font=`500 22px ${BODY}`; x.fillText(`Gerado pelo app GPE Gestão em ${dataBR(new Date().toISOString())} às ${horaAgora()}`,W/2,y+30); x.font=`500 19px ${BODY}`; x.fillText("Desenvolvido por Victor Ricardo Porto Alcântara",W/2,y+60);
   return cv;
 }
 function abrirZapImg(it){
@@ -9633,7 +9633,7 @@ function msgChkPend(grupos,so){
     L.push(`▫️ ${fmtDs(x.data)} ${diaDe(x.data).slice(0,3)} – checklist NÃO FEITO (${x.feitos.length} de ${x.meta} equipamento${x.meta===1?"":"s"})`);
     L.push(`      ✅ Feito: ${x.feitos.length?x.feitos.join(", "):"nenhum"}`);
     L.push(`      ❌ Falta: ${x.faltam?.length?x.faltam.join(", "):(x.meta-x.feitos.length)+" equipamento"+(x.meta-x.feitos.length===1?"":"s")}`); }); });
-  L.push("","Regularize *hoje* na aba *Checklist* do app *Programação GPE*:","https://gpe-dirsen.netlify.app","","Obrigado.",`${sessao?.nome||""} · ${cargoNome(acesso?.[sessao?.id]||sessao)||""}`);
+  L.push("","Regularize *hoje* na aba *Checklist* do app *GPE Gestão*:","https://gpe-dirsen.netlify.app","","Obrigado.",`${sessao?.nome||""} · ${cargoNome(acesso?.[sessao?.id]||sessao)||""}`);
   return L.join("\n");
 }
 function abrirCobrancaChk(){
@@ -9816,7 +9816,7 @@ function msgSemBaixa(lista,so){
       :`Senhores supervisores, há *${n} ${n===1?"serviço programado":"serviços programados"} sem baixa* no app.`,
     `Informe *hoje* se cada um foi *executado*, *executado parcialmente* ou *não executado – remarcado*.`];
   lista.forEach(({s,rs})=>{ const nm=nomeSupDe(s.id); L.push("",`*${s.id}${nm&&nm!=="A DEFINIR"?" – "+nm:""}* (${rs.length})`); rs.forEach(r=>L.push(lin(r))); });
-  L.push("","Dê baixa na aba *Em aberto* do app *Programação GPE*:","https://gpe-dirsen.netlify.app","","Obrigado.",`${sessao?.nome||""} · ${cargoNome(acesso?.[sessao?.id]||sessao)||""}`);
+  L.push("","Dê baixa na aba *Em aberto* do app *GPE Gestão*:","https://gpe-dirsen.netlify.app","","Obrigado.",`${sessao?.nome||""} · ${cargoNome(acesso?.[sessao?.id]||sessao)||""}`);
   return L.join("\n");
 }
 function abrirCobrancaBaixa(){
@@ -9854,7 +9854,7 @@ function msgCobranca(so){
   GRUPOS.forEach(g=>{ const ts=pend.filter(s=>s.grupo===g); if(!ts.length) return; L.push("",`*${g}*`);
     ts.forEach(s=>{ const t=proxSemTurma(s.id,PX), nm=nomeSupDe(s.id), quem=nm&&nm!=="A DEFINIR"?" – "+nm:"";
       L.push(`🔴 ${s.id}${quem}: ${t.feitos.length?`${t.feitos.length} de ${t.dias.length} dias. Faltam: ${t.falta.map(dm).join(", ")}`:`nenhum dia lançado (${t.dias.length} dias)`}`); }); });
-  L.push("","Favor lançar no app *Programação GPE*, aba Programar:","https://gpe-dirsen.netlify.app","",`Obrigado.`,`${sessao?.nome||""} · ${cargoNome(acesso?.[sessao?.id]||sessao)||""}`);
+  L.push("","Favor lançar no app *GPE Gestão*, aba Programar:","https://gpe-dirsen.netlify.app","",`Obrigado.`,`${sessao?.nome||""} · ${cargoNome(acesso?.[sessao?.id]||sessao)||""}`);
   return L.join("\n");
 }
 function abrirCobranca(){
@@ -10574,7 +10574,7 @@ async function avSwReg(){ if(avReg||!("serviceWorker" in navigator)||!window.GPE
 function avResumo(tot){ const L=[]; try{ (travado()?chkObrigMeu():(podeCobrarChk()?chkObrigPend():[])).slice(0,2).forEach(x=>L.push(supNome(x.sup)+": "+chkObrigTxt(x))); }catch(e){}
   try{ const late=todos().filter(r=>!r.arquivado&&isCobra(r)&&!cancBx(r)&&(!travado()||r.supervisao===sessao.sup)).length; if(late) L.push(`${late} serviço${late===1?"":"s"} sem baixa`); }catch(e){}
   return (L.join(" · ")||"Abra o app para ver.").slice(0,180); }
-async function avNotificar(tot){ const t=`⚠ ${tot} pendência${tot===1?"":"s"} – Programação GPE`, body=avResumo(tot);
+async function avNotificar(tot){ const t=`⚠ ${tot} pendência${tot===1?"":"s"} – GPE Gestão`, body=avResumo(tot);
   avBip(); if(!("Notification" in window)||Notification.permission!=="granted") return;
   try{ const r=await avSwReg(); if(r?.showNotification){ await r.showNotification(t,{body,tag:"gpe-pend",renotify:true,requireInteraction:true,vibrate:[300,150,300],icon:LOGO_FULL}); return; } }catch(e){}
   try{ const n=new Notification(t,{body,tag:"gpe-pend",renotify:true}); n.onclick=()=>{ window.focus(); show("pend"); n.close(); }; }catch(e){} }
@@ -11486,7 +11486,7 @@ function cppListaSheet(tipo){ const host=$("#sheetHost"); let L, tit, linhaExtra
   else { const C=cppCorrigir(); L=C.map(x=>x[0]); const mm=new Map(C.map(x=>[x[0].id,x[1]])); tit="⚠ Processos para corrigir"; linhaExtra=r=>`<br><span style="color:#b42318">${esc(mm.get(r.id).join(" · "))}</span></small>`; }
   // gerência: atrasados agrupados por supervisão, com cobrança no WhatsApp
   let grupos=""; if(tipo==="atr"&&isGerente()){ const g={}; L.forEach(r=>{ const k=r.equipe?cppEqGrupo(r.equipe):"SEM SUPERVISÃO"; (g[k]=g[k]||[]).push(r); });
-    grupos=Object.entries(g).sort((a,b)=>b[1].length-a[1].length).map(([eq,rs])=>{ const txt=`*Processos atrasados – ${eq}*\n${rs.length} processo(s) passaram do prazo desde o envio:\n`+rs.slice(0,30).map((r,i)=>`${i+1}. ${(r.sistema||"")} ${r.solicitacao||r.procSec||""} – ${r.logradouro||""} (${r.setor||""}) – ${cppDiasEnv(r)} dias`).join("\n")+(rs.length>30?`\n… e mais ${rs.length-30}`:"")+`\n\nFavor executar e informar. Programação GPE.`;
+    grupos=Object.entries(g).sort((a,b)=>b[1].length-a[1].length).map(([eq,rs])=>{ const txt=`*Processos atrasados – ${eq}*\n${rs.length} processo(s) passaram do prazo desde o envio:\n`+rs.slice(0,30).map((r,i)=>`${i+1}. ${(r.sistema||"")} ${r.solicitacao||r.procSec||""} – ${r.logradouro||""} (${r.setor||""}) – ${cppDiasEnv(r)} dias`).join("\n")+(rs.length>30?`\n… e mais ${rs.length-30}`:"")+`\n\nFavor executar e informar. GPE Gestão.`;
       const sups=(typeof SUPS!=="undefined"?SUPS:[]).filter(s=>cppEqDaSup(eq,s.id)), bts=sups.map(s=>{ const z=typeof zapSup==="function"?zapSup(s.id):null; return `<a class="btn sec" href="${zapLink(z?.num||"",txt)}" target="_blank" rel="noopener" style="text-decoration:none;min-height:38px;display:inline-flex;align-items:center">💬 Cobrar ${esc(s.id.replace(eq,"").trim()||s.id)}${z?" ("+esc(z.nome)+")":""}</a>`; }).join("")||`<a class="btn sec" href="${zapLink("",txt)}" target="_blank" rel="noopener" style="text-decoration:none">💬 Cobrar no WhatsApp</a>`;
       return `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 10px;margin:6px 0;border-radius:10px;background:var(--sunk)"><b>${esc(eq)} · ${rs.length} atrasado${rs.length===1?"":"s"}</b><span style="display:flex;gap:6px;flex-wrap:wrap">${bts}</span></div>`; }).join(""); }
   const vis=L.slice(0,1500);
