@@ -3111,7 +3111,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.18y";
+const APP_VERSAO="2026.11.18z";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -10328,18 +10328,22 @@ function acompHtml(F){
   const semP=[], folg=[];
   sups.forEach(s=>{ const rs=base.filter(r=>r.supervisao===s.id).sort((a,b)=>(a.data||"").localeCompare(b.data||"")||ord.indexOf(stKey(a))-ord.indexOf(stKey(b)));
     const dTrab=dias.filter(d=>trabalha(s.id,d)), dPass=dTrab.filter(d=>d<=hj);
-    if(!rs.length){ (dTrab.length?semP:folg).push(s.id); return; }
+    // serviço extra / emergencial / sem programação da turma no período (o que foi feito fora da programação)
+    const fx=todos().filter(r=>!r.arquivado&&r.supervisao===s.id&&(r.ocorrencia||r.avulso)&&dias.includes(r.dataExec||r.data)).concat(rs.filter(r=>r.extra));
+    const rsP=rs.filter(r=>!r.extra);
+    if(!rs.length&&!fx.length){ (dTrab.length?semP:folg).push(s.id); return; }
     const md=metaDe(s.id), mP=md*Math.max(1,dTrab.length), mE=md*Math.max(1,dPass.length);
-    const pd=rs.reduce((a,r)=>a+receitaDe(prevQ(r)),0), ex=rs.reduce((a,r)=>a+execRec(r),0);
+    const pd=rsP.reduce((a,r)=>a+receitaDe(prevQ(r)),0), exP=rsP.reduce((a,r)=>a+execRec(r),0), exF=fx.reduce((a,r)=>a+execRec(r),0), ex=exP+exF;
+    const nOc=fx.filter(r=>r.ocorrencia).length, nEx=fx.length-nOc, peP=Math.round(exP/mE*100), peF=Math.round(ex/mE*100)-peP;
     const pp=Math.round(pd/mP*100), pe=Math.round(ex/mE*100), kp=pp>=100?"ok":pp>=70?"wr":"bd", ke=pe>=100?"ok":pe>=70?"wr":"bd", mostraE=ex||dias[0]<=hj;
     const st={}; rs.forEach(r=>{const k=stKey(r); st[k]=(st[k]||0)+1;});
     const sel=acSel&&acSel.s===s.id&&acSel.d===dSel;
-    h+=`<button type="button" class="acrow" data-ac="${esc(s.id)}|${dSel}" aria-pressed="${sel}" title="Programado ${brl(pd)} · produzido ${brl(ex)} · meta ${brl(umDia?md:mP)}${umDia?"":" ("+dTrab.length+" dias de trabalho)"}"><div class="t"><b>${esc(s.id)}</b><small>${esc(s.enc||"")} · ${rs.length} serviço${rs.length===1?"":"s"}${umDia?"":" · "+dTrab.length+" dias de trabalho"}</small></div>
+    h+=`<button type="button" class="acrow" data-ac="${esc(s.id)}|${dSel}" aria-pressed="${sel}" title="Programado ${brl(pd)} · produzido ${brl(ex)} (programado ${brl(exP)} + fora da programação ${brl(exF)}) · meta ${brl(umDia?md:mP)}${umDia?"":" ("+dTrab.length+" dias de trabalho)"}"><div class="t"><b>${esc(s.id)}</b><small>${esc(s.enc||"")} · ${rsP.length} programado${rsP.length===1?"":"s"}${fx.length?` · <span style="color:#c96a00;font-weight:700">${fx.length} extra${fx.length===1?"":"s"}</span>`:""}${umDia?"":" · "+dTrab.length+" dias de trabalho"}</small></div>
       <div class="hl"><span>Programado <small>${brlS(pd)}</small></span><b class="${kp}">${pp}%</b></div><div class="hb"><i style="width:${W(pp)}%;background:#9fb3a5"></i><span class="m"></span></div>
-      ${mostraE?`<div class="hl"><span>Produzido <small>${brlS(ex)}${!umDia&&dPass.length<dTrab.length?" · meta até hoje ("+dPass.length+" dias)":""}</small></span><b class="${ke}">${pe}%</b></div><div class="hb"><i style="width:${W(pe)}%;background:${cor(ke)}"></i><span class="m"></span></div>`:`<div class="hl"><span>Produzido</span><b style="color:var(--muted)">ainda não</b></div>`}
-      <div class="st">${["SIM","PARCIAL","ATRASADO","NÃO","PROGRAMADO"].filter(k=>st[k]).map(k=>`<span><em style="color:${ICO[k][1]}">${ICO[k][0]} ${st[k]}</em> ${ICO[k][2]}</span>`).join("")}</div></button>`;
+      ${mostraE?`<div class="hl"><span>Produzido <small>${brlS(ex)}${exF?` = <b style="color:${cor(ke)}">${brlS(exP)} programado</b> + <b style="color:#c96a00">${brlS(exF)} extra</b>`:""}${!umDia&&dPass.length<dTrab.length?" · meta até hoje ("+dPass.length+" dias)":""}</small></span><b class="${ke}">${pe}%</b></div><div class="hb"><i style="width:${W(peP)}%;background:${cor(ke)}${exF?";border-radius:6px 0 0 6px":""}"></i>${exF?`<i style="left:${W(peP)}%;width:${Math.max(0,W(peP+peF)-W(peP))}%;background:#e8913a;border-radius:${peP?"0 6px 6px 0":"6px"}"></i>`:""}<span class="m"></span></div>`:`<div class="hl"><span>Produzido</span><b style="color:var(--muted)">ainda não</b></div>`}
+      <div class="st">${["SIM","PARCIAL","ATRASADO","NÃO","PROGRAMADO"].filter(k=>st[k]).map(k=>`<span><em style="color:${ICO[k][1]}">${ICO[k][0]} ${st[k]}</em> ${ICO[k][2]}</span>`).join("")}${nEx?`<span><em style="color:#c96a00">➕ ${nEx}</em> serviço${nEx===1?"":"s"} extra</span>`:""}${nOc?`<span><em style="color:#b42318">🚨 ${nOc}</em> emergencia${nOc===1?"l":"is"}</span>`:""}</div></button>`;
     if(sel) h+=`<div class="adet" style="margin:-4px 0 10px">${rs.map(r=>{const k=stKey(r);return `<button type="button" class="it" data-acid="${esc(r.id)}"><span class="lc">${umDia?"":`<b>${fmtD(r.data).slice(0,5)}</b> · `}${esc(r.bairro)} — ${esc(r.logradouro)}</span><span class="pill ${k}">${ST_NOME[k]}</span>
-        <span class="mt">${esc(r.equipe||"")} · previsto ${brl(receitaDe(prevQ(r)))}${k==="SIM"||k==="PARCIAL"?" · executado "+brl(execRec(r)):""}${k==="NÃO"?(r.outraEquipe?" · "+esc(outraTxt(r)):" · "+remTxt(r)+(r.motivo?" · "+esc(r.motivo):"")):""}${r.impactoQueda?" · afetado por queda":""}</span></button>`}).join("")}</div>`;
+        <span class="mt">${esc(r.equipe||"")} · previsto ${brl(receitaDe(prevQ(r)))}${k==="SIM"||k==="PARCIAL"?" · executado "+brl(execRec(r)):""}${k==="NÃO"?(r.outraEquipe?" · "+esc(outraTxt(r)):" · "+remTxt(r)+(r.motivo?" · "+esc(r.motivo):"")):""}${r.impactoQueda?" · afetado por queda":""}</span></button>`}).join("")}${fx.filter(r=>!rs.includes(r)).length?`<div style="margin:8px 0 4px;font-weight:700;color:#c96a00">Fora da programação</div>`:""}${fx.filter(r=>!rs.includes(r)).map(r=>`<button type="button" class="it" data-acid="${esc(r.id)}"><span class="lc">${umDia?"":`<b>${fmtD(r.dataExec||r.data).slice(0,5)}</b> · `}${esc(r.bairro||"")} — ${esc(r.logradouro||"")}</span><span class="pill" style="background:${r.ocorrencia?"#fdecea;color:#b42318":"#fff1e0;color:#a85a00"}">${r.ocorrencia?"EMERGENCIAL":r.extra?"EXTRA":"SEM PROGRAMAÇÃO"}</span><span class="mt">${esc(r.equipe||"")} · executado ${brl(execRec(r))}${r.extra?.origem?" · "+esc(r.extra.origem):""}</span></button>`).join("")}</div>`;
   });
   if(!base.length) h+=`<div class="dempty">Nenhum serviço programado ${umDia?"neste dia":"neste período"}.${!umDia?" Se for um período antigo, use “Carregar histórico anterior” na Evolução.":""}</div>`;
   if(semP.length) h+=`<div class="acrow vz"><div class="t"><b style="font-size:13px">Sem programação (${semP.length})</b></div><small style="color:var(--muted);font-size:12px">${semP.map(esc).join(" · ")}</small></div>`;
