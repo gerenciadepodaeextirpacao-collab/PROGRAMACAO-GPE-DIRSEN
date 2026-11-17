@@ -2902,7 +2902,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.19m";
+const APP_VERSAO="2026.11.19n";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -11250,7 +11250,7 @@ limpar("prog"); ajudaMontar(); show(sessao?"inicio":ls.get("gpe_tab","campo")); 
   }, err=>{});
   db.collection(ORC_COL).onSnapshot(snap=>{ orcs=snap.docs.map(d=>({...d.data(),id:d.id})); try{ if(curView==="orc") renderOrc(); }catch(e){} }, err=>{});
   db.collection(MAN_COL).where("data",">=",MAN_CORTE).onSnapshot(snap=>{ mans=snap.docs.map(d=>({...d.data(),id:d.id})); try{renderChk();renderChkGraf()}catch(e){} }, err=>{});
-  db.collection(ASS_COL).onSnapshot(snap=>{ assins={}; const et={}; const cd={}; const cp={}; snap.docs.forEach(d=>{ if(d.id.startsWith("esc_")) et[d.id]=d.data(); else if(d.id.startsWith("canc_")) cd[d.id]=d.data(); else if(d.id.startsWith("ctp_")) cp[d.id]=d.data(); else assins[d.id]=d.data(); }); ctpDocs=cp; try{ cppRecalc(); }catch(e){} escTurmas=et; escMesclar(); cancDocs=cd; cancMesclar(); setTimeout(()=>{ try{ cfgLimpar(); }catch(e){} },8000); equipAplicar(); assIniLembrar(); try{ cfgLimpar(); }catch(e){} if(sessao?.perfil==="fiscal"||PERF_ABAIXO.includes(sessao?.perfil)){ try{applyPerms()}catch(e){} } try{renderAll()}catch(e){} }, err=>{});
+  db.collection(ASS_COL).onSnapshot(snap=>{ assins={}; const et={}; const cd={}; const cp={}; snap.docs.forEach(d=>{ if(d.id.startsWith("esc_")) et[d.id]=d.data(); else if(d.id.startsWith("canc_")) cd[d.id]=d.data(); else if(d.id.startsWith("ctp_")) cp[d.id]=d.data(); else assins[d.id]=d.data(); }); ctpDocs=cp; try{ cppAgendar(); }catch(e){} escTurmas=et; escMesclar(); cancDocs=cd; cancMesclar(); setTimeout(()=>{ try{ cfgLimpar(); }catch(e){} },8000); equipAplicar(); assIniLembrar(); try{ cfgLimpar(); }catch(e){} if(sessao?.perfil==="fiscal"||PERF_ABAIXO.includes(sessao?.perfil)){ try{applyPerms()}catch(e){} } try{renderAll()}catch(e){} }, err=>{});
   db.collection(COL).where("status","==","PROGRAMADO").onSnapshot(snap=>{
     pendentes=snap.docs.map(d=>({...d.data(),id:d.id})); mergeRegs(); renderAll();
   }, err=>{});
@@ -11344,7 +11344,7 @@ async function cppGrava(id,d,del){ if(!ctpEdita()||(del&&ctpMeu()!=="tudo")) thr
   const prev=cppMap.get(id)||{};
   if(dd&&!del){ for(const f of ["dtReceb","dtEnvio","dtRetorno","dtExec","dtLanc","dtBaixa"]) if(dd[f]&&dd[f]!==prev[f]&&cppDataRuim(dd[f])) throw Object.assign(new Error("data"),{code:"dados",msgUser:"Data impossível em "+({dtReceb:"recebimento",dtEnvio:"envio",dtRetorno:"retorno",dtExec:"execução",dtLanc:"lançamento",dtBaixa:"baixa"})[f]+" ("+dd[f]+"): confira o ano. Não pode ser no futuro nem antes de 2015."});
     const k=cppDig(dd.solicitacao); if(!cppRaw.has(id)&&k){ const dup=[...cppMap.values()].find(x=>cppDig(x.solicitacao)===k); if(dup&&!(await cppSimNao(`Já existe o processo <b>${esc((dup.sistema||"")+" "+(dup.solicitacao||""))}</b> no controle (${esc([dup.logradouro,dup.setor].filter(Boolean).join(" – "))} · ${esc(dup.equipe||"")}). Lançar outro com o mesmo número?`))) throw Object.assign(new Error("dup"),{code:"dados",msgUser:"Processo não lançado: o número já existe no controle."}); } }
-  if(dd&&!del) ["fechamento","protBaixa"].forEach(x=>{ if(dd[x]===undefined&&prev[x]!==undefined) dd[x]=prev[x]; });
+  if(dd&&!del) ["fechamento","protBaixa","loteBaixa"].forEach(x=>{ if(dd[x]===undefined&&prev[x]!==undefined) dd[x]=prev[x]; });
   if(!del&&dd&&((dd.dtExec&&!prev.dtExec)||(dd.dtRetorno&&!prev.dtRetorno))){ dd=await cppConfirmar(id,dd,prev); if(!dd) throw Object.assign(new Error("Fechamento cancelado"),{code:"cancelled"}); }
   const doc={d:dd,del:!!del,em:agora,por:sessao.nome||"",uid:sessao.id,log:[...(ant.log||[]),{em:agora,por:sessao.nome||"",acao:del?"Excluiu":ant.d||cppBase?.some(r=>r.id===id)?"Alterou":"Lançou"}].slice(-30)};
   await db.collection(ASS_COL).doc(k).set(doc); ctpDocs[k]=doc; cppRecalc(); }
@@ -11455,9 +11455,34 @@ function cppListaSheet(tipo){ const host=$("#sheetHost"); let L, tit, linhaExtra
   host.innerHTML=`<div class="sheet" id="sh"><div class="panel" role="dialog" aria-label="${esc(tit)}">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:21px">${tit} (${L.length})</b><button type="button" class="btn sec" id="clX" style="min-height:40px;padding:0 14px">Fechar</button></div>
     ${tipo==="fbx"?`<p class="note" style="margin:0">Lista de trabalho do cadastrador, da finalização mais recente para a mais antiga. A <b>data da finalização</b> é a data da <b>execução</b> quando foi executado, ou a data do <b>retorno</b> quando foi <b>finalizado sem execução</b>. Dê a baixa no INTRANET/SEI e depois abra o processo e assine o fechamento.</p>`:""}
-    ${grupos}
+    ${grupos}${tipo==="fbx"&&ctpMeu()==="tudo"&&!soLeitura()?cppLoteHtml(L):""}
     <div>${vis.map(r=>`<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)"><div style="min-width:0">${nm(r)}${linhaExtra(r)}</div>${ctpPode()&&cppFrame?`<button type="button" class="btn ${tipo==="cor"?"pri":"sec"}" data-cppab="${esc(r.id)}" style="min-height:38px">${tipo==="cor"?"✏ Abrir e corrigir":"Abrir"}</button>`:""}</div>`).join("")||`<p class="note">Nenhum processo.</p>`}${L.length>vis.length?`<p class="note">… e mais ${L.length-vis.length}. Use os filtros da aba Processos.</p>`:""}</div></div></div>`;
+  if(tipo==="fbx") cppLoteLigar(L);
   $("#clX").onclick=()=>host.innerHTML=""; $("#sh").onclick=e=>{ if(e.target.id==="sh") host.innerHTML=""; const a=e.target.closest("[data-cppab]"); if(a) cppAbrirNoQuadro(a.dataset.cppab,tipo==="cor"); }; }
+// ===== baixa em lote: finalizados sem execução e/ou executados até hoje, sem data da baixa =====
+const cppLoteSel=(L,t)=>L.filter(r=>{ const fim=String(cppFimData(r)).slice(0,10); if(!(r.dtExec||r.dtRetorno)||r.dtBaixa||cppDataRuim(fim)||fim>hoje()) return false; return t==="fin"?(!r.dtExec&&!!r.dtRetorno):t==="exe"?!!r.dtExec:true; });
+function cppLoteHtml(L){ const nf=cppLoteSel(L,"fin").length, ne=cppLoteSel(L,"exe").length, P=["JOAO PAULO","ROSANGELA FERREIRA","NUBIA ROSA","VICTOR PORTO","ANDRE MOREIRA","MAYKON SCHIMIDT","CRISTIANO","KELLY"];
+  return `<details class="card" style="margin:8px 0;padding:10px 12px;border:2px solid #c96a00;border-radius:12px"><summary style="cursor:pointer;font-weight:800">📦 Baixar em lote <small style="font-weight:600;color:var(--muted)">(${nf} finalizados sem execução · ${ne} executados)</small></summary>
+    <p class="note" style="margin:6px 0">Grava a <b>data da baixa</b> e <b>quem baixou</b> em todos os processos escolhidos que já foram finalizados até hoje e ainda estão sem baixa. Use só depois de dar a baixa deles no INTRANET/SEI.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:4px 12px">
+      <label class="f">Quais processos<select id="lbTipo"><option value="fin">Finalizados sem execução (${nf})</option><option value="exe">Executados (${ne})</option><option value="tod">Todos (${nf+ne})</option></select></label>
+      <label class="f">Baixado por<select id="lbPor">${P.map(x=>`<option${x==="JOAO PAULO"?" selected":""}>${x}</option>`).join("")}</select></label>
+      <label class="f">Data da baixa<input type="date" id="lbDt" value="${hoje()}" max="${hoje()}"></label>
+      <label class="f">Sua senha (assinatura)<input type="password" id="lbSn" autocomplete="current-password"></label></div>
+    <div class="err" id="lbErr" hidden></div><button type="button" class="btn pri" id="lbOk" style="width:100%;margin-top:6px">📦 Baixar ${nf} processos</button></details>`; }
+function cppLoteLigar(L){ const t=$("#lbTipo"), ok=$("#lbOk"); if(!t||!ok) return; const n=()=>cppLoteSel(L,t.value).length; t.onchange=()=>{ ok.textContent=`📦 Baixar ${n()} processos`; };
+  ok.onclick=async()=>{ const er=$("#lbErr"), err=x=>{ er.textContent=x; er.hidden=false; }; er.hidden=true;
+    const sel=cppLoteSel([...cppMap.values()].filter(r=>L.some(x=>x.id===r.id)),t.value), por=$("#lbPor").value, dt=$("#lbDt").value, sn=$("#lbSn").value;
+    if(!sel.length) return err("Nenhum processo para baixar com essa escolha."); if(!dt||dt>hoje()) return err("Data da baixa inválida."); if(!sn) return err("Digite a sua senha para assinar.");
+    if(!ok.dataset.conf){ ok.dataset.conf="1"; ok.textContent=`Confirmar: baixar ${sel.length} processos em nome de ${por} com data ${fmtD(dt)}`; return; }
+    ok.disabled=true; ok.textContent="Conferindo a senha…"; let okS=false; try{ okS=await senhaConfere(sessao.id,sn); }catch(x){} if(!okS){ ok.disabled=false; delete ok.dataset.conf; ok.textContent=`📦 Baixar ${n()} processos`; return err("Senha não confere."); }
+    const em=new Date().toISOString(), lote="L"+Date.now().toString(36); let feitos=0, falhas=0;
+    for(const r of sel){ const k="ctp_"+r.id, ant=ctpDocs[k]||{}, dd={...r}; ["id","_b","_auto","_execApp","_vistJa","shard","_c"].forEach(x=>delete dd[x]);
+      Object.assign(dd,{dtBaixa:dt,baixadoPor:por,updatedAt:Date.now(),loteBaixa:{lote,por:sessao.nome||"",uid:sessao.id,em,como:r.dtExec?"EXECUTADO":"FINALIZADO SEM EXECUÇÃO"}});
+      const doc={d:dd,del:false,em,por:sessao.nome||"",uid:sessao.id,log:[...(ant.log||[]),{em,por:sessao.nome||"",acao:`Baixa em lote (${por}, ${fmtD(dt)})`}].slice(-30)};
+      let t2=0; for(;;){ try{ await db.collection(ASS_COL).doc(k).set(doc); ctpDocs[k]=doc; feitos++; break; }catch(x){ if(++t2>=3){ falhas++; break; } await new Promise(z=>setTimeout(z,1200)); } }
+      if(feitos%10===0) ok.textContent=`Baixando… ${feitos} de ${sel.length}`; }
+    cppRecalc(); $("#sheetHost").innerHTML=""; toast(`${feitos} processo${feitos===1?"":"s"} baixado${feitos===1?"":"s"} em nome de ${por} (${fmtD(dt)})${falhas?` · ${falhas} não gravaram (tente de novo)`:""}.`,8000); }; }
 let _cppBarOuv=false;
 function cppBarAtualiza(){ const b=$("#cppBar"); if(b) b.innerHTML=cppBarHtml(); }
 async function renderCtp(){ const host=$("#ctpRoot"); if(!host) return;
