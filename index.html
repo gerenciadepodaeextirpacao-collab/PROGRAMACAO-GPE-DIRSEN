@@ -2909,7 +2909,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.20n";
+const APP_VERSAO="2026.11.20o";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -5146,6 +5146,27 @@ function montar(root) {
       <table style="width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:12px"><thead><tr><th style="${th}">Total por pessoa</th><th style="${th};text-align:right">Qtd.</th></tr></thead><tbody>${tp.map(([nm, q]) => `<tr><td style="${td}">${esc(nm)}</td><td style="${td};text-align:right"><b>${q}</b></td></tr>`).join("")}</tbody></table>
       <table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr><th style="${th}">Dia da baixa</th><th style="${th}">Quem baixou</th><th style="${th};text-align:right">Qtd.</th></tr></thead><tbody>${linhas}</tbody>
       <tfoot><tr><td colspan="2" style="${td};background:#e3ece0"><b>Total</b></td><td style="${td};background:#e3ece0;text-align:right"><b>${L.length}</b></td></tr></tfoot></table></div></div>`; }
+  // ----- as duas baixas juntas (sistema + Urbantrim): por dia e por quem baixou -----
+  function ctlAmbDados() { const A = ctlItens("bx"), B = ctlItens("urb"), dias = {}, pes = {};
+    const add = (x, k) => { const d = (dias[x.dia] = dias[x.dia] || {}), o = (d[x.por] = d[x.por] || { bx: 0, urb: 0 }); o[k]++; const P = (pes[x.por] = pes[x.por] || { bx: 0, urb: 0 }); P[k]++; };
+    A.forEach((x) => add(x, "bx")); B.forEach((x) => add(x, "urb"));
+    return { A, B, dias, tp: Object.entries(pes).sort((a, b) => b[1].bx + b[1].urb - (a[1].bx + a[1].urb)) }; }
+  function ctlAmbLinhas(dias, td) { return Object.keys(dias).sort().reverse().map((d) => { const P = Object.entries(dias[d]).sort((a, b) => b[1].bx + b[1].urb - (a[1].bx + a[1].urb)), tb = P.reduce((a, x) => a + x[1].bx, 0), tu = P.reduce((a, x) => a + x[1].urb, 0);
+      return P.map(([nm, o], i) => `<tr${!td && i === 0 ? ' style="border-top:2px solid var(--line,#ddd)"' : ""}>${i === 0 ? `<td rowspan="${P.length}" style="${td ? td + ";" : ""}white-space:nowrap;vertical-align:top"><b>${fdD(d)}</b> ${td ? dwD(d) : `<small>${dwD(d)}</small>`}<br><small style="color:#5b6a5f">${tb} sistema · ${tu} Urbantrim</small></td>` : ""}<td${td ? ` style="${td}"` : ""}>${esc(nm)}</td><td style="${td ? td + ";" : ""}text-align:right">${o.bx || "–"}</td><td style="${td ? td + ";" : ""}text-align:right">${o.urb || "–"}</td><td style="${td ? td + ";" : ""}text-align:right"><b>${o.bx + o.urb}</b></td></tr>`).join(""); }).join(""); }
+  function ctlAmbHtml() { const { A, B, dias, tp } = ctlAmbDados(); if (!A.length && !B.length) return ""; S.ctlAb = S.ctlAb || {}; const nd = Object.keys(dias).length;
+    return `<details class="vp-card" style="padding:10px 14px"${S.ctlAb.amb ? " open" : ""} data-ctlab="amb"><summary><b>📊 Resumo das baixas – sistema e Urbantrim</b> <span class="vp-msg">${A.length} no sistema · ${B.length} no Urbantrim · ${nd} ${nd === 1 ? "dia" : "dias"} · ${tp.length} ${tp.length === 1 ? "pessoa" : "pessoas"}</span></summary>
+      <p style="margin:10px 0 4px;font-weight:700">Quem baixou quanto</p>
+      <div style="display:grid;gap:6px;margin-bottom:12px">${tp.map(([nm, o]) => `<div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;padding:8px 12px;border:1px solid var(--line,#ddd);border-left:4px solid #0f870c;border-radius:10px"><b style="flex:1 1 180px;min-width:0">${esc(nm)}</b><span><b style="font-size:18px;color:#005f27">${o.bx}</b> no sistema</span><span><b style="font-size:18px;color:#0f870c">${o.urb}</b> no Urbantrim</span><span class="vp-msg"><b>${o.bx + o.urb}</b> no total</span></div>`).join("")}</div>
+      <p style="margin:6px 0 4px;font-weight:700">Por dia</p>
+      <div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:14px"><thead><tr><th style="text-align:left">Dia da baixa</th><th style="text-align:left">Quem baixou</th><th style="text-align:right">No sistema</th><th style="text-align:right">No Urbantrim</th><th style="text-align:right">Total</th></tr></thead><tbody>${ctlAmbLinhas(dias)}</tbody>
+      <tfoot><tr style="border-top:2px solid var(--line,#ddd)"><td colspan="2"><b>Total</b></td><td style="text-align:right"><b>${A.length}</b></td><td style="text-align:right"><b>${B.length}</b></td><td style="text-align:right"><b>${A.length + B.length}</b></td></tr></tfoot></table></div>
+      <div class="vp-row" style="margin-top:8px"><button class="vp-btn" data-ctlpdf="amb">📄 Baixar em PDF</button><button class="vp-btn" data-ctlimg="amb">🖼 Baixar em imagem</button>${A.length ? `<button class="vp-btn" data-ctlxls="bx">⬇ Excel – sistema</button>` : ""}${B.length ? `<button class="vp-btn" data-ctlxls="urb">⬇ Excel – Urbantrim</button>` : ""}</div></details>`; }
+  function ctlAmbDoc() { const { A, B, dias, tp } = ctlAmbDados(); const td = "padding:5px 8px;border:1px solid #d5dbd3", th = td + ";background:#1f6b3a;color:#fff;text-align:left";
+    return `<div class="fdoc lx"><style>${typeof FDOC_CSS !== "undefined" ? FDOC_CSS : ""}</style><div class="r-body">${typeof fhead === "function" ? fhead("RESUMO DAS BAIXAS", "NO SISTEMA (SEI / INTRANET / GED) E NO URBANTRIM · POR DIA E POR PESSOA") : "<h2>Resumo das baixas</h2>"}
+      <p style="margin:10px 0 6px;font-size:13px"><b>${A.length}</b> no sistema · <b>${B.length}</b> no Urbantrim · <b>${Object.keys(dias).length}</b> dias · <b>${tp.length}</b> ${tp.length === 1 ? "pessoa" : "pessoas"} · gerado em ${new Date().toLocaleString("pt-BR").slice(0, 17)}</p>
+      <table style="width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:12px"><thead><tr><th style="${th}">Total por pessoa</th><th style="${th};text-align:right">No sistema</th><th style="${th};text-align:right">No Urbantrim</th><th style="${th};text-align:right">Total</th></tr></thead><tbody>${tp.map(([nm, o]) => `<tr><td style="${td}">${esc(nm)}</td><td style="${td};text-align:right">${o.bx}</td><td style="${td};text-align:right">${o.urb}</td><td style="${td};text-align:right"><b>${o.bx + o.urb}</b></td></tr>`).join("")}</tbody></table>
+      <table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr><th style="${th}">Dia da baixa</th><th style="${th}">Quem baixou</th><th style="${th};text-align:right">No sistema</th><th style="${th};text-align:right">No Urbantrim</th><th style="${th};text-align:right">Total</th></tr></thead><tbody>${ctlAmbLinhas(dias, td)}</tbody>
+      <tfoot><tr><td colspan="2" style="${td};background:#e3ece0"><b>Total</b></td><td style="${td};background:#e3ece0;text-align:right"><b>${A.length}</b></td><td style="${td};background:#e3ece0;text-align:right"><b>${B.length}</b></td><td style="${td};background:#e3ece0;text-align:right"><b>${A.length + B.length}</b></td></tr></tfoot></table></div></div>`; }
   async function ctlXls(k) { const C = CTL[k], L = ctlItens(k).sort((a, b) => a.dia.localeCompare(b.dia)); if (!L.length) return;
     const q = (v) => { const t = String(v == null ? "" : v); return /[;"\n\r]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
     const cab = k === "bx" ? ["Dia da baixa", "Quem baixou", "Sistema", "Nº documento", "Processo", "GED", "Endereço", "Setor", "Regional", "Situação da vistoria", "Registrado em"] : ["Dia da baixa", "Quem baixou", "Assinado", "Processo", "GED", "Endereço", "Setor", "Regional", "Situação da vistoria", "Registrado em"];
@@ -5502,7 +5523,7 @@ function montar(root) {
     <div class="vp-kpi"><b style="color:var(--lf)">${c.ja_executado}</b><span>Já executados</span><em>com foto que comprova</em></div>
     <div class="vp-kpi"><b style="color:var(--bk)">${c.nao_executado}</b><span>Não executados</span><em>${A.byEq.map((x) => x.n + " " + x.q).join(" · ")}</em></div></div>
     ${graficos(A)}
-    ${qfHtml()}${ctlHtml("bx")}${ctlHtml("urb")}${c1311Html()}${typeof isGerente === "function" && isGerente() ? urbImpHtml() : ""}
+    ${qfHtml()}${ctlAmbHtml()}${c1311Html()}${typeof isGerente === "function" && isGerente() ? urbImpHtml() : ""}
     <h3>Vistorias realizadas</h3>
     ${(() => { const q = (f) => A.D.filter(f).length, sel = S.rsit || "all";
       const N = { all: d, ja_executado: c.ja_executado, nao_executado: c.nao_executado, semenv: q((p) => R(p).situacao === "nao_executado" && !R(p).envio), env: q((p) => R(p).envio && !R(p).execucao), exe: q((p) => R(p).execucao), semb: q(aguardaBx), bx: q((p) => R(p).baixa), urbcad: q(faltaUrb), urbbx: q(aguardaUrbBx), urbok: q((p) => !!R(p).urb_baixa), bxinc: q(bxIncoerente) };
@@ -5989,7 +6010,9 @@ function montar(root) {
     if (ds.nvfila) { const i = +ds.nvfila; novoForm({ file: S.pdfFila[i].file, idx: i, lido: S.pdfFila[i].lido }); S.pdfNaoAberto = 1; render(); root.querySelector("#vp-nv-endereco")?.scrollIntoView({ block: "center" }); return; }
     if (ds.ctlxls) { await ctlXls(ds.ctlxls); return; }
     if (ds.vistpdf) { await baixarFormPdf(t, vistPessoaDoc(), "vistorias-por-vistoriador-" + (S.vdia || "geral") + "-" + hoje() + ".pdf", "📄 Baixar relatório em PDF"); return; }
+    if (ds.ctlpdf === "amb") { await baixarFormPdf(t, ctlAmbDoc(), "baixas-sistema-e-urbantrim-" + hoje() + ".pdf", "Resumo das baixas"); return; }
     if (ds.ctlpdf) { await baixarFormPdf(t, ctlDoc(ds.ctlpdf), CTL[ds.ctlpdf].arq + "-" + hoje() + ".pdf", CTL[ds.ctlpdf].tit); return; }
+    if (ds.ctlimg === "amb") { await baixarDocImg(t, ctlAmbDoc(), "baixas-sistema-e-urbantrim-" + hoje() + ".png"); return; }
     if (ds.ctlimg) { await baixarDocImg(t, ctlDoc(ds.ctlimg), CTL[ds.ctlimg].arq + "-" + hoje() + ".png"); return; }
     if (ds.resmanpdf) { await baixarFormPdf(t, resumoManualDoc(), "cadastros-manuais-" + new Date().toISOString().slice(0, 10) + ".pdf", "Resumo dos cadastros manuais"); return; }
     if (ds.resmanimg) { await baixarDocImg(t, resumoManualDoc(), "cadastros-manuais-" + new Date().toISOString().slice(0, 10) + ".png"); return; }
