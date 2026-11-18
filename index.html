@@ -2909,7 +2909,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.20o";
+const APP_VERSAO="2026.11.20p";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -7873,7 +7873,7 @@ async function baixarDocImg(btn,html,nome,janela){
     const host=document.createElement("div"); host.style.cssText="position:absolute;left:-12000px;top:0;width:794px;background:#fff"; host.innerHTML=html; document.body.appendChild(host);
     const sx=scrollX, sy=scrollY; scrollTo(0,0); let cv;
     try{ const el=host.firstElementChild, H=el.scrollHeight, k=Math.max(1,Math.min(2,Math.sqrt(14e6/(794*H))));
-      cv=await html2pdf().set({html2canvas:{scale:k,backgroundColor:"#ffffff",logging:false,scrollX:0,scrollY:0,x:0,y:0,useCORS:true,windowWidth:janela||1280,...(janela?{width:janela,onclone:d=>{ try{ d.querySelectorAll(".fdoc").forEach(x=>{ x.style.margin="0"; }); }catch(e){} }}:{})}}).from(el).toCanvas().get("canvas"); }
+      cv=await html2pdf().set({html2canvas:{scale:k,backgroundColor:"#ffffff",logging:false,scrollX:0,scrollY:0,x:0,y:0,useCORS:true,windowWidth:janela||1280,width:janela||794,onclone:d=>{ try{ repaginarCopia(d); d.querySelectorAll(".fdoc").forEach(x=>{ x.style.margin="0"; }); }catch(e){} }}}).from(el).toCanvas().get("canvas"); }
     finally{ host.remove(); scrollTo(sx,sy); }
     const blob=await new Promise(ok=>cv.toBlob(ok,"image/png")), f=new File([blob],nome,{type:"image/png"});
     let ok=false; if(downloads){ try{ await downloads.save({filename:nome,data:blob}); ok=true; toast("Imagem baixada: "+nome); }catch(e){ if(e?.code==="cancelled"||e?.code==="declined") return; } }
