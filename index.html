@@ -1526,6 +1526,7 @@ body.sofiscal nav.tabs{display:none!important}
 
   <section class="card" id="subCard" hidden>
     <div class="step">Serviço feito no lugar <b>obrigatório</b></div>
+    <div id="subExtra"></div>
     <label class="ck"><input type="checkbox" id="semSub"> A equipe não executou nenhum outro serviço neste dia</label>
     <div id="subFields" style="display:grid;gap:12px">
       <div class="row2">
@@ -1865,7 +1866,8 @@ const stKey = r => r.arquivado ? "HIST" : isProg(r) ? (isLate(r)?"ATRASADO":"PRO
 const stTxt = {HIST:"Histórico (planilha)",PROGRAMADO:"Programado",ATRASADO:"Atrasado · sem baixa",SIM:"Executado",PARCIAL:"Parcial","NÃO":"Não executado"};
 const prevQ = r => r.qtdPrevista || (isProg(r) ? (r.qtd||{}) : {});
 const execQ = r => (r.status==="SIM"||r.status==="PARCIAL") ? (r.qtd||{}) : {};
-const subQ = r => (r.status==="NÃO" && r.substituto) ? (r.substituto.qtd||{}) : {};
+// serviço feito no lugar que é um serviço EXTRA já lançado: a quantidade já conta no extra, não conta de novo aqui
+const subQ = r => (r.status==="NÃO" && r.substituto && !r.substituto.extraId) ? (r.substituto.qtd||{}) : {};
 const execRec = r => receitaDe(execQ(r)) + receitaDe(subQ(r));
 
 /* ---------- capacidades ---------- */
@@ -2917,7 +2919,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.21b";
+const APP_VERSAO="2026.11.21c";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -3903,6 +3905,19 @@ $("#impList").addEventListener("change",e=>{const s=e.target.closest("[data-imp]
 $("#data").addEventListener("change",()=>{ if(form.mode==="ocorr") renderImp(); });
 // processo / O.S programado sem endereço completo: precisa de tipo e nome da via + (QD. e LT.) ou Nº para dar baixa
 function endIncompleto(r){ if(!r||!temProc(r.tipo)) return false; const t=abrevEnd(r.logradouro||""); const via=/^(R\.|AV\.|AL\.|PÇ\.|PC\.|ROD\.|TV\.|ESTR\.)\s*\S/.test(t), qdlt=/\bQD\.\s*\S/.test(t)&&/\bLT\.\s*\S/.test(t), num=/\bN[º°]\s*\d/.test(t); return !(via&&(qdlt||num)); }
+// ⚡ serviço feito no lugar = um serviço extra que já está lançado no app (mesma supervisão, perto do dia programado)
+let _subExtraId="";
+function subExtraCands(base){ if(!base) return []; const d0=new Date(base.data+"T12:00"), ok=d=>{ const x=new Date((d||"")+"T12:00"); const dd=(x-d0)/864e5; return dd>=-1&&dd<=3; };
+  const usados=new Set(todosGlobal().filter(x=>x.id!==base.id&&x.substituto?.extraId).map(x=>x.substituto.extraId));
+  return todosGlobal().filter(r=>r.extra&&r.id!==base.id&&r.supervisao===base.supervisao&&!r.arquivado&&(r.status==="SIM"||r.status==="PARCIAL")&&ok(r.dataExec||r.data)&&!usados.has(r.id))
+    .sort((a,b)=>((a.equipe||"")===(base.equipe||"")?0:1)-((b.equipe||"")===(base.equipe||"")?0:1)||String(a.dataExec||a.data).localeCompare(String(b.dataExec||b.data))); }
+function subExtraUI(base){ const h=$("#subExtra"); if(!h) return; const C=subExtraCands(base); const L=C.concat(_subExtraId&&!C.some(x=>x.id===_subExtraId)?todosGlobal().filter(x=>x.id===_subExtraId):[]);
+  if(!L.length){ h.innerHTML=""; return; }
+  h.innerHTML=`<div class="note" style="margin:0 0 4px;border:1px solid var(--line);border-left:4px solid #f37020;border-radius:12px;padding:10px 12px"><b>⚡ A equipe fez um serviço extra no lugar?</b> Escolha o extra que já está lançado e o app preenche sozinho. Ele não conta duas vezes na produção.
+    <div style="display:grid;gap:6px;margin-top:8px">${L.map(r=>`<label class="ck" style="align-items:flex-start"><input type="radio" name="subx" value="${esc(r.id)}"${_subExtraId===r.id?" checked":""}><span><b>${esc(fmtD(r.dataExec||r.data))}</b> · ${esc(r.equipe||"")} · ${esc(tipoTxt(r)||r.tipo||"")}${r.processo?" · "+esc(procNum(r)):""}<br><small>${esc(r.bairro||"")} — ${esc(r.logradouro||"")} · ${esc(qtdTxtPlano(execQ(r))||"")}</small></span></label>`).join("")}
+      <label class="ck"><input type="radio" name="subx" value=""${_subExtraId?"":" checked"}><span>Não – foi outro serviço (preencher abaixo)</span></label></div></div>`;
+  h.querySelectorAll("input[name=subx]").forEach(i=>i.onchange=()=>{ _subExtraId=i.value; const r=todosGlobal().find(x=>x.id===_subExtraId);
+    if(r){ $("#semSub").checked=false; try{ $("#semSub").dispatchEvent(new Event("change")); }catch(x){} $("#s_data").value=r.dataExec||r.data; bairroCarregar("s_bairro",r.bairro||""); endCarregar("se_",r.logradouro||""); $("#s_tipo").value=r.tipo||""; $("#s_processo").value=r.processo||""; sProcUI(); writeQ("s_",execQ(r),$("#qtdSub")); toast("Serviço extra ligado como feito no lugar."); } }); }
 function abrirBaixa(r, pre){ if(ehFiscal()&&(!fisPode("baixa")||(r&&relTem(r)))){ toast("O fiscal não dá baixa: registre as fotos do serviço (O.S / processo). A baixa é do supervisor."); return; }
   if(ehFiscal()&&r&&relTem(r)&&isProg(r)){ toast("O.S e processo: o fiscal anexa as fotos; a baixa é do supervisor."); return abrirFotosFiscal(r); }
   limpar("baixa"); form.base=r; fillCommon(r); relAlvo=""; if(relTem(r)){ relCarregar(r); relAlvo="base"; }
@@ -3928,10 +3943,11 @@ function abrirBaixa(r, pre){ if(ehFiscal()&&(!fisPode("baixa")||(r&&relTem(r))))
     if(r.pctItens||r.pctExec){ form.pctModo="pct"; form.pcts={...(r.pctItens||{})}; if(!r.pctItens){ const pv=prevQ(r); ITENS.filter(i=>+pv[i.c]).forEach(i=>form.pcts[i.c]=r.pctExec); } $("#pctVal").value=typeof r.pctExec==="number"?r.pctExec:""; }
     $("#proxData").value=r.proxData||""; setMotivo(r.motivo||"");
     { const o=r.outraEquipe; if(o){ motivoUI(); $("#oeSup").value=o.sup||""; $("#oeOutro").value=o.outro||""; $("#oeEq").value=o.equipe||""; $("#oeData").value=o.data||""; motivoUI(); } }
-    const s=r.substituto; $("#semSub").checked=!!r.semSubstituto;
+    const s=r.substituto; _subExtraId=s?.extraId||""; $("#semSub").checked=!!r.semSubstituto;
     if(s){$("#s_data").value=s.data||r.data;bairroCarregar("s_bairro",s.bairro||"");endCarregar("se_", s.logradouro||"");$("#s_tipo").value=s.tipo||"";$("#s_processo").value=s.processo||"";sProcUI();writeQ("s_",s.qtd||{},$("#qtdSub"))}
     if(r.fiscal){$("#fiscal").value=r.fiscal;$("#fiscalN").value=r.fiscal}
   }
+  try{ if(!r?.substituto) _subExtraId=""; subExtraUI(form.base||r); }catch(x){}
   modeUI(); show("form",true,"campo"); scrollTo(0,0);
 }
 
@@ -4178,13 +4194,14 @@ $("#form").addEventListener("submit", async ev=>{
       if(!sem){
         const sq=readQ("s_");
         sub={data:$("#s_data").value||base.data, bairro:$("#s_bairro").value.trim().toUpperCase(), logradouro:abrevEnd($("#s_logradouro").value), tipo:$("#s_tipo").value, processo:$("#s_processo").value.trim(), qtd:sq, receita:receitaDe(sq)};
+        { const xr=_subExtraId&&todosGlobal().find(x=>x.id===_subExtraId); if(xr){ const xq=execQ(xr); Object.assign(sub,{extraId:xr.id,data:xr.dataExec||xr.data,bairro:xr.bairro||sub.bairro,logradouro:xr.logradouro||sub.logradouro,tipo:xr.tipo||sub.tipo,processo:xr.processo||sub.processo,qtd:Object.keys(xq).length?xq:sq,receita:0,extraNum:xr.osDia?.num||""}); } }
         if(!sub.bairro||!sub.logradouro) e.push("informe bairro e logradouro do outro serviço feito no dia");
         { const ee=erroEnd(sub.logradouro,"logradouro do outro serviço"); if(ee) e.push(ee); }
         if(!sub.tipo) e.push("informe o tipo do outro serviço feito no dia");
         if(!Object.keys(sq).length) e.push("lance as quantidades do outro serviço feito no dia");
         if(errDataExec(sub.data)) e.push("a data do outro serviço não pode ser futura");
       } else if(!obs) e.push("explique nas observações por que nenhum serviço foi feito");
-      if(!ehFiscal()&&sub&&["O.S","PROCESSO"].includes(sub.tipo)){ const fz=($("#fiscalN").value||$("#fiscal").value).trim();
+      if(!ehFiscal()&&sub&&!sub.extraId&&["O.S","PROCESSO"].includes(sub.tipo)){ const fz=($("#fiscalN").value||$("#fiscal").value).trim();
         if(!sub.processo&&$("#rlProc").value.trim()) sub.processo=$("#rlProc").value.trim().toUpperCase();
         if(sub.processo&&!$("#rlProc").value.trim()) $("#rlProc").value=sub.processo;
         if(!sub.processo) e.push("informe o nº do processo / O.S do serviço feito no lugar (sai no relatório)"); else e.push(...relIdErros());
@@ -8817,7 +8834,7 @@ function listaPlanilha(rows){
   const H=["Data","Dia","Sem.","Supervisão","Supervisor","Equipe","Equipamento (veículo)","Bairro","Logradouro","Tipo / serviço","Nº processo / O.S.","Situação",...ITENS.map(i=>i.c),...ITENS.map(i=>i.c),"Receita prevista","Receita executada","Remarcado para","Motivo","Observação"];
   const NI=ITENS.length, P0=12, E0=P0+NI, R0=E0+NI, NC=H.length;
   ws.widths=[11,6,6,20,15,11,15,22,32,22,18,16,...ITENS.map(()=>7.5),...ITENS.map(()=>7.5),15,15,13,26,32];
-  ws.set(0,0,"PROGRAMAÇÃO GPE — Lista de serviços",tit).fill(0,1,NC-1,tit).merge(0,0,0,NC-1).h(0,26);
+  ws.set(0,0,"GPE GESTÃO — Lista de serviços",tit).fill(0,1,NC-1,tit).merge(0,0,0,NC-1).h(0,26);
   const filtros=[msTexto($("#fSem")),selVals("fSup").length?msTexto($("#fSup")):"Todas as turmas",selVals("fSt").length?msTexto($("#fSt")):"",selVals("fPend").length?msTexto($("#fPend")):"",$("#fTxt").value.trim()?"busca: "+$("#fTxt").value.trim():""].filter(Boolean).join(" · ");
   ws.set(1,0,`COMURG · Gerência de Poda e Extirpação – ${escDirop()?"DIROP":"DIRSEN"} · ${filtros} · ${rows.length} serviço(s) · gerado em ${dataBR(new Date().toISOString())} ${horaAgora()}`,sub).fill(1,1,NC-1,sub).merge(1,0,1,NC-1);
   ws.set(3,P0,"QUANTIDADE PREVISTA",thP).fill(3,P0+1,E0-1,thP).merge(3,P0,3,E0-1); ws.set(3,E0,"QUANTIDADE EXECUTADA",thE).fill(3,E0+1,R0-1,thE).merge(3,E0,3,R0-1);
@@ -8838,7 +8855,7 @@ function listaPlanilha(rows){
   ws.freeze={r:hr+1,c:4}; ws.filter=`A${hr+1}:${C(NC-1)}${Math.max(last,hr+1)+1}`; ws.titles=[hr,hr+1];
   // aba Resumo de tudo (primeira aba)
   const rs=XL.Sheet("Resumo"); rs.tab=G; rs.widths=[30,34,14,14,14,14,14,14,14,16,16]; const NR=11;
-  rs.set(0,0,"PROGRAMAÇÃO GPE — Resumo geral",tit).fill(0,1,NR-1,tit).merge(0,0,0,NR-1).h(0,26);
+  rs.set(0,0,"GPE GESTÃO — Resumo geral",tit).fill(0,1,NR-1,tit).merge(0,0,0,NR-1).h(0,26);
   rs.set(1,0,`COMURG · Gerência de Poda e Extirpação – ${escDirop()?"DIROP":"DIRSEN"} · ${filtros} · ${rows.length} serviço(s) · gerado em ${dataBR(new Date().toISOString())} ${horaAgora()}`,sub).fill(1,1,NR-1,sub).merge(1,0,1,NR-1);
   const pr=rows.filter(x=>!x.ocorrencia&&!x.avulso), kL=st({font:{b:1,sz:8,color:MU},border:{t:{s:"medium",c:G}}}), kV=o=>st({font:{b:1,sz:14,color:"16231A"},num:o});
   const K=[["PROGRAMADOS",pr.length,"int"],["EXECUTADOS",pr.filter(x=>x.status==="SIM").length,"int"],["PARCIAIS",pr.filter(x=>x.status==="PARCIAL").length,"int"],["NÃO EXECUTADOS",pr.filter(x=>x.status==="NÃO").length,"int"],["SEM BAIXA",pr.filter(x=>isLate(x)).length,"int"],
@@ -8973,7 +8990,7 @@ function planilhaGPE(){
     b.ep+=somaG(eq,"P")+somaG(sq,"P");b.ee+=somaG(eq,"E")+somaG(sq,"E");b.rp+=receitaDe(pq);b.re+=execRec(r);});
   const T=Object.values(B).reduce((a,b)=>{for(const k in b)a[k]=(a[k]||0)+b[k];return a},{});
   const ws=XL.Sheet("Resumo");ws.tab=G;ws.widths=[24,15,10,10,10,11,11,13,10,10,17,17];
-  const NC=12;head(ws,NC,"PROGRAMAÇÃO GPE — Relatório de Programação e Execução");
+  const NC=12;head(ws,NC,"GPE GESTÃO — Relatório de Programação e Execução");
   // indicadores (4 por linha, 3 colunas cada)
   const venc=(T.SIM||0)+(T.PARCIAL||0)+(T.NAO||0)+(T.late||0);
   const kpis=[["PROGRAMADOS",T.prog||0,S.kV,`${T.SIM||0} executados · ${T.PARCIAL||0} parciais · ${T.NAO||0} não executados`],
@@ -9043,7 +9060,7 @@ function planilhaGPE(){
   const NI=ITENS.length, B0=12, BE=B0+NI, BA=B0+2*NI, RV=B0+3*NI;
   const H2=["Data","Dia","Sem.","Supervisão","Supervisor","Equipe","Equipamento (veículo)","Bairro","Logradouro","Tipo","Nº processo","Situação",...ITENS.map(i=>i.c),...ITENS.map(i=>i.c),...ITENS.map(i=>i.c),"Receita prevista","Receita executada","Receita a executar","Executado em","Remarcado para","Motivo","Feito no lugar","Receita feito no lugar","Ocorrência","Fiscal","Lançado por","Observações"];
   w2.widths=[11,6,6,20,14,11,15,22,32,13,18,15,...ITENS.map(()=>7.5),...ITENS.map(()=>7.5),...ITENS.map(()=>7.5),15,15,15,12,13,26,32,15,18,18,16,34];
-  const NC2=H2.length;head(w2,NC2,"PROGRAMAÇÃO GPE — Serviços programados e executados");
+  const NC2=H2.length;head(w2,NC2,"GPE GESTÃO — Serviços programados e executados");
   // linha de grupo sobre os blocos de itens
   const gStyle=(fill,color)=>st({font:{b:1,sz:10,color},fill,border:{l:{s:"medium",c:"FFFFFF"},r:{s:"medium",c:"FFFFFF"}},align:{h:"center"}});
   const gP=gStyle("86B6EF","0D366B"), gE=gStyle("184F95","FFFFFF"), gA=gStyle("FBEBCF","7A4A00"), gR=gStyle("DDE5D8","1F4D2E");
@@ -9094,7 +9111,7 @@ function planilhaGPE(){
     ...ITENS.map(i=>i.c),...ITENS.map(i=>i.c),...ITENS.map(i=>i.c),
     "Feito no lugar (local)","Tipo","Data",...ITENS.map(i=>i.c),"Receita a executar","Receita feito no lugar"];
   w3.widths=[12,20,11,34,14,28,12,...ITENS.map(()=>7.5),...ITENS.map(()=>7.5),...ITENS.map(()=>7.5),32,13,11,...ITENS.map(()=>7.5),15,15];
-  const NC3=H3.length;head(w3,NC3,"PROGRAMAÇÃO GPE — Remarcações e serviços feitos no lugar");
+  const NC3=H3.length;head(w3,NC3,"GPE GESTÃO — Remarcações e serviços feitos no lugar");
   let r3=4;
   w3.set(r3,F0,"QUANTIDADE PREVISTA",gP).fill(r3,F0+1,F1-1,gP).merge(r3,F0,r3,F1-1);
   w3.set(r3,F1,"QUANTIDADE EXECUTADA",gE).fill(r3,F1+1,F2-1,gE).merge(r3,F1,r3,F2-1);
@@ -9130,7 +9147,7 @@ function planilhaGPE(){
   if(oc.length){
     const w4=XL.Sheet("Galho e árvore caída");w4.tab="9B1F18";
     const H4=["Data","Hora","Tipo","Qtd.","Supervisão","Equipe","Local","Origem","Protocolo","Via bloqueada","Rede elétrica","Danos","Situação","Receita executada"];
-    w4.widths=[11,8,14,6,20,11,36,18,16,10,10,8,14,16];head(w4,H4.length,"PROGRAMAÇÃO GPE — Galho e árvore caída");
+    w4.widths=[11,8,14,6,20,11,36,18,16,10,10,8,14,16];head(w4,H4.length,"GPE GESTÃO — Galho e árvore caída");
     let r4=4;H4.forEach((t,c)=>w4.set(r4,c,t,S.th));w4.h(r4,30);const h4=r4;r4++;
     oc.forEach((x,i)=>{const z=i%2,o=x.ocorrencia;const [stxt,sst]=stCell(x);let c=0;const put=(v,op={})=>w4.set(r4,c++,v,cell(z,op));
       put(XL.serial(x.data),{num:"data",h:"center"});put(o.hora||"",{h:"center"});put(OC[o.tipo]||"",{b:1});put(o.qtd||1,{h:"center"});
@@ -9154,7 +9171,7 @@ $("#xlsxBtn").onclick=async()=>{
 function msgGrupo(r){
   const qs=q=>qtdTxtPlano(q);
   const sit = r.ocorrencia ? (isProg(r)?"OCORRÊNCIA REGISTRADA":"OCORRÊNCIA ATENDIDA") : r.avulso ? "SERVIÇO SEM PROGRAMAÇÃO" : r.status==="SIM"?"EXECUTADO":r.status==="PARCIAL"?"EXECUTADO PARCIAL":r.status==="NÃO"?"NÃO EXECUTADO · REMARCADO":"PROGRAMADO";
-  const L=[`*PROGRAMAÇÃO GPE — ${sit}*`,
+  const L=[`*GPE GESTÃO — ${sit}*`,
     `Data: ${fmtD(r.dataExec||r.data)} (${diaDe(r.dataExec||r.data)}) · ${semanaDe(r.dataExec||r.data)}ª semana`,
     `Equipe executora: ${r.supervisao} · ${r.equipe||""} · ${r.viatura||""}`,
     `Supervisor: ${supOf(r.supervisao)?.enc||r.encarregado||""}`,
@@ -9191,7 +9208,7 @@ async function msgImagem(r){
   // cabeçalho
   x.fillStyle="#fff"; x.fillRect(0,0,W,170);
   const lg=await logoImg(); if(lg){ const h=120,w=lg.width*h/lg.height; x.drawImage(lg,P,25,w,h); }
-  x.textAlign="right"; x.fillStyle=C.brand; x.font=`700 54px ${DISP}`; x.fillText("PROGRAMAÇÃO GPE",W-P,84);
+  x.textAlign="right"; x.fillStyle=C.brand; x.font=`700 54px ${DISP}`; x.fillText("GPE GESTÃO",W-P,84);
   x.fillStyle=C.mut; x.font=`500 25px ${BODY}`; x.fillText("Gerência de Poda e Extirpação – DIRSEN",W-P,122); x.fillText("COMURG · Goiânia",W-P,153);
   [["#f37020",0,.27],["#0d880b",.27,.72],["#005f27",.72,.89],["#3e4095",.89,1]].forEach(([c,a,b])=>{x.fillStyle=c;x.fillRect(W*a,170,W*(b-a)+1,10)});
   // faixa de situação
@@ -9301,7 +9318,7 @@ function resumoDados(){
 }
 function resumoTexto(d){
   const {K}=d, sv=n=>n+" "+(n===1?"serviço":"serviços"), av=(p,e)=>`${nf0(p+e)} ${p+e===1?"árvore":"árvores"} (${nf0(p)} podas · ${nf0(e)} extirp.)`;
-  const L=[`*📊 PROGRAMAÇÃO GPE – PREVISTO × EXECUTADO*`,`_${d.per} · ${d.esc}_`,`_Gerência de Poda e Extirpação – ${d.ger}_`,"",
+  const L=[`*📊 GPE GESTÃO – PREVISTO × EXECUTADO*`,`_${d.per} · ${d.esc}_`,`_Gerência de Poda e Extirpação – ${d.ger}_`,"",
     `🔵 *Previsto (programado): ${brl(K.Rp)}*`,`    ${sv(K.np)} · ${av(K.Pp,K.Pe)}`,"",
     `🟢 *Executado: ${brl(K.Re)}* (${d.pctE}%)`,`    ${sv(K.ne)} · ${av(K.Ep,K.Ee)}`,"",
     `🔴 *Pendente sem execução: ${brl(K.Rf)}* (${d.pctF}%)`,`    ${sv(K.nf)} · ${av(K.Fp,K.Fe)}`];
@@ -9322,7 +9339,7 @@ async function resumoImagem(d){
   x.fillStyle=C.bg; x.fillRect(0,0,W,H+400);
   x.fillStyle="#fff"; x.fillRect(0,0,W,170);
   const lg=await logoImg(); if(lg){ const h=120,w=lg.width*h/lg.height; x.drawImage(lg,P,25,w,h); }
-  x.textAlign="right"; x.fillStyle=C.brand; x.font=`700 54px ${DISP}`; x.fillText("PROGRAMAÇÃO GPE",W-P,84);
+  x.textAlign="right"; x.fillStyle=C.brand; x.font=`700 54px ${DISP}`; x.fillText("GPE GESTÃO",W-P,84);
   x.fillStyle=C.mut; x.font=`500 25px ${BODY}`; x.fillText(`Gerência de Poda e Extirpação – ${d.ger}`,W-P,122); x.fillText("COMURG · Goiânia",W-P,153);
   [["#f37020",0,.27],["#0d880b",.27,.72],["#005f27",.72,.89],["#3e4095",.89,1]].forEach(([c,a,b])=>{x.fillStyle=c;x.fillRect(W*a,170,W*(b-a)+1,10)});
   let y=180; x.fillStyle=C.brand; x.fillRect(0,y,W,150); x.textAlign="left"; x.fillStyle="#fff";
@@ -9548,7 +9565,7 @@ async function txtImagem(txt){
   const H=180+(titulo?120:0)+40+corpoH+60+110; cv.width=W; cv.height=H;
   x.fillStyle=C.bg; x.fillRect(0,0,W,H); x.fillStyle="#fff"; x.fillRect(0,0,W,170);
   const lg=await logoImg(); if(lg){ const h=120,w=lg.width*h/lg.height; x.drawImage(lg,P-8,25,w,h); }
-  x.textAlign="right"; x.fillStyle=C.brand; x.font=`700 54px ${DISP}`; x.fillText("PROGRAMAÇÃO GPE",W-P,84);
+  x.textAlign="right"; x.fillStyle=C.brand; x.font=`700 54px ${DISP}`; x.fillText("GPE GESTÃO",W-P,84);
   x.fillStyle=C.mut; x.font=`500 25px ${BODY}`; x.fillText(`Gerência de Poda e Extirpação – ${escDirop()?"DIROP":"DIRSEN"}`,W-P,122); x.fillText("COMURG · Goiânia",W-P,153);
   [["#f37020",0,.27],["#0d880b",.27,.72],["#005f27",.72,.89],["#3e4095",.89,1]].forEach(([c,a,b])=>{x.fillStyle=c;x.fillRect(W*a,170,W*(b-a)+1,10)});
   let y=180; x.textAlign="left";
@@ -9970,7 +9987,7 @@ function semBaixaPorTurma(){
 function msgSemBaixa(lista,so){
   const ger=escDirop()?"DIROP":"DIRSEN", n=lista.reduce((a,x)=>a+x.rs.length,0);
   const lin=r=>`▫️ ${fmtDs(r.data)} ${diaDe(r.data)} · ${r.bairro||""} – ${r.logradouro||""}${r.tipo?" · "+tipoTxt(r):""}${(r.historico||[]).length?" · remarcado "+r.historico.length+"x":""}`;
-  const L=[`*⚠️ SERVIÇOS SEM BAIXA – PROGRAMAÇÃO GPE*`,`_COMURG · Gerência de Poda e Extirpação – ${ger}_`,"",
+  const L=[`*⚠️ SERVIÇOS SEM BAIXA – GPE GESTÃO*`,`_COMURG · Gerência de Poda e Extirpação – ${ger}_`,"",
     so?`${nomeSupDe(so.id)&&nomeSupDe(so.id)!=="A DEFINIR"?nomeSupDe(so.id)+", o":"O"}s serviços abaixo da *${so.id}* foram programados e *ainda estão sem baixa* no app.`
       :`Senhores supervisores, há *${n} ${n===1?"serviço programado":"serviços programados"} sem baixa* no app.`,
     `Informe *hoje* se cada um foi *executado*, *executado parcialmente* ou *não executado – remarcado*.`];
