@@ -2648,6 +2648,9 @@ const histLista=()=>{ const d1=HIST.dia||hoje(), d0=HIST.dia?HIST.dia:HIST.per==
 const histHora=r=>{ const sv=r.osDia?.sv?.[r.id]; return (sv?.start||r.osDia?.start)?.em||r.fotosFiscal?.em||""; };
 const histMapa=g=>g&&g.lat!=null?`https://www.google.com/maps?q=${g.lat},${g.lng}`:"";
 // O.S sem fiscal (o supervisor fez o papel de fiscal): o supervisor da equipe (ou a gerência) pode anexar as fotos da galeria
+// foto que não abre: o supervisor do serviço (ou a gerência) recoloca da galeria
+const supFalhaPode=r=>!!r&&!!db&&!soLeitura()&&!r.arquivado&&fotoSlots(r).length>0&&(isGerente()||sessao?.perfil==="coordenador"||(["supervisor","supervisor1"].includes(sessao?.perfil)&&r.supervisao===sessao.sup));
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-supfalha]"); if(!b) return; e.stopPropagation(); const r=todosGlobal().find(x=>x.id===b.dataset.supfalha); if(r) abrirFotosFiscal(r,"falha"); });
 const supGalPode=r=>!!r?.osDia?.semFiscal&&!r.arquivado&&!!db&&!jaDe(r)&&fotoSlots(r).length>0&&(isGerente()||(["supervisor","supervisor1"].includes(sessao?.perfil)&&r.supervisao===sessao.sup))&&fotoObrig(r).some(x=>!(r.fotosFiscal?.[x.k]||r.relat?.midia?.[x.k]));
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-supgal]"); if(!b) return; const r=todosGlobal().find(x=>x.id===b.dataset.supgal); if(r) abrirFotosFiscal(r,true); });
 function histCard(r){ const ff=r.fotosFiscal||{}, G=ff.geo||{}, sv=r.osDia?.sv?.[r.id]||{}, h0=histHora(r), hf=sv.fim?.em||"", S=fotoSlots(r), k=stKey(r), fis=ff.por||r.osDia?.fiscal?.nome||(r.osDia?.semFiscal?"supervisor (sem fiscal)":"");
@@ -2658,7 +2661,7 @@ function histCard(r){ const ff=r.fotosFiscal||{}, G=ff.geo||{}, sv=r.osDia?.sv?.
     <span><b>PROCESSO</b> ${r.processo?esc(procNum(r)):"—"}</span>
     <span><b>ENDEREÇO</b> ${esc(r.logradouro||"")}${r.bairro?" – "+esc(r.bairro):""}</span>
     ${r.obs?`<span><b>OBS</b> ${esc(r.obs)}</span>`:""}
-    <span><b>FISCAL</b> ${esc(fis||"—")}${r.osDia?.num?" · O.S nº "+esc(r.osDia.num):""}</span><span class="hs-dl"><button type="button" class="btn sec" data-hsdl="pdf" data-hsid="${esc(r.id)}">📄 PDF</button><button type="button" class="btn sec" data-hsdl="img" data-hsid="${esc(r.id)}">🖼 Imagem</button>${supGalPode(r)?`<button type="button" class="btn pri" data-supgal="${esc(r.id)}">🖼 Anexar fotos da galeria</button>`:""}</span></div>
+    <span><b>FISCAL</b> ${esc(fis||"—")}${r.osDia?.num?" · O.S nº "+esc(r.osDia.num):""}</span>${r.termoResp?`<span><b>TERMO</b> 📜 ${esc(r.termoResp.num)} · morador ${esc(r.termoResp.morador?.nome||"")}${r.termoResp.morador?.recusou?" (recusou-se a assinar)":""}</span>`:""}<span class="hs-dl">${r.termoResp?`<button type="button" class="btn sec" data-termopdf="${esc(r.id)}">📜 Termo</button>`:""}<button type="button" class="btn sec" data-hsdl="pdf" data-hsid="${esc(r.id)}">📄 PDF</button><button type="button" class="btn sec" data-hsdl="img" data-hsid="${esc(r.id)}">🖼 Imagem</button>${supGalPode(r)?`<button type="button" class="btn pri" data-supgal="${esc(r.id)}">🖼 Anexar fotos da galeria</button>`:""}</span></div>
     <div class="hs-fs">${S.map(x=>{ const f=ff[x.k]||r.relat?.midia?.[x.k], g=G[x.k]; if(!f&&x.opc) return ""; if(!f) return `<div class="hs-f hs-sem"><span>${esc(x.curto)}<br>sem foto</span></div>`;
       return `<figure class="hs-f"><img data-hsfoto="${esc(r.id)}|${x.k}" alt="foto ${esc(x.curto)}"><figcaption><b>${g?.em?hm(g.em):""}</b> ${g?.em?fmtD(iso(new Date(g.em))):""}<br>${esc(x.curto)} · ${esc(r.logradouro||"")}${r.bairro?" – "+esc(r.bairro):""}<br>${g&&g.lat!=null?`📍 ${g.lat.toFixed(6)}, ${g.lng.toFixed(6)}${g.prec?" (±"+g.prec+" m)":""}`:g?.galeria?"🖼 anexada da galeria pelo supervisor":relTem(r)?"":"📍 sem localização"}</figcaption>${histMapa(g)?`<a href="${histMapa(g)}" target="_blank" rel="noopener">Localização e verificação: ver no mapa</a>`:""}</figure>`; }).join("")}</div></article>`; }
 // PDF / imagem do histórico (prestação de contas): um serviço ou todos os da lista filtrada (ex.: o dia)
@@ -2695,7 +2698,12 @@ function renderHist(){ const host=$("#histBody"); if(!host) return; if(!sessao){
     <div class="hs-row"><p class="note" style="margin:6px 0">${HIST.dia?"Dia "+fmtD(HIST.dia)+" · ":""}<b>${L.length}</b> registro${L.length===1?"":"s"} · ${nC} com fotos</p><span class="hs-dl">${L.length?`<button type="button" class="btn sec" data-hsdl="pdf" data-hsall="1">📄 PDF de todos (${L.length})</button><button type="button" class="btn sec" data-hsdl="img" data-hsall="1">🖼 Imagem de todos</button>`:""}${HIST.dia||HIST.end||HIST.sup||HIST.tipo||HIST.fot||HIST.st||HIST.q||HIST.per!=="tudo"?`<button type="button" class="btn sec" id="hsLimpa">Mostrar todos</button>`:""}</span></div>${!HIST.dia&&L.length>1?`<p class="note" style="margin:0 0 6px">Para prestar contas de um dia, escolha o <b>Dia</b> acima e baixe “de todos”.</p>`:""}
     <div class="hs-l">${L.slice(0,HIST.lim||60).map(histCard).join("")||`<div class="empty">Nenhum registro com esses filtros.</div>`}</div>${L.length>(HIST.lim||60)?`<button type="button" class="btn sec" id="hsMais" style="margin-top:10px">Mostrar mais (${L.length-(HIST.lim||60)} restantes)</button>`:""}`;
   if(foco){ const q=$("#"+foco); q.focus(); q.setSelectionRange(q.value.length,q.value.length); }
-  host.querySelectorAll("img[data-hsfoto]").forEach(async im=>{ const [id,k]=im.dataset.hsfoto.split("|"), r=L.find(x=>x.id===id), f=r?.fotosFiscal?.[k]||r?.relat?.midia?.[k]; if(!f) return; try{ await midCarregar(f); im.src=midUrl(f); im.onclick=()=>{ const u=midUrl(f); if(u) window.open(u,"_blank"); }; }catch(x){} });
+  host.querySelectorAll("img[data-hsfoto]").forEach(async im=>{ const [id,k]=im.dataset.hsfoto.split("|"), r=L.find(x=>x.id===id), f=r?.fotosFiscal?.[k]||r?.relat?.midia?.[k]; if(!f) return;
+      const falhou=()=>{ const fig=im.closest("figure"); if(!fig||fig.querySelector(".hs-err")) return; im.style.display="none"; const d=document.createElement("div"); d.className="hs-err"; d.style.cssText="min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:12px;text-align:center;color:#fff;font-size:13px";
+        d.innerHTML=`<span>⚠ Esta foto não abriu agora${f.id&&midErroTxt[f.id]?` <small style="opacity:.75">(${esc(String(midErroTxt[f.id]).slice(0,60))})</small>`:""}.<br><small style="opacity:.8">Verifique a internet deste aparelho.</small></span><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center"><button type="button" class="btn sec" style="min-height:36px">↻ Tentar de novo</button>${supFalhaPode(r)?`<button type="button" class="btn pri" data-supfalha="${esc(r.id)}" style="min-height:36px">🖼 Colocar da galeria</button>`:""}</span>`;
+        d.querySelector("button").onclick=async ev=>{ ev.stopPropagation(); const bt=ev.currentTarget; bt.disabled=true; bt.textContent="Carregando…"; if(f.id){ delete midCache["a:"+f.id]; delete midErroTxt[f.id]; } await midCarregar(f); const u=midUrl(f); if(u&&!(f.id&&midErroTxt[f.id])){ d.remove(); im.style.display=""; im.src=u; } else { bt.disabled=false; bt.textContent="↻ Tentar de novo"; } };
+        fig.insertBefore(d,im); };
+      try{ await midCarregar(f); if(f.id&&midErroTxt[f.id]) return falhou(); im.onerror=falhou; im.src=midUrl(f); im.onclick=()=>{ const u=midUrl(f); if(u) window.open(u,"_blank"); }; }catch(x){ falhou(); } });
   [["hsPer","per"],["hsSup","sup"],["hsTipo","tipo"],["hsFot","fot"],["hsSt","st"],["hsDia","dia"]].forEach(([id,k])=>{ const e=$("#"+id); if(e) e.onchange=()=>{ HIST[k]=e.value; HIST.lim=60; renderHist(); }; });
   const dx=$("#hsDiaX"); if(dx) dx.onclick=()=>{ HIST.dia=""; renderHist(); };
   const lp=$("#hsLimpa"); if(lp) lp.onclick=()=>{ Object.assign(HIST,{per:"tudo",sup:"",q:"",dia:"",end:"",tipo:"",fot:"",st:"",lim:60}); renderHist(); };
@@ -2909,7 +2917,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.20r";
+const APP_VERSAO="2026.11.20y";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -4327,9 +4335,12 @@ const VIST_PROC=()=>{ const RG=["CENTRO OESTE","SUL","LESTE","NORTE","OESTE","NO
 const vistNums=(...xs)=>{ const o=new Set(); xs.forEach(x=>{ String(x||"").split(/[\s,;]+/).forEach(ch=>{ const d=ch.replace(/\D/g,""); if(d.length>=6) o.add(d.replace(/^0+/,"")); (ch.match(/\d{5,}/g)||[]).forEach(n=>o.add(n.replace(/^0+/,""))); }); }); return [...o].filter(n=>n.length>=5); };
 let _vabIdx=null; const vistAbIdx=()=>{ if(_vabIdx) return _vabIdx; const m=new Map(); VIST_ABERTOS.forEach((t,i)=>t.forEach(n=>{ if(!m.has(n)) m.set(n,[]); m.get(n).push(i); })); return (_vabIdx=m); };
 // deixa na vistoria só um processo do app para cada processo ATRASADO / EM EXECUÇÃO da planilha (cadastro à mão primeiro, depois a relação antiga, depois os da planilha)
+// processo que já tem registro no app (vistoria, envio, execução, baixa, Urbantrim, foto) NUNCA sai da lista: não se perde informação
+const vistTemHist=p=>{ const r=(VIST.regs||{})[p.id]; return !!r&&!!(r.vistoriado||r.situacao||r.data_vistoria||r.envio||r.execucao||r.baixa||r.urb_baixa||r.urb_cad||r.foto_path||r.fotos||r.devolvido||r.vist_ant); };
 function vistSoAbertos(L){ if(!VIST_SO_ABERTOS) return L; const ix=vistAbIdx(), usado=new Set(), ok=new Set();
-  const ord=[...L].sort((a,b)=>(a.manual?0:a.planilha?2:1)-(b.manual?0:b.planilha?2:1));
-  ord.forEach(p=>{ const c=new Map(); vistNums(p.processo,p.ged).forEach(n=>(ix.get(n)||[]).forEach(i=>{ if(!usado.has(i)) c.set(i,(c.get(i)||0)+1); })); if(!c.size) return; let bi=-1,bq=0; c.forEach((q,i)=>{ if(q>bq||(q===bq&&i<bi)){ bq=q; bi=i; } }); usado.add(bi); ok.add(p.id); });
+  const pri=p=>(vistTemHist(p)?0:10)+(p.manual?0:p.planilha?2:1);
+  const ord=[...L].sort((a,b)=>pri(a)-pri(b));
+  ord.forEach(p=>{ const h=vistTemHist(p); const c=new Map(); vistNums(p.processo,p.ged).forEach(n=>(ix.get(n)||[]).forEach(i=>{ if(!usado.has(i)) c.set(i,(c.get(i)||0)+1); })); if(!c.size){ if(h) ok.add(p.id); return; } let bi=-1,bq=0; c.forEach((q,i)=>{ if(q>bq||(q===bq&&i<bi)){ bq=q; bi=i; } }); usado.add(bi); ok.add(p.id); });
   return L.filter(p=>ok.has(p.id)); }
 // quem indica o supervisor (coordenação) e quem dá baixa no SEI / Intranet
 // Resumo das vistorias, baixa no sistema, indicar vistoriador e PDFs: só de coordenador para cima
@@ -7071,10 +7082,19 @@ const SUPA_MIDIA=SUPA_URL+"/storage/v1/object/public/midia/";
 // baixa a foto/vídeo pelo Supabase (funciona mesmo se o bucket não estiver público) e guarda um endereço local
 let _supaCli=null, midErroTxt={};
 async function supaFoto(id){
-  if(!window.supabase){ await new Promise((ok,f)=>{ const sc=document.createElement("script"); sc.src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"; sc.onload=ok; sc.onerror=f; document.head.appendChild(sc); }); }
-  _supaCli=_supaCli||window.supabase.createClient(SUPA_URL,SUPA_KEY,{auth:{persistSession:false}});
-  const r=await _supaCli.storage.from("midia").download(id);
-  if(r.error) throw r.error; return URL.createObjectURL(r.data);
+  const CK="gpe-fotos-v1", chave=SUPA_MIDIA+id; let cx=null;
+  try{ if(window.caches){ cx=await caches.open(CK); const hit=await cx.match(chave); if(hit){ const b=await hit.blob(); if(b.size) return URL.createObjectURL(b); } } }catch(e){}
+  const guarda=b=>{ try{ if(cx&&b&&b.size) cx.put(chave,new Response(b,{headers:{"Content-Type":b.type||"image/jpeg"}})).catch(()=>{}); }catch(e){} return b; };
+  // 1º direto pelo servidor de arquivos (não depende de biblioteca de fora, que alguns computadores/redes bloqueiam)
+  let ult="";
+  for(const u of [SUPA_URL+"/storage/v1/object/midia/"+id, SUPA_URL+"/storage/v1/object/authenticated/midia/"+id, SUPA_MIDIA+id]){
+    try{ const r=await fetch(u,{headers:{apikey:SUPA_KEY},cache:"force-cache"}); if(r.ok){ const b=await r.blob(); if(b.size) return URL.createObjectURL(guarda(b)); } else ult="http "+r.status; }catch(e){ ult=String(e?.message||e); } }
+  // 2º pela biblioteca do Supabase (jsdelivr ou unpkg)
+  try{
+    if(!window.supabase){ for(const src of ["https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js","https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"]){ try{ await new Promise((ok,f)=>{ const sc=document.createElement("script"); sc.src=src; sc.onload=ok; sc.onerror=f; document.head.appendChild(sc); }); if(window.supabase) break; }catch(e){} } }
+    if(window.supabase){ _supaCli=_supaCli||window.supabase.createClient(SUPA_URL,SUPA_KEY,{auth:{persistSession:false}}); const r=await _supaCli.storage.from("midia").download(id); if(!r.error&&r.data) return URL.createObjectURL(guarda(r.data)); ult=r.error?.message||ult; }
+  }catch(e){ ult=String(e?.message||e); }
+  throw new Error(ult||"foto não encontrada");
 }
 // update (mescla) mesmo quando a camada do Netlify não tiver update()
 async function dbUpdate(ref,parte){ if(typeof ref.update==="function") return ref.update(parte);
@@ -7109,14 +7129,14 @@ async function midEnviar(slot,file,onProg){
   if(file.lastModified&&Date.now()-file.lastModified>(slot.janelaH?slot.janelaH*3600e3:15*60*1000)) throw slot.janelaH?{msg:`A foto tem que ser do dia do serviço (tirada nas últimas ${slot.janelaH} horas). Foto antiga não é aceita.`}: {msg:`${slot.tipo==="video"?"O vídeo":"A foto"} tem que ser ${slot.tipo==="video"?"gravado":"tirada"} agora pela câmera. Arquivo antigo não é aceito.`};
   if(slot.tipo==="foto"){
     if(!/^image\//.test(file.type)&&!/\.(jpe?g|png|heic|webp)$/i.test(file.name)) throw {msg:"Escolha uma foto."};
-    if(assets){ const b=await imgReduzir(file,1600,.82); const r=await assets.upload(b,{type:"image/jpeg"}); return {id:r.id,em:new Date().toISOString()}; }
+    if(assets){ const b=await imgReduzir(file,1280,.72); const r=await assets.upload(b,{type:"image/jpeg"}); return {id:r.id,em:new Date().toISOString()}; }
     if(!db) throw {msg:"Sem conexão com o banco."};
     const b=await imgReduzir(file,1024,.6), url=await blobDataUrl(b); if(url.length>240000) throw {msg:"Foto grande demais. Tente de novo."};
     const id=db.collection(MID_COL).doc().id; await db.collection(MID_COL).doc(id).set({img:url,em:new Date().toISOString(),por:nomeAutor()}); midCache[id]=url; return {db:id,em:new Date().toISOString()};
   }
   if(!assets) throw {msg:"Neste acesso o envio de vídeo não está liberado. As fotos são guardadas normalmente."};
   if(!/^video\//.test(file.type)) throw {msg:"Escolha um vídeo."};
-  const LIM=window.GPE_LIMITE_VIDEO||19.5*1024*1024, LMB=Math.round(LIM/1048576);
+  const LIM=window.GPE_LIMITE_VIDEO||10*1024*1024, LMB=Math.round(LIM/1048576);
   let b=file; if(b.size>LIM){ b=await videoReduzir(file,onProg); if(b.size>LIM) throw {msg:`O vídeo continua grande demais (limite de ${LMB} MB). Grave um vídeo mais curto, de`+" uns 15 a 20 segundos."}; }
   const ty=(b.type||"").split(";")[0]; const r=await assets.upload(b,{type:ty==="video/quicktime"?"video/mp4":(ty||"video/mp4")}); return {id:r.id,video:true,em:new Date().toISOString()};
 }
@@ -7204,13 +7224,13 @@ function abrirGalPedidos(){ const L=galPedidos(), host=$("#sheetHost");
     ${L.length?L.map(r=>`<div class="item" style="display:block"><b>${esc(r.supervisao)}</b> · ${esc(r.equipe||"")} · ${fmtD(r.data)}<br><small>${esc(r.bairro||"")} — ${esc(r.logradouro||"")}${relTem(r)?" · "+esc(procNum(r)):""}</small>${galAutHtml(r)}</div>`).join(""):`<p class="note">Nenhum pedido aguardando.</p>`}</div></div>`;
   const close=()=>host.innerHTML=""; $("#gaX").onclick=close; $("#sh").onclick=e=>{if(e.target.id==="sh")close()}; }
 function abrirFotosFiscal(r,gal){
-  const host=$("#sheetHost"), m={...(r.fotosFiscal||{})}, aut=gal==="aut", S=gal?fotoSlots(r).map(x=>({...x,galeria:true,janelaH:aut?24*30:48})):fotoSlots(r), rot=fotoSlots(r)===ROT_SLOTS, geo0={...(m.geo||{})}; if(gal) S.forEach(x=>{ if(r.relat?.midia?.[x.k]&&(aut||!m[x.k])) m[x.k]=r.relat.midia[x.k]; }); delete m.por; delete m.uid; delete m.em; delete m.geo;
+  const host=$("#sheetHost"), m={...(r.fotosFiscal||{})}, fal=gal==="falha", aut=gal==="aut"||fal, S=gal?fotoSlots(r).map(x=>({...x,galeria:true,janelaH:aut?24*30:48})):fotoSlots(r), rot=fotoSlots(r)===ROT_SLOTS, geo0={...(m.geo||{})}; if(gal) S.forEach(x=>{ if(r.relat?.midia?.[x.k]&&(aut||!m[x.k])) m[x.k]=r.relat.midia[x.k]; }); delete m.por; delete m.uid; delete m.em; delete m.geo;
   // fotos em ordem: a próxima só libera depois da anterior (antes → durante → depois)
   const ffSlots=(rot||gal)?S:S.filter((x,i)=>i===0||m[S[i-1].k]), ffTrav=S.filter(x=>!ffSlots.includes(x));
   host.innerHTML=`<div class="sheet" id="sh"><div class="panel" role="dialog" aria-label="Fotos do serviço">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:22px">Fotos do serviço</b><button type="button" class="btn sec" id="ffX" style="min-height:40px;padding:0 14px">Fechar</button></div>
     <p class="note" style="margin:0"><b>${esc(relTem(r)?(r.tipo==="O.S"?"O.S":"Processo")+" "+procNum(r):tipoTxt(r)||r.tipo||"Serviço")}</b> · ${esc(r.bairro||"")} — ${esc(r.logradouro||"")} · ${esc(r.equipe||"")}</p>
-    <div id="ffMid">${midSecHtml(m,true,ffSlots,aut?"Fotos do serviço – galeria autorizada pelo gerente":gal?"Fotos do serviço – O.S sem fiscal":rot?"Registro fotográfico – execução":"Registro fotográfico – O.S / processo",aut?`O gerente <b>${esc(r.galAut.ok.por||"")}</b> autorizou: você pode <b>trocar as fotos</b>, tirar na hora ou <b>anexar da galeria</b> (fotos de até 30 dias). Toque em <b>Salvar foto</b> ao terminar.`:gal?"Esta O.S foi feita <b>sem fiscal</b> (o supervisor fez o papel de fiscal). Você pode <b>tirar a foto</b> ou <b>anexar da galeria</b> do celular. Toque em <b>Salvar foto</b> ao terminar.":rot?"Duas fotos <b>do serviço</b> obrigatórias, tiradas na hora, no local: <b>1</b> a equipe executando e <b>2</b> outro ângulo ou o serviço concluído. A <b>3ª foto, do ENDEREÇO</b> (placa da rua), é opcional. Ao salvar, o app grava junto a <b>localização (GPS)</b>, a data e a hora. Pode tirar <b>a qualquer momento antes de finalizar a O.S</b>: tire uma, salve, tire outra, salve. Essas fotos não vão para relatório: ficam no <b>Histórico de execução</b>.":"Uma foto em cada momento do serviço, na ordem: <b>1 ANTES</b> (logo depois do start: a árvore por completo, sem equipe e sem servidor), <b>2 DURANTE</b> (as equipes e o maquinário executando) e <b>3 DEPOIS</b> (serviço concluído: galhos cortados e picados e o local limpo, sem servidor e sem maquinário). Salve e volte na O.S para a próxima foto. As fotos vão para o relatório de serviço que o supervisor assina.")}</div>
+    <div id="ffMid">${midSecHtml(m,true,ffSlots,fal?"Fotos do serviço – recolocar da galeria":aut?"Fotos do serviço – galeria autorizada pelo gerente":gal?"Fotos do serviço – O.S sem fiscal":rot?"Registro fotográfico – execução":"Registro fotográfico – O.S / processo",fal?`Alguma foto deste serviço <b>não abre</b> neste aparelho. Toque na foto e <b>anexe da galeria</b> a mesma foto (até 30 dias) ou tire de novo. Toque em <b>Salvar foto</b> ao terminar.`:aut?`O gerente <b>${esc(r.galAut.ok.por||"")}</b> autorizou: você pode <b>trocar as fotos</b>, tirar na hora ou <b>anexar da galeria</b> (fotos de até 30 dias). Toque em <b>Salvar foto</b> ao terminar.`:gal?"Esta O.S foi feita <b>sem fiscal</b> (o supervisor fez o papel de fiscal). Você pode <b>tirar a foto</b> ou <b>anexar da galeria</b> do celular. Toque em <b>Salvar foto</b> ao terminar.":rot?"Duas fotos <b>do serviço</b> obrigatórias, tiradas na hora, no local: <b>1</b> a equipe executando e <b>2</b> outro ângulo ou o serviço concluído. A <b>3ª foto, do ENDEREÇO</b> (placa da rua), é opcional. Ao salvar, o app grava junto a <b>localização (GPS)</b>, a data e a hora. Pode tirar <b>a qualquer momento antes de finalizar a O.S</b>: tire uma, salve, tire outra, salve. Essas fotos não vão para relatório: ficam no <b>Histórico de execução</b>.":"Uma foto em cada momento do serviço, na ordem: <b>1 ANTES</b> (logo depois do start: a árvore por completo, sem equipe e sem servidor), <b>2 DURANTE</b> (as equipes e o maquinário executando) e <b>3 DEPOIS</b> (serviço concluído: galhos cortados e picados e o local limpo, sem servidor e sem maquinário). Salve e volte na O.S para a próxima foto. As fotos vão para o relatório de serviço que o supervisor assina.")}</div>
     ${ffTrav.length?`<div class="fftrav">${ffTrav.map(x=>`<p>🔒 <b>${esc(x.t)}</b><br><small>Libera depois da foto ${S.indexOf(x)}.</small></p>`).join("")}</div>`:""}
     <div class="err" id="ffErr" hidden></div>
     <div class="actions" style="grid-template-columns:1fr;margin:0"><button type="button" class="btn pri" id="ffOk">Salvar foto</button></div>
@@ -7230,7 +7250,7 @@ function abrirFotosFiscal(r,gal){
     const fresh=todosGlobal().find(x=>x.id===r.id)||r, upd={...fresh}; delete upd.id; delete upd._fila;
     const fotos={}; S.forEach(x=>{ if(m[x.k]) fotos[x.k]=m[x.k]; });
     upd.fotosFiscal={...fotos,geo,por:sessao.nome,uid:sessao.id,em:new Date().toISOString()}; if(aut&&upd.relat) upd.relat={...upd.relat,midia:{...(upd.relat.midia||{}),...fotos}};
-    upd._acao=aut?`Supervisor editou as fotos com autorização do gerente ${r.galAut.ok.por||""} (${n} de ${S.length})`:gal?`Supervisor (O.S sem fiscal) anexou as fotos do serviço da galeria (${n} de ${S.length})`:`Fiscal registrou as fotos do serviço (${n} de ${S.length})`;
+    upd._acao=fal?`${sessao.nome||"Supervisor"} recolocou da galeria fotos que não abriam (${n} de ${S.length})`:aut?`Supervisor editou as fotos com autorização do gerente ${r.galAut.ok.por||""} (${n} de ${S.length})`:gal?`Supervisor (O.S sem fiscal) anexou as fotos do serviço da galeria (${n} de ${S.length})`:`Fiscal registrou as fotos do serviço (${n} de ${S.length})`;
     const res=await saveDoc(r.id,upd); if(res!=="ok"&&res!=="fila"){ b.disabled=false; b.textContent="Salvar foto"; return erro("Não foi possível salvar agora. Tente de novo."); }
     close(); try{ renderInicio(); renderPend(); }catch(x){}
     if(gal){ try{ renderHist(); }catch(x){} toast(aut?"Fotos salvas"+(fresh.relat?" (o relatório de serviço já usa as novas fotos)":" – entram no relatório quando você der a baixa")+".":"Fotos anexadas. Ficam no Histórico de execução."); return; }
@@ -11135,6 +11155,121 @@ const baixaRevisar=r=>!!r?.baixaFiscal&&!r.baixaFiscal.rev;
 // ao finalizar o serviço o fiscal informa se foi executado integralmente ou parcial (e quanto ficou a fazer)
 const SVX_MOT=["Chuva","Equipamento (veículo) quebrado","Rede elétrica (aguardando Equatorial)","Veículos estacionados / sem acesso","Morador impediu","Remanejado pela gerência (emergência)","Atendimento de galho / árvore caída","Endereço não localizado","Executado por outra equipe"];
 const svExecTxt=x=>{ if(!x) return ""; if(x.ja) return "JÁ ESTAVA EXECUTADO – "+(x.ja==="comurg"?"feito antes por equipe da COMURG"+(x.jaSup?" ("+x.jaSup+")":" (equipe não identificada)"):(x.jaQuem?"executado por terceiro: "+x.jaQuem:"serviço executado por terceiros, não identificamos o executor"))+(x.obs?" · "+x.obs:""); if(x.sit==="SIM") return "executado integralmente"; if(x.sit==="NÃO") return "NÃO EXECUTADO – "+(x.motivo||"")+(x.obs?" · "+x.obs:""); const f=ITENS.filter(i=>+x.falta?.[i.c]).map(i=>`${x.falta[i.c]} ${arv(+x.falta[i.c])} com ${itPorte(i)} (${i.c})`).join("; "); return "executado PARCIAL"+(f?" – ficou a fazer: "+f:"")+(x.obs?" · "+x.obs:""); };
+// ===== TERMO DE RESPONSABILIDADE: morador não autorizou o serviço =====
+// assinatura com o dedo na tela (morador, fiscal e, quando precisa, 2 testemunhas da equipe)
+const TERMO_SLOT=[{k:"termo",t:"Foto da árvore (obrigatória)",tipo:"foto",janelaH:24,curto:"ÁRVORE",dica:"a árvore cujo serviço não foi autorizado"}];
+function sigPad(cv){ const ctx=cv.getContext("2d"); let feito=false, ativo=false, pts=[];
+  const aj=()=>{ const r=cv.getBoundingClientRect(); if(!r.width) return; const dpr=Math.max(1,Math.min(3,devicePixelRatio||1)); cv.width=Math.round(r.width*dpr); cv.height=Math.round(r.height*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.lineCap="round"; ctx.lineJoin="round"; ctx.strokeStyle="#1b2a6b"; ctx.fillStyle="#1b2a6b"; feito=false; };
+  requestAnimationFrame(aj);
+  const pos=e=>{ const r=cv.getBoundingClientRect(); return {x:e.clientX-r.left,y:e.clientY-r.top,t:e.timeStamp}; };
+  cv.addEventListener("pointerdown",e=>{ e.preventDefault(); if(!cv.width) aj(); try{ cv.setPointerCapture(e.pointerId); }catch(x){} ativo=true; const p=pos(e); pts=[p]; ctx.beginPath(); ctx.arc(p.x,p.y,1.3,0,7); ctx.fill(); feito=true; cv.parentNode.classList.add("on"); });
+  cv.addEventListener("pointermove",e=>{ if(!ativo) return; e.preventDefault(); (e.getCoalescedEvents?e.getCoalescedEvents():[e]).forEach(ev=>{ const p=pos(ev), a=pts[pts.length-1], v=Math.hypot(p.x-a.x,p.y-a.y)/Math.max(1,p.t-a.t);
+    ctx.lineWidth=Math.max(1.4,Math.min(3.6,3.4-v*1.2)); const m={x:(a.x+p.x)/2,y:(a.y+p.y)/2}; ctx.beginPath(); ctx.moveTo(a.mx??a.x,a.my??a.y); ctx.quadraticCurveTo(a.x,a.y,m.x,m.y); ctx.stroke(); p.mx=m.x; p.my=m.y; pts.push(p); }); });
+  const fim=()=>{ ativo=false; }; cv.addEventListener("pointerup",fim); cv.addEventListener("pointercancel",fim);
+  return { vazio:()=>!feito, limpar:()=>{ ctx.clearRect(0,0,cv.width,cv.height); feito=false; cv.parentNode.classList.remove("on"); },
+    png:()=>{ if(!feito) return null; const w=cv.width,h=cv.height,d=ctx.getImageData(0,0,w,h).data; let x0=w,y0=h,x1=0,y1=0;
+      for(let y=0;y<h;y+=2) for(let x=0;x<w;x+=2){ if(d[(y*w+x)*4+3]>20){ if(x<x0)x0=x; if(y<y0)y0=y; if(x>x1)x1=x; if(y>y1)y1=y; } }
+      if(x1<=x0) return null; const m=12; x0=Math.max(0,x0-m); y0=Math.max(0,y0-m); x1=Math.min(w,x1+m); y1=Math.min(h,y1+m);
+      const e=Math.min(1,600/(x1-x0)), o=document.createElement("canvas"); o.width=Math.round((x1-x0)*e); o.height=Math.round((y1-y0)*e); o.getContext("2d").drawImage(cv,x0,y0,x1-x0,y1-y0,0,0,o.width,o.height); return o.toDataURL("image/png"); } }; }
+const termoPadHtml=(id,tit)=>`<div class="tr-pad"><b>${tit}</b><div class="tr-box"><canvas id="${id}"></canvas><span class="tr-x">✕</span><span class="tr-base"></span><span class="tr-hint">Assine aqui com o dedo</span></div><button type="button" class="btn sec" data-trlimpa="${id}" style="min-height:36px">Limpar</button></div>`;
+const termoMat=()=>String(acesso?.[sessao?.id]?.matricula||"").replace(/^m/i,"");
+// colhe o termo: devolve o objeto do termo, ou null se cancelar
+function termoColher(r,g){ return new Promise(res=>{ const mid={}, box=document.createElement("div"); box.className="sheet"; box.style.zIndex=50;
+  const membros=((g?.os?.membros)||[]).map(m=>m.nome).filter(Boolean);
+  const tst=i=>`<div class="tr-t"><b>Testemunha ${i}</b><label class="f">Nome<input id="trT${i}N" list="trEq" autocomplete="off" placeholder="Funcionário da COMURG"></label><label class="f">Matrícula<input id="trT${i}M" inputmode="numeric" autocomplete="off"></label>${termoPadHtml("trT"+i+"S","Assinatura da testemunha "+i)}</div>`;
+  box.innerHTML=`<div class="panel" role="dialog" aria-label="Termo de responsabilidade"><style>
+    .tr-box{position:relative;border:2px dashed #0f870c;border-radius:12px;background:#fbfdfb;touch-action:none;overflow:hidden}.tr-box canvas{display:block;width:100%;height:170px;touch-action:none}
+    .tr-hint{position:absolute;left:0;right:0;bottom:34px;text-align:center;color:#8aa293;font-size:14px;pointer-events:none}.tr-box.on .tr-hint{display:none}
+    .tr-base{position:absolute;left:18px;right:18px;bottom:28px;border-top:1.5px solid #9cc4a4;pointer-events:none}.tr-x{position:absolute;left:18px;bottom:32px;color:#9cc4a4;font-weight:700;pointer-events:none}
+    .tr-pad{display:grid;gap:6px}.tr-t{display:grid;gap:6px;border:1px solid var(--line);border-radius:12px;padding:10px}.tr-ck{display:flex;gap:8px;align-items:center;font-weight:600}.tr-ck input{width:22px;height:22px}
+    .tr-off{opacity:.4;pointer-events:none}</style>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:21px">📜 Termo de responsabilidade</b><button type="button" class="btn sec" data-trx="1" style="min-height:40px;padding:0 14px">Cancelar</button></div>
+    <p class="note" style="margin:0">O morador <b>não autorizou</b> o serviço em <b>${esc(r.bairro||"")} — ${esc(r.logradouro||"")}</b>. Ele assina que, a partir de agora, a responsabilidade por danos da árvore é dele. Processo, endereço, serviço, equipe, data, hora e GPS entram sozinhos.</p>
+    <div class="ckgrp">Morador</div>
+    <label class="f">Nome completo do morador<input id="trNome" autocomplete="off"></label>
+    <label class="f">Condição<select id="trCond"><option>proprietário(a)</option><option>inquilino(a)</option><option>responsável</option></select></label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><label class="f" style="flex:0 1 110px">Documento<select id="trDocT"><option>CPF</option><option>RG</option></select></label><label class="f" style="flex:1 1 160px">Número<input id="trDoc" inputmode="numeric" autocomplete="off"></label></div>
+    <label class="tr-ck"><input type="checkbox" id="trSemDoc"> Morador não quis informar o documento</label>
+    <label class="f">Telefone (opcional)<input id="trTel" inputmode="tel" autocomplete="off"></label>
+    <label class="f">Motivo informado pelo morador (opcional)<input id="trMot" autocomplete="off" placeholder="Ex.: a árvore faz sombra na garagem"></label>
+    <div id="trPM">${termoPadHtml("trSM","Assinatura do morador")}</div>
+    <label class="tr-ck"><input type="checkbox" id="trRec"> Morador recusou-se a assinar</label>
+    <div id="trTs" hidden><div class="ckgrp">Testemunhas (obrigatórias: morador recusou assinar ou não informou o documento)</div><datalist id="trEq">${membros.map(n=>`<option value="${esc(n)}">`).join("")}</datalist>${tst(1)}${tst(2)}</div>
+    <div class="ckgrp">Fiscal</div>${termoPadHtml("trSF","Assinatura do fiscal – "+esc(sessao.nome||""))}
+    <div id="trMid">${midSecHtml(mid,true,TERMO_SLOT,"Registro fotográfico","Tire 1 foto da árvore no local.")}</div>
+    <div class="err" id="trErr" hidden></div>
+    <button type="button" class="btn danger" data-trok="1" style="min-height:52px">✔ Confirmar termo e finalizar não executado</button></div>`;
+  document.body.appendChild(box); midLigar(box.querySelector("#trMid"),mid,true,TERMO_SLOT);
+  const P={M:sigPad(box.querySelector("#trSM")),F:sigPad(box.querySelector("#trSF"))}; let PT=null;
+  const v=id=>(box.querySelector("#"+id)?.value||"").trim();
+  const sync=()=>{ const sd=box.querySelector("#trSemDoc").checked, rc=box.querySelector("#trRec").checked; box.querySelector("#trDoc").disabled=sd; box.querySelector("#trDocT").disabled=sd;
+    box.querySelector("#trPM").classList.toggle("tr-off",rc); const ts=box.querySelector("#trTs"), ab=ts.hidden; ts.hidden=!(sd||rc); if(ab&&!ts.hidden&&!PT) setTimeout(()=>{ PT={1:sigPad(box.querySelector("#trT1S")),2:sigPad(box.querySelector("#trT2S"))}; },0); };
+  box.querySelector("#trSemDoc").onchange=sync; box.querySelector("#trRec").onchange=sync;
+  const fim=x=>{ box.remove(); res(x); };
+  box.addEventListener("click",async e=>{ if(e.target.closest("[data-trx]")) return fim(null);
+    const lp=e.target.closest("[data-trlimpa]"); if(lp){ const k=lp.dataset.trlimpa; (k==="trSM"?P.M:k==="trSF"?P.F:PT?.[k==="trT1S"?1:2])?.limpar(); return; }
+    if(!e.target.closest("[data-trok]")) return; const er=box.querySelector("#trErr"), bt=e.target.closest("[data-trok]"), ero=t=>{ er.textContent="Falta: "+t; er.hidden=false; er.scrollIntoView({block:"center",behavior:"smooth"}); };
+    er.hidden=true; const sd=box.querySelector("#trSemDoc").checked, rc=box.querySelector("#trRec").checked, nome=v("trNome").toUpperCase(), doc=v("trDoc");
+    if(nome.length<5) return ero("o nome completo do morador.");
+    if(!sd&&doc.replace(/\D/g,"").length<5) return ero("o número do documento (ou marque que o morador não quis informar).");
+    if(!rc&&P.M.vazio()) return ero("a assinatura do morador (ou marque que ele recusou-se a assinar).");
+    const T=[]; if(sd||rc){ for(const i of [1,2]){ const n=v("trT"+i+"N").toUpperCase(), m=v("trT"+i+"M"); if(n.length<5) return ero(`o nome da testemunha ${i}.`); if(!m) return ero(`a matrícula da testemunha ${i}.`); if(!PT||PT[i].vazio()) return ero(`a assinatura da testemunha ${i}.`); T.push({nome:n,mat:m,sig:PT[i].png()}); }
+      if(T[0].nome===T[1].nome) return ero("as duas testemunhas têm que ser pessoas diferentes."); }
+    if(P.F.vazio()) return ero("a assinatura do fiscal.");
+    if([...box.querySelectorAll("#trMid .midst")].some(x=>/enviando|reduzindo/.test(x.textContent))) return ero("espere terminar o envio da foto.");
+    if(!mid.termo) return ero("a foto da árvore.");
+    const t0=bt.textContent; bt.disabled=true; let gp=null; try{ gp=await svGpsAgora(pr=>{ bt.textContent=`📍 Precisão do GPS: ±${pr} m…`; }); }catch(x){} bt.disabled=false; bt.textContent=t0;
+    const em=new Date().toISOString(), num="TR-"+(r.osDia?.num||String(r.id).slice(-8)).replace(/\s+/g,"");
+    const t={num,em,morador:{nome,cond:v("trCond")||box.querySelector("#trCond").value,docTipo:sd?"":box.querySelector("#trDocT").value,doc:sd?"":doc,semDoc:sd,tel:v("trTel"),motivo:v("trMot").toUpperCase(),recusou:rc,sig:rc?null:P.M.png()},
+      testemunhas:T,fiscal:{nome:sessao.nome||"",mat:termoMat(),uid:sessao.id,sig:P.F.png()},foto:mid.termo,gps:gp?{...gp,em}:{sem:true,em},
+      local:{proc:r.processo?procNum(r):"",ped:r.ped||"",parecer:r.parecer||"",tipo:r.tipo||"",servico:r.servico||"",qtd:qtdTxtPlano(prevQ(r))||"",end:[r.logradouro,r.bairro].filter(Boolean).join(" – "),equipe:r.equipe||"",sup:supNome?supNome(r.supervisao):r.supervisao,os:r.osDia?.num||""}};
+    t.cod=termoCod(t); fim(t); }); }); }
+function termoCod(t){ const s=JSON.stringify([t.num,t.em,t.morador.nome,t.morador.doc,t.fiscal.nome,t.local.end]); let h=2166136261; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } const c=(h>>>0).toString(36).toUpperCase().padStart(7,"0"); return c.slice(0,4)+"-"+c.slice(4,8); }
+// PDF do termo (uma folha A4, cores da COMURG)
+function termoDocHtml(r){ const t=r.termoResp; if(!t) return ""; const L=t.local||{}, M=t.morador||{}, F=t.fiscal||{}, d=new Date(t.em), dt=d.toLocaleDateString("pt-BR"), hr=d.toTimeString().slice(0,5), fu=midUrl(t.foto);
+  const gps=t.gps&&t.gps.lat!=null?`${(+t.gps.lat).toFixed(5)}, ${(+t.gps.lng).toFixed(5)}${t.gps.prec?` (±${Math.round(t.gps.prec)} m)`:""}`:"não obtida";
+  const sig=(src,txt)=>`<div class="sv">${src?`<img src="${src}" alt="">`:txt||""}</div>`;
+  const docTxt=M.semDoc?`<b>CPF/RG: NÃO INFORMADO – o(a) declarante recusou-se a fornecer</b>`:`portador(a) do <b>${esc(M.docTipo||"documento")} nº ${esc(M.doc||"")}</b>`;
+  return `<div class="fdoc trm"><style>
+  .trm{width:794px;padding:34px 40px;background:#fff;color:#1d2a20;font:13.4px/1.4 Arial,Helvetica,sans-serif;position:relative;box-sizing:border-box}
+  .trm *{box-sizing:border-box}.trm>.wm{position:absolute;left:50%;top:47%;width:450px;transform:translate(-50%,-50%);opacity:.06;pointer-events:none}.trm>*:not(.wm){position:relative}
+  .trm .hd{display:flex;align-items:center;gap:14px;padding-bottom:8px}.trm .hd img{height:56px}.trm .hd .t{flex:1;text-align:right;font-size:12px;line-height:1.35}.trm .hd .t b{color:#005f27;font-size:13.5px}
+  .trm .bar{height:5px;border-radius:3px;background:linear-gradient(90deg,#0f870c 0 60%,#f37020 60% 82%,#3e4095 82% 100%);margin-bottom:12px}
+  .trm h1{background:#005f27;color:#fff;text-align:center;font-size:16px;letter-spacing:.05em;padding:8px;margin:0 0 10px;border-radius:4px}
+  .trm table{width:100%!important;max-width:100%;table-layout:fixed;border-collapse:collapse;margin-bottom:10px;font-size:12px}.trm td{border:1px solid #9cc4a4;padding:5px 7px;vertical-align:top;text-align:left!important;white-space:normal!important;word-break:break-word;overflow-wrap:anywhere;width:auto;min-width:0}.trm td.k{background:#eaf5ea;color:#005f27;font-weight:700;width:17%}
+  .trm p{margin:0 0 7px;text-align:justify}.trm ol{margin:4px 0 8px 18px;padding:0}.trm ol li{margin-bottom:4px;text-align:justify}
+  .trm .dest{background:#fff3ea;border-left:5px solid #f37020;padding:6px 9px;margin:8px 0;font-weight:700;color:#7a3208}
+  .trm .sec{color:#fff;background:#3e4095;border-radius:4px;padding:4px 8px;font-weight:700;font-size:12px;margin:10px 0 6px;letter-spacing:.04em}
+  .trm .ass{display:flex;gap:16px;margin-top:6px}.trm .ass>div{flex:1 1 0;text-align:center;min-width:0}.trm .sv{height:58px;display:flex;align-items:flex-end;justify-content:center}.trm .sv img{max-height:58px;max-width:100%}
+  .trm .lin{border-top:1.5px solid #005f27;padding-top:3px;font-size:11.5px}.trm .marca{display:inline-block;border:1.5px solid #c0392b;color:#c0392b;font-weight:700;padding:2px 8px;border-radius:4px;font-size:11.5px;margin-bottom:6px}
+  .trm .foto{display:flex;gap:8px}.trm .foto img{max-height:230px;max-width:100%;border:1px solid #9cc4a4;border-radius:4px}
+  .trm .ft{font-size:10.5px;color:#5b6a5f;border-top:1px solid #cfdcd2;padding-top:5px;margin-top:10px}</style>
+  <img class="wm" src="${LOGO_WM}" alt="">
+  <div class="hd"><img src="${LOGO_FULL}" alt="COMURG"><div class="t"><b>COMPANHIA DE URBANIZAÇÃO DE GOIÂNIA – COMURG</b><br>Diretoria de Serviços Urbanos – DIRSEN<br>Gerência de Poda e Extirpação – GPE</div></div><div class="bar"></div>
+  <h1>TERMO DE RESPONSABILIDADE POR NÃO AUTORIZAÇÃO DE SERVIÇO</h1>
+  <table><tr><td class="k">Termo nº</td><td>${esc(t.num)}</td><td class="k">Data e hora</td><td>${dt} · ${hr}</td></tr>
+    <tr><td class="k">Processo / O.S</td><td>${esc([L.proc,L.ped?"PED "+L.ped:"",L.os?"O.S "+L.os:""].filter(Boolean).join(" · ")||"—")}</td><td class="k">Parecer técnico</td><td>${esc(L.parecer||"—")}</td></tr>
+    <tr><td class="k">Endereço</td><td colspan="3">${esc(L.end||"")}</td></tr>
+    <tr><td class="k">Serviço previsto</td><td>${esc([L.servico,L.qtd].filter(Boolean).join(" · ")||"—")}</td><td class="k">Localização (GPS)</td><td>${esc(gps)}</td></tr>
+    <tr><td class="k">Equipe</td><td>${esc([L.sup,L.equipe].filter(Boolean).join(" · "))}</td><td class="k">Fiscal</td><td>${esc(F.nome||"")}${F.mat?" · mat. "+esc(F.mat):""}</td></tr></table>
+  <p>Eu, <b>${esc(M.nome||"")}</b>, ${docTxt}, telefone <b>${esc(M.tel||"não informado")}</b>, na condição de <b>${esc(M.cond||"responsável")}</b> do imóvel localizado no endereço acima, <b>declaro que NÃO AUTORIZO</b> a execução do serviço acima descrito, a ser realizado pela COMURG nesta data.</p>
+  <p>Declaro ainda que:</p>
+  <ol><li>Fui informado(a) pela equipe da COMURG sobre o serviço, o motivo da sua necessidade e o parecer técnico que o indicou.</li>
+    <li>Estou ciente dos riscos que a árvore pode oferecer, como queda da árvore ou de galhos, danos à rede elétrica, a imóveis, a veículos e a pessoas.</li>
+    <li><b>Assumo, a partir desta data, total responsabilidade</b> por quaisquer danos materiais ou pessoais que a referida árvore venha a causar, isentando a COMURG e a Prefeitura de Goiânia de qualquer responsabilidade decorrente da não execução do serviço.</li>
+    <li>Estou ciente de que, para a execução futura do serviço, deverei fazer uma nova solicitação aos órgãos competentes.</li></ol>
+  <div class="dest">Motivo informado pelo morador: ${esc(M.motivo||"não informado")}</div>
+  <div class="ass"><div>${sig(M.recusou?null:M.sig,`<span class="marca">RECUSOU-SE A ASSINAR</span>`)}<div class="lin">Assinatura do(a) morador(a)<br><b>${esc(M.nome||"")}</b></div></div>
+    <div>${sig(F.sig)}<div class="lin">Fiscal da COMURG<br><b>${esc(F.nome||"")}</b>${F.mat?" · mat. "+esc(F.mat):""}</div></div></div>
+  ${(t.testemunhas||[]).length?`<div class="sec">TESTEMUNHAS – ${M.recusou&&M.semDoc?"MORADOR RECUSOU-SE A ASSINAR E NÃO INFORMOU O DOCUMENTO":M.recusou?"MORADOR RECUSOU-SE A ASSINAR":"MORADOR NÃO INFORMOU O DOCUMENTO"}</div>
+    <p>Declaramos que o(a) responsável pelo imóvel foi informado(a) do conteúdo deste termo e recusou a execução do serviço${M.recusou?", recusando-se a assinar":""}${M.semDoc?`${M.recusou?" e":", recusando-se"} a informar o documento`:""}.</p>
+    <div class="ass">${t.testemunhas.map((x,i)=>`<div>${sig(x.sig)}<div class="lin">Testemunha ${i+1} – <b>${esc(x.nome)}</b><br>Matrícula ${esc(x.mat)}</div></div>`).join("")}</div>`:""}
+  <div class="sec">REGISTRO FOTOGRÁFICO</div><div class="foto">${fu?`<img src="${fu}" alt="Foto da árvore">`:"<i>foto não disponível</i>"}</div>
+  <div class="ft">Documento gerado eletronicamente pelo app GPE Gestão em ${dt} às ${hr}, com assinaturas colhidas na tela do celular, localização GPS e registro fotográfico. Código de verificação: <b>${esc(t.cod||"")}</b>.</div></div>`; }
+async function termoPdf(r,btn){ if(!r?.termoResp) return; await midCarregar(r.termoResp.foto);
+  await baixarFormPdf(btn,termoDocHtml(r),`termo-responsabilidade-${String(r.termoResp.num||"").replace(/[^A-Za-z0-9]+/g,"-")}.pdf`,"Termo de responsabilidade",{umaFolha:true,semWm:true}); }
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-termopdf]"); if(!b) return; e.stopPropagation(); const r=todosGlobal().find(x=>x.id===b.dataset.termopdf); if(r) termoPdf(r,b); });
+
 function svFimPerguntar(r,op){ return new Promise(res=>{ const pq=prevQ(r), its=ITENS.filter(i=>+pq[i.c]), jaMid={};
   const box=document.createElement("div"); box.className="sheet"; box.style.zIndex=45;
   box.innerHTML=`<div class="panel" role="dialog" aria-label="Como ficou o serviço"><b style="font-family:var(--display);font-size:20px">Como ficou este serviço?</b>
@@ -11148,7 +11283,7 @@ function svFimPerguntar(r,op){ return new Promise(res=>{ const pq=prevQ(r), its=
       <div id="svxJMid">${midSecHtml(jaMid,true,JA_SLOTS,"Foto do local (obrigatória)","Tire 1 foto do local mostrando que o serviço já estava feito. Vai para o Histórico de execução com a localização.")}</div>
       <label class="f">Observação (opcional)<textarea id="svxJObs" placeholder="Ex.: árvore já podada, galhos já recolhidos"></textarea></label>
       <div class="err" id="svxJErr" hidden></div><button type="button" class="btn pri" data-svxjok="1">Confirmar e finalizar</button></div>
-    <div id="svxN" hidden style="display:grid;gap:8px"><label class="f">Motivo (obrigatório)<select id="svxMot"><option value="">Selecione…</option>${SVX_MOT.map(t=>`<option>${esc(t)}</option>`).join("")}<option value="Outro">Outro (escrever)</option></select></label><label class="f">Explique o que aconteceu<textarea id="svxNObs" placeholder="Ex.: rede elétrica energizada sobre a árvore, aguardando Equatorial"></textarea></label><div class="err" id="svxNErr" hidden></div><button type="button" class="btn danger" data-svxnok="1">Confirmar não executado e finalizar</button></div>
+    <div id="svxN" hidden style="display:grid;gap:8px"><label class="f">Motivo (obrigatório)<select id="svxMot"><option value="">Selecione…</option>${SVX_MOT.map(t=>`<option value="${esc(t)}">${esc(t==="Morador impediu"?"Morador não autorizou (gera o termo de responsabilidade)":t)}</option>`).join("")}<option value="Outro">Outro (escrever)</option></select></label><label class="f">Explique o que aconteceu<textarea id="svxNObs" placeholder="Ex.: rede elétrica energizada sobre a árvore, aguardando Equatorial"></textarea></label><div class="err" id="svxNErr" hidden></div><button type="button" class="btn danger" data-svxnok="1">Confirmar não executado e finalizar</button></div>
     <div id="svxP" hidden style="display:grid;gap:8px"><p class="note" style="margin:0"><b>Quanto ficou a fazer (em haver)?</b> O supervisor vê isso na baixa.</p>
       ${its.map(i=>`<label class="f">${esc(itPorte(i))} (${i.c}) · programado ${pq[i.c]}<input type="number" inputmode="numeric" min="0" max="${+pq[i.c]}" data-svf="${i.c}" placeholder="quantas ficaram"></label>`).join("")}
       <label class="f">Observação${its.length?" (opcional)":" (obrigatória: o que ficou a fazer)"}<textarea id="svxObs" placeholder="Ex.: faltou 1 árvore por causa da rede elétrica"></textarea></label>
@@ -11169,6 +11304,7 @@ function svFimPerguntar(r,op){ return new Promise(res=>{ const pq=prevQ(r), its=
       fim({sit:"NÃO",ja:q,jaSup:sp,jaQuem:jq,motivo:q==="comurg"?"Já executado antes por outra equipe da COMURG":"Executado por terceiro (não identificamos o executor)",obs:(box.querySelector("#svxJObs").value||"").trim().toUpperCase(),foto:jaMid.ja,geo:g?{...g,em:new Date().toISOString()}:{sem:true,em:new Date().toISOString()}}); })(); return; }
     if(e.target.closest("[data-svxnok]")){ const mt=box.querySelector("#svxMot").value, ob=(box.querySelector("#svxNObs").value||"").trim().toUpperCase(), er=box.querySelector("#svxNErr");
       if(!mt){ er.textContent="Falta: escolha o motivo."; er.hidden=false; return; } if(mt==="Outro"&&ob.length<5){ er.textContent="Falta: explique o motivo."; er.hidden=false; return; }
+      if(mt==="Morador impediu"){ (async()=>{ const t=await termoColher(r,op?.g); if(t) fim({sit:"NÃO",motivo:"Morador não autorizou (termo de responsabilidade assinado)",obs:ob,termo:t}); })(); return; }
       return fim({sit:"NÃO",motivo:mt==="Outro"?ob:mt,obs:mt==="Outro"?"":ob}); }
     if(e.target.closest("[data-svxok]")){ const falta={}, er=box.querySelector("#svxErr"); let bad="";
       box.querySelectorAll("[data-svf]").forEach(inp=>{ const v=+inp.value||0, mx=+inp.max; if(v<0||v>mx) bad=`no máximo ${mx} em ${inp.dataset.svf}`; if(v>0) falta[inp.dataset.svf]=v; });
@@ -11184,7 +11320,11 @@ document.addEventListener("click",async e=>{ const b=e.target.closest("[data-svs
     const gps=await svConfereLocal(r,b); if(!gps) return; quem.gps=gps;
     b.disabled=true; const patch={sv:{...(g.os.sv||{}),[rid]:{...ant,start:quem}}}; if(!g.os.start){ patch.start=quem; patch.porServ=true; }
     if(await fisOsAtualiza(g,patch,`Fiscal deu o START no serviço ${end} (O.S nº ${g.os.num})`)) toast(fotoSlots(r).length?`Start registrado. Tire a 1ª foto (${fotoSlots(r)[0].curto}).`:"Start registrado: serviço em execução."); else b.disabled=false; return; }
-  const ex=await svFimPerguntar(r,{ja:!!b.dataset.svja}); if(!ex) return; quem.exec=ex;
+  const ex=await svFimPerguntar(r,{ja:!!b.dataset.svja,g}); if(!ex) return;
+  if(ex.termo){ const tm=ex.termo; delete ex.termo; ex.termoNum=tm.num; const fresh=todosGlobal().find(x=>x.id===rid)||r, upd={...fresh}; delete upd.id; delete upd._fila; upd.termoResp=tm;
+    upd._acao=`Fiscal registrou o termo de responsabilidade ${tm.num}: morador ${tm.morador.nome} não autorizou o serviço${tm.morador.recusou?" (recusou-se a assinar – 2 testemunhas)":tm.morador.semDoc?" (sem documento – 2 testemunhas)":""}`;
+    const rs=await saveDoc(rid,upd); if(rs!=="ok"&&rs!=="fila") return toast("Não foi possível salvar o termo agora. Tente de novo."); Object.assign(r,upd); }
+  quem.exec=ex;
   if(ex.sit!=="NÃO"&&!fotosOk(r)) return toast(`Tire as ${fotoObrig(r).length} fotos deste serviço antes de finalizar.`);
   if(ex.ja){ const foto=ex.foto, geo=ex.geo; delete ex.foto; delete ex.geo; quem.exec=ex;
     const fresh=todosGlobal().find(x=>x.id===rid)||r, upd={...fresh}; delete upd.id; delete upd._fila; const ff={...(fresh.fotosFiscal||{})};
@@ -11198,6 +11338,17 @@ function osSpecHtml(r){ const pq=prevQ(r), its=ITENS.filter(i=>+pq[i.c]), tot=it
     ${lin("Tipo de local",esc(r.tipo||"")+(r.areaId?" · "+esc(areaTxt(r)):""))}${lin("Serviço",esc(r.servico||""))}${r.processo?lin(r.tipo==="O.S"?"Processo Intranet":"Processo "+(r.procSist||"SEI"),esc(r.processo)+(r.ped?" · PED "+esc(r.ped):"")+(r.parecer?" · parecer "+esc(r.parecer):"")):""}${r.extra?lin("⚡ Serviço extra",esc(r.extra.origem||"")+(r.extra.just?" – "+esc(r.extra.just):"")):""}
     ${its.length?`<table class="ossp-t"><thead><tr><th>Item</th><th>Porte da árvore</th><th>Qtd.</th></tr></thead><tbody>${grupos.map(([G,t])=>{ const L=its.filter(i=>i.g===G); return L.length?`<tr class="g"><td colspan="3">${t}</td></tr>`+L.map(i=>`<tr><td>${i.c}</td><td>${esc(itPorte(i))}</td><td><b>${pq[i.c]}</b></td></tr>`).join(""):""; }).join("")}<tr class="tot"><td colspan="2">Total</td><td><b>${tot}</b> ${arv(tot)}</td></tr></tbody></table>`:`<p class="note" style="margin:4px 0">Sem quantidade de árvores informada na programação.</p>`}
     ${r.obs?`<div class="ossp-obs">📝 <b>Observação da programação:</b> ${esc(r.obs)}</div>`:""}</div>`; }
+// fiscal sem O.S na tela: explica o porquê (sem conexão, O.S de outro fiscal / equipe, ainda não liberada)
+function fisVazioHtml(nFim){ const me=acesso?.[sessao.id]||{}, base=nFim?"Nenhuma O.S em andamento. As finalizadas ficam em <b>📁 Controle de O.S</b>.":"Nenhuma O.S recebida ainda. Quando o supervisor iniciar a O.S do dia e enviar para você, ela aparece aqui.";
+  const off=!db||!loaded||!navigator.onLine, pend=(()=>{ try{ return fila.all().length; }catch(e){ return 0; } })();
+  let diag=""; try{ const lim=new Date(Date.now()-2*864e5).toISOString(), L=todosGlobal().filter(r=>r.osDia&&!r.arquivado&&!r.osDia.fim&&(r.osDia.em||"")>=lim&&r.supervisao===sessao.sup), M={};
+    L.forEach(r=>{ const k=r.osDia.num||r.osDia.em; if(M[k]) return; const o=r.osDia; let why="";
+      if(!osDoFiscal(r,me)) why=o.semFiscal?"foi feita sem fiscal":o.fiscalTroca?`está com o fiscal ${esc(o.fiscal?.nome||"outro")}`:`é da equipe ${esc(r.equipe||"—")} (a sua: ${esc(me.equipe||"—")})`;
+      else if(!osLiberada(r.supervisao,r.data)) why=`libera às ${osHoraLib(r.supervisao)}h`;
+      if(why) M[k]=`O.S nº ${esc(o.num||"")} ${why}`; });
+    const v=Object.values(M); if(v.length) diag=`<p class="note" style="margin:10px 0 0;text-align:left">🔎 Na sua supervisão hoje: ${v.join("; ")}. Se essa O.S é sua, peça ao supervisor para conferir a <b>equipe</b> e o <b>fiscal</b> da O.S.</p>`; }catch(e){}
+  if(off) return `<div class="empty" style="border-color:#f0b37a"><b>📡 Sem conexão com o banco agora</b><br>Suas O.S aparecem assim que a internet voltar${pend?` · <b>${pend}</b> ${pend===1?"registro guardado":"registros guardados"} no celular, enviados sozinhos quando conectar`:""}.<div style="margin-top:10px"><button type="button" class="btn pri" onclick="location.reload()" style="min-height:44px">↻ Recarregar</button></div>${diag}</div>`;
+  return `<div class="empty">${base}${diag}</div>`; }
 function renderInicioFiscal(h){
   const hr=new Date().getHours(), sau=hr<12?"Bom dia":hr<18?"Boa tarde":"Boa noite", me=acesso?.[sessao.id]||{}, G=fisOsGrupos(30), GA=G.filter(g=>!g.os.fim), GC=fisOsGrupos(90).filter(g=>g.os.fim);
   const card=g=>{ const o=g.os, d=g.rs[0]?.data||"", nF=g.rs.filter(r=>fotoSlots(r).length).length, ok=g.rs.filter(r=>fotoSlots(r).length&&fotosOk(r)).length;
@@ -11218,7 +11369,7 @@ function renderInicioFiscal(h){
             if(!ini) return `<button type="button" class="btn start" data-svstart="${esc(r.id)}" ${pe?"disabled":""} style="min-height:52px">▶ START neste endereço</button>`;
             if(sv.fim) return `<small style="color:${sv.fim.exec?.sit==="NÃO"?"var(--bad)":sv.fim.exec?.sit==="PARCIAL"?"#8a5200":"var(--ok)"};font-weight:700">🏁 Serviço finalizado às ${hm(sv.fim.em)}${sv.fim.exec?" · "+esc(svExecTxt(sv.fim.exec)):""}</small>`;
             const fOk=fotosOk(r);
-            return `<small style="color:var(--ok);font-weight:700">🟢 Em execução${(sv.start||o.start)?" desde "+hm((sv.start||o.start).em):""}</small>`+(fOk?`<button type="button" class="btn start" data-svfim="${esc(r.id)}" style="min-height:52px">✅ FINALIZAR ESTE SERVIÇO</button>`:`<button type="button" class="btn sec" data-svfim="${esc(r.id)}" style="min-height:44px">✖ Não foi possível executar (informar)</button>`)+`<button type="button" class="btn sec" data-svfim="${esc(r.id)}" data-svja="1" style="min-height:44px">🔁 Cheguei e já estava feito (só 1 foto)</button>`; })()}
+            return `<small style="color:var(--ok);font-weight:700">🟢 Em execução${(sv.start||o.start)?" desde "+hm((sv.start||o.start).em):""}</small>`+(fOk?`<button type="button" class="btn start" data-svfim="${esc(r.id)}" style="min-height:52px">✅ FINALIZAR ESTE SERVIÇO</button>`:"")+`<div style="display:flex;flex-wrap:wrap;gap:6px">${fOk?"":`<button type="button" class="btn sec" data-svfim="${esc(r.id)}" style="flex:1 1 140px;min-height:34px;padding:6px 10px;font:600 12.5px/1.25 var(--body);text-transform:none;letter-spacing:0;border-radius:10px;opacity:.85">✖ Não deu para executar</button>`}<button type="button" class="btn sec" data-svfim="${esc(r.id)}" data-svja="1" style="flex:1 1 140px;min-height:34px;padding:6px 10px;font:600 12.5px/1.25 var(--body);text-transform:none;letter-spacing:0;border-radius:10px;opacity:.85">🔁 Já estava feito</button></div>`; })()}
           ${tem?(!fotosFisPode(r)&&!svIniciado(o,r)&&!r.relat?.ass?`<small>📷 Fotos: ${relTem(r)?"depois do <b>START</b> deste endereço":"depois de confirmar o recebimento"} (${S.map((x,i)=>(i+1)+" "+x.curto.toLowerCase()).join(" · ")})</small>`:fotosFisPode(r)?(()=>{ const SO=S.filter(x=>!x.opc), nx=SO.find(x=>!(r.fotosFiscal?.[x.k]||r.relat?.midia?.[x.k])); return nx?`<button type="button" class="btn pri" data-fotfis="${esc(r.id)}" style="min-height:52px">📷 Foto ${S.indexOf(nx)+1} de ${SO.length} · ${nx.curto} <small style="display:block;font:600 12px var(--body);opacity:.9">${nx.dica}</small></button>`:`<button type="button" class="btn sec" data-fotfis="${esc(r.id)}" style="min-height:48px">✅ ${n} foto${n>1?"s":""} registrada${n>1?"s":""} – ver${S.length>n?" / tirar mais uma (opcional)":""}</button>`; })():`<small>${r.relat?.ass?"✅ Relatório assinado pelo supervisor":n?`📷 Fotos ${n} de ${S.length}`:S===ROT_SLOTS?"Fotos não registradas":"Fotos: o supervisor anexa na baixa"}</small>`):``}</li>`; }).join("")}</ol></section>`; };
   h.innerHTML=`<p class="note" style="margin:0 0 2px">${sau},</p><h2 style="margin:0 0 4px">${esc((sessao.nome||"").split(" ").slice(0,2).join(" "))}</h2>
     <p class="note" style="margin:0 0 12px">Fiscal de turma · ${esc(sessao.sup||"")} · ${me.equipe?esc(me.equipe):"todas as equipes"}</p>
@@ -11229,7 +11380,7 @@ function renderInicioFiscal(h){
     ${fosAba==="ctl"?`<p class="note" style="margin:0 0 10px">O.S que você já <b>finalizou</b> (últimos 90 dias), para consulta sempre que precisar.</p>${GC.length?GC.map(card).join(""):`<div class="empty">Nenhuma O.S finalizada ainda.</div>`}`:`
     <div class="step" style="margin-bottom:6px">Ordens de serviço recebidas <b>em andamento</b></div>
     <p class="note" style="margin:0 0 10px">Aqui aparecem as O.S que o supervisor enviou para você: <b>uma O.S por endereço</b>. Confirme o recebimento (uma vez vale para todas), dê o <b>START</b> ao chegar em cada endereço e <b>FINALIZE</b> informando como ficou. <b>Processo</b>: 3 fotos (antes, durante e depois) para o relatório. <b>Outros serviços</b>: 2 fotos do serviço e a do endereço (opcional), com GPS. Quando todos os endereços estiverem finalizados, <b>assine e finalize a O.S</b>.</p>
-    ${GA.length?GA.map(card).join(""):`<div class="empty">${GC.length?"Nenhuma O.S em andamento. As finalizadas ficam em <b>📁 Controle de O.S</b>.":"Nenhuma O.S recebida ainda. Quando o supervisor iniciar a O.S do dia e enviar para você, ela aparece aqui."}</div>`}`}`;
+    ${GA.length?GA.map(card).join(""):fisVazioHtml(GC.length)}`}`;
 }
 let fosAba="and";
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-fosab]"); if(!b) return; fosAba=b.dataset.fosab; renderInicio(); scrollTo(0,0); });
