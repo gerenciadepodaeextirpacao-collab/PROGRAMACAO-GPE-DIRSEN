@@ -2919,7 +2919,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.21c";
+const APP_VERSAO="2026.11.21e";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -11638,7 +11638,12 @@ function cppIdxAuto(){ const vis=new Map(), prog=new Map(), dig=x=>cppDig(x);
     Object.values(regs).forEach(r=>{ if(r&&r.manual&&!r.manual.removido) add([r.manual.processo,r.manual.ged,r.manual.ped],r); }); }catch(e){}
   try{ todosGlobal().forEach(r=>{ if(r.arquivado||r.ocorrencia) return; [r.processo,r.ped].map(dig).filter(x=>x.length>=5).forEach(k=>{ (prog.get(k)||prog.set(k,[]).get(k)).push(r); }); }); }catch(e){}
   return {vis,prog}; }
-function cppEnriquecer(row,ix){ const ks=[row.solicitacao,row.procSec,row.ped].map(cppDig).filter(x=>x.length>=5); if(!ks.length) return row;
+function cppEnriquecer(row,ix){ const e=cppEnriquecer0(row,ix), si=row.supInf; if(!si||!si.data) return e;
+  const o=e===row?{...row}:{...e}, auto=[...(o._auto||[])], pon=(k,v)=>{ if(v&&(o[k]==null||o[k]==="")){ o[k]=v; auto.push(k); } };
+  if(si.como==="exec") pon("dtExec",si.data); else if(!o.dtExec){ pon("dtRetorno",si.data); pon("obs",si.como==="terc"?"EXECUTADO POR TERCEIROS":"EXECUTADO ANTERIORMENTE"); }
+  if(!o._execApp&&si.como==="exec") o._execApp={data:si.data,sup:si.sup||"",status:"SIM",qtd:si.qtd||0,rel:false,inf:true};
+  if(auto.length) o._auto=auto; return o; }
+function cppEnriquecer0(row,ix){ const ks=[row.solicitacao,row.procSec,row.ped].map(cppDig).filter(x=>x.length>=5); if(!ks.length) return row;
   let v=null; const ps=[]; ks.forEach(k=>{ if(!v&&ix.vis.has(k)) v=ix.vis.get(k); (ix.prog.get(k)||[]).forEach(r=>{ if(!ps.includes(r)) ps.push(r); }); });
   if(!v&&!ps.length) return row;
   const o={...row}, auto=[], pon=(k,val)=>{ if(val!=null&&val!==""&&(o[k]==null||o[k]==="")){ o[k]=val; auto.push(k); } }, iso=x=>{ const t=String(x||"").slice(0,10); return /^\d{4}-\d\d-\d\d$/.test(t)?t:""; };
@@ -11821,10 +11826,73 @@ function cppListaSheet(tipo){ const host=$("#sheetHost"); let L, tit, linhaExtra
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:21px">${tit} (${L.length})</b><button type="button" class="btn sec" id="clX" style="min-height:40px;padding:0 14px">Fechar</button></div>
     ${tipo==="fbx"?`<p class="note" style="margin:0">Lista de trabalho do cadastrador, da finalização mais recente para a mais antiga. A <b>data da finalização</b> é a data da <b>execução</b> quando foi executado, ou a data do <b>retorno</b> quando foi <b>finalizado sem execução</b>. Dê a baixa no INTRANET/SEI e depois abra o processo e assine o fechamento.</p>`:""}
     ${grupos}${tipo==="fbx"&&ctpMeu()==="tudo"&&!soLeitura()?cppLoteHtml(L):""}${filtroH}
-    <div id="clLista">${vis.map(r=>`<div data-clbusca="${esc(cppBuscaNorm([r.sistema,r.solicitacao,r.procSec,r.ped,r.oficio,r.logradouro,r.numero,r.quadra,r.lote,r.setor,r.requerente,r.equipe].join(" "))+" "+[r.solicitacao,r.procSec,r.ped].map(cppDig).join(" "))}" style="display:flex;justify-content:space-between;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)"><div style="min-width:0">${nm(r)}${linhaExtra(r)}</div><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">${cppFaltaBx(r)&&cppPodeValidar()?`<button type="button" class="btn pri" data-cppval="${esc(r.id)}" style="min-height:38px">✔ Validar baixa</button>`:""}${ctpPode()&&cppFrame?`<button type="button" class="btn ${tipo==="cor"?"pri":"sec"}" data-cppab="${esc(r.id)}" style="min-height:38px">${tipo==="cor"?"✏ Abrir e corrigir":"Abrir"}</button>`:""}</span></div>`).join("")||`<p class="note">Nenhum processo.</p>`}${L.length>vis.length?`<p class="note">… e mais ${L.length-vis.length}. Use os filtros da aba Processos.</p>`:""}</div></div></div>`;
+    <div id="clLista">${vis.map(r=>`<div data-cldet="${esc(r.id)}" style="cursor:pointer" data-clbusca="${esc(cppBuscaNorm([r.sistema,r.solicitacao,r.procSec,r.ped,r.oficio,r.logradouro,r.numero,r.quadra,r.lote,r.setor,r.requerente,r.equipe].join(" "))+" "+[r.solicitacao,r.procSec,r.ped].map(cppDig).join(" "))}" style="display:flex;justify-content:space-between;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)"><div style="min-width:0">${nm(r)}${linhaExtra(r)}</div><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">${cppFaltaBx(r)&&cppPodeValidar()?`<button type="button" class="btn pri" data-cppval="${esc(r.id)}" style="min-height:38px">✔ Validar baixa</button>`:""}${ctpPode()&&cppFrame?`<button type="button" class="btn ${tipo==="cor"?"pri":"sec"}" data-cppab="${esc(r.id)}" style="min-height:38px">${tipo==="cor"?"✏ Abrir e corrigir":"Abrir"}</button>`:""}</span></div>`).join("")||`<p class="note">Nenhum processo.</p>`}${L.length>vis.length?`<p class="note">… e mais ${L.length-vis.length}. Use os filtros da aba Processos.</p>`:""}</div></div></div>`;
   if(tipo==="fbx") cppLoteLigar(L);
   { const f=$("#clF"); if(f) f.oninput=()=>{ const q=cppBuscaNorm(f.value), qd=cppDig(f.value); host.querySelectorAll("#clLista [data-clbusca]").forEach(el=>{ const t=el.dataset.clbusca; el.hidden=!!q&&!(q.split(" ").every(w=>t.includes(w))||(qd.length>=4&&t.includes(qd))); }); }; }
-  $("#clX").onclick=()=>host.innerHTML=""; $("#sh").onclick=e=>{ if(e.target.id==="sh") host.innerHTML=""; const v=e.target.closest("[data-cppval]"); if(v){ cppValidar(v.dataset.cppval); return; } const a=e.target.closest("[data-cppab]"); if(a) cppAbrirNoQuadro(a.dataset.cppab,tipo==="cor"); }; }
+  $("#clX").onclick=()=>host.innerHTML=""; $("#sh").onclick=e=>{ if(e.target.id==="sh") host.innerHTML=""; const v=e.target.closest("[data-cppval]"); if(v){ cppValidar(v.dataset.cppval); return; } const a=e.target.closest("[data-cppab]"); if(a){ cppAbrirNoQuadro(a.dataset.cppab,tipo==="cor"); return; } if(e.target.closest("button,a,input,select,summary,details")) return; const dt=e.target.closest("[data-cldet]"); if(dt) cppDetalhe(dt.dataset.cldet,()=>cppListaSheet(tipo)); }; }
+// toque no processo: abre as informações completas (para quem não tem o quadro do controle, ex.: supervisor)
+function cppDetalhe(id,voltar){ const r=cppMap.get(id); if(!r) return; const host=$("#sheetHost"), sit=cppSit(r), d=x=>x?cppDtTxt(x):"—";
+  const end=[r.logradouro,r.numero&&r.numero!=="S/N"?"nº "+r.numero:r.numero,r.quadra?"Qd. "+r.quadra:"",r.lote?"Lt. "+r.lote:""].filter(Boolean).join(", "), local=[end,r.setor,r.regiao].filter(Boolean).join(" – ");
+  const lin=(k,v,cor)=>v?`<div style="display:grid;grid-template-columns:minmax(110px,38%) 1fr;gap:8px;padding:7px 0;border-bottom:1px solid var(--line)"><span style="color:var(--muted);font-size:13px;font-weight:600">${k}</span><span style="min-width:0;overflow-wrap:anywhere${cor?";color:"+cor+";font-weight:700":""}">${v}</span></div>`:"";
+  const dias=cppDiasEnv(r), lim=r.dtEnvio&&r.prazo?(()=>{ const x=new Date(String(r.dtEnvio).slice(0,10)+"T12:00"); x.setDate(x.getDate()+(+r.prazo||0)); return x.toLocaleDateString("pt-BR"); })():"";
+  const corS=sit==="ATRASADO"?"#b42318":sit==="EXECUTADO"?"#1f6b3a":sit==="FINALIZADO"?"#5b3f8c":"#1d4ed8";
+  const mapa="https://www.google.com/maps/search/?api=1&query="+encodeURIComponent([end,r.setor,"Goiânia GO"].filter(Boolean).join(", "));
+  host.innerHTML=`<div class="sheet" id="sh"><div class="panel" role="dialog" aria-label="Processo">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:21px">📄 ${esc((r.sistema||"")+" "+(r.solicitacao||r.procSec||""))}</b><button type="button" class="btn sec" id="cdX" style="min-height:40px;padding:0 14px">${voltar?"◀ Voltar":"Fechar"}</button></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0"><span style="background:${corS};color:#fff;border-radius:999px;padding:4px 12px;font-weight:700;font-size:13px">${esc(sit==="FINALIZADO"?"FINALIZADO SEM EXECUÇÃO":sit)}${sit==="ATRASADO"&&dias!=null?` · ${dias} dias`:""}</span>${r.urbantrim?`<span style="border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:13px">Urbantrim: ${esc(r.urbantrim)}</span>`:""}</div>
+    <div>${lin("Endereço",esc(local))}${lin("Supervisão / equipe",esc(r.equipe?cppEqGrupo(r.equipe):"—"))}${lin("Tipo de serviço",esc(r.tipoServico||""))}${lin("Quantidade",r.qtdPoda||r.qtdExtirp?esc(`${r.qtdPoda?r.qtdPoda+" poda":""}${r.qtdPoda&&r.qtdExtirp?" · ":""}${r.qtdExtirp?r.qtdExtirp+" extirpação":""}`):r.qtdExec?esc(String(r.qtdExec)):"")}
+      ${lin("Processo secundário",esc(r.procSec||""))}${lin("PED",esc(r.ped||""))}${lin("Parecer / ofício",esc(r.oficio||""))}${lin("Instituição",esc(r.instituicao||""))}${lin("Requerente",esc(r.requerente||""))}
+      ${lin("Recebido em",d(r.dtReceb))}${lin("Enviado à supervisão",d(r.dtEnvio))}${lin("Prazo",r.prazo?esc(r.prazo+" dias"+(lim?" · até "+lim:"")):"",sit==="ATRASADO"?"#b42318":"")}
+      ${lin("Executado em",r.dtExec?d(r.dtExec):"","#1f6b3a")}${lin("Retorno (sem execução)",r.dtRetorno&&!r.dtExec?d(r.dtRetorno):"","#5b3f8c")}${lin("Baixado",r.dtBaixa?esc(d(r.dtBaixa)+(r.baixadoPor?" por "+r.baixadoPor:"")):"")}
+      ${r._execApp?lin("Baixa no campo (app)",esc(`${d(r._execApp.data)} · ${r._execApp.sup||""}${r._execApp.qtd?" · "+r._execApp.qtd+" árv.":""}`),"#1f6b3a"):""}${r._retApp?lin("Retorno do campo (app)",esc(`${r._retApp.sup||""}${r._retApp.motivo?" · "+r._retApp.motivo:""}`)):""}
+      ${lin("Observação",esc(r.obs||""))}</div>
+    ${r.supInf?`<p class="note" style="margin:8px 0 0;border-left:4px solid #1f6b3a;padding-left:8px">✔ <b>${esc(r.supInf.por||"")}</b> informou em ${esc(new Date(r.supInf.em).toLocaleDateString("pt-BR"))}: ${esc(r.supInf.como==="exec"?"executado pela equipe":r.supInf.como==="terc"?"já estava feito (por terceiros)":"já estava feito (equipe não identificada)")} em ${d(r.supInf.data)}${r.supInf.obs?" – "+esc(r.supInf.obs):""}</p>`:""}
+    ${r.transf?`<p class="note" style="margin:8px 0 0;border-left:4px solid #c77700;padding-left:8px">↪ <b>${esc(r.transf.por||"")}</b> mandou em ${esc(new Date(r.transf.em).toLocaleDateString("pt-BR"))} para <b>${esc(r.transf.paraSup||r.transf.para)}</b> dar baixa (essa equipe executou${r.transf.data?" em "+d(r.transf.data):""})${r.transf.obs?" – "+esc(r.transf.obs):""}. Antes estava com ${esc(cppEqGrupo(r.transf.de)||"—")}.</p>`:""}
+    ${(sit==="ATRASADO"||sit==="EM EXECUÇÃO"||sit==="SEM ENVIO")&&cppPodeAgir(r)?`<div class="actions" style="grid-template-columns:1fr 1fr;margin:10px 0 0"><button type="button" class="btn pri" id="cdProg" style="min-height:52px">📅 Programar para o fiscal executar</button><button type="button" class="btn sec" id="cdFeito" style="min-height:52px">✔ Já foi feito</button></div>`:""}
+    <div class="actions" style="grid-template-columns:1fr;margin:10px 0 0"><a class="btn sec" href="${mapa}" target="_blank" rel="noopener" style="text-decoration:none;display:flex;align-items:center;justify-content:center;min-height:46px">📍 Abrir no mapa</a></div></div></div>`;
+  const fecha=()=>{ if(voltar) voltar(); else host.innerHTML=""; };
+  $("#cdX").onclick=fecha; $("#sh").onclick=e=>{ if(e.target.id==="sh") host.innerHTML=""; };
+  if($("#cdProg")) $("#cdProg").onclick=()=>{ host.innerHTML=""; cppProgramar(r); };
+  if($("#cdFeito")) $("#cdFeito").onclick=()=>cppJaFeito(r,()=>cppDetalhe(id,voltar)); }
+// supervisor da equipe do processo (ou quem edita o controle) pode programar / informar
+const cppPodeAgir=r=>!!db&&!soLeitura()&&(ctpEdita()||isGerente()||(["supervisor","supervisor1","coordenador"].includes(sessao?.perfil)&&(!r.equipe||cppEqDaSup(r.equipe,sessao.sup)||sessao?.perfil==="coordenador")));
+// 📅 abre a programação já preenchida com o processo (depois segue o fluxo normal: O.S do dia → fiscal)
+function cppProgramar(r){ limpar("prog"); form.base=null;
+  const sis=String(r.sistema||"").toUpperCase(), num=String(r.solicitacao||r.procSec||"").trim();
+  try{ if(sessao?.sup&&!isGerente()){ form.sup=sessao.sup; setPressed($("#supChips"),form.sup); } }catch(x){}
+  form.tipo="PROCESSO"; setPressed($("#tipoChips"),form.tipo);
+  bairroCarregar("bairro",String(r.setor||"").toUpperCase()); endCarregar("e_",abrevEnd([r.logradouro,r.quadra?"QD. "+r.quadra:"",r.lote?"LT. "+r.lote:"",r.numero&&r.numero!=="S/N"?"Nº "+r.numero:""].filter(Boolean).join(", ").toUpperCase()));
+  $("#processo").value=num; $("#ped").value=r.ped||""; $("#parecer").value=r.oficio||""; $("#solic").value=r.requerente||""; $("#procSist").value=["SEI","INTRANET","GED"].includes(sis)?sis:"";
+  const ts=String(r.tipoServico||"").toUpperCase(); servCarregar(ts==="EXTIRPAÇÃO"?"EXTIRPAÇÃO":ts==="PODA/EXTIRPAÇÃO"?"PODA/EXTIRPAÇÃO":ts?"PODA DE MANUTENÇÃO":"");
+  $("#obs").value=`Processo do controle (${cppSit(r)==="ATRASADO"?"atrasado "+(cppDiasEnv(r)||"")+" dias":"em aberto"}).${r.obs?" "+r.obs:""}`;
+  try{ procUI(); }catch(x){} modeUI(); show("form",true); scrollTo(0,0); toast("Programação preenchida com o processo. Escolha a data, a equipe e as quantidades e salve."); try{ checaDup(); }catch(x){} }
+// ✔ já foi feito: o supervisor informa e o controle atualiza sozinho (execução ou finalizado sem execução)
+function cppJaFeito(r,voltar){ const host=$("#sheetHost");
+  host.innerHTML=`<div class="sheet" id="sh"><div class="panel" role="dialog" aria-label="Já foi feito">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:21px">✔ Informar que já foi feito</b><button type="button" class="btn sec" id="jfX" style="min-height:40px;padding:0 14px">◀ Voltar</button></div>
+    <p class="note" style="margin:0"><b>${esc((r.sistema||"")+" "+(r.solicitacao||r.procSec||""))}</b> · ${esc([r.logradouro,r.setor].filter(Boolean).join(" – "))}</p>
+    <label class="f">O que aconteceu<select id="jfComo"><option value="exec">Minha equipe executou (não foi lançado no app)</option><option value="ant">Chegamos e já estava feito (equipe não identificada)</option><option value="terc">Já estava feito por terceiros (Equatorial, morador, outro órgão…)</option><option value="outra">Foi outra equipe da COMURG (mandar para ela dar baixa)</option></select></label>
+    <label class="f" id="jfEqW" hidden>Equipe que executou<select id="jfEq"><option value="">Escolha…</option>${SUPS_ALL.filter(x=>{ const i=cppEqInfo(x.id); return i&&(cppG==="DIROP"?i.p>=3:i.p<=2)&&x.id!==sessao?.sup; }).map(x=>`<option value="${esc(x.id)}">${esc(x.id)}</option>`).join("")}</select></label>
+    <label class="f">Data<input type="date" id="jfData" value="${hoje()}" max="${hoje()}"></label>
+    <label class="f">Quantidade de árvores (se a equipe executou)<input id="jfQtd" inputmode="numeric" placeholder="Ex.: 2"></label>
+    <label class="f">Explique (obrigatório)<input id="jfObs" autocomplete="off" placeholder="Ex.: executado no dia 10/11 junto com a O.S 1982633"></label>
+    <div class="err" id="jfErr" hidden></div>
+    <button type="button" class="btn pri" id="jfOk" style="min-height:52px">✔ Informar</button></div></div>`;
+  const err=t=>{ const e=$("#jfErr"); e.textContent=t; e.hidden=false; };
+  $("#jfX").onclick=()=>voltar?voltar():host.innerHTML="";
+  $("#jfComo").onchange=()=>{ const o=$("#jfComo").value==="outra"; $("#jfEqW").hidden=!o; $("#jfQtd").closest("label").hidden=o; $("#jfData").closest("label").firstChild.textContent=o?"Data em que a outra equipe executou (se souber)":"Data"; };
+  $("#jfOk").onclick=async()=>{ const como=$("#jfComo").value, data=$("#jfData").value, obs=$("#jfObs").value.trim(), q=+String($("#jfQtd").value).replace(",",".")||0;
+    const para=$("#jfEq").value; if(como==="outra"&&!para) return err("Escolha a equipe que executou.");
+    if(!data||data>hoje()) return err("Informe a data (não pode ser futura)."); if(obs.length<8) return err("Explique o que aconteceu.");
+    const b=$("#jfOk"); b.disabled=true; b.textContent="Salvando…";
+    try{ const raw=cppRaw.get(r.id)||r, dd={...raw}; ["id","_b","_auto","_execApp","_vistJa","_retApp","shard","_c"].forEach(x=>delete dd[x]);
+      const em=new Date().toISOString();
+      if(como==="outra"){ dd.transf={de:raw.equipe||"",para:cppEquipe(para),paraSup:para,data,obs:obs.toUpperCase(),por:String(sessao.nome||"").toUpperCase(),uid:sessao.id,em}; dd.equipe=cppEquipe(para); }
+      else dd.supInf={como,data,obs:obs.toUpperCase(),qtd:q||0,por:String(sessao.nome||"").toUpperCase(),uid:sessao.id,sup:sessao.sup||"",em};
+      dd.updatedAt=Date.now();
+      const k=cppPref()+r.id, ant=ctpDocs[k]||{}, doc={d:dd,del:false,em,por:sessao.nome||"",uid:sessao.id,log:[...(ant.log||[]),{em,por:sessao.nome||"",acao:como==="outra"?`Supervisor mandou para ${para} dar baixa (foi essa equipe que executou)`:`Supervisor informou: ${como==="exec"?"executado":"já estava feito"} em ${fmtD(data)}`}].slice(-30)};
+      await db.collection(ASS_COL).doc(k).set(doc); ctpDocs[k]=doc; cppRecalc(); toast(como==="outra"?`Enviado para ${para}. A pendência passa para essa equipe dar a baixa.`:"Informado. O controle de processos já foi atualizado."); try{ renderPend(); }catch(x){} voltar?voltar():host.innerHTML=""; }
+    catch(x){ b.disabled=false; b.textContent="✔ Informar"; err("Não foi possível salvar: "+(x.message||x)); } }; }
 // ===== baixa em lote: finalizados sem execução e/ou executados até hoje, sem data da baixa =====
 const cppLoteSel=(L,t)=>L.filter(r=>{ const fim=String(cppFimData(r)).slice(0,10); if(!(r.dtExec||r.dtRetorno)||r.dtBaixa||cppDataRuim(fim)||fim>hoje()) return false; return t==="fin"?(!r.dtExec&&!!r.dtRetorno):t==="exe"?!!r.dtExec:true; });
 function cppLoteHtml(L){ const nf=cppLoteSel(L,"fin").length, ne=cppLoteSel(L,"exe").length, P=cppResp().map(x=>x.nome);
