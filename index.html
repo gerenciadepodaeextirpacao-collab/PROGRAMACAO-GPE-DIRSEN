@@ -2925,7 +2925,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.22i";
+const APP_VERSAO="2026.11.22j";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -4534,7 +4534,7 @@ function montar(root) {
   root.classList.add("vp");
   const usuario = () => (typeof sessao !== "undefined" && sessao && sessao.nome) || "";
   const meuId = () => (typeof sessao !== "undefined" && sessao && sessao.id) || "";
-  const S = { proc: [], reg: {}, rotas: {}, sups: [], tela: "rotas", grp: LS("vp-grp") || "all", yr: LS("vp-yr") || "all", cur: LS("vp-reg") || "CENTRO OESTE",
+  const S = { proc: [], reg: {}, rotas: {}, sups: [], tela: "rotas", grp: LS("vp-grp") || "all", pdf: LS("vp-pdf") || "all", yr: LS("vp-yr") || "all", cur: LS("vp-reg") || "CENTRO OESTE",
     start: LS("vp-start") || "", per: +(LS("vp-per2") || 0), q: "", hide: true, minhas: false, ver: LS("vp-ver2") || "todas", f: {}, doc: {}, x: {}, lim: 40, supF: "", erro: "", carregando: true, busy: {} };
   // cadastrador(a): também cuida dos PDFs dos processos
   const ehCadastrador = () => { try { return !!sessao && cargoK(acesso?.[sessao.id] || sessao) === "cadastrador"; } catch (e) { return false; } };
@@ -4672,7 +4672,8 @@ function montar(root) {
   }
 
   // ---------------- rotas (fixas por regional) ----------------
-  const inG = (p) => (S.grp === "all" || (S.grp === "ged" ? !!p.ged : !p.ged)) && (S.yr === "all" || String(p.ano || 0) === S.yr);
+  const temPdf = (p) => docLinks(R(p)).length > 0;
+  const inG = (p) => (S.grp === "all" || (S.grp === "ged" ? !!p.ged : !p.ged)) && (S.pdf === "all" || (S.pdf === "com" ? temPdf(p) : !temPdf(p))) && (S.yr === "all" || String(p.ano || 0) === S.yr);
   // ---------- rotas otimizadas: por regional → setores vizinhos em sequência → paradas mais próximas ----------
   const semAc = (t) => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase();
   const normSetor = (t) => { let x = " " + semAc(t).replace(/[.,;:()\/\-–]+/g, " ").replace(/\s+/g, " ").trim() + " ";
@@ -4970,7 +4971,9 @@ function montar(root) {
     const all = S.proc, d = all.filter((p) => R(p).vistoriado).length;
     // filtros (GED, ano) contam só o que ainda falta vistoriar: vistoriou, sai da contagem; ano sem pendente some
     const pend = all.filter((p) => !R(p).vistoriado), pendL = pend.filter((p) => S.vpUid ? (R(p).rota && R(p).rota.uid === S.vpUid) : !(R(p).rota && R(p).rota.uid)), ng = pendL.filter((p) => p.ged).length;
-    const base = pendL.filter((p) => S.grp === "all" || (S.grp === "ged" ? !!p.ged : !p.ged));
+    const tPdf = (p) => docLinks(R(p)).length > 0, okPdf = (p) => S.pdf === "all" || (S.pdf === "com" ? tPdf(p) : !tPdf(p)), okGrp = (p) => S.grp === "all" || (S.grp === "ged" ? !!p.ged : !p.ged);
+    const nPc = pendL.filter((p) => okGrp(p) && tPdf(p)).length, nPg = pendL.filter(okGrp).length;
+    const base = pendL.filter((p) => okGrp(p) && okPdf(p));
     const anos = {}; base.forEach((p) => (anos[p.ano || 0] = (anos[p.ano || 0] || 0) + 1));
     const ys = Object.keys(anos).map(Number).sort((a, b) => (a || 9999) - (b || 9999));
     if (S.yr !== "all" && !ys.some((y) => String(y) === S.yr)) S.yr = "all";
@@ -4984,6 +4987,7 @@ function montar(root) {
     return `<div><p class="vp-sub"><b>${pend.length}</b> a vistoriar · ${d} vistoriados · relatório de ${fDia(VIST_REL)}</p>${pode.coord() ? `<p class="vp-msg" style="margin:2px 0 0">Planilha: <b>${nPl}</b> em aberto (${nPlV} já vistoriados, <b>${nPl - nPlV}</b> a vistoriar)${nMan ? ` · cadastrados à mão: <b>${nMan}</b>` : ""}${nFora ? ` · vistoriados que já saíram da planilha (executados): <b>${nFora}</b> – ficam só no histórico` : ""}</p>` : ""}</div>
     <div class="vp-tabs">${T.map(([k, t]) => `<button class="vp-tab" data-tela="${k}" aria-pressed="${S.tela === k}">${t}</button>`).join("")}</div>
     ${S.tela !== "rotas" || !pode.coord() ? "" : `<div class="vp-row vp-cg">${[["all", "Todos", all.length], ["ged", "Com GED", ng], ["noged", "Sem GED", pendL.length - ng]].map(([k, t, n]) => `<button class="vp-chip" data-grp="${k}" aria-pressed="${S.grp === k}">${t}<small>${n}</small></button>`).join("")}</div>
+    <div class="vp-row vp-cg">${[["all", "📄 Com e sem PDF", nPg], ["com", "📄 Com PDF", nPc], ["sem", "⚠ Sem PDF", nPg - nPc]].map(([k, t, n]) => `<button class="vp-chip" data-pdff="${k}" aria-pressed="${S.pdf === k}">${t}<small>${n}</small></button>`).join("")}</div>
     <div class="vp-row vp-cy"><button class="vp-chip" data-yr="all" aria-pressed="${S.yr === "all"}">Todos os anos<small>${all.filter((p) => S.grp === "all" || (S.grp === "ged" ? !!p.ged : !p.ged)).length}</small></button>${ys.map((y) => `<button class="vp-chip" data-yr="${y}" aria-pressed="${S.yr === String(y)}">${y || "Sem ano"}<small>${anos[y]}</small></button>`).join("")}</div>`}`;
   }
 
@@ -5999,6 +6003,7 @@ function montar(root) {
     const ds = t.dataset;
     if (ds.tela) { S.tela = ds.tela; render(); return; }
     if (ds.grp) { S.grp = ds.grp; LS("vp-grp", S.grp); render(); return; }
+    if (ds.pdff) { S.pdf = ds.pdff; LS("vp-pdf", S.pdf); render(); return; }
     if (ds.yr) { S.yr = ds.yr; LS("vp-yr", S.yr); render(); return; }
     if (ds.reg) { S.cur = ds.reg; LS("vp-reg", S.cur); S.q = ""; render(); return; }
     if (ds.mais) { S.lim += 40; render(); return; }
