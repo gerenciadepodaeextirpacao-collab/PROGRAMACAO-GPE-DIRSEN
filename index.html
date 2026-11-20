@@ -2925,7 +2925,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.22e";
+const APP_VERSAO="2026.11.22f";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -4983,8 +4983,8 @@ function montar(root) {
     const og = window.__vistOrigem || {}, nPl = all.filter((p) => og[p.id] === "pl").length, nPlV = all.filter((p) => og[p.id] === "pl" && R(p).vistoriado).length, nFora = all.filter((p) => og[p.id] === "vist").length, nMan = all.filter((p) => og[p.id] === "manual").length;
     return `<div><p class="vp-sub"><b>${pend.length}</b> a vistoriar · ${d} vistoriados · relatório de ${fDia(VIST_REL)}</p>${pode.coord() ? `<p class="vp-msg" style="margin:2px 0 0">Planilha: <b>${nPl}</b> em aberto (${nPlV} já vistoriados, <b>${nPl - nPlV}</b> a vistoriar)${nMan ? ` · cadastrados à mão: <b>${nMan}</b>` : ""}${nFora ? ` · vistoriados que já saíram da planilha (executados): <b>${nFora}</b> – ficam só no histórico` : ""}</p>` : ""}</div>
     <div class="vp-tabs">${T.map(([k, t]) => `<button class="vp-tab" data-tela="${k}" aria-pressed="${S.tela === k}">${t}</button>`).join("")}</div>
-    ${S.tela !== "rotas" || !pode.coord() ? "" : `<div class="vp-row vp-cg">${[["all", "Todos", pend.length], ["ged", "Com GED", ng], ["noged", "Sem GED", pend.length - ng]].map(([k, t, n]) => `<button class="vp-chip" data-grp="${k}" aria-pressed="${S.grp === k}">${t}<small>${n}</small></button>`).join("")}</div>
-    <div class="vp-row vp-cy"><button class="vp-chip" data-yr="all" aria-pressed="${S.yr === "all"}">Todos os anos<small>${base.length}</small></button>${ys.map((y) => `<button class="vp-chip" data-yr="${y}" aria-pressed="${S.yr === String(y)}">${y || "Sem ano"}<small>${anos[y]}</small></button>`).join("")}</div>`}`;
+    ${S.tela !== "rotas" || !pode.coord() ? "" : `<div class="vp-row vp-cg">${[["all", "Todos", all.length], ["ged", "Com GED", ng], ["noged", "Sem GED", pend.length - ng]].map(([k, t, n]) => `<button class="vp-chip" data-grp="${k}" aria-pressed="${S.grp === k}">${t}<small>${n}</small></button>`).join("")}</div>
+    <div class="vp-row vp-cy"><button class="vp-chip" data-yr="all" aria-pressed="${S.yr === "all"}">Todos os anos<small>${all.filter((p) => S.grp === "all" || (S.grp === "ged" ? !!p.ged : !p.ged)).length}</small></button>${ys.map((y) => `<button class="vp-chip" data-yr="${y}" aria-pressed="${S.yr === String(y)}">${y || "Sem ano"}<small>${anos[y]}</small></button>`).join("")}</div>`}`;
   }
 
   // ----- bloco de vistoria de cada parada -----
