@@ -2106,7 +2106,7 @@ $("#trocaForm").addEventListener("submit",async ev=>{ ev.preventDefault(); const
   const salt=novoSal(), doc={salt,hash:await hashPin(salt,p1),em:new Date().toISOString(),nome:t.u.nome,tipo:"login"};
   try{ await db.collection(ASS_COL).doc("login_"+t.id).set(doc); assins["login_"+t.id]=doc; }catch(x){ return e("Não foi possível salvar a senha agora. Tente de novo."); }
   trocaPend=null; $("#lgPin").value=""; toast("Senha nova salva."); concluirEntrada(t.id,t.u,t.mat); });
-$("#recarregarBtn").onclick=async()=>{ const b=$("#recarregarBtn"); b.classList.add("gira"); try{ const r=await navigator.serviceWorker?.getRegistration?.(); await r?.update?.(); }catch(e){} setTimeout(()=>location.reload(),250); };
+$("#recarregarBtn").onclick=async()=>{ const b=$("#recarregarBtn"); b.classList.add("gira"); try{ sessionStorage.setItem("gpe_volta",JSON.stringify({v:curView,y:scrollY,t:Date.now(),tri:!!document.querySelector(".sheet [data-traba]")})); }catch(e){} try{ const r=await navigator.serviceWorker?.getRegistration?.(); await r?.update?.(); }catch(e){} setTimeout(()=>location.reload(),250); };
 (()=>{ const b=$("#recarregarBtn"), casa=b.parentNode; const pos=()=>{ const l=document.body.classList.contains("locked"); if(l&&b.parentNode!==document.body) document.body.appendChild(b); else if(!l&&b.parentNode!==casa) casa.appendChild(b); }; new MutationObserver(pos).observe(document.body,{attributes:true,attributeFilter:["class"]}); pos(); })();
 $("#sairBtn").onclick=e=>{ const b=$("#sairBtn"); if(e&&e.isTrusted&&e.currentTarget===b&&!b.classList.contains("conf")){ b.classList.add("conf"); b.querySelector("span").textContent="Confirmar saída"; clearTimeout(b._t); b._t=setTimeout(()=>{ b.classList.remove("conf"); b.querySelector("span").textContent="Sair"; },4000); return; } b.classList.remove("conf"); b.querySelector("span").textContent="Sair"; if(window.GPE_TREINO&&window.GPE_SAIR_TREINO) return window.GPE_SAIR_TREINO(); ls.set("gpe_teste",false); sessao=null; ls.set("gpe_sessao",null); if(!isGer()) ls.set("gpe_sup",""); limpar("prog"); renderLogin(); };
 
@@ -2925,7 +2925,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.22f";
+const APP_VERSAO="2026.11.22i";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -4821,7 +4821,7 @@ function montar(root) {
   // a rota é montada pelo app: processos da regional que passam no filtro (GED / ano), na ordem de proximidade, em blocos de N paradas
   const falta = (p) => !S.hide || !R(p).vistoriado || !!S.f[p.id];
   // rota indicada para um vistoriador não aparece para outro: na coordenação, por padrão só as paradas livres e as suas ("Todas" mostra tudo para reorganizar)
-  const verOk = (p) => S.ver === "todas" || (S.ver === "minhas" ? minha(p) : !deOutro(p));
+  const verOk = (p) => S.vpUid ? (!!dono(p) && dono(p).uid === S.vpUid) : !(dono(p) && dono(p).uid); // lista geral: só as SEM vistoriador; as designadas aparecem só ao tocar no vistoriador
   const listaRotas = (reg) => pode.coord() ? doReg(reg).filter((p) => inG(p) && (!S.minhas || minha(p)) && verOk(p) && falta(p)) : doReg(reg).filter((p) => (minha(p) && falta(p)) || (R(p).vistoriado && R(p).resp_uid === meuId() && !S.hide));
   // monta as rotas sem quebrar setor: fecha a rota quando o próximo setor não cabe e ela já está com boa parte das paradas
   // quantidade exata: a lista (já em ordem de setor e proximidade) é cortada de N em N paradas — 20 processos com 10 paradas = Rota 1 e Rota 2
@@ -4969,8 +4969,8 @@ function montar(root) {
   function cab() {
     const all = S.proc, d = all.filter((p) => R(p).vistoriado).length;
     // filtros (GED, ano) contam só o que ainda falta vistoriar: vistoriou, sai da contagem; ano sem pendente some
-    const pend = all.filter((p) => !R(p).vistoriado), ng = pend.filter((p) => p.ged).length;
-    const base = pend.filter((p) => S.grp === "all" || (S.grp === "ged" ? !!p.ged : !p.ged));
+    const pend = all.filter((p) => !R(p).vistoriado), pendL = pend.filter((p) => S.vpUid ? (R(p).rota && R(p).rota.uid === S.vpUid) : !(R(p).rota && R(p).rota.uid)), ng = pendL.filter((p) => p.ged).length;
+    const base = pendL.filter((p) => S.grp === "all" || (S.grp === "ged" ? !!p.ged : !p.ged));
     const anos = {}; base.forEach((p) => (anos[p.ano || 0] = (anos[p.ano || 0] || 0) + 1));
     const ys = Object.keys(anos).map(Number).sort((a, b) => (a || 9999) - (b || 9999));
     if (S.yr !== "all" && !ys.some((y) => String(y) === S.yr)) S.yr = "all";
@@ -4983,7 +4983,7 @@ function montar(root) {
     const og = window.__vistOrigem || {}, nPl = all.filter((p) => og[p.id] === "pl").length, nPlV = all.filter((p) => og[p.id] === "pl" && R(p).vistoriado).length, nFora = all.filter((p) => og[p.id] === "vist").length, nMan = all.filter((p) => og[p.id] === "manual").length;
     return `<div><p class="vp-sub"><b>${pend.length}</b> a vistoriar · ${d} vistoriados · relatório de ${fDia(VIST_REL)}</p>${pode.coord() ? `<p class="vp-msg" style="margin:2px 0 0">Planilha: <b>${nPl}</b> em aberto (${nPlV} já vistoriados, <b>${nPl - nPlV}</b> a vistoriar)${nMan ? ` · cadastrados à mão: <b>${nMan}</b>` : ""}${nFora ? ` · vistoriados que já saíram da planilha (executados): <b>${nFora}</b> – ficam só no histórico` : ""}</p>` : ""}</div>
     <div class="vp-tabs">${T.map(([k, t]) => `<button class="vp-tab" data-tela="${k}" aria-pressed="${S.tela === k}">${t}</button>`).join("")}</div>
-    ${S.tela !== "rotas" || !pode.coord() ? "" : `<div class="vp-row vp-cg">${[["all", "Todos", all.length], ["ged", "Com GED", ng], ["noged", "Sem GED", pend.length - ng]].map(([k, t, n]) => `<button class="vp-chip" data-grp="${k}" aria-pressed="${S.grp === k}">${t}<small>${n}</small></button>`).join("")}</div>
+    ${S.tela !== "rotas" || !pode.coord() ? "" : `<div class="vp-row vp-cg">${[["all", "Todos", all.length], ["ged", "Com GED", ng], ["noged", "Sem GED", pendL.length - ng]].map(([k, t, n]) => `<button class="vp-chip" data-grp="${k}" aria-pressed="${S.grp === k}">${t}<small>${n}</small></button>`).join("")}</div>
     <div class="vp-row vp-cy"><button class="vp-chip" data-yr="all" aria-pressed="${S.yr === "all"}">Todos os anos<small>${all.filter((p) => S.grp === "all" || (S.grp === "ged" ? !!p.ged : !p.ged)).length}</small></button>${ys.map((y) => `<button class="vp-chip" data-yr="${y}" aria-pressed="${S.yr === String(y)}">${y || "Sem ano"}<small>${anos[y]}</small></button>`).join("")}</div>`}`;
   }
 
@@ -5002,6 +5002,7 @@ function montar(root) {
     if (!f) {
       if (!pode.lancar()) return `<div class="vp-vb"><span class="vp-msg">Ainda não vistoriado.</span></div>`;
       if (!eu && !pode.coord()) return "";
+      if (!eu && dono(p) && dono(p).uid) return `<div class="vp-vb"><span class="vp-msg">🔒 Processo na rota de <b>${esc(dono(p).vistoriador || "")}</b>: só ele lança a vistoria. Para outra pessoa fazer, cancele o envio na rota dele.</span></div>`;
       return `<div class="vp-vb"><div class="vp-row"><span class="vp-lab">No local, o serviço</span><button class="vp-opt vp-s-ja_executado" data-ini="ja_executado" data-id="${p.id}">Já foi executado</button><button class="vp-opt vp-s-nao_executado" data-ini="nao_executado" data-id="${p.id}">Ainda não foi executado</button></div></div>`;
     }
     let h = `<div class="vp-vb"><div class="vp-row"><span class="vp-lab">No local, o serviço</span><button class="vp-opt vp-s-ja_executado" data-fsit="ja_executado" data-id="${p.id}" aria-pressed="${f.sit === "ja_executado"}">Já foi executado</button><button class="vp-opt vp-s-nao_executado" data-fsit="nao_executado" data-id="${p.id}" aria-pressed="${f.sit === "nao_executado"}">Ainda não foi executado</button></div>
@@ -5051,8 +5052,16 @@ function montar(root) {
     const meusN = S.proc.filter((p) => minha(p) && !R(p).vistoriado).length;
     let h = "";
     if (!coord && !regs.length) return `<div class="vp-card" style="padding:16px"><b>Nenhuma rota indicada para você.</b><p class="vp-msg" style="margin-top:6px">O coordenador indica o vistoriador de cada rota. Quando ele indicar você, a rota aparece aqui.</p></div>`;
+    if (coord) h += (() => { const G = {}, semV = [], cap2 = (t) => cap(t);
+        S.proc.forEach((p) => { const d = dono(p), v = !!R(p).vistoriado; if (!d || !d.uid) { if (!v) semV.push(p); return; } const g = (G[d.uid] = G[d.uid] || { uid: d.uid, nome: (acesso && acesso[d.uid] && acesso[d.uid].nome) || d.vistoriador || "—", pend: 0, feito: 0, regs: {} }); if (v) g.feito++; else { g.pend++; g.regs[p.regional] = (g.regs[p.regional] || 0) + 1; } });
+        const L = Object.values(G).filter((g) => g.pend || g.feito).sort((a, b) => b.pend - a.pend || a.nome.localeCompare(b.nome)), tp = L.reduce((a, g) => a + g.pend, 0), sr = {}; semV.forEach((p) => (sr[p.regional] = (sr[p.regional] || 0) + 1));
+        return `<div class="vp-card" style="padding:12px 14px;display:grid;gap:8px"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline"><b style="font-size:16px">👥 Vistoriadores designados</b><span class="vp-msg">${L.length} pessoa${L.length === 1 ? "" : "s"} · <b>${tp}</b> processos designados a vistoriar · <b style="color:var(--bad,#b3261e)">${semV.length}</b> sem vistoriador</span></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">
+          ${L.map((g) => `<button type="button" class="vp-chip" data-vpuid="${esc(g.uid)}" aria-pressed="${S.vpUid === g.uid}" style="display:grid;gap:2px;text-align:left;border-radius:12px;padding:8px 12px;height:auto"><b style="font-size:14px">${esc(g.nome)}</b><span style="font-size:12.5px"><b style="font-size:16px">${g.pend}</b> a vistoriar · ✔ ${g.feito} feitos</span><small style="opacity:.75">${Object.entries(g.regs).map(([r, n]) => cap2(r) + " " + n).join(" · ") || "tudo vistoriado"}</small></button>`).join("") || `<span class="vp-msg">Nenhum processo designado ainda.</span>`}
+          <div style="border:2px dashed var(--bad,#b3261e);border-radius:12px;padding:8px 12px;display:grid;gap:2px"><b style="font-size:14px;color:var(--bad,#b3261e)">⚠ Sem vistoriador</b><span style="font-size:12.5px"><b style="font-size:16px">${semV.length}</b> processos a vistoriar sem ninguém designado</span><small style="opacity:.75">${Object.entries(sr).sort((a, b) => b[1] - a[1]).map(([r, n]) => cap2(r) + " " + n).join(" · ")}</small></div></div>
+          ${S.vpUid ? `<div class="vp-row"><span class="vp-msg">🔒 Mostrando só a rota de <b>${esc(((acesso && acesso[S.vpUid]) || {}).nome || "")}</b>. Para devolver um processo à lista geral, toque em <b>Cancelar envio</b> na rota.</span><button class="vp-btn vp-pri" data-vpuid="">⬅ Voltar à lista geral</button></div>` : `<span class="vp-msg">A lista abaixo mostra só os processos <b>sem vistoriador</b>. Os designados ficam com o vistoriador: toque no nome para ver a rota dele.</span>`}</div>`; })();
     h += `<div class="vp-row">${regs.map((r) => { const l = listaRotas(r), dd = l.filter((p) => R(p).vistoriado).length, pn = l.length - dd; return `<button class="vp-chip" data-reg="${r}" aria-pressed="${r === S.cur}">${cap(r)}<small>${pn}${dd && !S.hide ? " · ✔" + dd : ""}</small></button>`; }).join("")}</div>
-    <div class="vp-ctl">${coord ? `<label class="vp-f">Paradas por rota<input type="number" id="vp-per" min="1" inputmode="numeric" value="${S.per > 0 ? S.per : ""}" placeholder="sem limite" style="width:110px"></label><label class="vp-f">Mostrar<select id="vp-ver"><option value="todas"${S.ver === "todas" ? " selected" : ""}>Todas as paradas</option><option value="livres"${S.ver === "livres" ? " selected" : ""}>Só as sem vistoriador e as minhas</option><option value="minhas"${S.ver === "minhas" ? " selected" : ""}>Só as indicadas para mim</option></select></label>` : ""}
+    <div class="vp-ctl">${coord ? `<label class="vp-f">Paradas por rota<input type="number" id="vp-per" min="1" inputmode="numeric" value="${S.per > 0 ? S.per : ""}" placeholder="sem limite" style="width:110px"></label><span class="vp-f"><span>Mostrando</span><b style="font-size:14px;padding:10px 0">${S.vpUid ? "🔒 Rota de " + esc(((acesso && acesso[S.vpUid]) || {}).nome || "vistoriador") : "Só os processos SEM vistoriador"}</b></span>` : ""}
     <div class="vp-f vp-grow"><span>Ponto de partida</span><b style="font-size:14px;padding:10px 0">📍 Sempre a sua localização atual</b></div>
     <label class="vp-f vp-grow">Buscar<input type="search" id="vp-q" name="vp-busca-proc" autocomplete="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-form-type="other" value="${esc(S.q)}" placeholder="Processo, rua, setor, vistoriador"></label></div>
     <div class="vp-row"><label class="vp-row" style="font-size:14px"><input type="checkbox" id="vp-hide" ${S.hide ? "" : "checked"}> Mostrar os já vistoriados (para conferir ou alterar)</label></div>
@@ -5074,6 +5083,7 @@ function montar(root) {
       const dv = S.draft && S.draft[ci] !== undefined ? S.draft[ci] : atual === "__mix" ? "" : atual;
       let resp = "";
       if (!pend.length) resp = `<span class="vp-sp vp-s-ja_executado">Rota concluída</span>`;
+      else if (coord && atual && atual !== "__mix") resp = `<span class="vp-ok">🔒 Designada para <b>${esc(nomeDe(atual))}</b></span><button class="vp-btn vp-warn" data-tirarvist="${ci}">✖ Cancelar envio (volta para a lista geral)</button><span class="vp-msg" style="flex-basis:100%">Não é possível mandar para outro vistoriador enquanto estiver com ${esc(nomeDe(atual))}.</span>`;
       else if (coord) resp = `<span class="vp-lab">Vistoriador</span><select id="vp-rv-${ci}" data-rvsel="${ci}"><option value="">${atual === "__mix" ? "Vários – escolha para unificar" : "— Escolher o vistoriador —"}</option>${S.vist.map((v) => `<option value="${esc(v.uid)}"${v.uid === dv ? " selected" : ""}>${esc(v.rot || v.nome)}</option>`).join("")}</select><button class="vp-btn vp-warn" data-indvist="${ci}">${atual && atual !== "__mix" ? "Trocar" : "Indicar"}${filtrada ? ` (${pend.length})` : ""}</button>${atual && atual !== "__mix" ? `<span class="vp-ok">Indicado: <b>${esc(nomeDe(atual))}</b> <button class="vp-btn" data-tirarvist="${ci}" style="padding:3px 8px;font-size:12px">tirar</button></span>` : atual === "__mix" ? `<span class="vp-ok">Vários vistoriadores: ${esc(nomes.filter(Boolean).map(nomeDe).join(", "))}</span>` : `<span class="vp-need" style="flex-basis:100%">Rota sem vistoriador: escolha o nome acima (você também pode lançar a vistoria direto, sem indicar ninguém)</span>`}`;
       else resp = `<span class="vp-sp vp-env">✔ Sua rota · ${pend.length} a vistoriar</span>`;
       h += `<section class="vp-card${!coord || (atual && atual === meuId()) ? " vp-mine" : ""}"><div class="vp-head"><div><b>Rota ${ro.n}</b>${ro.fixa ? ` <span class="vp-sp vp-env" title="Ordem travada: só sai a parada vistoriada">🔒 Rota fixa${(dono(ch[0]) || {}).vistoriador ? " · " + esc(dono(ch[0]).vistoriador) : ""}</span>` : ""} <small>${S.hide ? `${pendT.length} a vistoriar` : `${ch.length} paradas · ${feitos} vistoriados`} · ${po} poda · ${ex} extirpação</small>${filtrada ? `<div class="vp-need" style="margin-top:4px">🔎 Busca ativa: mostrando <b>${show.length} de ${ch.length}</b> paradas. ${coord ? `Indicar / tirar vale <b>só para ${pend.length === 1 ? "a parada mostrada" : "as " + pend.length + " paradas mostradas"}</b>.` : ""}</div>` : ""}</div>
@@ -5920,6 +5930,7 @@ function montar(root) {
     if (!ids.length) { toast("Rota já concluída"); return; }
     const v = S.vist.find((x) => x.uid === uid);
     if (uid && !v) { toast("Escolha o vistoriador"); return; }
+    { const outro = visiveis(ro).filter((p) => !R(p).vistoriado && dono(p) && dono(p).uid && dono(p).uid !== uid).map(dono); if (uid && outro.length) { toast(`⛔ Não autorizado: ${outro.length === 1 ? "este processo já está" : outro.length + " processos já estão"} com ${[...new Set(outro.map((d) => d.vistoriador || ""))].join(", ")}. Ninguém entra na rota do outro: cancele o envio na rota dele primeiro.`, 7000); render(); return; } }
     // ordem fixa da rota (não depende de onde a pessoa está): 1ª, 2ª, 3ª parada...
     const seqP = ordemGps(visiveis(ro).filter((p) => !R(p).vistoriado), true, true), seqI = {}; seqP.forEach((p, i) => (seqI[p.id] = i));
     const em = new Date().toISOString(), rid = uid ? uid + "_" + Date.now().toString(36) : "";
@@ -6086,6 +6097,7 @@ function montar(root) {
     if (ds.pdfparar) { S.pdfParar = 1; toast("Parando depois do arquivo atual…"); return; }
     if (ds.pdftira) { S.pdfFila.splice(+ds.pdftira, 1); render(); return; }
     if (ds.pdfesc) { const x = S.pdfFila[+ds.pdfesc]; x.id = ds.pid; x.st = "ok"; render(); return; }
+    if (ds.vpuid !== undefined) { S.vpUid = ds.vpuid || ""; S.cur = ""; render(); return; }
     if (ds.pmostra) { S.pmostra = ds.pmostra; S.lim = 40; render(); return; }
     if (ds.vdia != null) { S.vdia = ds.vdia; render(); return; }
     if (ds.rsit) { S.rsit = ds.rsit; S.lim = 40; render(); return; }
@@ -11773,6 +11785,11 @@ function trInicioHtml(){ try{ if(!trPainelVe()) return ""; const esc0=sup=>trMin
         <div><b style="display:block;font-size:22px">${rm.v}</b><small>viagens no mês${rm.v?` · ${trN(rm.pm,0)}%`:""}</small></div></div>
       ${H.length?`<div><small style="color:var(--muted)">Rota de hoje</small>${rotas}</div>`:`<small style="color:var(--muted)">${P.length?"Nenhuma rota montada hoje: monte em Pendentes.":"Nenhum local pendente para o triturador."}</small>`}
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px"><button type="button" class="btn ${H.length?"pri":"sec"}" data-trab="hoje" style="min-height:42px;padding:0 6px;font-size:13px">🚛 Rota de hoje</button><button type="button" class="btn ${!H.length&&P.length?"pri":"sec"}" data-trab="pend" style="min-height:42px;padding:0 6px;font-size:13px">🌿 Pendentes</button><button type="button" class="btn sec" data-trab="painel" style="min-height:42px;padding:0 6px;font-size:13px">📊 Painel</button></div></div>`; }catch(e){ return ""; } }
+
+// botão atualizar: depois de recarregar, volta para a mesma tela (e posição) em que a pessoa estava
+(()=>{ let V=null; try{ V=JSON.parse(sessionStorage.getItem("gpe_volta")||"null"); sessionStorage.removeItem("gpe_volta"); }catch(e){} if(!V||!V.v||Date.now()-V.t>120000) return;
+  let n=0; const tm=setInterval(()=>{ n++; if(n>80) return clearInterval(tm); try{ if(typeof sessao==="undefined"||!sessao||typeof show!=="function"||!document.body||document.body.classList.contains("locked")) return; }catch(e){ return; }
+    clearInterval(tm); setTimeout(()=>{ try{ if(V.v!=="inicio") show(V.v); setTimeout(()=>{ try{ scrollTo(0,V.y||0); }catch(e){} if(V.tri&&typeof abrirRotaTrit==="function") try{ abrirRotaTrit(); }catch(e){} },600); }catch(e){} },700); },250); })();
 function renderInicio(){
   const h=$("#inicioBox"); if(!h||!sessao) return;
   if(sessao.perfil==="fiscal") return renderInicioFiscal(h);
