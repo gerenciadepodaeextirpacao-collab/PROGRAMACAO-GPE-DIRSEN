@@ -30,6 +30,8 @@
       .catch(e => { _sb = null; throw e; });
     return _sb;
   }
+  // chamada de função do banco (ex.: gpe_uso = medição do espaço usado), só leitura
+  window.GPE_RPC = async (fn, args) => { const c = await sb(); const r = await c.rpc(fn, args || {}); if (r.error) throw r.error; return r.data; };
   const traduz = (e) => { const m = String(e?.message || e || ""); if (/gerente|row-level|violates|permission/i.test(m)) return erro("invalid_argument", m); if (/fetch|network|Failed/i.test(m)) return erro("unavailable", m); return erro("invalid_argument", m); };
 
   /* ---------- db ---------- */

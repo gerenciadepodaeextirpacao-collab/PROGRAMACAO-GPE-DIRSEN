@@ -2978,7 +2978,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.23s";
+const APP_VERSAO="2026.11.23t";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -5725,7 +5725,7 @@ function montar(root) {
         ${alerta}</div>`; })()}
     <div class="vp-ctl"><label class="vp-f">Regional<select id="vp-rreg"><option value="">Todas</option>${REGS.map((r) => `<option value="${r}"${S.rreg === r ? " selected" : ""}>${cap(r)}</option>`).join("")}</select></label>
     <label class="vp-f vp-grow">Buscar<input type="search" id="vp-rq" value="${esc(S.rq || "")}" placeholder="Processo, rua, vistoriador"></label></div>
-    <div class="vp-row" style="margin:4px 0 8px"><button class="vp-btn vp-pri" data-planilha="1">⬇ Baixar em Excel: ${esc(SIT_NOME[S.rsit || "all"] || "Todas")} (${L.length})</button><span class="vp-msg">baixa a lista da situação escolhida acima${S.rreg ? " · regional " + cap(S.rreg) : ""}${S.rq ? " · busca \"" + esc(S.rq) + "\"" : ""}</span></div>
+    <div class="vp-row" id="vpListaTop" style="margin:4px 0 8px;scroll-margin-top:80px"><b style="width:100%">📋 Lista: ${esc(SIT_NOME[S.rsit || "all"] || "Todas")} – ${L.length} processo${L.length === 1 ? "" : "s"}</b><button class="vp-btn vp-pri" data-planilha="1">⬇ Baixar em Excel: ${esc(SIT_NOME[S.rsit || "all"] || "Todas")} (${L.length})</button><span class="vp-msg">baixa a lista da situação escolhida acima${S.rreg ? " · regional " + cap(S.rreg) : ""}${S.rq ? " · busca \"" + esc(S.rq) + "\"" : ""}</span></div>
     ${S.rsit === "urbbx" && L.length && (typeof isGerente === "function" && isGerente()) ? urbLoteHtml(L.length) : ""}
     ${L.length ? `<section class="vp-card"><ol>${L.slice(0, S.lim).map((p) => { const r = R(p), u = r.urbantrim || {};
       const aberto = S.rab && S.rab[p.id];
@@ -5749,7 +5749,7 @@ function montar(root) {
         ${pode.coord() && (S.vret || {})[p.id] ? `<div class="vp-card" style="margin-top:8px;padding:12px;border:2px solid #c96a00;background:#fff8ec"><b>↩ Retornar este processo para vistoria?</b><div class="vp-msg" style="margin:4px 0 8px">A vistoria de ${r.data_vistoria ? fDia(r.data_vistoria) : "—"} (${esc(r.responsavel || "")}) será <b>desvalidada</b> e o processo volta para a lista de vistorias pendentes, para vistoriar de novo. A vistoria anterior fica guardada no histórico.${r.envio && r.envio.progId ? " O envio para a supervisão será cancelado (se ainda não foi executado)." : ""}</div><input id="vretMot_${p.id}" placeholder="Motivo (obrigatório) – ex.: endereço errado, foto não confere…" style="width:100%;min-height:42px;padding:8px 10px;border-radius:8px;border:1px solid #c9b48a;box-sizing:border-box"><div class="vp-row" style="margin-top:8px"><button class="vp-btn" data-vretok="${p.id}" style="background:#c96a00;color:#fff;border-color:#c96a00">Confirmar retorno</button><button class="vp-btn" data-vret="${p.id}">Cancelar</button></div></div>` : ""}
         ${r.situacao === "nao_executado" ? envioHtml(p) : ""}
         ${baixaHtml(p)}
-      </div></li>`; }).join("")}</ol></section>${L.length > S.lim ? `<button class="vp-btn" data-mais="1">Mostrar mais (${L.length - S.lim})</button>` : ""}` : `<p class="vp-msg">Nenhuma vistoria com esse filtro.</p>`}
+      </div></li>`; }).join("")}</ol></section>${L.length > S.lim ? `<button class="vp-btn" data-mais="1">Mostrar mais (${L.length - S.lim})</button>` : ""}` : `<p class="vp-msg">Nenhuma vistoria com esse filtro${S.rreg ? " · regional " + esc(cap(S.rreg)) : ""}${S.rq ? " · busca \"" + esc(S.rq) + "\"" : ""}.</p>${S.rreg || S.rq ? `<button class="vp-btn" data-rlimpa="1">✕ Limpar regional e busca</button>` : ""}`}
     <h3>Por dia</h3>${A.byDia.length ? `<div class="vp-tw"><table><thead><tr><th>Data</th><th class="vp-n">Vistorias</th><th class="vp-n">Já executado</th><th class="vp-n">Não executado</th></tr></thead><tbody>${A.byDia.map((x) => `<tr><td class="vp-nw">${fDia(x.k) || "Sem data"}</td><td class="vp-n"><b>${x.n}</b></td><td class="vp-n">${x.c.ja_executado || "–"}</td><td class="vp-n">${x.c.nao_executado || "–"}</td></tr>`).join("")}</tbody></table></div>` : `<p class="vp-msg">Sem vistorias.</p>`}
     <h3>Por regional</h3><div class="vp-tw"><table><thead><tr><th>Regional</th><th class="vp-n">Processos</th><th class="vp-n">Vistoriados</th><th class="vp-n">%</th><th class="vp-n">Já executado</th><th class="vp-n">Não executado</th></tr></thead><tbody>${A.byReg.map((x) => `<tr><td>${cap(x.r)}</td><td class="vp-n">${x.n}</td><td class="vp-n">${x.d}</td><td class="vp-n">${pct(x.d, x.n)}%</td><td class="vp-n">${x.c.ja_executado || "–"}</td><td class="vp-n">${x.c.nao_executado || "–"}</td></tr>`).join("")}</tbody></table></div>
     <h3>Por vistoriador</h3>${A.byVist.length ? `<div class="vp-tw"><table><thead><tr><th>Vistoriador</th><th class="vp-n">Vistorias</th><th class="vp-n">Já executado</th><th class="vp-n">Não executado</th><th>Última</th></tr></thead><tbody>${A.byVist.map((x) => `<tr><td>${esc(x.nm)}</td><td class="vp-n">${x.d}</td><td class="vp-n">${x.c.ja_executado || "–"}</td><td class="vp-n">${x.c.nao_executado || "–"}</td><td class="vp-nw">${fDia(x.ult) || "–"}</td></tr>`).join("")}</tbody></table></div>` : `<p class="vp-msg">Nenhuma vistoria ainda.</p>`}
@@ -6277,7 +6277,8 @@ function montar(root) {
     if (ds.vpuid !== undefined) { S.vpUid = ds.vpuid && ds.vpuid !== S.vpUid ? ds.vpuid : ""; /* toca de novo no mesmo nome = desmarca */ S.cur = ""; S.q = ""; S.hide = true; render(); setTimeout(() => { const el = root.querySelector("[data-reg]"); if (el && S.vpUid) el.scrollIntoView({ behavior: "smooth", block: "start" }); }, 150); return; }
     if (ds.pmostra) { S.pmostra = ds.pmostra; S.lim = 40; render(); return; }
     if (ds.vdia != null) { S.vdia = ds.vdia; render(); return; }
-    if (ds.rsit) { S.rsit = ds.rsit; S.lim = 40; render(); return; }
+    if (ds.rsit) { S.rsit = ds.rsit; S.lim = 40; render(); setTimeout(() => { const a = document.getElementById("vpListaTop"); if (a) a.scrollIntoView({ behavior: "smooth", block: "start" }); }, 60); return; }
+    if (ds.rlimpa) { S.rreg = ""; S.rq = ""; render(); return; }
     if (ds.indvist) { const sel = root.querySelector("#vp-rv-" + ds.indvist); const uid = sel ? sel.value : ""; if (!uid) { toast("Escolha o vistoriador"); return; } indicarRota(+ds.indvist, uid); return; }
     if (ds.geo) { localizar(); return; }
     if (ds.mapa1) { const p = S.proc.find((x) => x.id === ds.mapa1); if (p) abrirMapa([p], p.id, "Proc. " + p.processo); return; }
@@ -10854,10 +10855,59 @@ function irPara(v,acao){
   if(acao==="chkNovo") setTimeout(()=>{ document.querySelector('[data-kt="lista"]')?.click(); $("#kNovo")?.click(); },60);
   if(acao==="man") setTimeout(()=>{ document.querySelector('[data-kt="man"]')?.click(); setTimeout(()=>$("#kManut")?.click(),60); },60);
 }
+// ---------- 📦 Uso do banco e do armazenamento (gerente / administrador) ----------
+const USO_SQL=`-- GPE Gestão: medição do uso do banco (rodar 1 vez no SQL Editor do Supabase)
+create or replace function public.gpe_uso() returns json language sql security definer set search_path = public, storage as $$
+select json_build_object(
+  'banco_bytes', pg_database_size(current_database()),
+  'tabela_bytes', pg_total_relation_size('public.documentos'),
+  'colecoes', (select coalesce(json_agg(x order by x.bytes desc), '[]'::json) from (select colecao, count(*) as n, sum(pg_column_size(dados))::bigint as bytes from public.documentos group by colecao) x),
+  'assin_tipos', (select coalesce(json_agg(y order by y.bytes desc), '[]'::json) from (select split_part(id, '_', 1) as tipo, count(*) as n, sum(pg_column_size(dados))::bigint as bytes from public.documentos where colecao = 'assinaturas' group by 1 order by 3 desc limit 15) y),
+  'midia', (select json_build_object('arquivos', count(*), 'bytes', coalesce(sum((metadata->>'size')::bigint), 0)) from storage.objects where bucket_id = 'midia'),
+  'midia_tipos', (select coalesce(json_agg(z order by z.bytes desc), '[]'::json) from (select coalesce(metadata->>'mimetype', 'outro') as tipo, count(*) as n, coalesce(sum((metadata->>'size')::bigint), 0) as bytes from storage.objects where bucket_id = 'midia' group by 1) z),
+  'midia_meses', (select coalesce(json_agg(w order by w.mes desc), '[]'::json) from (select to_char(created_at, 'YYYY-MM') as mes, count(*) as n, coalesce(sum((metadata->>'size')::bigint), 0) as bytes from storage.objects where bucket_id = 'midia' group by 1 order by 1 desc limit 6) w),
+  'em', now());
+$$;
+grant execute on function public.gpe_uso() to anon, authenticated;`;
+const USO_LIM={banco:8*1024**3, midia:100*1024**3}; // plano Pro do Supabase: 8 GB de banco por projeto e 100 GB de arquivos
+const USO_NOME={lancamentos:"Programação, O.S e baixas dos serviços",assinaturas:"Assinaturas, O.S do dia, triturador, escalas e configurações",manutencao:"Manutenção dos equipamentos",checklist:"Checklist dos equipamentos",vistoria:"Vistoria de processos",orcamentos:"Orçamentos",chkmidia:"Registros de fotos/vídeos do checklist",horimetro:"Horímetro",cfg:"Acessos e configurações do app"};
+const usoNome=c=>/^proc\d+$/.test(c)?"Controle de processos ("+c+")":USO_NOME[c]||c;
+const usoMB=b=>{ b=+b||0; return b>=1024**3?(b/1024**3).toLocaleString("pt-BR",{maximumFractionDigits:2})+" GB":b>=1024**2?(b/1024**2).toLocaleString("pt-BR",{maximumFractionDigits:1})+" MB":Math.max(1,Math.round(b/1024)).toLocaleString("pt-BR")+" KB"; };
+const usoBarra=(v,lim,cor,al=true)=>{ const p=Math.min(100,lim?v/lim*100:0); return `<div style="height:12px;border-radius:999px;background:color-mix(in srgb,var(--ink) 10%,transparent);overflow:hidden"><i style="display:block;height:100%;width:${Math.max(p,0.6).toFixed(1)}%;background:${al&&p>85?"#cc3a22":al&&p>60?"#e8731f":cor}"></i></div>`; };
+const usoTab=(L,tot,nm)=>`<div style="display:grid;gap:6px">${L.map(x=>{ const p=tot?x.bytes/tot*100:0; return `<div style="display:grid;gap:3px"><div style="display:flex;justify-content:space-between;gap:8px;font-size:14px"><span>${esc(nm(x))}</span><b style="white-space:nowrap">${usoMB(x.bytes)} <small style="color:var(--muted);font-weight:600">${p.toFixed(0)}% · ${(+x.n||0).toLocaleString("pt-BR")} itens</small></b></div>${usoBarra(x.bytes,tot,"var(--brand)",false)}</div>`; }).join("")}</div>`;
+async function usoEstimado(){ const cols=[COL,ASS_COL,MAN_COL,CHK_COL,VIST_COL,ORC_COL,MID_COL,HORI_COL,...Array.from({length:8},(_,i)=>"proc"+i)], L=[], tipos={};
+  for(const c of cols){ try{ const sn=await db.collection(c).get(); let b=0; sn.docs.forEach(d=>{ const t=JSON.stringify(d.data()||{}).length; b+=t; if(c===ASS_COL){ const k=String(d.id).split("_")[0]; const o=(tipos[k]=tipos[k]||{tipo:k,n:0,bytes:0}); o.n++; o.bytes+=t; } }); if(sn.size) L.push({colecao:c,n:sn.size,bytes:b}); }catch(e){} }
+  return { colecoes:L.sort((a,b)=>b.bytes-a.bytes), assin_tipos:Object.values(tipos).sort((a,b)=>b.bytes-a.bytes).slice(0,12) }; }
+const USO_TIPO={trdia:"Triturador (rotas e descargas por dia)",login:"Registros de entrada no app",esc:"Escalas de trabalho",canc:"Cancelamentos",perm:"Permissões",metas:"Metas",trcfg:"Configuração do triturador",func:"Funcionários",equip:"Equipamentos"};
+async function abrirUso(){ const host=$("#sheetHost");
+  host.innerHTML=`<div class="sheet" id="sh"><div class="panel" role="dialog" aria-label="Uso do banco e do armazenamento"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:22px">📦 Uso do banco e do armazenamento</b><button type="button" class="btn sec" id="usoX" style="min-height:44px;padding:0 14px">Fechar</button></div><div id="usoBody"><p class="note" style="margin:0">Medindo…</p></div></div></div>`;
+  const close=()=>host.innerHTML=""; $("#usoX").onclick=close; $("#sh").addEventListener("click",e=>{ if(e.target.id==="sh") close(); });
+  let ex=null, erro=""; try{ if(typeof window.GPE_RPC==="function") ex=await window.GPE_RPC("gpe_uso"); else erro="sem"; }catch(e){ erro=String(e&&e.message||e); }
+  const body=$("#usoBody"); if(!body) return; let h="";
+  if(ex&&ex.banco_bytes!=null){ const m=ex.midia||{};
+    h+=`<div class="note" style="margin:0;display:grid;gap:10px"><div><div style="display:flex;justify-content:space-between;gap:8px"><b>🗄 Banco de dados</b><b>${usoMB(ex.banco_bytes)} de 8 GB</b></div>${usoBarra(ex.banco_bytes,USO_LIM.banco,"#138A12")}<small style="color:var(--muted)">Os textos do app (serviços, vistorias, assinaturas, controle de processos…). Tabela do app: ${usoMB(ex.tabela_bytes)}.</small></div>
+      <div><div style="display:flex;justify-content:space-between;gap:8px"><b>🖼 Fotos e vídeos</b><b>${usoMB(m.bytes)} de 100 GB</b></div>${usoBarra(m.bytes,USO_LIM.midia,"#41409A")}<small style="color:var(--muted)">${(+m.arquivos||0).toLocaleString("pt-BR")} arquivos guardados no Supabase.</small></div></div>`;
+    h+=`<h3 style="margin:6px 0 0">O que mais ocupa no banco</h3>${usoTab(ex.colecoes||[],(ex.colecoes||[]).reduce((a,x)=>a+(+x.bytes||0),0),x=>usoNome(x.colecao))}`;
+    if((ex.assin_tipos||[]).length) h+=`<h3 style="margin:6px 0 0">Dentro de "Assinaturas e configurações"</h3>${usoTab(ex.assin_tipos,(ex.assin_tipos||[]).reduce((a,x)=>a+(+x.bytes||0),0),x=>USO_TIPO[x.tipo]||x.tipo)}`;
+    if((ex.midia_tipos||[]).length) h+=`<h3 style="margin:6px 0 0">Fotos e vídeos por tipo</h3>${usoTab(ex.midia_tipos,+m.bytes||0,x=>/^image/.test(x.tipo)?"Fotos ("+x.tipo.replace("image/","")+")":/^video/.test(x.tipo)?"Vídeos ("+x.tipo.replace("video/","")+")":x.tipo)}`;
+    if((ex.midia_meses||[]).length) h+=`<h3 style="margin:6px 0 0">Fotos e vídeos por mês (últimos 6)</h3>${usoTab(ex.midia_meses,(ex.midia_meses||[]).reduce((a,x)=>Math.max(a,+x.bytes||0),0),x=>x.mes.slice(5)+"/"+x.mes.slice(0,4))}`;
+    h+=`<p class="note" style="margin:0">Medido agora no Supabase (${new Date(ex.em||Date.now()).toLocaleString("pt-BR")}). Limites do plano Pro: 8 GB de banco e 100 GB de arquivos por projeto.</p>`;
+  } else {
+    const es=await usoEstimado(), tot=es.colecoes.reduce((a,x)=>a+x.bytes,0);
+    h+=`<div class="note" style="margin:0;border-left:5px solid #e8731f"><b>Estimativa pelo que este aparelho baixou.</b> Para ver o tamanho <b>exato</b> do banco e das <b>fotos e vídeos</b>, ative a medição: copie o SQL abaixo, abra o Supabase → <b>SQL Editor</b> → cole e clique em <b>Run</b> (só uma vez).<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn pri" id="usoCopiar" style="min-height:44px">📋 Copiar o SQL</button></div>${erro&&erro!=="sem"&&!/gpe_uso|function|schema cache|not find/i.test(erro)?`<small style="display:block;color:#9b1c1c;margin-top:6px">${esc(erro.slice(0,160))}</small>`:""}</div>`;
+    h+=`<div><div style="display:flex;justify-content:space-between;gap:8px"><b>🗄 Dados do app (estimado)</b><b>${usoMB(tot)}</b></div>${usoBarra(tot,USO_LIM.banco,"#138A12")}<small style="color:var(--muted)">O banco real ocupa um pouco mais (índices e histórico interno do Supabase).</small></div>`;
+    h+=`<h3 style="margin:6px 0 0">O que mais ocupa</h3>${usoTab(es.colecoes,tot,x=>usoNome(x.colecao))}`;
+    if(es.assin_tipos.length) h+=`<h3 style="margin:6px 0 0">Dentro de "Assinaturas e configurações"</h3>${usoTab(es.assin_tipos,es.assin_tipos.reduce((a,x)=>a+x.bytes,0),x=>USO_TIPO[x.tipo]||x.tipo)}`;
+  }
+  h+=`<p class="note" style="margin:0">💡 O que mais pesa costuma ser <b>fotos e vídeos</b> (histórico de execução, checklist, vistoria). O <b>Histórico de execução</b> também mostra o espaço das fotos de cada serviço.</p>`;
+  body.innerHTML=`<div style="display:grid;gap:12px">${h}</div>`;
+  const cp=$("#usoCopiar"); if(cp) cp.onclick=async()=>{ try{ await navigator.clipboard.writeText(USO_SQL); toast("SQL copiado. Cole no SQL Editor do Supabase e clique em Run."); }catch(e){ const t=document.createElement("textarea"); t.value=USO_SQL; t.style.cssText="width:100%;height:160px;font:12px monospace"; cp.after(t); t.select(); toast("Selecione o texto e copie (Ctrl+C)."); } };
+}
 function abrirMais(){ if((sessao?.perfil==="gerencia_op"||sessao?.perfil==="fiscal")&&!NAV_MAIS.length) return;
   const host=$("#sheetHost");
   const itens=NAV_MAIS.map(v=>({k:"v:"+v,t:VIEW_NOME[v],i:ICO[v]}));
   if(isGerente()&&!sessao?.porGerente) itens.push({k:"a:zerar",t:"Zerar dados de teste",i:ICO.alerta});
+  if(isGerente()) itens.push({k:"a:uso",t:"Uso do banco e armazenamento",i:svgI('<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>')});
   if(isGerente()) itens.push({k:"a:acessos",t:"Acessos",i:ICO.acessos},{k:"a:teste",t:modoTeste()?"Desligar modo teste":"Modo teste",i:ICO.teste});
   if(false) itens.push(emTreino()?{k:"a:treinosair",t:"Sair do treinamento (voltar ao app de verdade)",i:svgI('<path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 2 9 2 12 0v-5"/>')}:{k:"a:treino",t:"Modo treinamento (ensinar sem mexer nos dados reais)",i:svgI('<path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 2 9 2 12 0v-5"/>')});
   if(trPainelVe()) itens.push({k:"a:trit",t:"Triturador – rotas, descargas e painel",i:svgI('<path d="M3 17h11V8H3z"/><path d="M14 11h4l3 3v3h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/><path d="M6 8V5h5v3"/>')});
@@ -10876,7 +10926,7 @@ function abrirMais(){ if((sessao?.perfil==="gerencia_op"||sessao?.perfil==="fisc
   const close=()=>host.innerHTML="";
   $("#sh").onclick=e=>{ if(e.target.id==="sh") close(); const b=e.target.closest("[data-mk]"); if(!b) return; const [t,k]=b.dataset.mk.split(":"); close();
     if(t==="v") irPara(k);
-    else if(k==="func") abrirFunc(); else if(k==="metas") abrirMetas(); else if(k==="acessos") abrirAcessos(); else if(k==="teste") $("#testeBtn").click(); else if(k==="sair") $("#sairBtn").click(); else if(k==="ajuda") abrirAjuda(curView); else if(k==="escala") abrirEscala(travado()?sessao.sup:""); else if(k==="busca") abrirBuscaEnd(); else if(k==="equip") abrirEquip(); else if(k==="rels") abrirRelatorios(); else if(k==="trit") abrirRotaTrit(); else if(k==="treino") entrarTreino(); else if(k==="treinosair") window.GPE_SAIR_TREINO(); else if(k==="zerar") abrirZerar(); };
+    else if(k==="func") abrirFunc(); else if(k==="metas") abrirMetas(); else if(k==="uso") abrirUso(); else if(k==="acessos") abrirAcessos(); else if(k==="teste") $("#testeBtn").click(); else if(k==="sair") $("#sairBtn").click(); else if(k==="ajuda") abrirAjuda(curView); else if(k==="escala") abrirEscala(travado()?sessao.sup:""); else if(k==="busca") abrirBuscaEnd(); else if(k==="equip") abrirEquip(); else if(k==="rels") abrirRelatorios(); else if(k==="trit") abrirRotaTrit(); else if(k==="treino") entrarTreino(); else if(k==="treinosair") window.GPE_SAIR_TREINO(); else if(k==="zerar") abrirZerar(); };
   $("#maisFechar").onclick=close;
 }
 // aba Pendências: junta os avisos do Painel, o checklist obrigatório e as pendências do checklist; o número aparece no ícone do sino
