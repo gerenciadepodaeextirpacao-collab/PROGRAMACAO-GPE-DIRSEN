@@ -2940,7 +2940,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.23e";
+const APP_VERSAO="2026.11.23f";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -8964,11 +8964,12 @@ function listaPlanilha(rows){
   const rs=XL.Sheet("Resumo"); rs.tab=G; rs.widths=[30,34,14,14,14,14,14,14,14,16,16]; const NR=11;
   rs.set(0,0,"GPE GESTÃO — Resumo geral",tit).fill(0,1,NR-1,tit).merge(0,0,0,NR-1).h(0,26);
   rs.set(1,0,`COMURG · Gerência de Poda e Extirpação – ${escDirop()?"DIROP":"DIRSEN"} · ${filtros} · ${rows.length} serviço(s) · gerado em ${dataBR(new Date().toISOString())} ${horaAgora()}`,sub).fill(1,1,NR-1,sub).merge(1,0,1,NR-1);
-  const pr=rows.filter(x=>!x.ocorrencia&&!x.avulso), kL=st({font:{b:1,sz:8,color:MU},border:{t:{s:"medium",c:G}}}), kV=o=>st({font:{b:1,sz:14,color:"16231A"},num:o});
+  const pr=rows.filter(x=>!foraProg(x)), fx=rows.filter(foraProg), kL=st({font:{b:1,sz:8,color:MU},border:{t:{s:"medium",c:G}}}), kV=o=>st({font:{b:1,sz:14,color:"16231A"},num:o});
   const K=[["PROGRAMADOS",pr.length,"int"],["EXECUTADOS",pr.filter(x=>x.status==="SIM").length,"int"],["PARCIAIS",pr.filter(x=>x.status==="PARCIAL").length,"int"],["NÃO EXECUTADOS",pr.filter(x=>x.status==="NÃO").length,"int"],["SEM BAIXA",pr.filter(x=>isLate(x)).length,"int"],
-    ["RECEITA PREVISTA",Math.round(pr.reduce((a,x)=>a+receitaDe(prevQ(x)),0)*100)/100,"brl"],["RECEITA EXECUTADA",Math.round(rows.reduce((a,x)=>a+execRec(x),0)*100)/100,"brl"],["GALHO / ÁRVORE CAÍDA",rows.filter(x=>x.ocorrencia).length,"int"]];
+    ["RECEITA PREVISTA",Math.round(pr.reduce((a,x)=>a+receitaDe(prevQ(x)),0)*100)/100,"brl"],["RECEITA EXECUTADA",Math.round(pr.reduce((a,x)=>a+execRec(x),0)*100)/100,"brl"],["GALHO / ÁRVORE CAÍDA",rows.filter(x=>x.ocorrencia).length,"int"],
+    ["SERVIÇO EXTRA (À PARTE)",fx.length,"int"],["RECEITA SERVIÇO EXTRA",Math.round(fx.reduce((a,x)=>a+execRec(x),0)*100)/100,"brl"],["ÁRVORES SERVIÇO EXTRA",fx.reduce((a,x)=>{const q=execQ(x);return a+somaG(q,"P")+somaG(q,"E")},0),"int"]];
   K.forEach(([t,v,n],i)=>{ const rr=3+Math.floor(i/4)*3, cc=[0,1,2,4][i%4], ce=[0,1,3,5][i%4]; rs.set(rr,cc,t,kL).fill(rr,cc+1,ce,kL); rs.set(rr+1,cc,v,kV(n)).fill(rr+1,cc+1,ce,kV(n)); if(ce>cc){ rs.merge(rr,cc,rr,ce).merge(rr+1,cc,rr+1,ce); } rs.h(rr+1,22); });
-  xlResumoTudo(rs,10,rows,st,NR);
+  xlResumoTudo(rs,13,rows,st,NR);
   rs.landscape=false;
   return XL.book([rs,ws],st);
 }
@@ -9408,7 +9409,10 @@ function abrirMsg(r){
 function resumoDados(){
   const F=rptFiltro(), rows=linhasPeriodo(F,todos());
   const K={np:0,ne:0,nf:0,Rp:0,Re:0,Rf:0,Pp:0,Pe:0,Ep:0,Ee:0,Fp:0,Fe:0,fLate:0,fNao:0,fParc:0,fFut:0}, T={};
-  rows.forEach(r=>{ const pq=r.avulso?{}:prevQ(r), eq=execQ(r), sq=subQ(r), rv=execRec(r), t=T[r.supervisao]||(T[r.supervisao]={rp:0,re:0,rf:0,n:0});
+  K.xn=0;K.xre=0;K.xp=0;K.xe=0;
+  rows.forEach(r=>{ const pq=r.avulso?{}:prevQ(r), eq=execQ(r), sq=subQ(r), rv=execRec(r);
+    if(foraProg(r)){ K.xn++; K.xre+=rv; K.xp+=somaG(eq,"P")+somaG(sq,"P"); K.xe+=somaG(eq,"E")+somaG(sq,"E"); return; }
+    const t=T[r.supervisao]||(T[r.supervisao]={rp:0,re:0,rf:0,n:0});
     K.Rp+=receitaDe(pq); K.Re+=rv; K.Pp+=somaG(pq,"P"); K.Pe+=somaG(pq,"E"); K.Ep+=somaG(eq,"P")+somaG(sq,"P"); K.Ee+=somaG(eq,"E")+somaG(sq,"E");
     t.rp+=receitaDe(pq); t.re+=rv;
     if(r.avulso) return; K.np++; t.n++; if(r.status==="SIM"||r.status==="PARCIAL") K.ne++;
@@ -9430,6 +9434,7 @@ function resumoTexto(d){
     `🟢 *Executado: ${brl(K.Re)}* (${d.pctE}%)`,`    ${sv(K.ne)} · ${av(K.Ep,K.Ee)}`,"",
     `🔴 *Pendente sem execução: ${brl(K.Rf)}* (${d.pctF}%)`,`    ${sv(K.nf)} · ${av(K.Fp,K.Fe)}`];
   d.quebra.forEach(([n,t])=>L.push(`    • ${n} ${t}`));
+  if(K.xn) L.push("",`⚡ *Serviço extra (fora da programação, à parte): ${brl(K.xre)}*`,`    ${sv(K.xn)} · ${av(K.xp,K.xe)}`);
   if(d.turmas.length>1){ L.push("","*Por turma* _(previsto · executado · pendente)_");
     d.turmas.forEach(t=>L.push(`${t.rf>0?"🔸":"✅"} ${t.s.id}: ${brlS(t.rp)} · ${brlS(t.re)} · ${brlS(t.rf)}`)); }
   L.push("",`_Gerado em ${dataBR(new Date().toISOString())} às ${horaAgora()} · app GPE Gestão_`);
@@ -9437,7 +9442,7 @@ function resumoTexto(d){
 }
 async function resumoImagem(d){
   try{ await Promise.all(['700 40px "Barlow Condensed"','600 30px "Barlow Condensed"','400 30px Barlow','600 30px Barlow'].map(f=>document.fonts.load(f))); }catch(e){}
-  const {K}=d, W=1080, P=48, nT=d.turmas.length>1?d.turmas.length:0, H=180+150+3*250+90+(nT?120+nT*62:0)+120;
+  const {K}=d, W=1080, P=48, nT=d.turmas.length>1?d.turmas.length:0, H=180+150+(K.xn?4:3)*250+90+(nT?120+nT*62:0)+120;
   const cv=document.createElement("canvas"); cv.width=W; cv.height=H+400; const x=cv.getContext("2d");
   const DISP='"Barlow Condensed","Arial Narrow",Arial,sans-serif', BODY='Barlow,Arial,sans-serif';
   const C={bg:"#eef1ec",card:"#ffffff",line:"#c9d1c4",ink:"#16231a",mut:"#56655a",brand:"#005f27",prev:"#184f95",ok:"#0d880b",bad:"#b3261e",badbg:"#f8dcd9",track:"#e4e9e1"};
@@ -9464,6 +9469,7 @@ async function resumoImagem(d){
   card("Previsto (programado)",brl(K.Rp),C.prev,sv(K.np),av(K.Pp,K.Pe),null);
   card("Executado",brl(K.Re),C.ok,sv(K.ne),av(K.Ep,K.Ee),d.pctE);
   card("Pendente sem execução",brl(K.Rf),C.bad,sv(K.nf),av(K.Fp,K.Fe),d.pctF,d.quebra);
+  if(K.xn) card("Serviço extra (fora da programação · à parte)",brl(K.xre),"#e8731f",sv(K.xn),av(K.xp,K.xe),null);
   // barra previsto
   const bw=W-2*P; rr(P,y,bw,34,17,C.track); const we=Math.min(1,K.Rp?K.Re/K.Rp:0)*bw, wf=Math.min(1-we/bw,K.Rp?K.Rf/K.Rp:0)*bw;
   if(we) rr(P,y,Math.max(34,we),34,17,C.ok); if(wf){ x.fillStyle=C.bad; x.globalAlpha=.85; x.fillRect(P+we,y,wf-(we+wf>=bw?17:0),34); x.globalAlpha=1; }
@@ -10181,6 +10187,7 @@ function fMapUI(){ const b=$("#bairro").value.trim(), l=$("#logradouro").value.t
 { const _l=limpar; limpar=function(...a){ const v=_l.apply(this,a); try{ ["e_","se_"].forEach(pre=>["via","nome","qd","lt","comp"].forEach(k=>{const el=$("#"+pre+k); if(el) el.value="";})); endSync("e_"); endSync("se_"); }catch(e){} try{fMapUI()}catch(e){} return v; }; }
 
 /* ---------- painel (dashboard) ---------- */
+const foraProg=r=>!!(r&&(r.extra||r.ocorrencia||r.avulso));
 function renderPainel(){
   const host=$("#painel"); if(!host) return;
   const W=Math.max(300,Math.min(900,(host.clientWidth||Math.min(innerWidth-32,560))));
@@ -10188,8 +10195,9 @@ function renderPainel(){
   const all=todos(), rows=linhasPeriodo(F,all);
   if(!loaded){host.innerHTML=`<div class="dempty full">Carregando os lançamentos…</div>`;return;}
   if(!rows.length){host.innerHTML=`<div class="dempty full">Nenhum lançamento para este filtro. Escolha outro dia, semana ou turma, ou lance a programação na aba Programar.</div>`;return;}
-  const c={SIM:0,PARCIAL:0,NAO:0,late:0,fut:0}; let Rp=0,Re=0,Pp=0,Pe=0,Ep=0,Ee=0; const mot={}, bs={};
+  const c={SIM:0,PARCIAL:0,NAO:0,late:0,fut:0}; let Rp=0,Re=0,Pp=0,Pe=0,Ep=0,Ee=0; const mot={}, bs={}, X={n:0,ex:0,oc:0,av:0,re:0,p:0,e:0,sb:0};
   rows.forEach(r=>{const pq=r.avulso?{}:prevQ(r), eq=execQ(r), sq=subQ(r);
+    if(foraProg(r)){ X.n++; if(r.extra)X.ex++; else if(r.ocorrencia)X.oc++; else X.av++; X.re+=execRec(r); X.p+=somaG(eq,"P")+somaG(sq,"P"); X.e+=somaG(eq,"E")+somaG(sq,"E"); if(!r.status&&isLate(r))X.sb++; return; }
     if(!r.avulso){ if(r.status==="SIM")c.SIM++; else if(r.status==="PARCIAL")c.PARCIAL++; else if(r.status==="NÃO")c.NAO++; else if(isLate(r))c.late++; else c.fut++; }
     Rp+=receitaDe(pq); const rv=execRec(r); Re+=rv; Pp+=somaG(pq,"P"); Pe+=somaG(pq,"E"); Ep+=somaG(eq,"P")+somaG(sq,"P"); Ee+=somaG(eq,"E")+somaG(sq,"E");
     if(r.status==="NÃO"){const k=r.motivo||"Sem motivo"; const m=mot[k]||(mot[k]={n:0,v:0}); m.n++; m.v+=receitaDe(prevQ(r));}
@@ -10206,7 +10214,9 @@ function renderPainel(){
     <div class="dk"><span>Cumprimento</span><b>${cump===null?"—":cump+"%"}</b><i>${c.SIM} exec. · ${c.PARCIAL} parc. · ${c.NAO} não exec.</i><div class="bar" role="img" aria-label="${cump||0}% de cumprimento"><div style="width:${cump||0}%"></div></div></div>
     <div class="dk"><span>Árvores executadas</span><b>${nf0(Ep+Ee)}</b><i>${nf0(Ep)} podas · ${nf0(Ee)} extirp. · previstas ${nf0(Pp+Pe)}</i></div>
     <div class="dk${(c.late+ocAg)?" warn":""}"><span>Pendências</span><b>${nf0(c.late+ocAg)}</b><i>${c.late} sem baixa · ${ocAg} queda${ocAg===1?"":"s"} aguardando</i></div>
-  </div>`;
+    <div class="dk" style="border-left:5px solid #e8731f"><span>⚡ Serviço extra <small style="font-weight:600">(fora da programação · à parte)</small></span><b>${brlS(X.re)}</b><i>${X.n} serviço${X.n===1?"":"s"}: ${X.ex} extra${X.ex===1?"":"s"} · ${X.oc} emergencia${X.oc===1?"l":"is"}${X.av?" · "+X.av+" sem programação":""}</i><i style="display:block;margin-top:2px">${nf0(X.p+X.e)} árvores (${nf0(X.p)} podas · ${nf0(X.e)} extirp.)${X.sb?" · "+X.sb+" sem baixa":""}</i></div>
+  </div>
+  <p class="dcap full" style="margin:-4px 0 6px">Receita, cumprimento e árvores acima = só o <b>programado × executado</b>. Serviço extra, emergencial e sem programação ficam no card ⚡ à parte.</p>`;
   h+=acompHtml(F);
   try{ h+=extraImpHtml(rows); }catch(e){}
   // contrato do mês
