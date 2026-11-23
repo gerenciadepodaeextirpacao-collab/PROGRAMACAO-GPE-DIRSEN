@@ -2950,7 +2950,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.23p";
+const APP_VERSAO="2026.11.23q";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -5813,7 +5813,7 @@ function montar(root) {
     if (!urbOk(p)) return `<div class="vp-vb"><span class="vp-lab">Enviar para uma supervisão executar</span>${urbHtml(p)}</div>`;
     return `<div class="vp-vb"><span class="vp-lab">Enviar para uma supervisão executar</span>${urbHtml(p)}
       <select id="vp-ev-${p.id}" data-evsup="${p.id}"><option value="">— Escolher a supervisão / turma —</option>${sups.map((q) => `<option value="${esc(q.id)}"${(x.sup || (e && e.sup)) === q.id ? " selected" : ""}>${esc(supNome(q.id))}</option>`).join("")}</select>
-      <span class="vp-msg">Equipamento indicado na vistoria: <b>${esc(r.equipamento || "–")}</b>. O supervisor recebe no Início e repassa ao fiscal, que executa e anexa as fotos antes, durante e depois.</span>
+      <span class="vp-msg">Equipamento indicado na vistoria: <b>${esc(r.equipamento || "–")}</b>. O supervisor recebe no Início, <b>escolhe o fiscal</b> que vai executar e envia na O.S; o fiscal executa e anexa as fotos antes, durante e depois.</span>
       <div class="vp-row"><button class="vp-btn vp-warn" data-evenviar="${p.id}">📤 Enviar para execução</button>${x.edit ? `<button class="vp-btn" data-evx="${p.id}">Cancelar</button>` : ""}</div></div>`;
   }
   // formulário da execução: data, quantidades executadas e as 3 fotos que vão para o relatório de serviço
@@ -10995,7 +10995,7 @@ function osDiaGrupos(){ if(!sessao) return []; const G=[];
   todos().filter(r=>r.supervisao&&(r.data===diaOS(r.supervisao)||osNoturnaAberta(r))&&!r.avulso&&!r.ocorrencia&&!r.arquivado&&r.osCanc?.data!==r.data&&r.supervisao&&noEscopo(r.supervisao)&&(!travado()||r.supervisao===sessao.sup)).forEach(r=>{
     const k=r.supervisao+"|"+(r.equipe||"")+(r.data!==diaOS(r.supervisao)?"|"+r.data:""); let g=G.find(x=>x.k===k); if(!g){ g={k,sup:r.supervisao,eq:r.equipe||"",dia:r.data,rs:[]}; G.push(g); } g.rs.push(r); });
   let L=G.sort((a,b)=>(SUPS.findIndex(s=>s.id===a.sup)-SUPS.findIndex(s=>s.id===b.sup))||a.eq.localeCompare(b.eq));
-  L=L.map(g=>({...g,os:g.rs.find(r=>r.osDia)?.osDia||null,novos:g.rs.filter(r=>!r.osDia),fis:OS_FIS_ESC[g.k]||fiscalDe(g.sup,g.eq)})); // a O.S sempre vem com o fiscal titular; o supervisor pode indicar outro ou acompanhar ele mesmo (sem fiscal)
+  L=L.map(g=>({...g,os:g.rs.find(r=>r.osDia)?.osDia||null,novos:g.rs.filter(r=>!r.osDia),fis:OS_FIS_ESC[g.k]||(()=>{ const x=g.rs.find(r=>!r.osDia&&r.fiscalEsc); return x?{id:x.fiscalEsc.id,nome:x.fiscalEsc.nome,zap:((acesso||{})[x.fiscalEsc.id]||{}).zap||""}:null; })()||fiscalDe(g.sup,g.eq)})); // a O.S sempre vem com o fiscal titular; o supervisor pode indicar outro ou acompanhar ele mesmo (sem fiscal)
   if(sessao.perfil==="fiscal"){ const me=acesso?.[sessao.id]; L=L.filter(g=>g.os?osDoFiscal({osDia:g.os,equipe:g.eq},me):(!me?.equipe||g.eq===me.equipe)); }
   return L; }
 const osNumSeq=(base,i)=>`${base}-${String(i).padStart(2,"0")}`;
@@ -11048,13 +11048,21 @@ function osEtapaHtml(o){ if(!o) return ""; if(o.semFiscal) return `<div class="o
 async function fisOsAtualiza(g,patch,acao){ let ok=true, os={...g.os,...patch};
   for(const r of g.rs){ const fresh=todosGlobal().find(x=>x.id===r.id)||r, upd={...fresh}; delete upd.id; delete upd._fila; const o1={...(fresh.osDia||r.osDia||g.os),...patch}; upd.osDia=o1; upd._acao=acao; const res=await saveDoc(r.id,upd); if(res!=="ok"&&res!=="fila") ok=false; else { r.osDia=o1; os=o1; } }
   if(!ok){ toast("Não foi possível salvar agora. Tente de novo."); return false; } g.os=g.rs[0]?.osDia||os; try{renderAll()}catch(e){} return true; }
-function detOsHtml(r){ if(!r||r.ocorrencia||r.avulso||r.arquivado||!r.supervisao) return ""; const k=esc(r.supervisao+"|"+(r.equipe||""));
+// serviço que veio da vistoria (ou extra) ainda fora da O.S: o supervisor escolhe para qual fiscal vai
+function fisEscHtml(r){ if(r.osDia||!isProg(r)||!(r.vistId||r.extra)||!osPodeIniciar(r.supervisao)) return ""; const L=fiscaisSup(r.supervisao); if(!L.length) return "";
+  const at=(r.fiscalEsc&&r.fiscalEsc.id)||(fiscalDe(r.supervisao,r.equipe)||{}).id||"";
+  return `<div class="detos" style="border-left:5px solid var(--brand)"><b>👷 Fiscal que vai executar</b><select data-fisesc="${esc(r.id)}" style="min-height:44px;width:100%">${r.fiscalEsc?"":`<option value="">— Escolher o fiscal —</option>`}${L.map(f=>`<option value="${esc(f.id)}"${f.id===at&&r.fiscalEsc?" selected":""}>${esc(f.nome)}${f.equipe?" · "+esc(f.equipe):""}</option>`).join("")}</select><small>${r.fiscalEsc?`Vai para <b>${esc(r.fiscalEsc.nome)}</b>${r.equipe?" ("+esc(r.equipe)+")":""}. Ele recebe quando a O.S da equipe for enviada.`:"Escolha o fiscal: o serviço entra na O.S da equipe dele."}</small></div>`; }
+document.addEventListener("change",async e=>{ const sel=e.target.closest("[data-fisesc]"); if(!sel) return; const id=sel.dataset.fisesc, uid=sel.value; if(!uid) return;
+  const r=todosGlobal().find(x=>x.id===id); if(!r) return; const f=fiscaisSup(r.supervisao).find(x=>x.id===uid); if(!f) return;
+  const upd={...r}; delete upd.id; delete upd._fila; if(f.equipe) upd.equipe=f.equipe; upd.fiscalEsc={id:f.id,nome:f.nome,em:new Date().toISOString(),por:sessao?.nome||""}; upd._acao="Fiscal escolhido pelo supervisor: "+f.nome+(f.equipe?" ("+f.equipe+")":"");
+  sel.disabled=true; const res=await saveDoc(id,upd); sel.disabled=false; if(res!=="ok"&&res!=="fila") return toast("Não foi possível salvar o fiscal. Tente de novo."); toast("Serviço direcionado para o fiscal "+f.nome); try{renderAll()}catch(x){} },true);
+function detOsHtml(r){ if(!r||r.ocorrencia||r.avulso||r.arquivado||!r.supervisao) return ""; const k=esc(r.supervisao+"|"+(r.equipe||"")), fe=fisEscHtml(r);
   if(r.osDia) return `<div class="detos ok"><b>✅ O.S nº ${esc(r.osDia.num)} enviada</b><small>${new Date(r.osDia.em).toTimeString().slice(0,5)} de ${fmtDs(iso(new Date(r.osDia.em)))} por ${esc(r.osDia.por||"—")} · para ${esc(r.osDia.fiscal?.nome||"o fiscal")}</small>${osEtapaHtml(r.osDia)}${r.data===hoje()?`<button type="button" class="btn sec" data-osenv="${k}">👁 Ver a O.S</button>`:""}</div>`;
   if(!isProg(r)||!osPodeIniciar(r.supervisao)) return "";
-  if(r.data!==diaOS(r.supervisao)) return `<div class="detos"><button type="button" class="btn sec" disabled>▶ Iniciar O.S e enviar ao fiscal</button><small>Disponível só no dia da execução: ${diaDe(r.data)} ${fmtD(r.data)}.</small></div>`;
-  if(!osLiberada(r.supervisao)) return `<div class="detos"><button type="button" class="btn sec" disabled>🔒 Envio liberado às ${osLibTxt(r.supervisao)}</button><small>A O.S só pode ser enviada ao fiscal a partir das ${osLibTxt(r.supervisao)} (turma ${/NOTURNO/i.test(r.supervisao)?"noturna":"diurna"}).</small></div>`;
-  const f=fiscalDe(r.supervisao,r.equipe);
-  return `<div class="detos"><button type="button" class="btn pri" data-osini="${k}">▶ Iniciar O.S da ${esc(r.equipe||"equipe")} e enviar ao fiscal</button><small>${f?`Fiscal: ${esc(f.nome)}`:"Sem fiscal cadastrado para esta equipe em Acessos."} A O.S vale para todos os serviços da equipe hoje.</small></div>`; }
+  if(r.data!==diaOS(r.supervisao)) return fe+`<div class="detos"><button type="button" class="btn sec" disabled>▶ Iniciar O.S e enviar ao fiscal</button><small>Disponível só no dia da execução: ${diaDe(r.data)} ${fmtD(r.data)}.</small></div>`;
+  if(!osLiberada(r.supervisao)) return fe+`<div class="detos"><button type="button" class="btn sec" disabled>🔒 Envio liberado às ${osLibTxt(r.supervisao)}</button><small>A O.S só pode ser enviada ao fiscal a partir das ${osLibTxt(r.supervisao)} (turma ${/NOTURNO/i.test(r.supervisao)?"noturna":"diurna"}).</small></div>`;
+  const f=r.fiscalEsc||fiscalDe(r.supervisao,r.equipe);
+  return fe+`<div class="detos"><button type="button" class="btn pri" data-osini="${k}">▶ Iniciar O.S da ${esc(r.equipe||"equipe")} e enviar ao fiscal</button><small>${f?`Fiscal: ${esc(f.nome)}`:"Sem fiscal cadastrado para esta equipe em Acessos."} A O.S vale para todos os serviços da equipe hoje.</small></div>`; }
 // gerente cancela a O.S do dia que não foi enviada ao fiscal: ela só sai da fila de envio de hoje.
 // Não mexe em mais nada: os serviços continuam na programação, com o mesmo status, para dar baixa ou remarcar normalmente.
 const osPodeCancelar=()=>!!sessao&&["admin","gerencia","gerencia_op"].includes(sessao.perfil);
