@@ -2642,6 +2642,14 @@ const histSit=r=>{ if(jaDe(r)) return "JA"; if(r.status==="SIM"||r.status==="PAR
 const histExec=r=>!!histSit(r);
 const jaTxt=r=>{ const j=jaDe(r); if(!j) return ""; if(j!=="comurg"){ const qm=r.jaQuem||r.osDia?.sv?.[r.id]?.fim?.exec?.jaQuem; return qm?"Serviço já executado anteriormente por terceiro: "+qm:"Serviço executado por terceiros – não identificamos o executor"; } const sp=r.jaSup||r.osDia?.sv?.[r.id]?.fim?.exec?.jaSup; return "Serviço já executado anteriormente por equipe da COMURG"+(sp?" – "+supNome(sp):" (equipe não identificada)"); };
 const histSitTxt=r=>{ const h=histSit(r); return h==="JA"?jaTxt(r):h==="SIM"?"Executado":"Parcial"; };
+// espaço ocupado pelo Histórico de execução: fotos e vídeos (tamanho real quando gravado; estimado nas antigas) + dados
+function histEspaco(){ const vis=new Set(), A=todosGlobal().filter(r=>!r.arquivado&&!r.ocorrencia); let nf=0,nv=0,kbR=0,nR=0,dados=0;
+  A.forEach(r=>{ const ff=r.fotosFiscal||{}, md=r.relat?.midia||{}; [...Object.values(ff),...Object.values(md)].forEach(m=>{ if(!m||typeof m!=="object") return; const key=m.id||m.db||m.path||m.url; if(!key||vis.has(key)) return; vis.add(key); const vid=m.tipo==="video"||/\.(mp4|mov|webm)$/i.test(String(m.path||"")); if(vid) nv++; else nf++; if(m.kb){ kbR+=m.kb; nR++; } }); try{ dados+=JSON.stringify(r).length; }catch(e){} });
+  const est=(nf-Math.min(nf,nR))*180+nv*6000, tot=(kbR+est)/1024+dados/1048576, lim=+(window.GPE_LIM_STORAGE_MB||1024); return {nf,nv,nR,mbF:(kbR+est)/1024,mbD:dados/1048576,tot,lim,pct:Math.min(100,tot/lim*100)}; }
+function histEspacoHtml(){ try{ const e=histEspaco(), f=x=>x>=1024?(x/1024).toLocaleString("pt-BR",{maximumFractionDigits:2})+" GB":x<1?Math.round(x*1024).toLocaleString("pt-BR")+" KB":x.toLocaleString("pt-BR",{maximumFractionDigits:1})+" MB", cor=e.pct>85?"var(--bad)":e.pct>60?"var(--warn)":"var(--ok)";
+  return `<div style="border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0;display:grid;gap:6px"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>💾 Espaço ocupado pelo Histórico de execução</b><b style="color:${cor}">${f(e.tot)} de ${f(e.lim)} (${e.pct.toLocaleString("pt-BR",{maximumFractionDigits:1})}%)</b></div>
+    <div style="height:10px;border-radius:99px;background:var(--sunk);overflow:hidden"><i style="display:block;height:100%;width:${Math.max(1,e.pct)}%;background:${cor}"></i></div>
+    <small style="color:var(--muted)">📷 ${e.nf} fotos${e.nv?` · 🎥 ${e.nv} vídeos`:""}: <b>${f(e.mbF)}</b> · 🗂 dados dos serviços: <b>${f(e.mbD)}</b> · atualiza sozinho a cada foto nova.${e.nR<e.nf?` Fotos antigas sem tamanho gravado: estimadas em ~180 KB cada.`:""} Limite do plano grátis do banco: ${f(e.lim)}.</small></div>`; }catch(x){ return ""; } }
 const histLista=()=>{ const d1=HIST.dia||hoje(), d0=HIST.dia?HIST.dia:HIST.per==="tudo"?"":(()=>{ const d=new Date(hoje()+"T12:00"); d.setDate(d.getDate()-(+HIST.per-1)); return iso(d); })(), q=semAcento(HIST.q||"").toUpperCase(), qe=semAcento(HIST.end||"").toUpperCase().replace(/[^A-Z0-9 ]/g," ").split(/\s+/).filter(Boolean);
   return todosGlobal().filter(r=>!r.arquivado&&(!r.ocorrencia||OC_SLOTS.some(x=>r.fotosFiscal?.[x.k]))&&r.supervisao&&fotoSlots(r).length&&histExec(r)&&(travado()?r.supervisao===sessao.sup:noEscopo(r.supervisao))&&(!HIST.sup||r.supervisao===HIST.sup)&&(!d0||(r.data||"")>=d0)&&(r.data||"")<=d1
     &&(!HIST.tipo||(HIST.tipo==="rot"?fotosRot(r):relTem(r)))&&(!HIST.fot||(HIST.fot==="com"?histFotos(r)>0:histFotos(r)===0))&&(!HIST.st||histSit(r)===HIST.st)
@@ -2660,7 +2668,13 @@ const histInfo=r=>{ const o=[]; try{ const q=isProg(r)?prevQ(r):r.qtd, t=typeof 
   try{ const t=tritDe(r); if(t) o.push(["TRITURAÇÃO",t.sit==="SIM"?"Galhos triturados na hora":"Galhos NÃO triturados na hora"+(t.obs?" ("+esc(t.obs)+")":"")+(r.tritFeito?` · triturados depois em ${fmtD(iso(new Date(r.tritFeito.em)))} por ${esc(r.tritFeito.por||"")}`:" · na rota do triturador")]); }catch(e){}
   if(r.avulso&&!r.ocorrencia) o.push(["ORIGEM","Serviço extra (sem programação)"]);
   return o; };
-function histCard(r){ const ff=r.fotosFiscal||{}, G=ff.geo||{}, sv=r.osDia?.sv?.[r.id]||{}, h0=histHora(r), hf=sv.fim?.em||"", S=fotoSlots(r), k=stKey(r), fis=ff.por||r.osDia?.fiscal?.nome||(r.osDia?.semFiscal||!r.osDia?"supervisor (sem fiscal)":"");
+// nome do supervisor do serviço (quem fez a O.S sem fiscal, quem emitiu a O.S, quem lançou ou o supervisor cadastrado da turma)
+function supNomeDe(r){ try{ const ok=u=>u&&["supervisor","supervisor1"].includes(u.perfil); const nm=x=>String(x||"").replace(/\s*\(.*\)\s*$/,"").trim().toUpperCase();
+  if(r?.osDia?.semFiscal?.por) return nm(r.osDia.semFiscal.por); const po=r?.osDia?.porId&&acesso?.[r.osDia.porId]; if(ok(po)) return nm(po.nome); if(r?.osDia?.por&&!r.osDia.porId) return nm(r.osDia.por);
+  const au=r?.autor&&acesso?.[r.autor]; if(ok(au)) return nm(au.nome);
+  const L=Object.values(acesso||{}).filter(u=>ok(u)&&u.ativo!==false&&u.sup===r?.supervisao).map(u=>nm(u.nome)); return [...new Set(L)].join(" / "); }catch(e){ return ""; } }
+const fisNomeDe=r=>{ const ff=r?.fotosFiscal||{}; if(r?.osDia?.semFiscal||!r?.osDia){ const sp=supNomeDe(r); return (sp||"supervisor")+" (supervisor, sem fiscal)"; } return ff.por||r.osDia?.fiscal?.nome||""; };
+function histCard(r){ const ff=r.fotosFiscal||{}, G=ff.geo||{}, sv=r.osDia?.sv?.[r.id]||{}, h0=histHora(r), hf=sv.fim?.em||"", S=fotoSlots(r), k=stKey(r), fis=fisNomeDe(r);
   return `<article class="hs-c${relTem(r)?" hs-p":""}"><div class="hs-tx"><b>${esc(r.supervisao||"")}${r.equipe?" · "+esc(r.equipe):""} <em class="hs-st hs-${esc(histSit(r))}">${histSitTxt(r)}${isProg(r)?" · aguardando baixa":""}</em></b>
     <span><b>DATA</b> ${fmtD(r.data)} (${diaDe(r.data)})</span>
     <span><b>HORÁRIO</b> ${h0?hm(h0):"—"}${hf?" às "+hm(hf):""}</span>
@@ -2669,17 +2683,18 @@ function histCard(r){ const ff=r.fotosFiscal||{}, G=ff.geo||{}, sv=r.osDia?.sv?.
     <span><b>ENDEREÇO</b> ${esc(r.logradouro||"")}${r.bairro?" – "+esc(r.bairro):""}</span>
     ${r.obs?`<span><b>OBS</b> ${esc(r.obs)}</span>`:""}
     ${histInfo(r).map(([a,b])=>`<span><b>${a}</b> ${b}</span>`).join("")}
+    <span><b>SUPERVISOR</b> ${esc(supNomeDe(r)||"—")}</span>
     <span><b>FISCAL</b> ${esc(fis||"—")}${r.osDia?.num?" · O.S nº "+esc(r.osDia.num):""}</span>${r.termoResp?`<span><b>TERMO</b> 📜 ${esc(r.termoResp.num)} · morador ${esc(r.termoResp.morador?.nome||"")}${r.termoResp.morador?.recusou?" (recusou-se a assinar)":""}</span>`:""}<span class="hs-dl">${r.termoResp?`<button type="button" class="btn sec" data-termopdf="${esc(r.id)}">📜 Termo</button>`:""}<button type="button" class="btn sec" data-hsdl="pdf" data-hsid="${esc(r.id)}">📄 PDF</button><button type="button" class="btn sec" data-hsdl="img" data-hsid="${esc(r.id)}">🖼 Imagem</button>${supGalPode(r)?`<button type="button" class="btn pri" data-supgal="${esc(r.id)}">🖼 Anexar fotos da galeria</button>`:""}</span></div>
     <div class="hs-fs">${S.map(x=>{ const f=ff[x.k]||r.relat?.midia?.[x.k], g=G[x.k]; if(!f&&x.opc) return ""; if(!f) return `<div class="hs-f hs-sem"><span>${esc(x.curto)}<br>sem foto</span></div>`;
       return `<figure class="hs-f"><img data-hsfoto="${esc(r.id)}|${x.k}" alt="foto ${esc(x.curto)}"><figcaption><b>${g?.em?hm(g.em):""}</b> ${g?.em?fmtD(iso(new Date(g.em))):""}<br>${esc(x.curto)} · ${esc(r.logradouro||"")}${r.bairro?" – "+esc(r.bairro):""}<br>${g&&g.lat!=null?`📍 ${g.lat.toFixed(6)}, ${g.lng.toFixed(6)}${g.prec?" (±"+g.prec+" m)":""}`:g?.galeria?"🖼 anexada da galeria pelo supervisor":relTem(r)?"":"📍 sem localização"}</figcaption>${histMapa(g)?`<a href="${histMapa(g)}" target="_blank" rel="noopener">Localização e verificação: ver no mapa</a>`:""}</figure>`; }).join("")}</div></article>`; }
 // PDF / imagem do histórico (prestação de contas): um serviço ou todos os da lista filtrada (ex.: o dia)
 function histDocHtml(L,tit){ const nw="white-space:normal;text-align:left;word-break:break-word;overflow-wrap:anywhere;", td=nw+"padding:4px 8px;border:1px solid #d5dbd3;font-size:11px;vertical-align:top", th=nw+"padding:4px 8px;border:1px solid #d5dbd3;font-size:10.5px;background:#eef3ec;color:#24402c;font-weight:700;width:130px";
-  const bloco=r=>{ const ff=r.fotosFiscal||{}, G=ff.geo||{}, sv=r.osDia?.sv?.[r.id]||{}, h0=histHora(r), hf=sv.fim?.em||"", S=fotoSlots(r), fis=ff.por||r.osDia?.fiscal?.nome||"", x=sv.fim?.exec;
+  const bloco=r=>{ const ff=r.fotosFiscal||{}, G=ff.geo||{}, sv=r.osDia?.sv?.[r.id]||{}, h0=histHora(r), hf=sv.fim?.em||"", S=fotoSlots(r), fis=fisNomeDe(r), x=sv.fim?.exec;
     const fs=S.map(s=>{ const f=ff[s.k]||r.relat?.midia?.[s.k], g=G[s.k]; if(!f) return ""; const u=midUrl(f); if(!u) return "";
       return `<td style="width:50%;padding:4px;vertical-align:top;white-space:normal;text-align:left"><img src="${u}" style="width:100%;height:210px;object-fit:cover;border-radius:6px;display:block"><div style="font-size:10px;margin-top:3px;line-height:1.35"><b>${esc(s.curto)}</b> · ${g?.em?hm(g.em)+" de "+fmtD(iso(new Date(g.em))):""}${g&&g.lat!=null?`<br>📍 ${g.lat.toFixed(6)}, ${g.lng.toFixed(6)}${g.prec?" (±"+g.prec+" m)":""}`:""}</div></td>`; }).filter(Boolean);
     const lin=[]; for(let i=0;i<fs.length;i+=2) lin.push(`<tr>${fs[i]}${fs[i+1]||'<td style="width:50%"></td>'}</tr>`);
     return `<div style="break-inside:avoid;page-break-inside:avoid;margin:0 0 14px;border:1px solid #cfd8cc;border-radius:8px;padding:8px">
-      <table style="width:100%;border-collapse:collapse;table-layout:fixed">${[["Supervisão / equipe",esc(r.supervisao||"")+(r.equipe?" · "+esc(r.equipe):"")],["Data",fmtD(r.data)+" ("+diaDe(r.data)+")"],["Horário",(h0?hm(h0):"—")+(hf?" às "+hm(hf):"")],["Tipo de atendimento",esc(tipoTxt(r)||r.tipo||"")],["Processo",r.processo?esc(procNum(r)):"—"],["Endereço",esc(r.logradouro||"")+(r.bairro?" – "+esc(r.bairro):"")],["Situação",histSitTxt(r)+(x&&!jaDe(r)?" · fiscal: "+esc(svExecTxt(x)):"")],...histInfo(r).map(([a,b])=>[a.charAt(0)+a.slice(1).toLowerCase(),b]),["Fiscal",esc(fis||"—")+(r.osDia?.num?" · O.S nº "+esc(r.osDia.num):"")],...(r.obs?[["Obs.",esc(r.obs)]]:[])].map(([a,b])=>`<tr><th style="${th}">${a}</th><td style="${td}">${b}</td></tr>`).join("")}</table>
+      <table style="width:100%;border-collapse:collapse;table-layout:fixed">${[["Supervisão / equipe",esc(r.supervisao||"")+(r.equipe?" · "+esc(r.equipe):"")],["Data",fmtD(r.data)+" ("+diaDe(r.data)+")"],["Horário",(h0?hm(h0):"—")+(hf?" às "+hm(hf):"")],["Tipo de atendimento",esc(tipoTxt(r)||r.tipo||"")],["Processo",r.processo?esc(procNum(r)):"—"],["Endereço",esc(r.logradouro||"")+(r.bairro?" – "+esc(r.bairro):"")],["Situação",histSitTxt(r)+(x&&!jaDe(r)?" · fiscal: "+esc(svExecTxt(x)):"")],...histInfo(r).map(([a,b])=>[a.charAt(0)+a.slice(1).toLowerCase(),b]),["Supervisor",esc(supNomeDe(r)||"—")],["Fiscal",esc(fis||"—")+(r.osDia?.num?" · O.S nº "+esc(r.osDia.num):"")],...(r.obs?[["Obs.",esc(r.obs)]]:[])].map(([a,b])=>`<tr><th style="${th}">${a}</th><td style="${td}">${b}</td></tr>`).join("")}</table>
       ${lin.length?`<table style="width:100%;border-collapse:collapse;margin-top:6px;table-layout:fixed">${lin.join("")}</table>`:`<p style="font-size:11px;color:#667;margin:6px 0 0">Sem fotos registradas.</p>`}</div>`; };
   return `<div class="fdoc lx"><style>${typeof FDOC_CSS!=="undefined"?FDOC_CSS:""}</style><div class="r-body">${fhead("HISTÓRICO DE EXECUÇÃO",tit)}<p style="font-size:11px;margin:6px 0 10px">${L.length} serviço${L.length===1?"":"s"} · gerado em ${fmtD(hoje())} às ${hm(new Date().toISOString())} por ${esc(sessao?.nome||"")}</p>${L.map(bloco).join("")}</div></div>`; }
 async function histBaixar(btn,L,tipo){ if(!L.length) return toast("Nenhum registro para baixar.");
@@ -2703,7 +2718,7 @@ function renderHist(){ const host=$("#histBody"); if(!host) return; if(!sessao){
       ${sel("hsFot",HIST.fot,[["","Com e sem foto"],["com","Só com fotos"],["sem","Só sem fotos"]])}
       ${sel("hsSt",HIST.st,[["","Todos"],["SIM","Só executado"],["PARCIAL","Só parcial"],["JA","Já estava feito"]])}
       <input type="search" id="hsQ" value="${esc(HIST.q)}" placeholder="Buscar fiscal, equipe, O.S, processo…"></div>
-    <div class="hs-row"><p class="note" style="margin:6px 0">${HIST.dia?"Dia "+fmtD(HIST.dia)+" · ":""}<b>${L.length}</b> registro${L.length===1?"":"s"} · ${nC} com fotos</p><span class="hs-dl">${L.length?`<button type="button" class="btn sec" data-hsdl="pdf" data-hsall="1">📄 PDF de todos (${L.length})</button><button type="button" class="btn sec" data-hsdl="img" data-hsall="1">🖼 Imagem de todos</button>`:""}${HIST.dia||HIST.end||HIST.sup||HIST.tipo||HIST.fot||HIST.st||HIST.q||HIST.per!=="tudo"?`<button type="button" class="btn sec" id="hsLimpa">Mostrar todos</button>`:""}</span></div>${!HIST.dia&&L.length>1?`<p class="note" style="margin:0 0 6px">Para prestar contas de um dia, escolha o <b>Dia</b> acima e baixe “de todos”.</p>`:""}
+    ${histEspacoHtml()}<div class="hs-row"><p class="note" style="margin:6px 0">${HIST.dia?"Dia "+fmtD(HIST.dia)+" · ":""}<b>${L.length}</b> registro${L.length===1?"":"s"} · ${nC} com fotos</p><span class="hs-dl">${L.length?`<button type="button" class="btn sec" data-hsdl="pdf" data-hsall="1">📄 PDF de todos (${L.length})</button><button type="button" class="btn sec" data-hsdl="img" data-hsall="1">🖼 Imagem de todos</button>`:""}${HIST.dia||HIST.end||HIST.sup||HIST.tipo||HIST.fot||HIST.st||HIST.q||HIST.per!=="tudo"?`<button type="button" class="btn sec" id="hsLimpa">Mostrar todos</button>`:""}</span></div>${!HIST.dia&&L.length>1?`<p class="note" style="margin:0 0 6px">Para prestar contas de um dia, escolha o <b>Dia</b> acima e baixe “de todos”.</p>`:""}
     <div class="hs-l">${L.slice(0,HIST.lim||60).map(histCard).join("")||`<div class="empty">Nenhum registro com esses filtros.</div>`}</div>${L.length>(HIST.lim||60)?`<button type="button" class="btn sec" id="hsMais" style="margin-top:10px">Mostrar mais (${L.length-(HIST.lim||60)} restantes)</button>`:""}`;
   if(foco){ const q=$("#"+foco); q.focus(); q.setSelectionRange(q.value.length,q.value.length); }
   host.querySelectorAll("img[data-hsfoto]").forEach(async im=>{ const [id,k]=im.dataset.hsfoto.split("|"), r=L.find(x=>x.id===id), f=r?.fotosFiscal?.[k]||r?.relat?.midia?.[k]; if(!f) return;
@@ -2925,7 +2940,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.22m";
+const APP_VERSAO="2026.11.23b";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -4382,7 +4397,7 @@ const vistAlto=()=>!!sessao&&(ORD[sessao.perfil]??99)<=ORD.coordenador;
 const vistCoord=()=>vistAlto()&&!soLeitura();
 const vistBaixaSis=(uid=sessao?.id)=>{ const u=acesso?.[uid]; if(!u||u.ativo===false) return false; if(ehGerPerf(u.perfil)||u.perfil==="admin") return true; return !!(u.abas&&u.abas.baixa_sis); };
 // estado de cada processo no fluxo da vistoria
-const vistEst=r=>!r||!r.vistoriado?"pendente":r.situacao==="ja_executado"?"ja_executado":r.situacao==="nao_executado"?"nao_executado":"pendente";
+const vistEst=r=>!r||!r.vistoriado?"pendente":r.situacao==="ja_executado"?"ja_executado":r.situacao==="nao_executado"?"nao_executado":r.situacao==="nao_pertence"?"nao_pertence":"pendente";
 const VIST=(()=>{
 const V={regs:{},rotas:{},pronto:false,erro:"",ouvintes:new Set(),_sub:null};
 V.iniciar=()=>{ if(V._sub||!db) return; V._sub=true; try{ V._sub=db.collection(VIST_COL).onSnapshot(snap=>{ const o={}, ro={}; snap.docs.forEach(d=>{ if(d.id.startsWith("rota_")) ro[d.id]=d.data(); else o[d.id]=d.data(); }); V.regs=o; V.rotas=ro; V.pronto=true; V.erro=""; V.ouvintes.forEach(f=>{try{f()}catch(e){}}); }, err=>{ V.pronto=true; V.erro="Não foi possível carregar as vistorias ("+(err?.message||err)+"). Se o app está no Netlify, rode o GPE-VISTORIA.sql no Supabase."; V.ouvintes.forEach(f=>{try{f()}catch(e){}}); }); }catch(e){ V.erro=String(e?.message||e); } };
@@ -4524,7 +4539,8 @@ const full = (a) => a + ", Goiânia - GO";
 const cssId = (s) => (window.CSS && CSS.escape ? CSS.escape(s) : s);
 const EQUIPS = ["Van", "Sky", "Splinter"];
 const REGS = ["CENTRO OESTE", "SUL", "SUDOESTE", "LESTE", "NORTE", "NOROESTE", "OESTE"];
-const EST = { pendente: ["Não vistoriado", ""], ja_executado: ["Já executado", "vp-s-ja_executado"], nao_executado: ["Não executado", "vp-s-nao_executado"] };
+try { if (!document.getElementById("vpNP")) { const st = document.createElement("style"); st.id = "vpNP"; st.textContent = ".vp-s-nao_pertence{background:#eef0ff;color:#3e4095;border-color:#3e4095}.vp-opt.vp-s-nao_pertence[aria-pressed=true]{background:#3e4095;color:#fff}"; document.head.appendChild(st); } } catch (e) {}
+const EST = { pendente: ["Não vistoriado", ""], ja_executado: ["Já executado", "vp-s-ja_executado"], nao_executado: ["Não executado", "vp-s-nao_executado"], nao_pertence: ["🚫 Não é poda nem extirpação", "vp-s-nao_pertence"] };
 const URB = { ja: "Já estava no Urbantrim", reg: "Registrada agora no Urbantrim", pend: "Falta registrar no Urbantrim" };
 const urbTxt = (r) => !r || r.situacao !== "nao_executado" || !r.urbantrim ? "" : URB[r.urbantrim.st] + (r.urbantrim.id ? " · ID " + r.urbantrim.id : "");
 const sistemaDe = (p) => (/^\d{2}\.\d{2}\.\d{9}-\d$/.test(String(p.processo || "").trim()) ? "SEI" : p.ged ? "GED" : "INTRANET");
@@ -4588,7 +4604,7 @@ function montar(root) {
       const q = { ...p, editado: e }; ["processo", "ged", "parecer", "endereco", "setor", "loc", "urbantrim"].forEach((k) => { if (e[k] != null) q[k] = e[k]; });
       if (e.ano != null) q.ano = +e.ano || null; if (REGN.includes(e.regional)) q.regional = e.regional;
       [["po", "qtd_poda"], ["ex", "qtd_extirpacao"], ["de", "qtd_destocamento"]].forEach(([a, b]) => { if (e[a] != null) q[b] = +e[a] || 0; }); return q; };
-    const gv = vistGerVis(); return vistSoAbertos(_base.concat(man).map(ED)).map((p) => ((VIST.regs || {})[p.id] || {}).urb_cad ? { ...p, urbantrim: "sim" } : p).filter((p) => !gv || (p.ger || "DIRSEN") === gv); };
+    const gv = vistGerVis(); return vistSoAbertos(_base.concat(man).map(ED).filter((p) => !((VIST.regs || {})[p.id] || {}).cancelado_vist)).map((p) => ((VIST.regs || {})[p.id] || {}).urb_cad ? { ...p, urbantrim: "sim" } : p).filter((p) => !gv || (p.ger || "DIRSEN") === gv); };
   function carregar() { VIST.iniciar(); S.proc = todosProc(); listas(); S.erro = ""; S.carregando = !VIST.pronto; if (!VIST.pronto) setTimeout(() => { VIST.iniciar(); if (S.carregando && VIST.pronto) { S.carregando = false; S.reg = VIST.regs; render(); } }, 1500); render(); }
   function aoVivo() { setTimeout(() => urbCorrecao1311(), 4000); VIST.ouvir(() => { if (!S._c1311) setTimeout(() => urbCorrecao1311(), 2000); S.reg = VIST.regs; S.rotas = VIST.rotas; const n0 = S.proc.length; S.proc = todosProc(); if (S.proc.length !== n0) _idx = null; S.carregando = false; if (VIST.erro) S.erro = VIST.erro; if (!root.hidden && root.offsetParent !== null) render(); }); S.reg = VIST.regs; S.rotas = VIST.rotas; }
   // falha de internet (não é recusa do banco): tenta de novo e, se não der, guarda no celular e envia sozinho depois
@@ -4984,7 +5000,9 @@ function montar(root) {
     if (pode.pdf()) T.push(["pdfs", `📄 PDFs dos processos (${all.filter((p) => docLinks(R(p)).length).length}/${all.length})`]);
     if (!T.some(([k]) => k === S.tela)) S.tela = T[0][0];
     const og = window.__vistOrigem || {}, nPl = all.filter((p) => og[p.id] === "pl").length, nPlV = all.filter((p) => og[p.id] === "pl" && R(p).vistoriado).length, nFora = all.filter((p) => og[p.id] === "vist").length, nMan = all.filter((p) => og[p.id] === "manual").length;
-    return `<div><p class="vp-sub"><b>${pend.length}</b> a vistoriar · ${d} vistoriados · relatório de ${fDia(VIST_REL)}</p>${pode.coord() ? `<p class="vp-msg" style="margin:2px 0 0">Planilha: <b>${nPl}</b> em aberto (${nPlV} já vistoriados, <b>${nPl - nPlV}</b> a vistoriar)${nMan ? ` · cadastrados à mão: <b>${nMan}</b>` : ""}${nFora ? ` · vistoriados que já saíram da planilha (executados): <b>${nFora}</b> – ficam só no histórico` : ""}</p>` : ""}</div>
+    const canc = isGerente() ? Object.entries(VIST.regs || {}).filter(([k, r]) => r && r.cancelado_vist) : [], bP = (_base || []).concat([]);
+    const cancHtml = canc.length ? `<p class="vp-msg" style="margin:2px 0 0">🗑 <b>${canc.length}</b> tirado${canc.length === 1 ? "" : "s"} da vistoria pelo gerente · <button class="vp-btn" data-vcanclista="1" style="padding:2px 8px;font-size:12px">${S.verCanc ? "esconder" : "ver"}</button></p>${S.verCanc ? `<div style="display:grid;gap:4px;margin:6px 0">${canc.map(([k, r]) => { const pp = bP.find((x) => x.id === k) || {}; return `<div class="vp-row" style="font-size:13px"><span><b>${esc(pp.processo || (r.manual && r.manual.processo) || k)}</b> · ${esc(pp.endereco || (r.manual && r.manual.endereco) || "")} <small style="opacity:.75">· tirado por ${esc(r.cancelado_vist.por || "")} em ${fDia(String(r.cancelado_vist.em || "").slice(0, 10))}</small></span><button class="vp-btn" data-vvolta="${esc(k)}" style="padding:2px 8px;font-size:12px">↩ Voltar para a vistoria</button></div>`; }).join("")}</div>` : ""}` : "";
+    return `${cancHtml ? "" : ""}<div><p class="vp-sub"><b>${pend.length}</b> a vistoriar · ${d} vistoriados · relatório de ${fDia(VIST_REL)}</p>${pode.coord() ? `<p class="vp-msg" style="margin:2px 0 0">Planilha: <b>${nPl}</b> em aberto (${nPlV} já vistoriados, <b>${nPl - nPlV}</b> a vistoriar)${nMan ? ` · cadastrados à mão: <b>${nMan}</b>` : ""}${nFora ? ` · vistoriados que já saíram da planilha (executados): <b>${nFora}</b> – ficam só no histórico` : ""}</p>` : ""}${cancHtml}</div>
     <div class="vp-tabs">${T.map(([k, t]) => `<button class="vp-tab" data-tela="${k}" aria-pressed="${S.tela === k}">${t}</button>`).join("")}</div>
     ${S.tela !== "rotas" || !pode.coord() ? "" : `<div class="vp-row vp-cg">${[["all", "Todos", all.length], ["ged", "Com GED", ng], ["noged", "Sem GED", pendL.length - ng]].map(([k, t, n]) => `<button class="vp-chip" data-grp="${k}" aria-pressed="${S.grp === k}">${t}<small>${n}</small></button>`).join("")}</div>
     <div class="vp-row vp-cg">${[["all", "📄 Com e sem PDF", nPg], ["com", "📄 Com PDF", nPc], ["sem", "⚠ Sem PDF", nPg - nPc]].map(([k, t, n]) => `<button class="vp-chip" data-pdff="${k}" aria-pressed="${S.pdf === k}">${t}<small>${n}</small></button>`).join("")}</div>
@@ -5007,9 +5025,9 @@ function montar(root) {
       if (!pode.lancar()) return `<div class="vp-vb"><span class="vp-msg">Ainda não vistoriado.</span></div>`;
       if (!eu && !pode.coord()) return "";
       if (!eu && dono(p) && dono(p).uid) return `<div class="vp-vb"><span class="vp-msg">🔒 Processo na rota de <b>${esc(dono(p).vistoriador || "")}</b>: só ele lança a vistoria. Para outra pessoa fazer, cancele o envio na rota dele.</span></div>`;
-      return `<div class="vp-vb"><div class="vp-row"><span class="vp-lab">No local, o serviço</span><button class="vp-opt vp-s-ja_executado" data-ini="ja_executado" data-id="${p.id}">Já foi executado</button><button class="vp-opt vp-s-nao_executado" data-ini="nao_executado" data-id="${p.id}">Ainda não foi executado</button></div></div>`;
+      return `<div class="vp-vb"><div class="vp-row"><span class="vp-lab">No local, o serviço</span><button class="vp-opt vp-s-ja_executado" data-ini="ja_executado" data-id="${p.id}">Já foi executado</button><button class="vp-opt vp-s-nao_executado" data-ini="nao_executado" data-id="${p.id}">Ainda não foi executado</button><button class="vp-opt vp-s-nao_pertence" data-ini="nao_pertence" data-id="${p.id}">🚫 Não é poda nem extirpação</button></div>${isGerente() ? `<div class="vp-row"><button class="vp-btn" data-vcanc="${p.id}" style="font-size:12.5px">🗑 Tirar da vistoria (gerente)</button></div>` : ""}</div>`;
     }
-    let h = `<div class="vp-vb"><div class="vp-row"><span class="vp-lab">No local, o serviço</span><button class="vp-opt vp-s-ja_executado" data-fsit="ja_executado" data-id="${p.id}" aria-pressed="${f.sit === "ja_executado"}">Já foi executado</button><button class="vp-opt vp-s-nao_executado" data-fsit="nao_executado" data-id="${p.id}" aria-pressed="${f.sit === "nao_executado"}">Ainda não foi executado</button></div>
+    let h = `<div class="vp-vb"><div class="vp-row"><span class="vp-lab">No local, o serviço</span><button class="vp-opt vp-s-ja_executado" data-fsit="ja_executado" data-id="${p.id}" aria-pressed="${f.sit === "ja_executado"}">Já foi executado</button><button class="vp-opt vp-s-nao_executado" data-fsit="nao_executado" data-id="${p.id}" aria-pressed="${f.sit === "nao_executado"}">Ainda não foi executado</button><button class="vp-opt vp-s-nao_pertence" data-fsit="nao_pertence" data-id="${p.id}" aria-pressed="${f.sit === "nao_pertence"}">🚫 Não é poda nem extirpação</button></div>
       <div class="vp-row"><span class="vp-lab">Data da vistoria</span><b>${fDia(f.data)}</b><span class="vp-msg">(automática)</span></div>`;
     if (f.sit === "ja_executado") {
       const img = f.preview || (f.fotoPath ? fotoUrl(f.fotoPath) : "");
@@ -5021,10 +5039,12 @@ function montar(root) {
       h += `<div class="vp-row"><span class="vp-lab">Equipamento necessário</span>${EQUIPS.map((q) => `<button class="vp-opt" data-feq="${q}" data-id="${p.id}" aria-pressed="${f.equip === q}">${q}</button>`).join("")}</div>
         ${f.equip ? "" : `<span class="vp-need">Escolha o equipamento para executar o serviço.</span>`}`;
     }
-    h += `<input type="text" id="vp-fo-${p.id}" data-fobs="${p.id}" value="${esc(f.obs)}" placeholder="Observação (opcional)">`;
+    if (f.sit === "nao_pertence") h += `<span class="vp-need" style="background:#eef0ff;color:#3e4095">No local não há serviço de poda nem de extirpação para este departamento. <b>Descreva o que é</b> (ex.: roçagem, capina, limpeza de lote, galhos já recolhidos, outro órgão).</span>`;
+    h += `<input type="text" id="vp-fo-${p.id}" data-fobs="${p.id}" value="${esc(f.obs)}" placeholder="${f.sit === "nao_pertence" ? "O que foi encontrado no local (obrigatório)" : "Observação (opcional)"}">`;
     const ocupado = !!S.busy[p.id];
     if (f.sit === "ja_executado") h += `<div class="vp-row"><button class="vp-btn vp-pri" data-fsalvar="${p.id}" ${!(f.file || f.fotoPath) || ocupado ? "disabled" : ""}>${ocupado ? "Enviando foto…" : "Salvar vistoria"}</button><button class="vp-btn" data-fcancel="${p.id}">Cancelar</button></div>`;
     else if (f.sit === "nao_executado") h += `<div class="vp-row"><button class="vp-btn vp-warn" data-fsalvar="${p.id}" ${!f.equip || ocupado ? "disabled" : ""}>Salvar vistoria</button><button class="vp-btn" data-fcancel="${p.id}">Cancelar</button></div>`;
+    else if (f.sit === "nao_pertence") h += `<div class="vp-row"><button class="vp-btn vp-pri" data-fsalvar="${p.id}" ${ocupado ? "disabled" : ""}>Salvar vistoria</button><button class="vp-btn" data-fcancel="${p.id}">Cancelar</button></div>`;
     else h += `<div class="vp-row"><button class="vp-btn" data-fcancel="${p.id}">Cancelar</button></div>`;
     return h + `</div>`;
   }
@@ -5058,11 +5078,14 @@ function montar(root) {
     if (!coord && !regs.length) return `<div class="vp-card" style="padding:16px"><b>Nenhuma rota indicada para você.</b><p class="vp-msg" style="margin-top:6px">O coordenador indica o vistoriador de cada rota. Quando ele indicar você, a rota aparece aqui.</p></div>`;
     if (coord) h += (() => { const G = {}, semV = [], cap2 = (t) => cap(t);
         S.proc.forEach((p) => { const d = dono(p), v = !!R(p).vistoriado; if (!d || !d.uid) { if (!v) semV.push(p); return; } const g = (G[d.uid] = G[d.uid] || { uid: d.uid, nome: (acesso && acesso[d.uid] && acesso[d.uid].nome) || d.vistoriador || "—", pend: 0, feito: 0, regs: {} }); if (v) g.feito++; else { g.pend++; g.regs[p.regional] = (g.regs[p.regional] || 0) + 1; } });
-        const L = Object.values(G).filter((g) => g.pend || g.feito).sort((a, b) => b.pend - a.pend || a.nome.localeCompare(b.nome)), tp = L.reduce((a, g) => a + g.pend, 0), sr = {}; semV.forEach((p) => (sr[p.regional] = (sr[p.regional] || 0) + 1));
+        const L = Object.values(G).filter((g) => g.pend || g.feito).sort((a, b) => b.pend - a.pend || a.nome.localeCompare(b.nome)), tp = L.reduce((a, g) => a + g.pend, 0);
+        // por região com os MESMOS filtros da tela (GED, PDF, ano): bate com os números dos botões das regiões
+        const semF = S.proc.filter((p) => !R(p).vistoriado && !(dono(p) && dono(p).uid) && (S.grp === "all" || (S.grp === "ged" ? !!p.ged : !p.ged)) && (S.pdf === "all" || (S.pdf === "com" ? docLinks(R(p)).length > 0 : !docLinks(R(p)).length)) && (S.yr === "all" || String(p.ano || 0) === S.yr));
+        const sr = {}; semF.forEach((p) => (sr[p.regional] = (sr[p.regional] || 0) + 1)); const filtro = S.grp !== "all" || S.pdf !== "all" || S.yr !== "all";
         return `<div class="vp-card" style="padding:12px 14px;display:grid;gap:8px"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline"><b style="font-size:16px">👥 Vistoriadores designados</b><span class="vp-msg">${L.length} pessoa${L.length === 1 ? "" : "s"} · <b>${tp}</b> processos designados a vistoriar · <b style="color:var(--bad,#b3261e)">${semV.length}</b> sem vistoriador</span></div>
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">
           ${L.map((g) => `<button type="button" class="vp-chip" data-vpuid="${esc(g.uid)}" aria-pressed="${S.vpUid === g.uid}" style="display:grid;gap:2px;text-align:left;border-radius:12px;padding:8px 12px;height:auto"><b style="font-size:14px">${esc(g.nome)}</b><span style="font-size:12.5px"><b style="font-size:16px">${g.pend}</b> a vistoriar · ✔ ${g.feito} feitos</span><small style="opacity:.75">${Object.entries(g.regs).map(([r, n]) => cap2(r) + " " + n).join(" · ") || "tudo vistoriado"}</small></button>`).join("") || `<span class="vp-msg">Nenhum processo designado ainda.</span>`}
-          <div style="border:2px dashed var(--bad,#b3261e);border-radius:12px;padding:8px 12px;display:grid;gap:2px"><b style="font-size:14px;color:var(--bad,#b3261e)">⚠ Sem vistoriador</b><span style="font-size:12.5px"><b style="font-size:16px">${semV.length}</b> processos a vistoriar sem ninguém designado</span><small style="opacity:.75">${Object.entries(sr).sort((a, b) => b[1] - a[1]).map(([r, n]) => cap2(r) + " " + n).join(" · ")}</small></div></div>
+          <div style="border:2px dashed var(--bad,#b3261e);border-radius:12px;padding:8px 12px;display:grid;gap:2px"><b style="font-size:14px;color:var(--bad,#b3261e)">⚠ Sem vistoriador</b><span style="font-size:12.5px"><b style="font-size:16px">${semF.length}</b> processos a vistoriar sem ninguém designado${filtro ? ` <span style="opacity:.75">(com os filtros escolhidos · ${semV.length} no total)</span>` : ""}</span><small style="opacity:.75">${Object.entries(sr).sort((a, b) => b[1] - a[1]).map(([r, n]) => cap2(r) + " " + n).join(" · ")}</small></div></div>
           ${S.vpUid ? `<div class="vp-row"><span class="vp-msg">🔒 Mostrando só os processos de <b>${esc(((acesso && acesso[S.vpUid]) || {}).nome || "")}</b>. Cancele <b>tudo</b>, <b>rota por rota</b> ou <b>parada por parada</b>: o que for cancelado volta para a lista geral.</span><button class="vp-btn vp-warn" data-vpcanc="${esc(S.vpUid)}">✖ Cancelar tudo de ${esc(((acesso && acesso[S.vpUid]) || {}).nome || "")} (${S.proc.filter((p) => !R(p).vistoriado && dono(p) && dono(p).uid === S.vpUid).length})</button><button class="vp-btn vp-pri" data-vpuid="">⬅ Voltar à lista geral</button></div>` : `<span class="vp-msg">A lista abaixo mostra só os processos <b>sem vistoriador</b>. Os designados ficam com o vistoriador: toque no nome para ver a rota dele.</span>`}</div>`; })();
     h += `<div class="vp-row">${regs.map((r) => { const l = listaRotas(r), dd = l.filter((p) => R(p).vistoriado).length, pn = l.length - dd; return `<button class="vp-chip" data-reg="${r}" aria-pressed="${r === S.cur}">${cap(r)}<small>${pn}${dd && !S.hide ? " · ✔" + dd : ""}</small></button>`; }).join("")}</div>
     <div class="vp-ctl">${coord ? `<label class="vp-f">Paradas por rota<input type="number" id="vp-per" min="1" inputmode="numeric" value="${S.per > 0 ? S.per : ""}" placeholder="sem limite" style="width:110px"></label><span class="vp-f"><span>Mostrando</span><b style="font-size:14px;padding:10px 0">${S.vpUid ? "🔒 Rota de " + esc(((acesso && acesso[S.vpUid]) || {}).nome || "vistoriador") : "Só os processos SEM vistoriador"}</b></span>` : ""}
@@ -5930,14 +5953,17 @@ function montar(root) {
   async function indicarRota(ci, uid) {
     if (!pode.coord()) return;
     const ro = rotasDe(S.cur)[ci]; if (!ro) return;
-    const ids = visiveis(ro).filter((p) => !R(p).vistoriado).map((p) => p.id);
+    let ids = visiveis(ro).filter((p) => !R(p).vistoriado).map((p) => p.id);
     if (!ids.length) { toast("Rota já concluída"); return; }
+    // respeita o número de "Paradas por rota": manda só as N primeiras na ordem de proximidade
+    if (uid && isFinite(nPer()) && ids.length > nPer()) { const ord = ordemGps(visiveis(ro).filter((p) => !R(p).vistoriado), true, true).map((p) => p.id); ids = ord.slice(0, nPer()); toast(`Limite de ${nPer()} paradas por rota: foram enviadas as ${nPer()} primeiras.`, 5000); }
     const v = S.vist.find((x) => x.uid === uid);
     if (uid && !v) { toast("Escolha o vistoriador"); return; }
     { const outro = visiveis(ro).filter((p) => !R(p).vistoriado && dono(p) && dono(p).uid && dono(p).uid !== uid).map(dono); if (uid && outro.length) { toast(`⛔ Não autorizado: ${outro.length === 1 ? "este processo já está" : outro.length + " processos já estão"} com ${[...new Set(outro.map((d) => d.vistoriador || ""))].join(", ")}. Ninguém entra na rota do outro: cancele o envio na rota dele primeiro.`, 7000); render(); return; } }
     // ordem fixa da rota (não depende de onde a pessoa está): 1ª, 2ª, 3ª parada...
     const seqP = ordemGps(visiveis(ro).filter((p) => !R(p).vistoriado), true, true), seqI = {}; seqP.forEach((p, i) => (seqI[p.id] = i));
     const em = new Date().toISOString(), rid = uid ? uid + "_" + Date.now().toString(36) : "";
+    if (uid) { const so = new Set(ids), sq = seqP.filter((p) => so.has(p.id)); Object.keys(seqI).forEach((k) => delete seqI[k]); sq.forEach((p, i) => (seqI[p.id] = i)); }
     const ok = await gravar(ids, uid ? (id) => ({ rota: { vistoriador: v.nome, uid, em, por: usuario(), rid, seq: seqI[id] ?? 999, gv: GEO_V } }) : { rota: null });
     if (ok) { if (S.draft) delete S.draft[ci]; const q = ids.length + (ids.length === 1 ? " parada" : " paradas"); toast(uid ? `${q} da rota ${ro.n} para ${v.nome}` : `Vistoriador retirado de ${q} da rota ${ro.n}`); }
   }
@@ -5960,6 +5986,7 @@ function montar(root) {
     if (!f.data) { toast("Informe a data da vistoria"); return; }
     if (f.sit === "ja_executado" && !f.file && !f.fotoPath) { toast("Anexe a foto que comprova o serviço feito"); return; }
     if (f.sit === "nao_executado" && !f.equip) { toast("Escolha o equipamento necessário"); return; }
+    if (f.sit === "nao_pertence" && String(f.obs || "").trim().length < 4) { toast("Descreva o que foi encontrado no local (não é poda nem extirpação)"); return; }
     let ass = null; if (f.sit === "ja_executado") { const a = await assinarVist(id); if (a.erro) { toast("Assinatura do relatório: " + a.erro); return; } ass = a.ass; }
     S.busy[id] = 1; render();
     try {
@@ -5968,7 +5995,8 @@ function montar(root) {
       const r0 = S.reg[id] || {};
       const gpsV = S.pos && Date.now() - (S.pos.em || 0) < 180000 && !(R({ id }).geo && R({ id }).geo.n === "gps") ? { geo: { lat: +S.pos.lat.toFixed(6), lng: +S.pos.lng.toFixed(6), n: "gps", v: GEO_V, em: new Date().toISOString(), por: usuario() } } : {};
       const base = { ...gpsV, vistoriado: true, data_vistoria: f.data, observacao: f.obs.trim() || null, responsavel: r0.vistoriado && r0.responsavel ? r0.responsavel : usuario(), resp_uid: r0.vistoriado && r0.resp_uid ? r0.resp_uid : meuId() };
-      const campos = f.sit === "ja_executado" ? Object.assign(base, { situacao: "ja_executado", foto_path: fotoPath, equipamento: null, ass })
+      const campos = f.sit === "nao_pertence" ? Object.assign(base, { situacao: "nao_pertence", foto_path: null, equipamento: null, ass: null, observacao: f.obs.trim().toUpperCase() })
+        : f.sit === "ja_executado" ? Object.assign(base, { situacao: "ja_executado", foto_path: fotoPath, equipamento: null, ass })
         : Object.assign(base, { situacao: "nao_executado", foto_path: null, equipamento: f.equip, urbantrim: null, ass: null });
       delete S.busy[id];
       const roA = rotasDe(S.cur).find((r) => r.ps.some((p) => p.id === id));
@@ -6118,6 +6146,10 @@ function montar(root) {
       if (await gravar([id], { execucao: { ...r.execucao, ass } })) { Object.keys(S.sigv || {}).forEach((k) => { if (k.startsWith(px)) delete S.sigv[k]; }); toast("Relatório assinado"); render(); } return; }
     if (ds.vassinar) { const a = await assinarVist(ds.vassinar); if (a.erro) { toast("Assinatura: " + a.erro); return; } if (await gravar([ds.vassinar], { ass: a.ass })) toast("Relatório assinado"); return; }
     if (ds.geostop) { if (S.geo) S.geo.on = false; render(); return; }
+    if (ds.vcanc) { if (!isGerente()) return; const id = ds.vcanc; if (t.dataset.arm !== "1") { t.dataset.arm = "1"; t.textContent = "Toque de novo: tira este processo da vistoria"; setTimeout(() => { if (t.isConnected) { t.dataset.arm = ""; t.textContent = "🗑 Tirar da vistoria (gerente)"; } }, 5000); return; }
+      t.disabled = true; if (await gravar([id], { cancelado_vist: { por: usuario(), uid: meuId(), em: new Date().toISOString() }, rota: null })) { S.proc = todosProc(); _idx = null; render(); toast("Processo tirado da vistoria (dá para voltar em “tirados da vistoria”)"); } return; }
+    if (ds.vvolta) { if (!isGerente()) return; if (await gravar([ds.vvolta], { cancelado_vist: null })) { S.proc = todosProc(); _idx = null; render(); toast("Processo voltou para a vistoria"); } return; }
+    if (ds.vcanclista) { S.verCanc = !S.verCanc; render(); return; }
     if (ds.tiraum) { if (t.dataset.arm !== "1") { t.dataset.arm = "1"; t.textContent = "toque de novo para cancelar"; setTimeout(() => { if (t.isConnected) { t.dataset.arm = ""; t.textContent = "✖ Cancelar esta parada"; } }, 4000); return; } if (await gravar([ds.tiraum], { rota: null })) toast("Parada cancelada: voltou para a lista geral"); return; }
     if (ds.vpcanc) { const uid = ds.vpcanc, ids = S.proc.filter((p) => !R(p).vistoriado && dono(p) && dono(p).uid === uid).map((p) => p.id); if (!ids.length) return;
       if (t.dataset.arm !== "1") { t.dataset.arm = "1"; t.textContent = `Toque de novo: cancela os ${ids.length} processos`; setTimeout(() => { if (t.isConnected) { t.dataset.arm = ""; render(); } }, 5000); return; }
@@ -6277,6 +6309,7 @@ const chkVis=()=>chks.filter(c=>(noEscopo(c.supervisao)||noEscopo(c.recebe?.sup)
 const chkRecebido=c=>!!c?.recebe?.em;
 // recusa do recebimento: o supervisor que recebe nega e relata o motivo; o coordenador valida a situação
 const chkRecusado=c=>!!c?.recusa?.em;
+const noEscChk=sup=>{ try{ return comEscPend(()=>noEscopo(sup)); }catch(e){ return true; } }; // Victor: só PODA I e II; Pedro: só PODA III e IV
 const chkAguardaCoord=c=>chkRecusado(c)&&!c?.validacao?.em;
 const podeValidar=()=>!!sessao&&(sessao.perfil==="coordenador"||isGerente()||sessao.perfil==="gerencia_op");
 // avaria confirmada pelo coordenador: o comunicado de defeito tem que ser feito de imediato (fica pendente até existir)
@@ -6499,13 +6532,13 @@ function renderChk(){
   const cota=[...trab].sort().map(t=>({t,...chkCota(t,dia,vis)}));
   const pend=cota.filter(x=>x.feitos.length<x.meta);
   const naoApto=lst.filter(c=>chkNivel(c)==="NÃO").length, ress=lst.filter(c=>chkNivel(c)==="PARCIAL").length, semRec=lst.filter(c=>!chkRecebido(c)&&!chkRecusado(c)).length;
-  const aguarda=chks.filter(chkAguardaCoord).filter(c=>noEscopo(c.supervisao)).filter(c=>!travado()||c.supervisao===sessao.sup||c.recebe?.sup===sessao.sup).sort((a,b)=>(a.data||"").localeCompare(b.data||""));
+  const aguarda=chks.filter(chkAguardaCoord).filter(c=>noEscChk(c.supervisao)).filter(c=>!travado()||c.supervisao===sessao.sup||c.recebe?.sup===sessao.sup).sort((a,b)=>(a.data||"").localeCompare(b.data||""));
   let h=""; // o aviso de checklist obrigatório pendente fica só no Início e em Pendências
   // recusas: o coordenador valida; o supervisor que entregou é avisado (pendentes e as validadas nos últimos 7 dias)
   const val=podeValidar()?aguarda:[];
   const d7=(()=>{const d=new Date();d.setDate(d.getDate()-7);return d.toISOString()})();
   const minhasRec=travado()?chks.filter(c=>chkRecusado(c)&&c.supervisao===sessao.sup&&(!c.validacao?.em||c.validacao.em>=d7)).sort((a,b)=>(b.recusa.em||"").localeCompare(a.recusa.em||"")):[];
-  const pedeCom=chks.filter(chkPedeComunicado).filter(c=>noEscopo(c.supervisao)).filter(c=>podeValidar()||(travado()&&(c.supervisao===sessao.sup||c.recusa?.sup===sessao.sup)));
+  const pedeCom=chks.filter(chkPedeComunicado).filter(c=>noEscChk(c.supervisao)).filter(c=>podeValidar()||(travado()&&(c.supervisao===sessao.sup||c.recusa?.sup===sessao.sup)));
   const nb=meus.length+val.length+minhasRec.filter(chkAguardaCoord).length+pedeCom.length;
   const tb=document.querySelector('nav.tabs button[data-v="chk"]'); window.__nbChk=nb; if(curView==="inicio") try{renderInicio()}catch(e){} if(tb) tb.innerHTML=ICO.chk+`<span class="tl">Checklist</span>`+(nb?`<span class="tbadge" aria-label="${nb} pendência(s) no checklist">${nb}</span>`:"");
   if(pedeCom.length) h+=`<div class="alert"><h3>Avaria confirmada – fazer o comunicado de defeito</h3><p class="note" style="margin:0">O coordenador confirmou a avaria apontada no recebimento. Faça <b>de imediato</b> o comunicado de defeito e encaminhe o equipamento para manutenção.</p>${pedeCom.map(c=>`<button type="button" class="urg" data-comdef="${esc(c.id)}"><b>⚠</b><span>${esc(c.viatura||"")} · ${esc(c.supervisao)} · ${fmtD(c.data)}<small>Confirmado por ${esc(c.validacao.nome)}: ${esc(c.validacao.obs||"")} · toque para fazer o comunicado</small></span></button>`).join("")}</div>`;
@@ -7185,7 +7218,7 @@ async function midEnviar(slot,file,onProg){
   if(file.lastModified&&Date.now()-file.lastModified>(slot.janelaH?slot.janelaH*3600e3:15*60*1000)) throw slot.janelaH?{msg:`A foto tem que ser do dia do serviço (tirada nas últimas ${slot.janelaH} horas). Foto antiga não é aceita.`}: {msg:`${slot.tipo==="video"?"O vídeo":"A foto"} tem que ser ${slot.tipo==="video"?"gravado":"tirada"} agora pela câmera. Arquivo antigo não é aceito.`};
   if(slot.tipo==="foto"){
     if(!/^image\//.test(file.type)&&!/\.(jpe?g|png|heic|webp)$/i.test(file.name)) throw {msg:"Escolha uma foto."};
-    if(assets){ const b=await imgReduzir(file,1280,.72); const r=await assets.upload(b,{type:"image/jpeg"}); return {id:r.id,em:new Date().toISOString()}; }
+    if(assets){ const b=await imgReduzir(file,1280,.72); const r=await assets.upload(b,{type:"image/jpeg"}); return {id:r.id,em:new Date().toISOString(),kb:Math.round(b.size/1024)}; }
     if(!db) throw {msg:"Sem conexão com o banco."};
     const b=await imgReduzir(file,1024,.6), url=await blobDataUrl(b); if(url.length>240000) throw {msg:"Foto grande demais. Tente de novo."};
     const id=db.collection(MID_COL).doc().id; await db.collection(MID_COL).doc(id).set({img:url,em:new Date().toISOString(),por:nomeAutor()}); midCache[id]=url; return {db:id,em:new Date().toISOString()};
@@ -9548,9 +9581,9 @@ function renderAlertas(hostEl,opt){
   const ex=(arr,f)=>arr.slice(0,3).map(f).join(" · ")+(arr.length>3?` · +${arr.length-3}`:"");
   const itens=[
     [(travado()?[]:mans.filter(m=>noEscopo(m.supervisao)).filter(preOsPend)).length,"equipamentos recolhidos sem a pré-ordem de serviço enviada à manutenção",ex(mans.filter(m=>noEscopo(m.supervisao)).filter(preOsPend),m=>`${fmtDs(m.data)} ${m.viatura} — ${m.supervisao}`),"","chkrec",1],
-    [podeValidar()?chks.filter(chkPedeComunicado).filter(c=>noEscopo(c.supervisao)).length:0,"avaria confirmada no checklist sem comunicado de defeito (fazer de imediato)",ex(chks.filter(chkPedeComunicado).filter(c=>noEscopo(c.supervisao)),c=>`${fmtDs(c.data)} ${c.viatura} — ${c.supervisao}`),"","chkrec",1],
+    [podeValidar()?chks.filter(chkPedeComunicado).filter(c=>noEscChk(c.supervisao)).length:0,"avaria confirmada no checklist sem comunicado de defeito (fazer de imediato)",ex(chks.filter(chkPedeComunicado).filter(c=>noEscChk(c.supervisao)),c=>`${fmtDs(c.data)} ${c.viatura} — ${c.supervisao}`),"","chkrec",1],
     [extraAguardam().length,"serviços fora de programação aguardando a sua validação (assinar)",ex(extraAguardam(),r=>`${fmtDs(r.data)} ${r.supervisao} — ${r.bairro}`),"","exval",1],
-    [podeValidar()?chks.filter(chkAguardaCoord).filter(c=>noEscopo(c.supervisao)).length:0,"checklists com recebimento recusado aguardando validação do coordenador",ex(chks.filter(chkAguardaCoord).filter(c=>noEscopo(c.supervisao)),c=>`${fmtDs(c.data)} ${c.viatura} — ${c.supervisao}`),"","chkrec",1],
+    [podeValidar()?chks.filter(chkAguardaCoord).filter(c=>noEscChk(c.supervisao)).length:0,"checklists com recebimento recusado aguardando validação do coordenador",ex(chks.filter(chkAguardaCoord).filter(c=>noEscChk(c.supervisao)),c=>`${fmtDs(c.data)} ${c.viatura} — ${c.supervisao}`),"","chkrec",1],
     [semBaixa.length,"serviços programados sem baixa há 2 dias ou mais",ex(semBaixa,r=>`${fmtDs(r.data)} ${r.supervisao} — ${r.bairro}`),"ATRASADO","",1],
     [ocAg.length,"galho/árvore caída aguardando atendimento",ex(ocAg,r=>`${fmtDs(r.data)} ${r.bairro}`),"","oc"],
     [remarc.length,"serviços remarcados 2 vezes ou mais",ex(remarc,r=>`${r.bairro} (${(r.historico||[]).length}x)`),"","rem"],
@@ -10424,7 +10457,7 @@ let _pnT; addEventListener("resize",()=>{clearTimeout(_pnT);_pnT=setTimeout(()=>
 function renderAvisoGlobal(){
   const host=$("#avisoGlobal"); if(!host) return; if(!sessao||typeof chks==="undefined"){ host.innerHTML=""; return; }
   const pend=chks.filter(chkAguardaCoord);
-  const val=podeValidar()?pend:[];
+  const val=podeValidar()?pend.filter(c=>noEscChk(c.supervisao)):[];
   const meus=sessao.perfil==="supervisor"?pend.filter(c=>c.supervisao===sessao.sup||c.entrega?.uid===sessao.id):[];
   const itens=[];
   if(val.length) itens.push(`<b>${val.length}</b> checklist${val.length>1?"s":""} contestado${val.length>1?"s":""} aguardando a sua <b>análise e validação</b>: ${val.slice(0,3).map(c=>esc(c.viatura+" · "+c.supervisao)).join("; ")}${val.length>3?"…":""}`);
@@ -12110,7 +12143,10 @@ async function cppGrava(id,d,del,valida){ if(!(ctpEdita()||(valida&&cppPodeValid
     if(cppRaw.has(id)&&prev.lancadoPor!==undefined&&dd.lancadoPor!==prev.lancadoPor) dd.lancadoPor=prev.lancadoPor; }
   if(!del&&dd&&((dd.dtExec&&!prev.dtExec)||(dd.dtRetorno&&!prev.dtRetorno))){ dd=await cppConfirmar(id,dd,prev); if(!dd) throw Object.assign(new Error("Fechamento cancelado"),{code:"cancelled"}); }
   const doc={d:dd,del:!!del,em:agora,por:sessao.nome||"",uid:sessao.id,log:[...(ant.log||[]),{em:agora,por:sessao.nome||"",acao:del?"Excluiu":ant.d||cppBase?.some(r=>r.id===id)?"Alterou":"Lançou"}].slice(-30)};
-  await db.collection(ASS_COL).doc(k).set(doc); ctpDocs[k]=doc; cppRecalc(); }
+  await db.collection(ASS_COL).doc(k).set(doc);
+  // confere no servidor: se não gravou, avisa (nunca fecha a ficha como se tivesse salvo)
+  try{ const g=await db.collection(ASS_COL).doc(k).get(); const v=g&&g.exists!==false&&typeof g.data==="function"?g.data():null; if(v&&v.em&&v.em!==agora) throw Object.assign(new Error("outro"),{code:"dados",msgUser:"Outra pessoa alterou este processo ao mesmo tempo e a gravação dela ficou valendo. Abra de novo, confira e salve outra vez."}); if(g&&g.exists===false) throw Object.assign(new Error("nao gravou"),{code:"dados",msgUser:"O servidor não confirmou a gravação: o processo NÃO foi salvo. Confira a internet e tente de novo."}); }catch(x){ if(x&&x.code==="dados"){ try{ console.error("[controle] "+x.msgUser); }catch(e){} throw x; } }
+  ctpDocs[k]=doc; try{ cppRecalc(); }catch(x){ console.error(x); } }
 // serviços do app (programação / baixa) do mesmo processo: comprovação da execução
 const cppDig=v=>String(v||"").replace(/\D/g,"").replace(/^0+/,"");
 function cppEvid(dd){ const ks=[dd.solicitacao,dd.procSec,dd.ped].map(cppDig).filter(x=>x.length>=5); if(!ks.length) return [];
