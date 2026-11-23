@@ -1886,6 +1886,34 @@ const RESET_MARCA="2026-10-28-zerar";
 try{ if(ls.get("gpe_reset","")!==RESET_MARCA){ ls.set("gpe_fila",[]); ls.set("gpe_reset",RESET_MARCA); } }catch(e){}
 const fila = { all(){return ls.get("gpe_fila",[])}, put(id,body){const f=this.all().filter(x=>x.id!==id);f.push({id,body});ls.set("gpe_fila",f);syncUI()}, drop(id){ls.set("gpe_fila",this.all().filter(x=>x.id!==id));syncUI()} };
 function newId(){ return db ? db.collection(COL).doc().id : "l"+Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+// gerente / coordenador: muda SÓ o que quiser (fiscal, equipe ou equipamento) sem refazer a programação
+function abrirAjuste(r){
+  const box=document.createElement("div"); box.className="sheet"; box.style.zIndex=30;
+  const FIS=fiscaisSup(r.supervisao), fAt=(r.osDia&&r.osDia.fiscal&&r.osDia.fiscal.id)||(r.fiscalEsc&&r.fiscalEsc.id)||(fiscalDe(r.supervisao,r.equipe)||{}).id||"";
+  const vts=[...$("#viatura").options].map(o=>[o.value,o.textContent]).filter(x=>x[0]); if(r.viatura&&!vts.some(x=>x[0]===r.viatura)) vts.unshift([r.viatura,r.viatura]);
+  box.innerHTML=`<div class="panel" role="dialog" aria-label="Alterar fiscal, equipe ou equipamento"><b style="font-family:var(--display);font-size:22px">🔧 Alterar só o que precisa</b>
+    <p class="note" style="margin:0"><b>${esc(fmtD(r.data))}</b> · ${esc(r.bairro||"")} — ${esc(r.logradouro||"")}<br>${esc(supNome(r.supervisao))}. Mude só o campo que quiser; o resto do serviço continua igual.</p>
+    <label class="f">Fiscal<select id="ajFis">${FIS.map(f=>`<option value="${esc(f.id)}" ${f.id===fAt?"selected":""}>${esc(f.nome)}${f.equipe?" · "+esc(f.equipe):""}</option>`).join("")}${fAt&&!FIS.some(f=>f.id===fAt)?`<option value="${esc(fAt)}" selected>${esc((r.osDia&&r.osDia.fiscal&&r.osDia.fiscal.nome)||(r.fiscalEsc&&r.fiscalEsc.nome)||"atual")}</option>`:""}${FIS.length?"":`<option value="">Sem fiscal cadastrado na turma</option>`}</select></label>
+    <div class="row2"><label class="f">Equipe<select id="ajEq">${["1ª EQUIPE","2ª EQUIPE","3ª EQUIPE"].map(q=>`<option ${q===r.equipe?"selected":""}>${q}</option>`).join("")}</select></label>
+    <label class="f">Equipamento (veículo)<select id="ajVt"><option value="">—</option>${vts.map(([v,t])=>`<option value="${esc(v)}" ${v===r.viatura?"selected":""}>${esc(t)}</option>`).join("")}</select></label></div>
+    ${r.osDia?`<p class="note" style="margin:0">A O.S nº ${esc(r.osDia.num)} já foi enviada. Se trocar o fiscal, <b>este serviço passa para o novo fiscal</b> no app.</p>`:""}
+    <div class="err" id="ajErr" hidden></div>
+    <div class="actions" style="grid-template-columns:1fr 1fr;margin:0"><button type="button" class="btn sec" data-ajno>Voltar</button><button type="button" class="btn pri" data-ajok>💾 Salvar alteração</button></div></div>`;
+  document.body.appendChild(box);
+  box.onclick=async e=>{ if(e.target===box||e.target.closest("[data-ajno]")) return box.remove();
+    const ok=e.target.closest("[data-ajok]"); if(!ok) return; const er=box.querySelector("#ajErr");
+    const fresh=todosGlobal().find(x=>x.id===r.id)||r, upd={...fresh}; delete upd.id; delete upd._fila; const mud=[];
+    const eq=box.querySelector("#ajEq").value, vt=box.querySelector("#ajVt").value, fid=box.querySelector("#ajFis").value;
+    if(eq!==(fresh.equipe||"")){ mud.push("equipe "+(fresh.equipe||"—")+" → "+eq); upd.equipe=eq; }
+    if(vt!==(fresh.viatura||"")){ mud.push("equipamento "+(fresh.viatura||"—")+" → "+(vt||"—")); upd.viatura=vt; }
+    if(fid&&fid!==fAt){ const f=FIS.find(x=>x.id===fid); if(f){ const em=new Date().toISOString(); mud.push("fiscal → "+f.nome); upd.fiscalEsc={id:f.id,nome:f.nome,em,por:sessao.nome||""};
+      if(upd.osDia){ const de=upd.osDia.fiscal||null; upd.osDia={...upd.osDia,fiscal:{id:f.id,nome:f.nome},fiscalTroca:{de:de&&de.nome||"",para:f.nome,por:sessao.nome||"",em}}; delete upd.osDia.recebida; } } }
+    if(!mud.length){ er.textContent="Nada foi alterado."; er.hidden=false; return; }
+    upd._acao="Alterado pela gerência: "+mud.join(" · ");
+    ok.disabled=true; ok.textContent="Salvando…";
+    const res=await saveDoc(r.id,upd); if(res!=="ok"&&res!=="fila"){ ok.disabled=false; ok.textContent="💾 Salvar alteração"; er.textContent="Não foi possível salvar agora. Tente de novo."; er.hidden=false; return; }
+    box.remove(); try{ renderAll(); }catch(x){} toast("Alterado: "+mud.join(" · ")); };
+}
 // gerente: o serviço foi executado por outra turma → passa para ela (some da turma original e vai para quem executou)
 function abrirTransferir(r){
   const box=document.createElement("div"); box.className="sheet"; box.style.zIndex=30;
@@ -2950,7 +2978,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.23q";
+const APP_VERSAO="2026.11.23s";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -3636,13 +3664,33 @@ function proxSemTurma(sup,P){ const dias=P.dias.filter(x=>trabalha(sup,x)); cons
 // serviço extra: enviado fora da programação semanal (uso eventual); libera data a partir de hoje e exige quem enviou + justificativa
 const ehExtra=()=>(form.mode==="prog"||form.mode==="avulso")&&!!$("#extraChk")?.checked;
 // Início › Serviço fora de programação: escolher entre serviço enviado (registro + baixa) e registro emergencial (galho / árvore caída)
-function abrirForaProg(okEx,okOc){ if(okEx&&!okOc) return abrirExtra(); if(okOc&&!okEx) return irPara("oc");
+// relação dos serviços extras (fora da programação): hoje / esta semana / semana passada
+let EXL_PER="dia";
+function extraLista(per){ const iso2=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  const h=parseD(hoje()), dom=new Date(h.getFullYear(),h.getMonth(),h.getDate()-h.getDay(),12), ini=new Date(dom), fim=new Date(dom); fim.setDate(dom.getDate()+6);
+  if(per==="ant"){ ini.setDate(ini.getDate()-7); fim.setDate(fim.getDate()-7); }
+  const a=per==="dia"?hoje():iso2(ini), b=per==="dia"?hoje():iso2(fim);
+  return todosGlobal().filter(r=>r&&r.extra&&!r.arquivado&&!r.ocorrencia&&(r.dataExec||r.data||"")>=a&&(r.dataExec||r.data||"")<=b&&(travado()?r.supervisao===sessao.sup:(typeof noEscopo!=="function"||noEscopo(r.supervisao))))
+    .sort((x,y)=>String(x.dataExec||x.data).localeCompare(String(y.dataExec||y.data))||String(x.supervisao).localeCompare(String(y.supervisao))); }
+function extraListaHtml(){ const L=extraLista(EXL_PER), stx=r=>r.status==="SIM"?["✅ Executado","#138A12"]:r.status==="PARCIAL"?["◐ Parcial","#b45309"]:r.status==="NÃO"||r.status==="NAO"?["✕ Não executado","#cc3a22"]:["⏳ Programado","#41409A"];
+  const tot=L.reduce((o,r)=>{ const q=execQ(r); o.re+=execRec(r); o.p+=somaG(q,"P"); o.e+=somaG(q,"E"); if(r.status==="SIM")o.ok++; else if(!r.status)o.ab++; return o; },{re:0,p:0,e:0,ok:0,ab:0});
+  const PER=[["dia","Hoje"],["sem","Esta semana"],["ant","Semana passada"]];
+  return `<div style="display:flex;flex-direction:column;gap:8px;margin-top:6px"><b style="font-family:var(--display);font-size:19px">⚡ Relação de serviço extra</b>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">${PER.map(([k,t])=>`<button type="button" class="btn ${EXL_PER===k?"pri":"sec"}" data-exper="${k}" style="min-height:40px;padding:0 14px">${t}</button>`).join("")}</div>
+    <div class="note" style="margin:0">${L.length} serviço${L.length===1?"":"s"} extra${L.length===1?"":"s"} · ${tot.ok} executado${tot.ok===1?"":"s"} · ${tot.ab} em aberto · ${brlS(tot.re)} executado · ${nf0(tot.p+tot.e)} árvores (${nf0(tot.p)} podas · ${nf0(tot.e)} extirp.)</div>
+    ${L.length?`<div style="display:flex;flex-direction:column;gap:6px;max-height:46vh;overflow:auto">${L.map(r=>{ const [t,c]=stx(r); return `<button type="button" data-exid="${esc(r.id)}" style="text-align:left;border:1px solid var(--line);border-left:5px solid ${c};border-radius:12px;background:var(--surface);color:var(--ink);padding:10px 12px;font:inherit;cursor:pointer;display:grid;gap:2px">
+      <span style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${esc(fmtD(r.dataExec||r.data))} · ${esc(r.supervisao||"")}</b><b style="color:${c}">${t}</b></span>
+      <span>${esc([r.logradouro,r.bairro].filter(Boolean).join(" – ")||"—")}</span>
+      <small style="color:var(--muted)">${esc(r.extra.origem||"—")}${r.processo?" · "+esc(r.tipo||"")+" "+esc(r.processo):""}${r.fiscalEsc?" · fiscal "+esc(r.fiscalEsc.nome):""}${r.status?" · "+brlS(execRec(r)):""}</small></button>`; }).join("")}</div>`:`<div class="empty" style="margin:0">Nenhum serviço extra ${EXL_PER==="dia"?"hoje":EXL_PER==="sem"?"nesta semana":"na semana passada"}.</div>`}</div>`; }
+function abrirForaProg(okEx,okOc){ if(okOc&&!okEx) return irPara("oc");
   const host=$("#sheetHost"), op=(k,cor,ic,t,d)=>`<button type="button" data-fp="${k}" style="display:flex;flex-direction:column;align-items:flex-start;gap:10px;text-align:left;border:0;border-radius:18px;padding:20px 18px;min-height:150px;background:${cor};color:#fff;font:inherit;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.15)"><span style="display:inline-flex;width:52px;height:52px;border-radius:14px;background:rgba(255,255,255,.22);align-items:center;justify-content:center">${ic}</span><b style="font-family:var(--display);font-size:24px;line-height:1.05;letter-spacing:.3px;text-transform:uppercase">${t}</b><small style="font-size:14px;line-height:1.3;opacity:.95">${d}</small></button>`;
   host.innerHTML=`<div class="sheet" id="sh"><div class="panel" role="dialog" aria-label="Serviço fora de programação">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:22px">O que você vai registrar?</b><button type="button" class="btn sec" id="fpX" style="min-height:44px;padding:0 14px">Fechar</button></div>
-    <div class="fpgrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:4px">${op("ex","#e8731f",svgI('<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>').replace("<svg",'<svg style="width:30px;height:30px;color:#fff"'),"Serviço fora da programação","Gerência ou outro órgão mandou executar. Registre aqui e depois dê a baixa.")}${op("oc","#b3261e",ICO.oc.replace("<svg",'<svg style="width:30px;height:30px;color:#fff"'),"Registro emergencial","Galho ou árvore caída atendida na hora.")}</div></div></div>`;
+    <div class="fpgrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:4px">${op("ex","#e8731f",svgI('<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>').replace("<svg",'<svg style="width:30px;height:30px;color:#fff"'),"Serviço fora da programação","Gerência ou outro órgão mandou executar. Registre aqui e depois dê a baixa.")}${okOc?op("oc","#b3261e",ICO.oc.replace("<svg",'<svg style="width:30px;height:30px;color:#fff"'),"Registro emergencial","Galho ou árvore caída atendida na hora."):""}</div><div id="exlBox">${extraListaHtml()}</div></div></div>`;
   const close=()=>host.innerHTML="";
-  $("#sh").onclick=e=>{ if(e.target.id==="sh") return close(); const b=e.target.closest("[data-fp]"); if(!b) return; close(); if(b.dataset.fp==="ex") abrirExtra(); else irPara("oc"); };
+  $("#sh").onclick=e=>{ if(e.target.id==="sh") return close(); const pb=e.target.closest("[data-exper]"); if(pb){ EXL_PER=pb.dataset.exper; $("#exlBox").innerHTML=extraListaHtml(); return; }
+    const xb=e.target.closest("[data-exid]"); if(xb){ const r=todosGlobal().find(x=>x.id===xb.dataset.exid); if(r){ close(); detalhe(r); } return; }
+    const b=e.target.closest("[data-fp]"); if(!b) return; close(); if(b.dataset.fp==="ex") abrirExtra(); else irPara("oc"); };
   $("#fpX").onclick=close; }
 function abrirExtra(){ limpar("prog"); form.extraModo=true; $("#extraChk").checked=true; show("form"); scrollTo(0,0); modeUI(); extraUI(); }
 const extraTxt=r=>r?.extra?`⚡ Serviço extra – enviado por ${r.extra.origem||"—"}${r.extra.just?": "+r.extra.just:""}${r.extra.valid?` · ✍ validado por ${r.extra.valid.nome}`:""}`:"";
@@ -8176,6 +8224,7 @@ function detalhe(r, abrirAdiar=false, soVer=false){
     ${fotosFisHtml(r)}
     ${galAutHtml(r)}
     ${(!r.ocorrencia&&!r.avulso&&!r._fila&&!r.arquivado&&(podeEditProg()&&noEscopo(r.supervisao)||isGerente()||(!soVer&&isProg(r)&&isGer())))?`<button type="button" class="btn sec" id="shProg">✏ ${isGerente()?"Editar programação (gerente)":podeEditProg()?"Editar programação":"Corrigir programação (gerência)"}</button>`:""}
+    ${(!r.ocorrencia&&!r._fila&&!r.arquivado&&!r.status&&isProg(r)&&!soLeitura()&&(isGerente()||["coordenador","gerencia_op"].includes(sessao?.perfil))&&noEscopo(r.supervisao))?`<button type="button" class="btn sec" id="shAjuste">🔧 Alterar só fiscal, equipe ou equipamento</button>`:""}
     ${(!r.ocorrencia&&!r._fila&&!r.arquivado&&isGerente()&&!soLeitura())?`<button type="button" class="btn sec" id="shTransf">🔁 Executado por outra turma – transferir</button>`:""}
     ${(soVer||soLeitura()||r.arquivado)?`${soVer&&isProg(r)&&!soLeitura()&&!r.arquivado?`<button type="button" class="btn pri" id="shBaixa" style="min-height:52px;font-size:16px">${r.ocorrencia?"Registrar atendimento":"✔ Dar baixa"}</button>`:""}<button type="button" class="btn sec" id="shClose">Fechar</button>${(soVer&&isGerente()&&!r._fila&&db&&!r.arquivado)?`<button type="button" class="btn danger" id="shDel">${isProg(r)?"Excluir programação":"Excluir lançamento"} (gerente)</button>`:""}`:`<div class="actions" style="grid-template-columns:1fr 1fr">
       ${isProg(r)?`<button type="button" class="btn pri" id="shBaixa">Dar baixa</button>`:`<button type="button" class="btn pri" id="shEdit">Corrigir baixa</button>`}
@@ -8196,6 +8245,7 @@ function detalhe(r, abrirAdiar=false, soVer=false){
   const sm=$("#shMsg"); if(sm) sm.onclick=()=>{close(); abrirMsg(r)};
   const sp=$("#shProg"); if(sp) sp.onclick=()=>{close(); abrirProg(r)};
   const stf=$("#shTransf"); if(stf) stf.onclick=()=>{close(); abrirTransferir(r)};
+  const saj=$("#shAjuste"); if(saj) saj.onclick=()=>{close(); abrirAjuste(r)};
   const ad=$("#shAdiar"); if(ad) ad.onclick=()=>{$("#adiarBox").hidden=false;ad.hidden=true};
   const ok=$("#adOk"); if(ok) ok.onclick=async()=>{
     const nd=$("#adData").value, mot=$("#adMot").value;
