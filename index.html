@@ -2940,7 +2940,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.23d";
+const APP_VERSAO="2026.11.23e";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -5174,7 +5174,8 @@ function montar(root) {
     }
     const term = (S.pq || "").trim().toLowerCase();
     const sem = S.proc.filter((p) => (S.pmostra === "com" ? docLinks(R(p)).length : !docLinks(R(p)).length) && (!S.preg || p.regional === S.preg) && (!term || buscaOk([p.processo, p.endereco, p.setor, p.ged].join(" "), term)));
-    h += `<div class="vp-row" style="margin:6px 0"><button class="vp-btn vp-pri" data-pdfxls="1">⬇ Baixar relação em Excel · com PDF e sem PDF${S.preg ? " · " + cap(S.preg) : ""}</button></div>`;
+    { const L0 = S.proc.filter((p) => !S.preg || p.regional === S.preg), tl = (tp) => { const a = L0.filter((p) => tipoProc(p) === tp), n1 = a.filter((p) => docLinks(R(p)).length).length; return `<span class="vp-chip" style="cursor:default">${tp}<small>✔ ${n1} com · ⚠ ${a.length - n1} sem</small></span>`; };
+      h += `<div class="vp-row" style="margin:6px 0">${["GED", "O.S", "SEI"].map(tl).join("")}</div><div class="vp-row" style="margin:6px 0"><button class="vp-btn vp-pri" data-pdfxls="1">⬇ Baixar relação em Excel · com e sem PDF, separado por GED, O.S e SEI${S.preg ? " · " + cap(S.preg) : ""}</button></div>`; }
     h += `<h3>Um por um</h3><div class="vp-row">${[["sem", "Sem PDF", n - com], ["com", "Com PDF", com]].map(([k, t, q]) => `<button class="vp-chip" data-pmostra="${k}" aria-pressed="${(S.pmostra || "sem") === k}">${t}<small>${q}</small></button>`).join("")}</div>
     <div class="vp-ctl"><label class="vp-f">Regional<select id="vp-preg"><option value="">Todas</option>${REGS.map((r) => `<option value="${r}"${S.preg === r ? " selected" : ""}>${cap(r)}</option>`).join("")}</select></label>
     <label class="vp-f vp-grow">Buscar<input type="search" id="vp-pq" value="${esc(S.pq || "")}" placeholder="Nº do processo, rua, setor"></label></div>
@@ -5984,28 +5985,34 @@ function montar(root) {
   }
 
   // relação dos processos da vistoria com PDF e sem PDF (Excel: resumo + abas "Sem PDF" e "Com PDF")
+  // tipo do processo: GED, SEI (nº 00.00.000000000-0) ou O.S (INTRANET, só número)
+  const tipoProc = (p) => { const t = String(p.processo || ""); return /\d{2}\.\d{2}\.\s*\d{5,}\s*-\s*\d/.test(t) ? "SEI" : p.ged || /\bGED\b/i.test(t) || /\b\d{3,7}\s*[\/-]\s*(19|20)\d\d\b/.test(t) ? "GED" : "O.S"; };
   function vistPdfXlsx(L, reg) { const st = XL.Styles(), G = "005F27";
     const tit = st({ font: { b: 1, sz: 16, color: "FFFFFF" }, fill: G, align: { indent: 1 } }), sub = st({ font: { sz: 10, color: "FFFFFF" }, fill: G, align: { indent: 1 } });
     const th = st({ font: { b: 1, sz: 9, color: "FFFFFF" }, fill: G, border: "thin", align: { h: "center", wrap: 1 } }), c = (z, o = {}) => st({ font: { sz: 9, b: o.b ? 1 : 0, color: o.cor || "16231A" }, fill: z ? "F4F7F2" : "FFFFFF", border: { b: { c: "E2E6DF" } }, align: { h: o.h, wrap: o.wrap } });
-    const H = ["Nº", "Processo", "GED", "Ano", "Regional", "Setor", "Endereço", "Parecer", "Poda", "Extirp.", "Vistoria", "Vistoriador designado", "Cadastrado à mão", "PDF / link"];
-    const W = [6, 24, 16, 7, 13, 22, 40, 14, 7, 8, 22, 26, 10, 40];
+    const H = ["Nº", "Tipo", "Processo", "GED", "Ano", "Regional", "Setor", "Endereço", "Parecer", "Poda", "Extirp.", "Vistoria", "Vistoriador designado", "Cadastrado à mão", "PDF / link"];
+    const W = [6, 8, 24, 16, 7, 13, 22, 40, 14, 7, 8, 22, 26, 10, 40];
     const tem = (p) => docLinks(R(p)).length > 0, com = L.filter(tem), sem = L.filter((p) => !tem(p));
     const aba = (nome, lista, cor) => { const ws = XL.Sheet(nome); ws.tab = cor; ws.widths = W;
       ws.set(0, 0, `GPE GESTÃO — Vistoria de processos · ${nome}`, tit).fill(0, 1, H.length - 1, tit).merge(0, 0, 0, H.length - 1).h(0, 26);
       ws.set(1, 0, `COMURG · Gerência de Poda e Extirpação${reg ? " · " + cap(reg) : ""} · ${lista.length} processo(s) · gerado em ${new Date().toLocaleString("pt-BR").slice(0, 17)}`, sub).fill(1, 1, H.length - 1, sub).merge(1, 0, 1, H.length - 1);
       const hr = 3; H.forEach((t, k) => ws.set(hr, k, t, th)); ws.h(hr, 30); let r = hr + 1;
       lista.slice().sort((a, b) => (a.regional || "").localeCompare(b.regional || "") || (a.setor || "").localeCompare(b.setor || "")).forEach((p, i) => { const rr = R(p), z = i % 2, d = dono(p); let k = 0; const put = (v, o) => ws.set(r, k++, v, c(z, o || {}));
-        put(i + 1, { h: "center" }); put(p.processo || "", { b: 1 }); put(p.ged || ""); put(p.ano || "", { h: "center" }); put(cap(p.regional || "")); put(p.setor || ""); put(p.endereco || "", { wrap: 1 }); put(p.parecer || ""); put(p.qtd_poda || "", { h: "center" }); put(p.qtd_extirpacao || "", { h: "center" });
+        put(i + 1, { h: "center" }); put(tipoProc(p), { b: 1, h: "center" }); put(p.processo || "", { b: 1 }); put(p.ged || ""); put(p.ano || "", { h: "center" }); put(cap(p.regional || "")); put(p.setor || ""); put(p.endereco || "", { wrap: 1 }); put(p.parecer || ""); put(p.qtd_poda || "", { h: "center" }); put(p.qtd_extirpacao || "", { h: "center" });
         put(rr.vistoriado ? (EST[vistEst(rr)] || ["Vistoriado"])[0] : "Não vistoriado", { cor: rr.vistoriado ? "1F6B3A" : "8A5200" }); put(d && d.uid ? d.vistoriador || "" : ""); put(p.manual ? "SIM" : ""); put(docLinks(rr).map(([k2, u]) => (k2 === "pdf" ? "PDF: " : "Link: ") + u).join(" | ") || (tem(p) ? "PDF anexado" : ""), { wrap: 1 }); r++; });
       ws.freeze = { r: hr + 1, c: 2 }; return ws; };
     const rs = XL.Sheet("Resumo"); rs.tab = "F37020"; rs.widths = [26, 12, 12, 12];
+    const TIP = ["GED", "O.S", "SEI"];
     rs.set(0, 0, "GPE GESTÃO — Processos com PDF e sem PDF", tit).fill(0, 1, 3, tit).merge(0, 0, 0, 3).h(0, 26);
     rs.set(1, 0, `COMURG · Gerência de Poda e Extirpação${reg ? " · " + cap(reg) : ""} · gerado em ${new Date().toLocaleString("pt-BR").slice(0, 17)}`, sub).fill(1, 1, 3, sub).merge(1, 0, 1, 3);
     ["Regional", "Com PDF", "Sem PDF", "Total"].forEach((t, k) => rs.set(3, k, t, th)); let r = 4;
     const regs = [...new Set(L.map((p) => p.regional || ""))].sort();
     regs.forEach((g, i) => { const a = L.filter((p) => (p.regional || "") === g), n1 = a.filter(tem).length; [cap(g) || "—", n1, a.length - n1, a.length].forEach((v, k) => rs.set(r, k, v, c(i % 2, { h: k ? "center" : undefined }))); r++; });
-    [["TOTAL", com.length, sem.length, L.length]].forEach((row) => row.forEach((v, k) => rs.set(r, k, v, c(0, { b: 1, h: k ? "center" : undefined }))));
-    return XL.book([rs, aba("Sem PDF", sem, "B42318"), aba("Com PDF", com, "1F6B3A")], st); }
+    [["TOTAL", com.length, sem.length, L.length]].forEach((row) => row.forEach((v, k) => rs.set(r, k, v, c(0, { b: 1, h: k ? "center" : undefined })))); r += 2;
+    ["Tipo do processo", "Com PDF", "Sem PDF", "Total"].forEach((t, k) => rs.set(r, k, t, th)); r++;
+    TIP.forEach((tp, i) => { const a = L.filter((p) => tipoProc(p) === tp), n1 = a.filter(tem).length; [tp, n1, a.length - n1, a.length].forEach((v, k) => rs.set(r, k, v, c(i % 2, { b: !k, h: k ? "center" : undefined }))); r++; });
+    const abas = [rs]; [["Sem PDF", sem, "B42318"], ["Com PDF", com, "1F6B3A"]].forEach(([n, lst, cor]) => TIP.forEach((tp) => { const a = lst.filter((p) => tipoProc(p) === tp); abas.push(aba(`${n} · ${tp}`, a, cor)); }));
+    return XL.book(abas, st); }
   async function salvarForm(id) {
     const f = S.f[id]; if (!f || S.busy[id]) return;
     const p = S.proc.find((x) => x.id === id);
