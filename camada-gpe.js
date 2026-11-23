@@ -36,17 +36,27 @@
   const cache = {};            // col -> {docs:{id:dados}, pronto:Promise}
   const assinantes = new Set();
   function notificar(col) { for (const a of [...assinantes]) if (a.col === col) try { a.fn(); } catch (e) {} }
-  let canal = null;
+  let canal = null, canalOk = false, escondidoEm = 0, ultCarga = 0;
+  /* AVISO AO VIVO LEVE (economia de disco do Supabase): em vez de o banco vigiar a tabela inteira
+     (postgres_changes, que pesa no disco a cada gravação e para cada aparelho), quem grava avisa os outros
+     aparelhos por "broadcast" só com {coleção, id}; quem recebe busca aquele único registro. */
+  const pend = new Map(); let pendT = null;
+  async function buscarUm(col, id) {
+    const c = await sb(); const r = await c.from("documentos").select("dados").eq("colecao", col).eq("id", id).maybeSingle();
+    if (r.error) return; if (!cache[col]) return;
+    if (r.data) cache[col].docs[id] = r.data.dados; else delete cache[col].docs[id];
+  }
+  function agendar(col, id) { if (!cache[col]) return; pend.set(col + "\u0001" + id, [col, id]);
+    clearTimeout(pendT); pendT = setTimeout(async () => { const L = [...pend.values()]; pend.clear(); const cols = new Set();
+      for (const [cl, i] of L) { try { await buscarUm(cl, i); cols.add(cl); } catch (e) {} } cols.forEach(notificar); }, 400); }
   async function tempoReal() {
     if (canal) return; const c = await sb();
-    canal = c.channel("gpe-documentos")
-      .on("postgres_changes", { event: "*", schema: "public", table: "documentos" }, (p) => {
-        const r = p.new && p.new.colecao ? p.new : p.old; if (!r || !r.colecao || !cache[r.colecao]) return;
-        if (p.eventType === "DELETE") delete cache[r.colecao].docs[r.id]; else cache[r.colecao].docs[r.id] = p.new.dados;
-        notificar(r.colecao);
-      })
-      .subscribe((st) => { if (st === "CHANNEL_ERROR" || st === "TIMED_OUT") { canal = null; setTimeout(() => recarregarTudo(), 5000); } });
+    canal = c.channel("gpe-sync", { config: { broadcast: { self: false, ack: false } } })
+      .on("broadcast", { event: "mud" }, ({ payload }) => { const p = payload || {}; if (!p.col || !p.id || !cache[p.col]) return;
+        if (p.del) { delete cache[p.col].docs[p.id]; notificar(p.col); } else agendar(p.col, p.id); })
+      .subscribe((st) => { if (st === "SUBSCRIBED") canalOk = true; if (st === "CHANNEL_ERROR" || st === "TIMED_OUT" || st === "CLOSED") { canalOk = false; canal = null; setTimeout(() => recarregarTudo(), 15000); } });
   }
+  function avisar(col, id, del) { try { if (canal && canalOk) canal.send({ type: "broadcast", event: "mud", payload: { col, id, del: !!del } }); } catch (e) {} }
   async function baixar(col) {
     const c = await sb(); const docs = {}; let de = 0;
     for (;;) {
@@ -61,11 +71,17 @@
     if (!cache[col].pronto) cache[col].pronto = baixar(col).then(d => { cache[col].docs = d; tempoReal(); return d; }).catch(e => { cache[col].pronto = null; throw e; });
     return cache[col].pronto.then(() => cache[col].docs);
   }
-  async function recarregarTudo() { for (const col of Object.keys(cache)) { cache[col].pronto = null; try { await colecao(col); notificar(col); } catch (e) {} } }
-  document.addEventListener("visibilitychange", () => { if (!document.hidden) recarregarTudo(); });
-  // reserva: se o aviso ao vivo do banco falhar, atualiza a cada 2 minutos com o app aberto (pendências somem quando a tarefa é feita em outro aparelho)
-  setInterval(() => { if (!document.hidden && navigator.onLine !== false) recarregarTudo(); }, 120000);
-  addEventListener("online", () => recarregarTudo());
+  // ECONOMIA DE DADOS (cota de tráfego do Supabase): baixar TUDO de novo só quando precisa.
+  // O aviso ao vivo (tempo real) já traz cada alteração; recarregar tudo só se ele cair ou se o app ficou muito tempo fechado.
+  let recarregando = false;
+  async function recarregarTudo(forcar) { if (recarregando) return; if (!forcar && Date.now() - ultCarga < 60000) return; recarregando = true; ultCarga = Date.now();
+    try { for (const col of Object.keys(cache)) { cache[col].pronto = null; try { await colecao(col); notificar(col); } catch (e) {} } } finally { recarregando = false; } }
+  document.addEventListener("visibilitychange", () => { if (document.hidden) { escondidoEm = Date.now(); return; }
+    // voltou para o app (ex.: depois de tirar a foto): só recarrega se ficou fechado mais de 10 min ou se o aviso ao vivo caiu
+    if (!canalOk || (escondidoEm && Date.now() - escondidoEm > 600000)) recarregarTudo(); escondidoEm = 0; tempoReal().catch(() => {}); });
+  // reserva: com o aviso ao vivo funcionando, confere tudo a cada 20 min; sem ele, a cada 5 min
+  setInterval(() => { if (!document.hidden && navigator.onLine !== false && (!canalOk || Date.now() - ultCarga >= 1200000)) recarregarTudo(); }, 300000);
+  addEventListener("online", () => recarregarTudo(true));
 
   const docSnap = (id, d) => ({ id, exists: d != null, data: () => (d == null ? undefined : JSON.parse(JSON.stringify(d))), metadata: {} });
   const OPS = { "==": (a, b) => a === b, "!=": (a, b) => a !== b, "<": (a, b) => a < b, "<=": (a, b) => a <= b, ">": (a, b) => a > b, ">=": (a, b) => a >= b, "in": (a, b) => Array.isArray(b) && b.includes(a), "array-contains": (a, b) => Array.isArray(a) && a.includes(b) };
@@ -92,6 +108,7 @@
                                 : await c.from("documentos").upsert({ colecao: col, id, dados }, { onConflict: "colecao,id" });
         if (r.error) throw traduz(r.error);
         if (cache[col]) { cache[col].docs[id] = JSON.parse(JSON.stringify(dados)); notificar(col); }
+        avisar(col, id, false);
       },
       // mescla campos (objetos aninhados se juntam; o resto substitui), como no Claude
       async update(parte) {
@@ -105,6 +122,7 @@
         const r = await c.from("documentos").delete().eq("colecao", col).eq("id", id);
         if (r.error) throw traduz(r.error);
         if (cache[col]) { delete cache[col].docs[id]; notificar(col); }
+        avisar(col, id, true);
       },
       async get() {
         const c = await sb(); const r = await c.from("documentos").select("dados").eq("colecao", col).eq("id", id).maybeSingle();
