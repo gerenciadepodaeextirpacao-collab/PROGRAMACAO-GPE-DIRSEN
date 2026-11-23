@@ -228,6 +228,12 @@ nav.tabs .wrap.nav5 .tbadge{position:absolute;top:2px;right:calc(50% - 22px)}
 .vhead{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .vhead h2{flex:1;min-width:0}
 .ajbtn{flex:none;width:44px;height:44px;border-radius:22px;border:2px solid var(--brand);background:var(--surface);color:var(--brand);font:800 21px var(--display);cursor:pointer;margin-top:12px}
+.ajpf h3{margin:4px 0 0;color:var(--brand);font:700 17px var(--body)}
+.ajpf ol{margin:0;padding-left:22px;display:grid;gap:10px;font-size:15px;line-height:1.45}.ajpf ol li::marker{font-weight:800;color:var(--brand)}
+.ajdica{border-left:5px solid var(--brand);background:color-mix(in srgb,var(--brand) 12%,var(--surface));border-radius:10px;padding:12px 14px;font-size:14px}
+.ajpchips{display:flex;flex-wrap:wrap;gap:6px}.ajpchips button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;min-height:36px;padding:0 12px;font:600 13px var(--body);cursor:pointer}
+.ajpchips button[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
+#ajudaBtn{background:var(--brand);color:#fff;white-space:nowrap;flex:none}
 .ajlist{margin:0;padding:0;list-style:none;counter-reset:aj;display:grid;gap:10px}
 .ajlist li{counter-increment:aj;display:flex;gap:10px;align-items:flex-start;font-size:15px;line-height:1.35}
 .ajlist li::before{content:counter(aj);flex:none;width:26px;height:26px;border-radius:13px;background:var(--accent);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:14px}
@@ -1325,7 +1331,7 @@ body.sofiscal nav.tabs{display:none!important}
 </div><div class="brandbar"></div></header>
 
 <main class="wrap">
-<div class="userbar"><div><b id="whoNome"></b><span id="whoPerfil"></span></div><button type="button" id="testeBtn" hidden title="Modo teste do gerente">🧪 Teste</button><button type="button" id="acessosBtn" hidden>Acessos</button><button type="button" id="temaBtn" aria-label="Ligar ou desligar o modo escuro" title="Modo escuro / claro">🌙</button><button type="button" id="sairBtn" aria-label="Sair do aplicativo"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H4"/></svg><span>Sair</span></button></div>
+<div class="userbar"><div><b id="whoNome"></b><span id="whoPerfil"></span></div><button type="button" id="testeBtn" hidden title="Modo teste do gerente">🧪 Teste</button><button type="button" id="acessosBtn" hidden>Acessos</button><button type="button" id="ajudaBtn" aria-label="Ajuda: como usar o sistema no seu perfil" title="Ajuda do seu perfil">❓ Ajuda</button><button type="button" id="temaBtn" aria-label="Ligar ou desligar o modo escuro" title="Modo escuro / claro">🌙</button><button type="button" id="sairBtn" aria-label="Sair do aplicativo"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H4"/></svg><span>Sair</span></button></div>
 <div id="avisoGlobal"></div>
 
 <div id="v-inicio" hidden><div id="inicioBox"></div></div>
@@ -2940,7 +2946,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.23f";
+const APP_VERSAO="2026.11.23k";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -4554,6 +4560,8 @@ function montar(root) {
     start: LS("vp-start") || "", per: +(LS("vp-per2") || 0), q: "", hide: true, minhas: false, ver: LS("vp-ver2") || "todas", f: {}, doc: {}, x: {}, lim: 40, supF: "", erro: "", carregando: true, busy: {} };
   // cadastrador(a): também cuida dos PDFs dos processos
   const ehCadastrador = () => { try { return !!sessao && cargoK(acesso?.[sessao.id] || sessao) === "cadastrador"; } catch (e) { return false; } };
+  const cadVist = () => ehCadastrador(); // cadastrador(a): informa Executado / Finalizado no sistema, sem relatório
+  const galVist = () => ehCadastrador() || (typeof isGerente === "function" && isGerente()); // cadastrador(a) e gerente: foto da galeria no "Já foi executado"
   const pode = { pdf: () => vistCoord() || ehCadastrador(), lancar: () => !soLeitura(), coord: () => vistCoord(), resumo: () => vistAlto() || ehCadastrador(), /* cadastrador(a) também vê o Resumo */ sup: () => !!sessao && travado() && !!sessao.sup && sessao.perfil !== "fiscal", fis: () => !!sessao && sessao.perfil === "fiscal" };
   const minhaAlguma = () => Object.values(S.reg || {}).some((r) => r && r.rota && r.rota.uid === meuId() && !r.vistoriado);
 
@@ -5016,6 +5024,7 @@ function montar(root) {
     if (r.vistoriado && !f) {
       let h = `<div class="vp-vb"><div class="vp-row">${estPill(r)}<span class="vp-msg">Vistoria em ${fDia(r.data_vistoria) || "—"}${r.responsavel ? " · " + esc(r.responsavel) : ""}</span></div>`;
       if (r.situacao === "ja_executado") h += r.foto_path ? `<div class="vp-foto"><a href="${esc(fotoAbrir(r.foto_path))}" target="_blank" rel="noopener"><img src="${esc(fotoUrl(r.foto_path))}" alt="Foto do serviço já executado" loading="lazy"></a><span class="vp-msg">Foto que comprova o serviço feito</span></div>` : `<span class="vp-need">Sem foto anexada</span>`;
+      if (r.situacao === "ja_executado" && r.cad_modo) h += `<div class="vp-row"><span class="vp-lab">${r.cad_modo === "executado" ? "✅ Executado" : "🏁 Finalizado"}</span><b>${r.cad_modo === "executado" ? "execução em " + fDia(r.data_execucao) : "vistoria em " + fDia(r.data_vistoria)}</b>${r.cad_sis ? ` <span class="vp-msg">· baixado no ${r.cad_sis === "INTRANET" ? "Intranet" : esc(r.cad_sis)} · sem relatório</span>` : ` <span class="vp-msg">· ainda não baixado · com relatório</span>`}</div>`;
       if (r.situacao === "nao_executado") h += `<div class="vp-row"><span class="vp-lab">Equipamento para executar</span><b>${esc(r.equipamento || "—")}</b></div>`;
       if (r.observacao) h += `<div class="vp-msg">Obs.: ${esc(r.observacao)}</div>`;
       const altera = pode.lancar() && (eu || r.resp_uid === meuId() || pode.coord());
@@ -5029,12 +5038,21 @@ function montar(root) {
       return `<div class="vp-vb"><div class="vp-row"><span class="vp-lab">No local, o serviço</span><button class="vp-opt vp-s-ja_executado" data-ini="ja_executado" data-id="${p.id}">Já foi executado</button><button class="vp-opt vp-s-nao_executado" data-ini="nao_executado" data-id="${p.id}">Ainda não foi executado</button><button class="vp-opt vp-s-nao_pertence" data-ini="nao_pertence" data-id="${p.id}">🚫 Não é poda nem extirpação</button></div>${isGerente() ? `<div class="vp-row"><button class="vp-btn" data-vcanc="${p.id}" style="font-size:12.5px">🗑 Tirar da vistoria (gerente)</button></div>` : ""}</div>`;
     }
     let h = `<div class="vp-vb"><div class="vp-row"><span class="vp-lab">No local, o serviço</span><button class="vp-opt vp-s-ja_executado" data-fsit="ja_executado" data-id="${p.id}" aria-pressed="${f.sit === "ja_executado"}">Já foi executado</button><button class="vp-opt vp-s-nao_executado" data-fsit="nao_executado" data-id="${p.id}" aria-pressed="${f.sit === "nao_executado"}">Ainda não foi executado</button><button class="vp-opt vp-s-nao_pertence" data-fsit="nao_pertence" data-id="${p.id}" aria-pressed="${f.sit === "nao_pertence"}">🚫 Não é poda nem extirpação</button></div>
-      <div class="vp-row"><span class="vp-lab">Data da vistoria</span><b>${fDia(f.data)}</b><span class="vp-msg">(automática)</span></div>`;
+      ${cadVist() && f.sit === "ja_executado" ? "" : `<div class="vp-row"><span class="vp-lab">Data da vistoria</span><b>${fDia(f.data)}</b><span class="vp-msg">(automática)</span></div>`}`;
+    if (f.sit === "ja_executado" && cadVist()) {
+      h += `<div class="vp-row"><span class="vp-lab">Informar como</span><button class="vp-opt" data-fcmodo="executado" data-id="${p.id}" aria-pressed="${f.cmodo === "executado"}">✅ Executado</button><button class="vp-opt" data-fcmodo="finalizado" data-id="${p.id}" aria-pressed="${f.cmodo === "finalizado"}">🏁 Finalizado</button></div>`;
+      if (f.cmodo === "executado") h += `<div class="vp-row"><span class="vp-lab">Data da execução</span><input type="date" data-fdexec="${p.id}" value="${esc(f.dexec || "")}" max="${hoje()}" style="min-height:40px"></div><div class="vp-row"><span class="vp-lab">Data da vistoria</span><b>${fDia(f.data)}</b><span class="vp-msg">(automática)</span></div>${f.dexec ? "" : `<span class="vp-need">Informe a data em que o serviço foi executado.</span>`}`;
+      else if (f.cmodo === "finalizado") h += `<div class="vp-row"><span class="vp-lab">Data da vistoria</span><input type="date" data-fdvist="${p.id}" value="${esc(f.data || "")}" max="${hoje()}" style="min-height:40px"></div>`;
+      else h += `<span class="vp-need">Escolha: <b>Executado</b> (informa a data da execução) ou <b>Finalizado</b> (informa a data da vistoria).</span>`;
+      if (f.cmodo) h += `<div class="vp-row"><span class="vp-lab">Já foi baixado no sistema?</span><button class="vp-opt" data-fcbx="sim" data-id="${p.id}" aria-pressed="${f.cbx === "sim"}">Sim, já foi baixado</button><button class="vp-opt" data-fcbx="nao" data-id="${p.id}" aria-pressed="${f.cbx === "nao"}">Não</button></div>${f.cbx ? "" : `<span class="vp-need">Responda se o processo já foi baixado no Intranet, SEI ou GED.</span>`}`;
+      if (f.cmodo && f.cbx === "nao") h += `<span class="vp-msg">Ainda não foi baixado: o app gera o <b>relatório de serviço</b> para responder no sistema. Assine abaixo.</span>`;
+      if (f.cmodo && f.cbx === "sim") h += `<div class="vp-row"><span class="vp-lab">Em qual sistema</span>${["INTRANET", "SEI", "GED"].map((x) => `<button class="vp-opt" data-fcsis="${x}" data-id="${p.id}" aria-pressed="${f.csis === x}">${x === "INTRANET" ? "Intranet" : x}</button>`).join("")}</div>${f.csis ? `<span class="vp-msg">Já baixado no ${f.csis === "INTRANET" ? "Intranet" : f.csis}: <b>não precisa gerar relatório</b> nem assinar.</span>` : `<span class="vp-need">Informe em qual sistema foi baixado: Intranet, SEI ou GED.</span>`}`;
+    }
     if (f.sit === "ja_executado") {
       const img = f.preview || (f.fotoPath ? fotoUrl(f.fotoPath) : "");
-      h += `<div class="vp-foto">${img ? `<img src="${img}" alt="Foto anexada">` : ""}<label class="vp-btn vp-filebtn${img ? "" : " vp-pri"}">${img ? "Trocar foto" : "📷 Foto que comprova o serviço feito"}<input type="file" accept="image/*" capture="environment" data-ffoto="${p.id}"></label></div>
+      h += `<div class="vp-foto">${img ? `<img src="${img}" alt="Foto anexada">` : ""}<label class="vp-btn vp-filebtn${img ? "" : " vp-pri"}">${img ? "Trocar foto" : "📷 Foto que comprova o serviço feito"}<input type="file" accept="image/*" capture="environment" data-ffoto="${p.id}"></label>${galVist() ? `<label class="vp-btn vp-filebtn">🖼 Anexar da galeria<input type="file" accept="image/*" data-ffoto="${p.id}"></label>` : ""}</div>${galVist() ? `<span class="vp-msg">Você pode tirar a foto na hora ou anexar uma foto da galeria.</span>` : ""}
         ${img ? "" : `<span class="vp-need">Foto obrigatória: ela fica no Resumo para quem dá baixa no SEI / Intranet.</span>`}
-        ${assBloco(p)}`;
+        ${cadVist() && f.cmodo && f.cbx === "sim" ? "" : assBloco(p)}`;
     }
     if (f.sit === "nao_executado") {
       h += `<div class="vp-row"><span class="vp-lab">Equipamento necessário</span>${EQUIPS.map((q) => `<button class="vp-opt" data-feq="${q}" data-id="${p.id}" aria-pressed="${f.equip === q}">${q}</button>`).join("")}</div>
@@ -5659,7 +5677,7 @@ function montar(root) {
         </div>
         ${docLinks(r).length ? `<div class="vp-doc">${docLinks(r).map(([k, u2]) => `<a class="vp-btn" href="${esc(u2)}" target="_blank" rel="noopener">${k === "pdf" ? "📄 PDF do processo" : "🔗 Link do processo"}</a>`).join("")}</div>` : ""}
         <div class="vp-msg" style="margin-top:4px">Registrado em ${fHora(r.atualizado_em)}${r.atualizado_por ? " por " + esc(r.atualizado_por) : ""}${r.rota && r.rota.vistoriador ? " · rota indicada para " + esc(r.rota.vistoriador) : ""}</div>
-        ${r.situacao === "ja_executado" && r.foto_path ? (r.ass && r.ass.em ? `<span class="vp-msg" style="margin-top:6px">✍ Assinado eletronicamente por <b>${esc(r.ass.nome)}</b> em ${fHora(r.ass.em)} · código ${esc(r.ass.cod || "")}</span>` : r.resp_uid === meuId() ? `${assBloco(p)}<div class="vp-row"><button class="vp-btn vp-pri" data-vassinar="${p.id}">✍ Assinar o relatório</button></div>` : `<span class="vp-need" style="margin-top:6px">Relatório ainda sem a assinatura do vistoriador ${esc(r.responsavel || "")}: ele assina ao abrir este processo no Resumo ou ao corrigir a vistoria.</span>`) : ""}${r.situacao === "ja_executado" && r.foto_path ? `<span class="vp-lab" style="margin-top:6px">Relatório de serviço (para responder no SEI / Intranet)</span>${solicBloco(p)}<div class="vp-row"><button class="vp-btn vp-pri" data-vrelpdf="${p.id}">📄 Baixar em PDF</button><button class="vp-btn" data-vreldocx="${p.id}">📝 Baixar em Word</button></div>` : ""}
+        ${r.situacao === "ja_executado" && r.cad_sis ? `<span class="vp-msg" style="margin-top:6px">${r.cad_modo === "executado" ? "✅ Executado em " + fDia(r.data_execucao) : "🏁 Finalizado"} no <b>${r.cad_sis === "INTRANET" ? "Intranet" : esc(r.cad_sis || "sistema")}</b> · informado por ${esc(r.responsavel || "")}. Não precisa de relatório.</span>` : r.situacao === "ja_executado" && r.foto_path ? (r.ass && r.ass.em ? `<span class="vp-msg" style="margin-top:6px">✍ Assinado eletronicamente por <b>${esc(r.ass.nome)}</b> em ${fHora(r.ass.em)} · código ${esc(r.ass.cod || "")}</span>` : r.resp_uid === meuId() ? `${assBloco(p)}<div class="vp-row"><button class="vp-btn vp-pri" data-vassinar="${p.id}">✍ Assinar o relatório</button></div>` : `<span class="vp-need" style="margin-top:6px">Relatório ainda sem a assinatura do vistoriador ${esc(r.responsavel || "")}: ele assina ao abrir este processo no Resumo ou ao corrigir a vistoria.</span>`) : ""}${r.situacao === "ja_executado" && r.foto_path && !r.cad_sis ? `<span class="vp-lab" style="margin-top:6px">Relatório de serviço (para responder no SEI / Intranet)</span>${solicBloco(p)}<div class="vp-row"><button class="vp-btn vp-pri" data-vrelpdf="${p.id}">📄 Baixar em PDF</button><button class="vp-btn" data-vreldocx="${p.id}">📝 Baixar em Word</button></div>` : ""}
         <div class="vp-row" style="margin-top:6px">${r.foto_path ? `<button class="vp-btn" data-baixafoto="${p.id}">⬇ Baixar a foto</button>` : ""}<button class="vp-btn" data-rab="${p.id}">Fechar</button>${pode.coord() ? `<button class="vp-btn" data-vret="${p.id}" style="border-color:#c96a00;color:#8a5300">↩ Retornar para vistoria</button>` : ""}</div>
         ${pode.coord() && (S.vret || {})[p.id] ? `<div class="vp-card" style="margin-top:8px;padding:12px;border:2px solid #c96a00;background:#fff8ec"><b>↩ Retornar este processo para vistoria?</b><div class="vp-msg" style="margin:4px 0 8px">A vistoria de ${r.data_vistoria ? fDia(r.data_vistoria) : "—"} (${esc(r.responsavel || "")}) será <b>desvalidada</b> e o processo volta para a lista de vistorias pendentes, para vistoriar de novo. A vistoria anterior fica guardada no histórico.${r.envio && r.envio.progId ? " O envio para a supervisão será cancelado (se ainda não foi executado)." : ""}</div><input id="vretMot_${p.id}" placeholder="Motivo (obrigatório) – ex.: endereço errado, foto não confere…" style="width:100%;min-height:42px;padding:8px 10px;border-radius:8px;border:1px solid #c9b48a;box-sizing:border-box"><div class="vp-row" style="margin-top:8px"><button class="vp-btn" data-vretok="${p.id}" style="background:#c96a00;color:#fff;border-color:#c96a00">Confirmar retorno</button><button class="vp-btn" data-vret="${p.id}">Cancelar</button></div></div>` : ""}
         ${r.situacao === "nao_executado" ? envioHtml(p) : ""}
@@ -5684,9 +5702,9 @@ function montar(root) {
   // planilha (CSV, abre no Excel) com TODAS as informações de cada vistoria da lista filtrada
   async function baixarPlanilha() {
     const L = listaResumo(); if (!L.length) { toast("Nenhuma vistoria com esse filtro"); return; }
-    const cab = ["Data da vistoria", "Situação", "Processo", "GED", "Parecer", "Ano", "Endereço", "Setor", "Regional", "Poda", "Extirpação", "Destocamento", "Vistoriador", "Foto (link)", "Equipamento", "Observação", "PDF do processo", "Vistoriador indicado", "Registrado em", "Registrado por", "Baixa no Urbantrim", "Data da baixa no Urbantrim", "Baixa no Urbantrim feita por", "Baixa no sistema", "Data da baixa", "Baixa feita por", "Nº documento da baixa", "Enviado para a supervisão", "Enviado em", "Enviado por", "Executado pela turma em", "Execução informada por", "Repassado ao fiscal", "Quantidade executada", "Foto antes", "Foto durante", "Foto depois"];
+    const cab = ["Data da vistoria", "Situação", "Informado como (cadastrador)", "Data da execução (informada)", "Processo", "GED", "Parecer", "Ano", "Endereço", "Setor", "Regional", "Poda", "Extirpação", "Destocamento", "Vistoriador", "Foto (link)", "Equipamento", "Observação", "PDF do processo", "Vistoriador indicado", "Registrado em", "Registrado por", "Baixa no Urbantrim", "Data da baixa no Urbantrim", "Baixa no Urbantrim feita por", "Baixa no sistema", "Data da baixa", "Baixa feita por", "Nº documento da baixa", "Enviado para a supervisão", "Enviado em", "Enviado por", "Executado pela turma em", "Execução informada por", "Repassado ao fiscal", "Quantidade executada", "Foto antes", "Foto durante", "Foto depois"];
     const q = (v) => { const t = String(v == null ? "" : v); return /[;"\n\r]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
-    const linhas = L.map((p) => { const r = R(p), u = r.urbantrim || {}; return [fDia(r.data_vistoria), EST[vistEst(r)][0], p.processo, p.ged, parecerTxt(p.parecer), p.ano || "", p.endereco, p.setor, cap(p.regional), p.qtd_poda, p.qtd_extirpacao, p.qtd_destocamento, r.responsavel || "", r.foto_path ? fotoAbrir(r.foto_path) : "", r.equipamento || "", r.observacao || "", docUrl(r) || "", (r.rota && r.rota.vistoriador) || "", fHora(r.atualizado_em), r.atualizado_por || "", precisaUrbBx(p) ? (r.urb_baixa ? "baixado" : "falta baixar") : "", r.urb_baixa ? fDia(r.urb_baixa.data) : "", r.urb_baixa ? r.urb_baixa.por || "" : "", r.baixa ? (r.baixa.sistema === "INTRANET" ? "Intranet" : r.baixa.sistema) : "não baixado", r.baixa ? fDia(r.baixa.data) : "", r.baixa ? r.baixa.por || "" : "", r.baixa ? r.baixa.doc || "" : "", r.envio ? supNome(r.envio.sup) : "", r.envio ? fHora(r.envio.em) : "", r.envio ? r.envio.por || "" : "", r.execucao ? fDia(r.execucao.data) : "", r.execucao ? r.execucao.por || "" : "", r.envio_fiscal ? r.envio_fiscal.nome || "" : "", r.execucao ? qtdExecTxt(r.execucao.qtd) : "", ...REL_SLOTS.map((sl) => r.execucao && r.execucao.fotos && r.execucao.fotos[sl.k] ? fotoAbrir(r.execucao.fotos[sl.k]) : "")].map(q).join(";"); });
+    const linhas = L.map((p) => { const r = R(p), u = r.urbantrim || {}; return [fDia(r.data_vistoria), EST[vistEst(r)][0], r.cad_modo === "executado" ? "Executado" + (r.cad_sis ? " · baixado no " + r.cad_sis : " · não baixado") : r.cad_modo === "finalizado" ? "Finalizado" + (r.cad_sis ? " · baixado no " + r.cad_sis : " · não baixado") : "", r.data_execucao ? fDia(r.data_execucao) : "", p.processo, p.ged, parecerTxt(p.parecer), p.ano || "", p.endereco, p.setor, cap(p.regional), p.qtd_poda, p.qtd_extirpacao, p.qtd_destocamento, r.responsavel || "", r.foto_path ? fotoAbrir(r.foto_path) : "", r.equipamento || "", r.observacao || "", docUrl(r) || "", (r.rota && r.rota.vistoriador) || "", fHora(r.atualizado_em), r.atualizado_por || "", precisaUrbBx(p) ? (r.urb_baixa ? "baixado" : "falta baixar") : "", r.urb_baixa ? fDia(r.urb_baixa.data) : "", r.urb_baixa ? r.urb_baixa.por || "" : "", r.baixa ? (r.baixa.sistema === "INTRANET" ? "Intranet" : r.baixa.sistema) : "não baixado", r.baixa ? fDia(r.baixa.data) : "", r.baixa ? r.baixa.por || "" : "", r.baixa ? r.baixa.doc || "" : "", r.envio ? supNome(r.envio.sup) : "", r.envio ? fHora(r.envio.em) : "", r.envio ? r.envio.por || "" : "", r.execucao ? fDia(r.execucao.data) : "", r.execucao ? r.execucao.por || "" : "", r.envio_fiscal ? r.envio_fiscal.nome || "" : "", r.execucao ? qtdExecTxt(r.execucao.qtd) : "", ...REL_SLOTS.map((sl) => r.execucao && r.execucao.fotos && r.execucao.fotos[sl.k] ? fotoAbrir(r.execucao.fotos[sl.k]) : "")].map(q).join(";"); });
     const csv = "\ufeff" + [cab.join(";")].concat(linhas).join("\r\n");
     const nome = `vistorias-${{ all: "todas", ja_executado: "ja-executados", nao_executado: "nao-executados", urb: "falta-urbantrim", urbcad: "cadastrar-no-urbantrim", urbbx: "aguardando-baixa-urbantrim", urbok: "baixados-no-urbantrim", bxinc: "baixado-mas-nao-executado", semb: "aguardando-baixa", bx: "baixados", semenv: "nao-executados-sem-envio", env: "enviados-para-execucao", exe: "executados-pela-turma" }[S.rsit || "all"]}-${hoje()}.csv`;
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
@@ -5835,7 +5853,7 @@ function montar(root) {
   }
   // para "Relatórios prontos para baixar" (fora da aba Vistoria): relatórios dos processos da vistoria já executados
   V.relLista = () => { try { if (!S.proc || !S.proc.length) S.proc = todosProc(); } catch (e) {}
-    return (S.proc || []).filter((p) => { const r = R(p); return (r.execucao && r.execucao.fotos) || (r.situacao === "ja_executado" && r.foto_path); }).map((p) => { const r = R(p), x = r.execucao, ass = x ? x.ass : r.ass;
+    return (S.proc || []).filter((p) => { const r = R(p); return (r.execucao && r.execucao.fotos) || (r.situacao === "ja_executado" && r.foto_path && !r.cad_sis); }).map((p) => { const r = R(p), x = r.execucao, ass = x ? x.ass : r.ass;
       return { vid: p.id, processo: p.processo || "", ged: p.ged || "", endereco: p.endereco || "", setor: p.setor || "", data: x ? x.data : r.data_vistoria, sup: (r.envio && r.envio.sup) || (x && x.sup) || "", ja: !x, assinado: !!(ass && ass.em) }; }); };
   V.relGerar = (id, word, btn) => vRel(id, btn, word);
   async function vRel(id, btn, word) { const p = S.proc.find((q) => q.id === id); if (!p || !(R(p).execucao || (R(p).situacao === "ja_executado" && R(p).foto_path))) return; const rec = relRec(p); try { if (word) await relDocx(rec, btn); else await relPdf(rec, btn); } catch (e) { toast("Não foi possível gerar o relatório"); } }
@@ -5950,7 +5968,7 @@ function montar(root) {
   function toast(t) { const e = root.querySelector("#vp-toast"); if (!e) return; e.textContent = t; e.classList.add("vp-on"); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove("vp-on"), 2600); }
   function copiar(t) { const ok = () => toast("Copiado"); try { navigator.clipboard.writeText(t).then(ok, () => fb(t)); } catch (e) { fb(t); } }
   function fb(t) { const ta = document.createElement("textarea"); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); toast("Copiado"); } catch (e) { toast("Não foi possível copiar"); } ta.remove(); }
-  const abrirForm = (id, sit) => { const r = S.reg[id] || {}; S.f[id] = { sit: sit || r.situacao || "", data: r.vistoriado && r.data_vistoria ? r.data_vistoria : hoje(), equip: r.equipamento || "", urb: (r.urbantrim || {}).st || "", urbId: (r.urbantrim || {}).id || "", obs: r.observacao || "", fotoPath: r.foto_path || "", file: null, preview: "" }; };
+  const abrirForm = (id, sit) => { const r = S.reg[id] || {}; S.f[id] = { sit: sit || r.situacao || "", data: r.vistoriado && r.data_vistoria ? r.data_vistoria : hoje(), equip: r.equipamento || "", urb: (r.urbantrim || {}).st || "", urbId: (r.urbantrim || {}).id || "", obs: r.observacao || "", fotoPath: r.foto_path || "", file: null, preview: "", cmodo: r.cad_modo || "", dexec: r.data_execucao || "", csis: r.cad_sis || "", cbx: r.cad_modo ? (r.cad_sis ? "sim" : "nao") : "" }; };
   const fecharForm = (id) => { const f = S.f[id]; if (f && f.preview) URL.revokeObjectURL(f.preview); delete S.f[id]; };
   const linhaTxt = (p) => { const r = R(p); return `${p.endereco} – ${p.ged ? "GED " + p.ged : "Proc. " + p.processo} – ${p.qtd_poda} poda / ${p.qtd_extirpacao} extirp.${r.observacao ? " – Obs.: " + r.observacao : ""}${docLinks(r).map(([k, u]) => (k === "pdf" ? "\n   Processo (PDF): " : "\n   Processo: ") + u).join("")}`; };
 
@@ -6018,10 +6036,17 @@ function montar(root) {
     const p = S.proc.find((x) => x.id === id);
     if (!pode.coord() && !minha(p) && (S.reg[id] || {}).resp_uid !== meuId()) { toast("Este processo não está indicado para você"); return; }
     if (!f.data) { toast("Informe a data da vistoria"); return; }
+    if (f.sit === "ja_executado" && cadVist()) {
+      if (!f.cmodo) { toast("Escolha: Executado ou Finalizado"); return; }
+      if (f.cmodo === "executado" && !f.dexec) { toast("Informe a data da execução"); return; }
+      if (!f.cbx) { toast("Responda se já foi baixado no sistema"); return; }
+      if (f.cbx === "sim" && !f.csis) { toast("Informe o sistema: Intranet, SEI ou GED"); return; }
+      if ((f.dexec && f.dexec > hoje()) || f.data > hoje()) { toast("A data não pode ser no futuro"); return; }
+    }
     if (f.sit === "ja_executado" && !f.file && !f.fotoPath) { toast("Anexe a foto que comprova o serviço feito"); return; }
     if (f.sit === "nao_executado" && !f.equip) { toast("Escolha o equipamento necessário"); return; }
     if (f.sit === "nao_pertence" && String(f.obs || "").trim().length < 4) { toast("Descreva o que foi encontrado no local (não é poda nem extirpação)"); return; }
-    let ass = null; if (f.sit === "ja_executado") { const a = await assinarVist(id); if (a.erro) { toast("Assinatura do relatório: " + a.erro); return; } ass = a.ass; }
+    let ass = null; if (f.sit === "ja_executado" && !(cadVist() && f.cmodo && f.cbx === "sim")) { const a = await assinarVist(id); if (a.erro) { toast("Assinatura do relatório: " + a.erro); return; } ass = a.ass; }
     S.busy[id] = 1; render();
     try {
       let fotoPath = f.fotoPath;
@@ -6030,7 +6055,7 @@ function montar(root) {
       const gpsV = S.pos && Date.now() - (S.pos.em || 0) < 180000 && !(R({ id }).geo && R({ id }).geo.n === "gps") ? { geo: { lat: +S.pos.lat.toFixed(6), lng: +S.pos.lng.toFixed(6), n: "gps", v: GEO_V, em: new Date().toISOString(), por: usuario() } } : {};
       const base = { ...gpsV, vistoriado: true, data_vistoria: f.data, observacao: f.obs.trim() || null, responsavel: r0.vistoriado && r0.responsavel ? r0.responsavel : usuario(), resp_uid: r0.vistoriado && r0.resp_uid ? r0.resp_uid : meuId() };
       const campos = f.sit === "nao_pertence" ? Object.assign(base, { situacao: "nao_pertence", foto_path: null, equipamento: null, ass: null, observacao: f.obs.trim().toUpperCase() })
-        : f.sit === "ja_executado" ? Object.assign(base, { situacao: "ja_executado", foto_path: fotoPath, equipamento: null, ass })
+        : f.sit === "ja_executado" ? Object.assign(base, { situacao: "ja_executado", foto_path: fotoPath, equipamento: null, ass }, cadVist() && f.cmodo ? { cad_modo: f.cmodo, cad_sis: f.cbx === "sim" ? f.csis : null, data_execucao: f.cmodo === "executado" ? f.dexec : null, ...(f.cbx === "sim" ? { ass: null } : {}) } : { cad_modo: null, cad_sis: null, data_execucao: null })
         : Object.assign(base, { situacao: "nao_executado", foto_path: null, equipamento: f.equip, urbantrim: null, ass: null });
       delete S.busy[id];
       const roA = rotasDe(S.cur).find((r) => r.ps.some((p) => p.id === id));
@@ -6196,6 +6221,9 @@ function montar(root) {
     if (ds.alterar) { abrirForm(ds.alterar); render(); return; }
     if (ds.fcancel) { fecharForm(ds.fcancel); render(); return; }
     if (ds.fsit) { S.f[ds.id].sit = ds.fsit; render(); return; }
+    if (ds.fcbx) { const f = S.f[ds.id]; f.cbx = ds.fcbx; if (ds.fcbx === "nao") f.csis = ""; render(); return; }
+    if (ds.fcsis) { S.f[ds.id].csis = ds.fcsis; render(); return; }
+    if (ds.fcmodo) { const f = S.f[ds.id]; f.cmodo = ds.fcmodo; if (ds.fcmodo === "executado" && !(S.reg[ds.id] || {}).vistoriado) f.data = hoje(); render(); return; }
     if (ds.feq) { const f = S.f[ds.id]; f.equip = f.equip === ds.feq ? "" : ds.feq; render(); return; }
     if (ds.furb) { S.f[ds.id].urb = ds.furb; render(); const x = root.querySelector("#vp-fu-" + cssId(ds.id)); if (x && !x.value) x.focus(); return; }
     if (ds.fsalvar) { salvarForm(ds.fsalvar); return; }
@@ -6217,6 +6245,8 @@ function montar(root) {
   root.addEventListener("change", async (e) => {
     if (e.target.id === "vp-qfdia") { if (e.target.value) { S.qfDia = e.target.value; S.qfAb = true; render(); } return; }
     const t = e.target, ds = t.dataset;
+    if (ds.fdexec) { S.f[ds.fdexec].dexec = t.value || ""; render(); return; }
+    if (ds.fdvist) { S.f[ds.fdvist].data = t.value || ""; render(); return; }
     if (t.id === "vp-ver") { S.ver = t.value; LS("vp-ver2", S.ver); render(); return; }
       if (t.id === "vp-per") { S.per = Math.max(0, +t.value || 0); LS("vp-per2", S.per); render(); return; }
     if (t.id === "vp-start") { S.start = t.value; LS("vp-start", S.start); render(); return; }
@@ -11953,6 +11983,80 @@ function ajudaMontar(){
     else d.insertAdjacentHTML("afterbegin",`<div class="vhead"><h2>${VIEW_NOME[v]}</h2>${bt}</div>`);
   });
 }
+// ---------- Ajuda por perfil (botão ❓ Ajuda na barra do usuário) ----------
+const AJ_GER=[
+  "**Entre:** o app abre no **Início**. Os avisos do topo mostram o que precisa de atenção e o número em **Pendências** é o total.",
+  "**Acompanhe no Painel:** receita, cumprimento e árvores mostram só o **programado × executado**. O **⚡ Serviço extra** aparece num card à parte. Filtre por semana, poda ou turma e envie o resumo no **WhatsApp**.",
+  "**Cobre as turmas:** em **Pendências**, toque no aviso e use o botão de **cobrar no WhatsApp** para serviço sem baixa.",
+  "**Valide:** serviços fora da programação, baixas finalizadas pelo fiscal e checklists contestados aparecem para você **validar**.",
+  "**Triturador:** no card **🌿 Triturador** do Início veja o painel, as rotas em andamento e o que falta recolher (prazo de **3 dias**).",
+  "**Vistoria de processo:** monte as rotas e indique o vistoriador (o app respeita o número de paradas). Use **🗑 Tirar da vistoria** quando o processo não for o caso. Baixe a relação com e sem PDF, separada em **GED, O.S e SEI**.",
+  "**Acessos:** cadastre as pessoas com perfil e turma. Só gerente e administrador mexem aqui.",
+  "**Relatórios:** Lista e Painel geram **PDF** e **Excel**. O **Histórico de execução** guarda as fotos e o nome do supervisor e do fiscal de cada serviço."];
+const AJ_PERFIL={
+  gerencia:{t:"Gerente DIRSEN",p:AJ_GER,d:"Use o botão **🧪 Teste** para treinar sem mexer nos dados reais."},
+  gerencia_op:{t:"Gerente DIROP",p:["**Sua área:** você vê só **PODA III e PODA IV**.",...AJ_GER.slice(0,6)],d:"Notificações da PODA I e II não aparecem para você."},
+  admin:{t:"Administrador",p:[...AJ_GER,"**Administrador:** vê tudo, sem restrição. Em **Acessos** liga e desliga as abas de cada perfil; em **Atualizar** envia a nova versão do app."],d:"Antes de mudar permissões, teste com um usuário de treino."},
+  diretoria:{t:"Diretoria",p:[
+    "**Entre:** o app abre no **Painel**, só para consulta.",
+    "**Filtre:** escolha a semana, a poda ou a turma no topo do Painel.",
+    "**Leia os números:** receita, cumprimento e árvores são o **programado × executado**. O **⚡ Serviço extra** vem à parte.",
+    "**Dashboard:** a mesma informação em tela cheia, **ao vivo**.",
+    "**Envie ou baixe:** resumo no **WhatsApp** (imagem ou texto), **PDF** ou **Excel**."],d:"Os valores atualizam sozinhos; toque em ⟳ no topo se quiser forçar."},
+  coordenador:{t:"Coordenador",p:[
+    "**Entre:** o app abre no **Início**. Os avisos mostram o que precisa de atenção.",
+    "**Programação:** confira em **Programar** e **Lista** a programação da semana seguinte, que fica pronta até **quinta-feira**.",
+    "**Acompanhe no Painel:** programado × executado por turma. O **⚡ Serviço extra** aparece à parte.",
+    "**Checklist contestado:** aparece um aviso no topo. Abra, analise e **valide**.",
+    "**Cobre as turmas:** em **Pendências**, use o botão de **cobrar no WhatsApp**.",
+    "**Vistoria e triturador:** monte as rotas de vistoria e acompanhe o **🌿 Triturador** pelo card do Início."],d:"Abra o Painel todo dia de manhã para ver o que ficou sem baixa."},
+  supervisor:{t:"Supervisor",p:[
+    "**Entre:** o app abre no **Início**. Os avisos mostram o que está atrasado ou precisa de resposta.",
+    "**Programe a semana:** em **Programar**, lance os serviços da semana seguinte até **quinta-feira** (endereço, tipo e quantidades).",
+    "**No dia do serviço:** em **Em aberto**, toque em **▶ Iniciar O.S e enviar ao fiscal**. O fiscal recebe a O.S no celular.",
+    "**Dia sem fiscal?** Você mesmo dá o **▶ START** e o **✅ FINALIZAR** em cada endereço, com as fotos (pode puxar da **galeria**). Seu nome entra no lugar do fiscal no histórico.",
+    "**Revise a baixa:** quando o fiscal finaliza, confira e marque **executado**, **parcial** ou **não executado – remarcado**. Vermelho é atrasado.",
+    "**Serviço extra:** em **⚡ Serviço fora de programação**, registre o que a gerência mandou fazer, com fotos, e dê a baixa. Ele fica **separado** do programado.",
+    "**Triturador:** endereços com galho não triturado entram na lista. Monte a **🚛 rota** e envie ao operador pelo app (prazo de **3 dias**). Na descarga, informe a % da carga com **foto da caçamba cheia**.",
+    "**Fim do turno:** faça o **✅ Checklist** de cada equipamento. Defeito: grave o vídeo e envie a pré-OS à manutenção."],d:"Tire fotos de antes e depois, do mesmo ângulo."},
+  supervisor1:{t:"Supervisor 1 / cadastrador / vistoriador",p:[
+    "**Entre:** o app abre no **Início**, com os avisos da sua turma.",
+    "**Em aberto:** dê a baixa dos serviços: executado, parcial ou não executado – remarcado.",
+    "**Registro emergencial:** galho ou árvore caída já atendido. Informe local, hora, origem do chamado e quantidade.",
+    "**Vistoria:** você vê só as rotas indicadas para você. Abra a rota no GPS e toque no número do processo para abrir o PDF.",
+    "**Em cada processo:** informe **Já executado** (data + foto), **Não executado** (equipamento) ou **🚫 Não é poda nem extirpação** (com observação).",
+    "**Consulta:** **Lista** e **Painel** mostram a situação da turma."],d:"Na vistoria, deixe o GPS ligado: o app marca a posição de cada processo."},
+  fiscal:{t:"Fiscal de turma",p:[
+    "**Entre:** o app abre no **Início**. A **🧾 O.S do dia** chega quando o supervisor envia.",
+    "**Chegou no endereço?** Toque em **▶ START neste endereço**.",
+    "**Terminou?** Toque em **✅ FINALIZAR ESTE SERVIÇO** e tire as **fotos** pela câmera.",
+    "**Galhos:** responda **🌿 Os galhos foram triturados?** Se não, o app grava a **sua localização real** e manda o endereço para a rota do triturador.",
+    "**Serviço extra no lugar?** Responda em **⚡ A equipe fez um serviço extra no lugar?** e registre as fotos.",
+    "**Não deu para fazer?** Marque **não executado** e explique o motivo.",
+    "**Siga:** toque em **▶ Próxima parada** e repita."],d:"Fotos só pela câmera, na hora. Tire de antes e depois, do mesmo ângulo."}
+};
+AJ_PERFIL.ger_equipe={...AJ_PERFIL.coordenador,t:"Coordenador de equipe"};
+const ajMd=t=>esc(t).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>");
+function abrirAjudaPerfil(k){
+  const meu=sessao?.perfil||"supervisor", todos=["admin","gerencia","gerencia_op","ger_equipe","coordenador"].includes(meu);
+  k=k||meu; const a=AJ_PERFIL[k]||AJ_PERFIL.supervisor, host=$("#sheetHost");
+  const ord=["gerencia","gerencia_op","coordenador","supervisor","supervisor1","fiscal","diretoria","admin"];
+  const txt=[`*❓ GPE Gestão – Ajuda: ${a.t}*`,"",...a.p.map((t,i)=>`${i+1}. ${t.replace(/\*\*(.+?)\*\*/g,"*$1*")}`),"",`💡 Dica: ${a.d.replace(/\*\*(.+?)\*\*/g,"*$1*")}`].join("\n");
+  host.innerHTML=`<div class="sheet" id="sh"><div class="panel ajpf" role="dialog" aria-label="Ajuda — como usar o sistema">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-family:var(--display);font-size:22px">Ajuda — como usar o sistema</b><button type="button" class="btn sec" id="ajpX" style="min-height:44px;padding:0 14px">Fechar</button></div>
+    ${todos?`<div class="ajpchips" role="group" aria-label="Escolher o perfil">${ord.map(p=>`<button type="button" data-ajp="${p}" aria-pressed="${p===k}">${esc(AJ_PERFIL[p].t.split(" / ")[0])}${p===meu?" (você)":""}</button>`).join("")}</div>`:""}
+    <h3>${esc(a.t)} — o que eu faço aqui</h3>
+    <ol>${a.p.map(t=>`<li>${ajMd(t)}</li>`).join("")}</ol>
+    <div class="ajdica">💡 <b>Dica:</b> ${ajMd(a.d)}</div>
+    <div class="actions" style="grid-template-columns:1fr 1fr;margin:0">
+      <button type="button" class="btn sec" id="ajpTela">❔ Ajuda desta tela</button>
+      <a class="btn sec" href="https://wa.me/?text=${encodeURIComponent(txt)}" target="_blank" rel="noopener" style="display:grid;place-items:center;text-decoration:none">💬 Enviar no WhatsApp</a>
+    </div>
+  </div></div>`;
+  const close=()=>host.innerHTML=""; $("#sh").onclick=e=>{ if(e.target.id==="sh") close(); const b=e.target.closest("[data-ajp]"); if(b) abrirAjudaPerfil(b.dataset.ajp); };
+  $("#ajpX").onclick=close; $("#ajpTela").onclick=()=>abrirAjuda(curView);
+}
+document.addEventListener("click",e=>{ if(e.target.closest("#ajudaBtn")) abrirAjudaPerfil(); });
 function abrirAjuda(v){
   const a=AJUDA[v]||AJUDA.inicio, host=$("#sheetHost");
   host.innerHTML=`<div class="sheet" id="sh"><div class="panel" role="dialog" aria-label="Ajuda">
