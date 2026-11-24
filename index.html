@@ -2978,7 +2978,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.23t";
+const APP_VERSAO="2026.11.23v";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -5724,7 +5724,7 @@ function montar(root) {
         ${grupo("4 · Urbantrim", "cadastro e baixa", [card("urbcad", "Falta cadastrar", "cadastrar no Urbantrim", N.urbcad ? "alr" : "n"), card("urbbx", "Falta baixar", "aguardando baixa no Urbantrim", N.urbbx ? "pend" : "n"), card("urbok", "Baixado", "concluído no Urbantrim", "ok")])}
         ${alerta}</div>`; })()}
     <div class="vp-ctl"><label class="vp-f">Regional<select id="vp-rreg"><option value="">Todas</option>${REGS.map((r) => `<option value="${r}"${S.rreg === r ? " selected" : ""}>${cap(r)}</option>`).join("")}</select></label>
-    <label class="vp-f vp-grow">Buscar<input type="search" id="vp-rq" value="${esc(S.rq || "")}" placeholder="Processo, rua, vistoriador"></label></div>
+    <label class="vp-f vp-grow">Buscar<input type="search" id="vp-rq" name="vp-busca-resumo" autocomplete="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-form-type="other" value="${esc(S.rq || "")}" placeholder="Processo, rua, vistoriador"></label></div>
     <div class="vp-row" id="vpListaTop" style="margin:4px 0 8px;scroll-margin-top:80px"><b style="width:100%">📋 Lista: ${esc(SIT_NOME[S.rsit || "all"] || "Todas")} – ${L.length} processo${L.length === 1 ? "" : "s"}</b><button class="vp-btn vp-pri" data-planilha="1">⬇ Baixar em Excel: ${esc(SIT_NOME[S.rsit || "all"] || "Todas")} (${L.length})</button><span class="vp-msg">baixa a lista da situação escolhida acima${S.rreg ? " · regional " + cap(S.rreg) : ""}${S.rq ? " · busca \"" + esc(S.rq) + "\"" : ""}</span></div>
     ${S.rsit === "urbbx" && L.length && (typeof isGerente === "function" && isGerente()) ? urbLoteHtml(L.length) : ""}
     ${L.length ? `<section class="vp-card"><ol>${L.slice(0, S.lim).map((p) => { const r = R(p), u = r.urbantrim || {};
@@ -5980,7 +5980,7 @@ function montar(root) {
     const res = I.L ? `<p class="vp-msg" style="margin:6px 0"><b>${I.L.length}</b> linhas na planilha · <b style="color:var(--lf)">${I.ok.length}</b> processos achados no app${I.ja ? " (" + I.ja + " já estavam baixados no Urbantrim)" : ""} · <b style="color:var(--bk)">${I.nao.length}</b> não achados</p>
       ${I.nao.length ? `<details><summary class="vp-msg">Ver os ${I.nao.length} não achados</summary><ol class="vp-msg">${I.nao.slice(0, 200).map((x) => `<li>${esc(x.proc)} · ${esc(x.end || "")}${x.motivo ? " – " + esc(x.motivo) : ""}</li>`).join("")}</ol></details>` : ""}
       ${I.ok.filter((x) => !x.ja).length ? `<label class="vp-row" style="font-size:13px;color:var(--mu);font-weight:600">Data da baixa no Urbantrim <input type="date" id="vp-uimp-d" value="${esc(I.data || hoje())}" max="${hoje()}"></label>
-      <span class="vp-msg">✍ Quem informa: <b>${esc(usuario())}</b> – assine com a sua senha</span><input type="password" id="vp-uimp-s" autocomplete="current-password" placeholder="Sua senha (assinatura)">
+      <span class="vp-msg">✍ Quem informa: <b>${esc(usuario())}</b> – assine com a sua senha</span><input type="text" name="username" autocomplete="username" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0"><input type="password" id="vp-uimp-s" autocomplete="current-password" placeholder="Sua senha (assinatura)">
       <div class="vp-row"><button class="vp-btn vp-pri" data-uimp="ok" ${S.busy.uimp ? "disabled" : ""}>${S.busy.uimp ? "Gravando… " + (S.busy.uimp - 1) : "✅ Marcar " + I.ok.filter((x) => !x.ja).length + " como baixados no Urbantrim"}</button></div>` : ""}` : "";
     return `<details class="vp-card" style="padding:10px 14px"${S.uimpAb ? " open" : ""} data-uimpab="1"><summary><b>📥 Importar planilha de cancelamentos do Urbantrim</b> <span class="vp-msg">(gerente / administrador)</span></summary>
       <p class="vp-msg" style="margin:6px 0">Envie a planilha (.xlsx) com os processos <b>já cancelados/baixados no Urbantrim</b> (aba "Cancelados", colunas Processo e GED). O app acha cada processo e marca como <b>Baixado no Urbantrim</b>.</p>
@@ -6003,7 +6003,7 @@ function montar(root) {
       <p class="vp-msg" style="margin:6px 0">Use quando as baixas <b>já foram feitas no Urbantrim</b> e falta registrar no app. Vale para a lista acima (situação "Aguardando baixa no Urbantrim"${S.rreg ? ", regional " + cap(S.rreg) : ""}${S.rq ? ", busca" : ""}). Confira a lista antes.</p>
       <label class="vp-row" style="font-size:13px;color:var(--mu);font-weight:600">Data da baixa no Urbantrim <input type="date" id="vp-ubxl-d" value="${esc(x.data || hoje())}" max="${hoje()}"></label>
       <span class="vp-msg">✍ Quem informa: <b>${esc(usuario())}</b> – assine com a sua senha</span>
-      <input type="password" id="vp-ubxl-s" autocomplete="current-password" placeholder="Sua senha (assinatura)">
+      <input type="text" name="username" autocomplete="username" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0"><input type="password" id="vp-ubxl-s" autocomplete="current-password" placeholder="Sua senha (assinatura)">
       <div class="vp-row"><button class="vp-btn vp-pri" data-ubxlote="ok" ${S.busy.ubxl ? "disabled" : ""}>${S.busy.ubxl ? "Gravando… " + (S.busy.ubxl - 1) + " de " + n : "✅ Informar baixa de todos (" + n + ")"}</button></div></details>`; }
   function urbBxHtml(p) { const r = R(p), u = r.urb_baixa, x = (S.ubx || {})[p.id] || {}; if (!precisaUrbBx(p)) return "";
     if (u && !x.edit) return `<div class="vp-vb" style="border-color:var(--lf)"><div class="vp-row"><span class="vp-sp vp-env">✔ Baixado no Urbantrim</span><span>em <b>${fDia(u.data)}</b> por <b>${esc(u.por || "–")}</b>${u.ass ? " · ✍ assinado" : ""}${u.id ? ` · ID ${esc(u.id)}` : ""}</span></div>${pode.lancar() ? `<div class="vp-row"><button class="vp-btn" data-ubxedit="${p.id}">Corrigir</button><button class="vp-btn" data-ubxdesfaz="${p.id}">Desfazer baixa no Urbantrim</button></div>` : ""}</div>`;
@@ -6011,7 +6011,7 @@ function montar(root) {
     return `<div class="vp-vb"><span class="vp-lab">Baixa no Urbantrim</span><span class="vp-msg">${vistEst(r) === "ja_executado" ? "Constatado na vistoria que já estava executado" : "Executado pela turma"}: dê a baixa também no <b>Urbantrim</b>.</span>
       <label class="vp-row" style="font-size:13px;color:var(--mu);font-weight:600">Data da baixa no Urbantrim <input type="date" id="vp-ubxd-${p.id}" data-ubxdata="${p.id}" value="${esc(x.data || (u && u.data) || hoje())}" max="${hoje()}"></label>
       <span class="vp-msg">✍ Quem dá a baixa: <b>${esc(usuario())}</b> – assine com a sua senha do app</span>
-      <input type="password" id="vp-ubxn-${p.id}" data-ubxsenha="${p.id}" autocomplete="current-password" inputmode="numeric" placeholder="Sua senha (assinatura)">
+      <input type="text" name="username" autocomplete="username" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0"><input type="password" id="vp-ubxn-${p.id}" data-ubxsenha="${p.id}" autocomplete="current-password" inputmode="numeric" placeholder="Sua senha (assinatura)">
       <div class="vp-row"><button class="vp-btn vp-pri" data-ubxsalvar="${p.id}">✅ Informar baixa no Urbantrim</button>${x.edit ? `<button class="vp-btn" data-ubxcancel="${p.id}">Cancelar</button>` : ""}</div></div>`; }
   function baixaHtml(p) { return baixaSisHtml(p) + urbBxHtml(p); }
   function baixaSisHtml(p) {
@@ -6382,6 +6382,8 @@ function montar(root) {
   root.addEventListener("input", (e) => {
     if (e.target.id && /^vj/.test(e.target.id)) { S.sigv = S.sigv || {}; S.sigv[e.target.id] = e.target.value; return; }
     const t = e.target, ds = t.dataset;
+    // preenchimento automático do navegador (usuário salvo) cai na busca sem a pessoa tocar nela: ignora
+    if ((t.id === "vp-q" || t.id === "vp-rq") && document.activeElement !== t) { t.value = t.id === "vp-q" ? (S.q || "") : (S.rq || ""); return; }
     if (t.id === "vp-q") { S.q = t.value; render(); return; }
     if (t.id === "vp-rq") { S.rq = t.value; render(); return; }
     if (ds.nv && S.novo && ds.nv !== "regional") { S.novo[ds.nv] = t.value;
