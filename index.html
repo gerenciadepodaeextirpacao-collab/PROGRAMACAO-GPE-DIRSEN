@@ -2978,7 +2978,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.24b";
+const APP_VERSAO="2026.11.24c";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -4615,8 +4615,9 @@ function montar(root) {
   const LOCAIS = [["praca", "Praça"], ["canteiro", "Canteiro central"], ["entrepista", "Entre-pista"], ["publica", "Outra área pública"], ["calcada", "Calçada do morador"]];
   const locArv = (k) => (LOCAIS.find((x) => x[0] === k) || [, k || "—"])[1];
   const temParecerProc = (p) => !!(p.parecer && p.parecer !== "SEM NUMERO");
-  const locOk = (f, p) => f.loc && (f.loc !== "calcada" || (f.par === "nao" && !!(f.file || f.fotoPath)) || (f.par === "sim" && (temParecerProc(p) || String(f.parn || "").trim())));
-  const cadVist = () => ehCadastrador(); // cadastrador(a): informa Executado / Finalizado no sistema, sem relatório
+  const locOk = (f, p) => !VIST_LOCAL || f.loc && (f.loc !== "calcada" || (f.par === "nao" && !!(f.file || f.fotoPath)) || (f.par === "sim" && (temParecerProc(p) || String(f.parn || "").trim())));
+  const VIST_LOCAL = false; // pedido 24/11: vistoria volta ao simples (sem "onde está a árvore / parecer" e sem "Executado/Finalizado/baixado no sistema")
+  const cadVist = () => false; // cadastrador(a): informa Executado / Finalizado no sistema, sem relatório
   const galVist = () => ehCadastrador() || (typeof isGerente === "function" && isGerente()); // cadastrador(a) e gerente: foto da galeria no "Já foi executado"
   const pode = { pdf: () => vistCoord() || ehCadastrador(), lancar: () => !soLeitura(), coord: () => vistCoord(), resumo: () => vistAlto() || ehCadastrador(), /* cadastrador(a) também vê o Resumo */ sup: () => !!sessao && travado() && !!sessao.sup && sessao.perfil !== "fiscal", fis: () => !!sessao && sessao.perfil === "fiscal" };
   const minhaAlguma = () => Object.values(S.reg || {}).some((r) => r && r.rota && r.rota.uid === meuId() && !r.vistoriado);
@@ -5114,6 +5115,7 @@ function montar(root) {
     if (f.sit === "nao_executado") {
       h += `<div class="vp-row"><span class="vp-lab">Equipamento necessário</span>${EQUIPS.map((q) => `<button class="vp-opt" data-feq="${q}" data-id="${p.id}" aria-pressed="${f.equip === q}">${q}</button>`).join("")}</div>
         ${f.equip ? "" : `<span class="vp-need">Escolha o equipamento para executar o serviço.</span>`}`;
+      if (VIST_LOCAL) {
       h += `<div class="vp-row"><span class="vp-lab">Onde está a árvore</span>${LOCAIS.map(([k, n]) => `<button class="vp-opt" data-floc="${k}" data-id="${p.id}" aria-pressed="${f.loc === k}">${n}</button>`).join("")}</div>`;
       if (!f.loc) h += `<span class="vp-need">Informe onde está a árvore: área pública ou calçada do morador.</span>`;
       else if (f.loc !== "calcada") h += `<span class="vp-msg" style="color:#138A12">🌳 Área pública: <b>pode atender sem parecer técnico</b>.</span>`;
@@ -5122,6 +5124,7 @@ function montar(root) {
         if (!f.par) h += `<span class="vp-need">Calçada do morador: poda ou extirpação <b>só com parecer técnico</b>. ${temParecerProc(p) ? "O processo tem o parecer " + esc(parecerTxt(p.parecer)) + "." : "O processo não tem nº de parecer."}</span>`;
         else if (f.par === "sim") h += temParecerProc(p) ? `<span class="vp-msg" style="color:#138A12">✔ Parecer técnico ${esc(parecerTxt(p.parecer))}: pode executar.</span>` : `<div class="vp-row"><span class="vp-lab">Nº do parecer</span><input type="text" data-fparn="${p.id}" value="${esc(f.parn || "")}" placeholder="Ex.: 00982/2025" style="min-height:40px"></div>${String(f.parn || "").trim() ? "" : `<span class="vp-need">Informe o nº do parecer técnico.</span>`}`;
         else h += `<span class="vp-need" style="background:#fde8e6;color:#9b1c1c">⚠ Calçada do morador <b>sem parecer técnico: NÃO executar</b>. O processo fica marcado como <b>aguardando parecer técnico</b> e o app gera o <b>relatório</b> para dar baixa no processo.</span>${(() => { const img = f.preview || (f.fotoPath ? fotoUrl(f.fotoPath) : ""); return `<div class="vp-foto">${img ? `<img src="${img}" alt="Foto da árvore na calçada">` : ""}<label class="vp-btn vp-filebtn${img ? "" : " vp-pri"}">${img ? "Trocar foto" : "📷 Foto da árvore na calçada"}<input type="file" accept="image/*" capture="environment" data-ffoto="${p.id}"></label>${galVist() ? `<label class="vp-btn vp-filebtn">🖼 Anexar da galeria<input type="file" accept="image/*" data-ffoto="${p.id}"></label>` : ""}</div>${img ? "" : `<span class="vp-need">Foto obrigatória: mostra a árvore na calçada do morador e vai no relatório.</span>`}`; })()}${assBloco(p).replace("comprova o serviço já executado", "informa que o serviço não foi executado porque necessita de parecer técnico")}`;
+      }
       }
     }
     if (f.sit === "nao_pertence") h += `<span class="vp-need" style="background:#eef0ff;color:#3e4095">No local não há serviço de poda nem de extirpação para este departamento. <b>Descreva o que é</b> (ex.: roçagem, capina, limpeza de lote, galhos já recolhidos, outro órgão).</span>`;
@@ -6129,18 +6132,18 @@ function montar(root) {
     if (f.sit === "nao_executado" && !f.equip) { toast("Escolha o equipamento necessário"); return; }
     if (f.sit === "nao_executado" && !locOk(f, p)) { toast(!f.loc ? "Informe onde está a árvore" : !f.par ? "Informe se tem parecer técnico" : f.par === "nao" ? "Tire a foto da árvore na calçada" : "Informe o nº do parecer técnico"); return; }
     if (f.sit === "nao_pertence" && String(f.obs || "").trim().length < 4) { toast("Descreva o que foi encontrado no local (não é poda nem extirpação)"); return; }
-    let ass = null; if (f.sit === "nao_executado" && f.loc === "calcada" && f.par === "nao") { const a = await assinarVist(id); if (a.erro) { toast("Assinatura do relatório: " + a.erro); return; } ass = a.ass; }
+    let ass = null; if (VIST_LOCAL && f.sit === "nao_executado" && f.loc === "calcada" && f.par === "nao") { const a = await assinarVist(id); if (a.erro) { toast("Assinatura do relatório: " + a.erro); return; } ass = a.ass; }
     if (f.sit === "ja_executado" && !(cadVist() && f.cmodo && f.cbx === "sim")) { const a = await assinarVist(id); if (a.erro) { toast("Assinatura do relatório: " + a.erro); return; } ass = a.ass; }
     S.busy[id] = 1; render();
     try {
       let fotoPath = f.fotoPath;
-      if ((f.sit === "ja_executado" || (f.sit === "nao_executado" && f.loc === "calcada" && f.par === "nao")) && f.file) { try { fotoPath = await midEnviar({ tipo: "foto", janelaH: 24 }, f.file); } catch (x) { throw new Error(midErro(x)); } }
+      if ((f.sit === "ja_executado" || (VIST_LOCAL && f.sit === "nao_executado" && f.loc === "calcada" && f.par === "nao")) && f.file) { try { fotoPath = await midEnviar({ tipo: "foto", janelaH: 24 }, f.file); } catch (x) { throw new Error(midErro(x)); } }
       const r0 = S.reg[id] || {};
       const gpsV = S.pos && Date.now() - (S.pos.em || 0) < 180000 && !(R({ id }).geo && R({ id }).geo.n === "gps") ? { geo: { lat: +S.pos.lat.toFixed(6), lng: +S.pos.lng.toFixed(6), n: "gps", v: GEO_V, em: new Date().toISOString(), por: usuario() } } : {};
       const base = { ...gpsV, vistoriado: true, data_vistoria: f.data, observacao: f.obs.trim() || null, responsavel: r0.vistoriado && r0.responsavel ? r0.responsavel : usuario(), resp_uid: r0.vistoriado && r0.resp_uid ? r0.resp_uid : meuId() };
       const campos = f.sit === "nao_pertence" ? Object.assign(base, { situacao: "nao_pertence", foto_path: null, equipamento: null, ass: null, observacao: f.obs.trim().toUpperCase() })
         : f.sit === "ja_executado" ? Object.assign(base, { situacao: "ja_executado", foto_path: fotoPath, equipamento: null, ass }, cadVist() && f.cmodo ? { cad_modo: f.cmodo, cad_sis: f.cbx === "sim" ? f.csis : null, data_execucao: f.cmodo === "executado" ? f.dexec : null, ...(f.cbx === "sim" ? { ass: null } : {}) } : { cad_modo: null, cad_sis: null, data_execucao: null })
-        : Object.assign(base, { situacao: "nao_executado", foto_path: f.loc === "calcada" && f.par === "nao" ? fotoPath : null, equipamento: f.equip, urbantrim: null, ass: f.loc === "calcada" && f.par === "nao" ? ass : null, local_arvore: f.loc, parecer_ok: f.loc === "calcada" ? f.par : "nao_precisa", parecer_num: f.loc === "calcada" && f.par === "sim" ? (String(f.parn || "").trim().toUpperCase() || (p.parecer || null)) : null, precisa_parecer: f.loc === "calcada" && f.par === "nao" });
+        : Object.assign(base, { situacao: "nao_executado", foto_path: VIST_LOCAL && f.loc === "calcada" && f.par === "nao" ? fotoPath : null, equipamento: f.equip, urbantrim: null, ass: VIST_LOCAL && f.loc === "calcada" && f.par === "nao" ? ass : null, local_arvore: VIST_LOCAL ? f.loc : null, parecer_ok: !VIST_LOCAL ? null : f.loc === "calcada" ? f.par : "nao_precisa", parecer_num: VIST_LOCAL && f.loc === "calcada" && f.par === "sim" ? (String(f.parn || "").trim().toUpperCase() || (p.parecer || null)) : null, precisa_parecer: VIST_LOCAL && f.loc === "calcada" && f.par === "nao" });
       delete S.busy[id];
       const roA = rotasDe(S.cur).find((r) => r.ps.some((p) => p.id === id));
       if (await gravar([id], campos)) { fecharForm(id); render(); toast("Vistoria salva no resumo · o endereço saiu da rota"); proximaParada(roA); }
