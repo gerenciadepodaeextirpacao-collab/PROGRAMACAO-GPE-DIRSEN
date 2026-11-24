@@ -2978,7 +2978,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-orcper]")
   $("#orcDe").value=iso(de); $("#orcAte").value=hoje(); orcFxSalvar(); renderOrc(); });
 $("#orcLimpa").onclick=()=>{ ORC_FX.forEach(k=>$("#"+k).value=k==="orcOrd"?"num-":""); $("#orcBusca").value=""; orcFxSalvar(); renderOrc(); };
 /* ---------- atualizações do app (só gerente): versões + arquivos para GitHub / Netlify / AI Studio ---------- */
-const APP_VERSAO="2026.11.24h";
+const APP_VERSAO="2026.11.24i";
 try{ document.addEventListener("DOMContentLoaded",()=>{ const e=document.getElementById("verRod"); if(e) e.textContent="versão "+APP_VERSAO; }); const e0=document.getElementById("verRod"); if(e0) e0.textContent="versão "+APP_VERSAO; }catch(e){}
 const VERSOES=[
   {v:"2026.10.29o", d:"29/10/2026", itens:["Botão Imagem (ordem de serviço e lista): baixa a imagem direto no aparelho, sem abrir a tela de compartilhar"]},
@@ -12398,11 +12398,11 @@ function cppEnriquecer0(row,ix){ const ks=[row.solicitacao,row.procSec,row.ped].
     if(v.baixa){ pon("dtBaixa",iso(v.baixa.data)); pon("baixadoPor",String(v.baixa.por||"").toUpperCase()); if(v.baixa.doc) pon("protBaixa",String(v.baixa.doc).toUpperCase()); }
     if(v.situacao==="ja_executado") o._vistJa={data:v.data_vistoria||"",por:v.responsavel||""}; }
   if(ps.length){ const prim=ps.map(r=>r.data).filter(Boolean).sort()[0]; pon("dtEnvio",prim); pon("equipe",cppEquipe(ps[0].supervisao));
-    const ex=ps.filter(r=>r.status==="SIM"||r.status==="PARCIAL").sort((a,b)=>(b.dataExec||b.data||"").localeCompare(a.dataExec||a.data||""));
+    const ex=ps.filter(r=>r.status==="SIM"&&!r.arquivado).sort((a,b)=>(b.dataExec||b.data||"").localeCompare(a.dataExec||a.data||""));
     const pend=ps.some(r=>r.status==="PROGRAMADO"&&!r.arquivado);
     if(ex.length){ const e=ex[0], q=Object.values((typeof execQ==="function"?execQ(e):e.qtd)||{}).reduce((a,b)=>a+(+b||0),0); o._execApp={data:e.dataExec||e.data,sup:e.supervisao,status:e.status,id:e.id,qtd:q,rel:!!e.relat?.ass}; if(q) pon("qtdExec",q); { const Q=(typeof execQ==="function"?execQ(e):e.qtd)||{}; let qp=0,qx=0,amb=false; Object.entries(Q).forEach(([k,v])=>{ v=+v||0; if(!v) return; const K=String(k).toUpperCase(); if(K==="EXTIRPAÇÃO") qx+=v; else if(/^PODA/.test(K)&&!/EXTIRP/.test(K)) qp+=v; else amb=true; }); if(!amb&&qp&&qx&&o.qtdPoda==null&&o.qtdExtirp==null&&auto.includes("qtdExec")){ pon("qtdPoda",qp); pon("qtdExtirp",qx); } }
-      // executado na baixa do campo → data da execução entra sozinha (parcial só quando não ficou nada programado para terminar)
-      if(e.status==="SIM"||!pend) pon("dtExec",iso(e.dataExec||e.data)); }
+      // só a baixa "Executado" (SIM) da programação leva a data da execução para a planilha; parcial e remarcado não contam
+      pon("dtExec",iso(e.dataExec||e.data)); }
     else if(!pend){ // não executado e não remarcado → finalizado sem execução, com a data do retorno
       const nx=ps.filter(r=>r.status==="NÃO"&&!r.proxData).sort((a,b)=>(b.dataExec||b.data||"").localeCompare(a.dataExec||a.data||""))[0];
       if(nx){ pon("dtRetorno",iso(nx.dataExec||nx.data)); o._retApp={data:nx.dataExec||nx.data,sup:nx.supervisao,motivo:nx.jaExecutado?"já estava executado":(nx.motivo||""),id:nx.id}; { const ob=cppObsDe(nx); if(ob) pon("obs",ob); } } } }
